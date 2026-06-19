@@ -1,0 +1,59 @@
+{
+  "settings": {
+    "logRoot": "D:\\Progetti\\RobocopySW\\logs",
+    "tempRoot": "D:\\Progetti\\RobocopySW\\temp",
+    "compressLogs": true,
+    "logRetentionDays": 30,
+    "email": {
+      "enabled": false,
+      "smtpHost": "smtp.example.com",
+      "smtpPort": 587,
+      "useSsl": true,
+      "from": "backup@example.com",
+      "to": "admin@example.com",
+      "username": "backup@example.com",
+      "passwordProtected": null,
+      "onlyOnError": true
+    }
+  },
+  "credentials": [
+    {
+      "id": "nasufficio",
+      "host": "\\\\nas01\\backupshare",
+      "user": "DOMINIO\\backup",
+      "passwordProtected": "<impostata-dalla-GUI-cifrata-DPAPI>"
+    }
+  ],
+  "jobs": [
+    {
+      "name": "Documenti",
+      "source": "D:\\documenti",
+      "destination": "E:\\Backup\\Documenti",
+      "mirror": true,
+      "excludeOlder": false,
+      "copyAll": false,
+      "multiThread": 8,
+      "excludeFiles": [ "*.tmp", "~$*" ],
+      "excludeDirs": [ "cache" ],
+      "retries": 1,
+      "wait": 5,
+      "enabled": true,
+      "credentialId": null
+    },
+    {
+      "name": "Cartella-di-rete",
+      "source": "\\\\nas01\\backupshare\\sezioni\\Acquisti",
+      "destination": "\\\\srvbackup\\h$\\RootShare\\sezionitemp\\Acquisti",
+      "mirror": true,
+      "excludeOlder": false,
+      "copyAll": true,
+      "multiThread": 16,
+      "excludeFiles": [],
+      "excludeDirs": [],
+      "retries": 3,
+      "wait": 15,
+      "enabled": true,
+      "credentialId": "nasufficio"
+    }
+  ]
+}

@@ -1,0 +1,163 @@
+<Window x:Class="RobocopySW.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        mc:Ignorable="d"
+        Title="Impostazioni" Height="620" Width="720"
+        WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <Style TargetType="TextBlock" x:Key="Label">
+            <Setter Property="Margin" Value="0,8,8,2"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel Margin="12">
+        <Border DockPanel.Dock="Bottom" Margin="0,10,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Annulla" Width="100" Margin="0,0,8,0" IsCancel="True" Click="OnCancel"/>
+                <Button Content="Salva" Width="100" IsDefault="True" Click="OnSave"/>
+            </StackPanel>
+        </Border>
+
+        <TabControl>
+            <!-- GENERALE -->
+            <TabItem Header="Generale">
+                <StackPanel Margin="12">
+                    <TextBlock Text="Cartella log (archivio per data)" Style="{StaticResource Label}"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" Text="{Binding LogRoot, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Button Grid.Column="1" Content="Sfoglia…" Margin="6,0,0,0" Padding="10,2" Click="OnBrowseLog"/>
+                    </Grid>
+
+                    <TextBlock Text="Cartella temporanea" Style="{StaticResource Label}"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" Text="{Binding TempRoot, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Button Grid.Column="1" Content="Sfoglia…" Margin="6,0,0,0" Padding="10,2" Click="OnBrowseTemp"/>
+                    </Grid>
+
+                    <CheckBox Content="Comprimi i log in .zip" IsChecked="{Binding CompressLogs}" Margin="0,12,0,0"/>
+
+                    <TextBlock Text="Giorni di conservazione log (0 = non eliminare)" Style="{StaticResource Label}"/>
+                    <TextBox Width="120" HorizontalAlignment="Left" Text="{Binding LogRetentionDays, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+            </TabItem>
+
+            <!-- EMAIL -->
+            <TabItem Header="Email">
+                <StackPanel Margin="12">
+                    <CheckBox Content="Abilita notifiche email" IsChecked="{Binding EmailEnabled}"/>
+                    <CheckBox Content="Invia solo in caso di errore" IsChecked="{Binding OnlyOnError}" Margin="0,6,0,0"/>
+
+                    <Grid Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                            <TextBlock Text="Server SMTP" Style="{StaticResource Label}"/>
+                            <TextBox Text="{Binding SmtpHost, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Porta" Style="{StaticResource Label}"/>
+                            <TextBox Text="{Binding SmtpPort, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <CheckBox Content="Usa SSL/TLS" IsChecked="{Binding UseSsl}" Margin="0,8,0,0"/>
+
+                    <TextBlock Text="Da (mittente)" Style="{StaticResource Label}"/>
+                    <TextBox Text="{Binding EmailFrom, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBlock Text="A (destinatario)" Style="{StaticResource Label}"/>
+                    <TextBox Text="{Binding EmailTo, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBlock Text="Utente SMTP (facoltativo)" Style="{StaticResource Label}"/>
+                    <TextBox Text="{Binding EmailUser, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBlock Text="Password SMTP (lascia vuoto per non modificare)" Style="{StaticResource Label}"/>
+                    <PasswordBox x:Name="EmailPasswordBox"/>
+                </StackPanel>
+            </TabItem>
+
+            <!-- CREDENZIALI -->
+            <TabItem Header="Credenziali di rete">
+                <DockPanel Margin="12">
+                    <Border DockPanel.Dock="Bottom" Margin="0,10,0,0" Padding="8" Background="#F3F3F3">
+                        <StackPanel>
+                            <TextBlock Text="Aggiungi / aggiorna credenziale" FontWeight="Bold" Margin="0,0,0,6"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                                    <TextBlock Text="Id" Style="{StaticResource Label}"/>
+                                    <TextBox x:Name="CredId"/>
+                                    <TextBlock Text="Host/Share (\\server\share)" Style="{StaticResource Label}"/>
+                                    <TextBox x:Name="CredHost"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="Utente (DOMINIO\utente)" Style="{StaticResource Label}"/>
+                                    <TextBox x:Name="CredUser"/>
+                                    <TextBlock Text="Password" Style="{StaticResource Label}"/>
+                                    <PasswordBox x:Name="CredPassword"/>
+                                </StackPanel>
+                            </Grid>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <Button Content="Salva credenziale" Padding="10,3" Click="OnUpsertCredential"/>
+                                <Button Content="Rimuovi selezionata" Padding="10,3" Margin="8,0,0,0" Click="OnRemoveCredential"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <DataGrid x:Name="CredGrid" ItemsSource="{Binding CredentialList}" AutoGenerateColumns="False"
+                              IsReadOnly="True" CanUserAddRows="False" HeadersVisibility="Column"
+                              SelectionChanged="OnCredentialSelected">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="*"/>
+                            <DataGridTextColumn Header="Host" Binding="{Binding Host}" Width="2*"/>
+                            <DataGridTextColumn Header="Utente" Binding="{Binding User}" Width="2*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <!-- PIANIFICAZIONE -->
+            <TabItem Header="Pianificazione">
+                <StackPanel Margin="12">
+                    <TextBlock TextWrapping="Wrap" Foreground="#444"
+                               Text="Registra un'attività nell'Utilità di pianificazione di Windows che esegue «Avvia tutti» in modalità silenziosa all'orario scelto."/>
+                    <Grid Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                            <TextBlock Text="Orario (HH:mm)" Style="{StaticResource Label}"/>
+                            <TextBox x:Name="ScheduleTime" Text="22:00"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Frequenza" Style="{StaticResource Label}"/>
+                            <ComboBox x:Name="ScheduleFreq" SelectedIndex="0">
+                                <ComboBoxItem Content="Giornaliera"/>
+                                <ComboBoxItem Content="Settimanale"/>
+                            </ComboBox>
+                        </StackPanel>
+                    </Grid>
+                    <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                        <Button Content="Crea / aggiorna attività" Padding="12,4" Click="OnCreateSchedule"/>
+                        <Button Content="Rimuovi attività" Padding="12,4" Margin="8,0,0,0" Click="OnRemoveSchedule"/>
+                    </StackPanel>
+                    <TextBlock x:Name="ScheduleStatus" Margin="0,10,0,0" Foreground="#0A0"/>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>
