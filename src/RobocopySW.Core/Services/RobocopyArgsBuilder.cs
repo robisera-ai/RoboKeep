@@ -1,0 +1,102 @@
+using System.Text;
+using RobocopySW.Core.Models;
+
+namespace RobocopySW.Core.Services;
+
+/// <summary>
+/// Traduce un <see cref="BackupJob"/> nella lista di argomenti per robocopy.
+/// Funzione pura e senza effetti collaterali: facilmente testabile.
+/// </summary>
+public static class RobocopyArgsBuilder
+{
+    private const int MaxThreads = 128;
+
+    /// <summary>
+    /// Costruisce gli argomenti per robocopy nell'ordine
+    /// <c>&lt;sorgente&gt; &lt;destinazione&gt; [opzioni]</c>.
+    /// </summary>
+    /// <param name="job">Definizione del job.</param>
+    /// <param name="dryRun">Se true aggiunge <c>/L</c> (anteprima: nessuna modifica).</param>
+    /// <param name="logFile">Se valorizzato aggiunge <c>/TEE</c> e <c>/LOG:&lt;file&gt;</c>.</param>
+    public static IReadOnlyList<string> Build(BackupJob job, bool dryRun = false, string? logFile = null)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+
+        var source = (job.Source ?? "").Trim();
+        var dest = (job.Destination ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(dest))
+            throw new InvalidOperationException(
+                $"Il job '{job.Name}' deve avere sorgente e destinazione valorizzate.");
+
+        var args = new List<string> { source, dest };
+
+        // Modalità mirror vs copia/aggiornamento senza cancellazione.
+        args.Add(job.Mirror ? "/MIR" : "/E");
+
+        // Non sovrascrivere i file più recenti in destinazione.
+        if (job.ExcludeOlder)
+            args.Add("/XO");
+
+        // Cosa copiare degli attributi del file.
+        args.Add(job.CopyAll ? "/COPYALL" : "/COPY:DAT");
+
+        // Esclude le junction per evitare loop/ricorsioni indesiderate.
+        args.Add("/XJ");
+
+        // Copia multi-thread.
+        if (job.MultiThread > 0)
+        {
+            var threads = Math.Min(job.MultiThread, MaxThreads);
+            args.Add($"/MT:{threads}");
+        }
+
+        // Esclusioni file.
+        if (job.ExcludeFiles is { Count: > 0 })
+        {
+            args.Add("/XF");
+            args.AddRange(job.ExcludeFiles.Where(f => !string.IsNullOrWhiteSpace(f)));
+        }
+
+        // Esclusioni cartelle.
+        if (job.ExcludeDirs is { Count: > 0 })
+        {
+            args.Add("/XD");
+            args.AddRange(job.ExcludeDirs.Where(d => !string.IsNullOrWhiteSpace(d)));
+        }
+
+        // Tentativi e attesa.
+        args.Add($"/R:{Math.Max(0, job.Retries)}");
+        args.Add($"/W:{Math.Max(0, job.Wait)}");
+
+        // Anteprima: elenca soltanto, non modifica nulla.
+        if (dryRun)
+            args.Add("/L");
+
+        // Logging su file (oltre allo stdout grazie a /TEE).
+        if (!string.IsNullOrWhiteSpace(logFile))
+        {
+            args.Add("/TEE");
+            args.Add($"/LOG:{logFile}");
+        }
+
+        return args;
+    }
+
+    /// <summary>
+    /// Rende gli argomenti come riga di comando leggibile (per anteprima nella GUI).
+    /// NB: solo per visualizzazione; l'esecuzione usa la lista di argomenti, non questa stringa.
+    /// </summary>
+    public static string ToDisplayString(IEnumerable<string> args)
+    {
+        var sb = new StringBuilder("robocopy");
+        foreach (var a in args)
+        {
+            sb.Append(' ');
+            if (string.IsNullOrEmpty(a) || a.Contains(' '))
+                sb.Append('"').Append(a).Append('"');
+            else
+                sb.Append(a);
+        }
+        return sb.ToString();
+    }
+}
