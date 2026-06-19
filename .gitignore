@@ -1,0 +1,32 @@
+# Build output .NET
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+.vs/
+
+# Pubblicazione / artefatti
+publish/
+*.nupkg
+
+# Test/coverage
+[Tt]est[Rr]esults/
+coverage*.json
+*.trx
+
+# Configurazione runtime con credenziali (DPAPI) e log generati
+config.local.json
+/logs/
+/temp/
+/errorlogs/
+
+# Artefatti generati dal vecchio sistema (riferimento storico, non versionati)
+Vecchi CMD/logs/
+Vecchi CMD/temp/
+Vecchi CMD/errorlogs/
+
+# Sistema
+Thumbs.db
+desktop.ini
