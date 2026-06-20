@@ -4,6 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:ctl="clr-namespace:RobocopySW.Controls"
         mc:Ignorable="d"
         Title="Modifica job" Height="740" Width="740"
         ExtendsContentIntoTitleBar="True"
@@ -80,20 +81,32 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                        <TextBlock Text="Thread (/MT)" Style="{StaticResource Label}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Thread (/MT)" Style="{StaticResource Label}"/>
+                            <ctl:InfoHint Margin="0,12,0,0" Text="Numero di file copiati in parallelo (multi-thread). Più alto = più veloce, soprattutto con tanti file piccoli. 8 va bene quasi sempre; 16+ su SSD o share di rete veloci; su hard disk meccanici meglio non esagerare. 0 disattiva il multi-thread."/>
+                        </StackPanel>
                         <ui:TextBox Text="{Binding MultiThread, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Margin="0,0,8,0">
-                        <TextBlock Text="Tentativi (/R)" Style="{StaticResource Label}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Tentativi (/R)" Style="{StaticResource Label}"/>
+                            <ctl:InfoHint Margin="0,12,0,0" Text="Quante volte riprovare a copiare un file se la copia fallisce (es. file temporaneamente in uso o rete instabile). Con file spesso aperti tieni un valore basso (1) per non aspettare a lungo."/>
+                        </StackPanel>
                         <ui:TextBox Text="{Binding Retries, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                     <StackPanel Grid.Column="2">
-                        <TextBlock Text="Attesa sec (/W)" Style="{StaticResource Label}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Attesa sec (/W)" Style="{StaticResource Label}"/>
+                            <ctl:InfoHint Margin="0,12,0,0" Text="Secondi di attesa tra un tentativo e l'altro. Si combina con i Tentativi (es. 1 tentativo × 5 sec). Valori alti allungano molto i tempi se ci sono file problematici."/>
+                        </StackPanel>
                         <ui:TextBox Text="{Binding Wait, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                 </Grid>
 
-                <TextBlock Text="Credenziale di rete (per share UNC)" Style="{StaticResource Label}"/>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Credenziale di rete (per share UNC)" Style="{StaticResource Label}"/>
+                    <ctl:InfoHint Margin="0,12,0,0" Text="Serve solo se sorgente o destinazione è una cartella di rete condivisa (\\server\condivisione) che richiede utente e password. Le credenziali si creano in Impostazioni → Credenziali. Per dischi locali o USB lascia «nessuna»."/>
+                </StackPanel>
                 <ComboBox ItemsSource="{Binding Credentials}" SelectedItem="{Binding SelectedCredential}"
                           DisplayMemberPath="Display"/>
 
@@ -103,13 +116,19 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                        <TextBlock Text="Escludi file (uno per riga)" Style="{StaticResource Label}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Escludi file (uno per riga)" Style="{StaticResource Label}"/>
+                            <ctl:InfoHint Margin="0,12,0,0" Text="Schemi di file da NON copiare, uno per riga. Esempi: *.tmp (tutti i .tmp), ~$* (temporanei di Office), *.log. Lascia vuoto per copiare tutto."/>
+                        </StackPanel>
                         <ui:TextBox Text="{Binding ExcludeFilesText, UpdateSourceTrigger=PropertyChanged}"
                                  AcceptsReturn="True" Height="76" TextWrapping="NoWrap"
                                  VerticalScrollBarVisibility="Auto" PlaceholderText="*.tmp"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1">
-                        <TextBlock Text="Escludi cartelle (una per riga)" Style="{StaticResource Label}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Escludi cartelle (una per riga)" Style="{StaticResource Label}"/>
+                            <ctl:InfoHint Margin="0,12,0,0" Text="Nomi di cartelle da saltare, una per riga. Esempi: cache, node_modules, Temp. Vengono escluse ovunque compaiano nell'albero."/>
+                        </StackPanel>
                         <ui:TextBox Text="{Binding ExcludeDirsText, UpdateSourceTrigger=PropertyChanged}"
                                  AcceptsReturn="True" Height="76" TextWrapping="NoWrap"
                                  VerticalScrollBarVisibility="Auto" PlaceholderText="cache"/>
