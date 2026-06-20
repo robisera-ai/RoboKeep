@@ -16,12 +16,13 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         _vm = new MainViewModel(_host);
         DataContext = _vm;
 
-        // Auto-scroll del log in fondo a ogni aggiornamento.
-        _vm.PropertyChanged += (_, e) =>
+        // Il log viene riversato a blocchi (sul thread UI) per non ingolfare l'interfaccia.
+        _vm.LogFlushed += text =>
         {
-            if (e.PropertyName == nameof(MainViewModel.LogText))
-                LogBox.ScrollToEnd();
+            LogBox.AppendText(text);
+            LogBox.ScrollToEnd();
         };
+        _vm.LogCleared += () => LogBox.Clear();
     }
 
     private void OnNewJob(object sender, RoutedEventArgs e)

@@ -37,6 +37,9 @@
                            Command="{Binding RunSelectedCommand}" Margin="0,0,8,0"/>
                 <ui:Button Icon="{ui:SymbolIcon FastForward24}" Content="Avvia tutti"
                            Command="{Binding RunAllCommand}" Margin="0,0,8,0"/>
+                <ui:Button Icon="{ui:SymbolIcon Stop24}" Content="Annulla" Appearance="Danger"
+                           Command="{Binding StopCommand}"
+                           Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
             </StackPanel>
             <ui:Button HorizontalAlignment="Right" Icon="{ui:SymbolIcon Settings24}" Content="Impostazioni" Click="OnSettings"/>
         </Grid>
@@ -79,7 +82,7 @@
                                    Appearance="Secondary" Command="{Binding ClearLogCommand}"/>
                     </Grid>
                     <Border Margin="12,0,12,12" CornerRadius="6" Background="#1E1E1E">
-                        <TextBox x:Name="LogBox" Text="{Binding LogText, Mode=OneWay}" IsReadOnly="True"
+                        <TextBox x:Name="LogBox" IsReadOnly="True"
                                  FontFamily="Cascadia Mono, Consolas" FontSize="12" TextWrapping="NoWrap"
                                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
                                  Background="Transparent" Foreground="#DDDDDD" BorderThickness="0" Padding="8"/>

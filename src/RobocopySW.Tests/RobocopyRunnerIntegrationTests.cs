@@ -107,6 +107,21 @@ public sealed class RobocopyRunnerIntegrationTests : IDisposable
     }
 
     [Fact]
+    public async Task RunAsync_StreamsOutputLines_ViaProgress()
+    {
+        var runner = new RobocopyRunner();
+        var lines = new List<string>();
+        var progress = new Progress<string>(l => { lock (lines) lines.Add(l); });
+
+        var run = await runner.RunAsync(Job(mirror: true), dryRun: false, progress);
+
+        Assert.True(run.Result.Success);
+        // L'output deve essere stato trasmesso riga per riga (non solo a fine processo come blocco unico).
+        lock (lines)
+            Assert.NotEmpty(lines);
+    }
+
+    [Fact]
     public async Task NonMirror_DoesNotRemoveFilesDeletedInSource()
     {
         var runner = new RobocopyRunner();

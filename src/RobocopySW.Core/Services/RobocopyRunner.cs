@@ -63,7 +63,15 @@ public sealed class RobocopyRunner
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
 
-        await process.WaitForExitAsync(ct).ConfigureAwait(false);
+        // Alla cancellazione, termina robocopy (e i suoi thread figli) per non lasciare il processo appeso.
+        await using (ct.Register(() =>
+        {
+            try { if (!process.HasExited) process.Kill(entireProcessTree: true); }
+            catch { /* il processo potrebbe essere già terminato */ }
+        }))
+        {
+            await process.WaitForExitAsync(ct).ConfigureAwait(false);
+        }
 
         var exit = process.ExitCode;
         var interpreted = ExitCodeInterpreter.Interpret(exit);
