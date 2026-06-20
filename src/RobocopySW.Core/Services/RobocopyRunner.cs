@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text;
 using RobocopySW.Core.Models;
 
@@ -20,8 +21,28 @@ public sealed class RobocopyRunner
 {
     private readonly string _robocopyPath;
 
+    // Robocopy scrive l'output nella code page OEM del sistema (es. CP850 in italiano):
+    // leggerlo con quella codifica evita accenti mancanti/garbled.
+    private static readonly Encoding OemEncoding = ResolveOemEncoding();
+
     public RobocopyRunner(string? robocopyPath = null) =>
         _robocopyPath = robocopyPath ?? Path.Combine(Environment.SystemDirectory, "Robocopy.exe");
+
+    [DllImport("kernel32.dll")]
+    private static extern uint GetOEMCP();
+
+    private static Encoding ResolveOemEncoding()
+    {
+        try
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            return Encoding.GetEncoding((int)GetOEMCP());
+        }
+        catch
+        {
+            return Encoding.UTF8;
+        }
+    }
 
     /// <summary>
     /// Esegue il job. <paramref name="dryRun"/> attiva l'anteprima (nessuna modifica reale).
@@ -41,8 +62,8 @@ public sealed class RobocopyRunner
             RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true,
-            StandardOutputEncoding = Encoding.UTF8,
-            StandardErrorEncoding = Encoding.UTF8,
+            StandardOutputEncoding = OemEncoding,
+            StandardErrorEncoding = OemEncoding,
         };
         foreach (var a in args)
             psi.ArgumentList.Add(a);

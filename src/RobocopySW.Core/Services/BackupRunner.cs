@@ -52,7 +52,14 @@ public sealed class BackupRunner
 
             var run = await _runner.RunAsync(job, dryRun, progress, ct).ConfigureAwait(false);
 
-            run.Result.LogPath = _log.WriteAndArchive(job.Name, run.Output, run.Result.StartedAt);
+            // Riepilogo nostro, leggibile e in italiano (l'output nativo di robocopy ha le
+            // intestazioni localizzate che sbordano dalle colonne).
+            var recap = BuildRecap(run.Result, dryRun);
+            foreach (var line in recap)
+                progress?.Report(line);
+
+            var logContent = run.Output + Environment.NewLine + string.Join(Environment.NewLine, recap);
+            run.Result.LogPath = _log.WriteAndArchive(job.Name, logContent, run.Result.StartedAt);
 
             try
             {
@@ -71,6 +78,27 @@ public sealed class BackupRunner
             if (connected && cred is not null)
                 _credentials.Disconnect(cred.Host);
         }
+    }
+
+    private static string[] BuildRecap(JobResult r, bool dryRun)
+    {
+        var titolo = dryRun ? "RIEPILOGO ANTEPRIMA (RobocopySW)" : "RIEPILOGO (RobocopySW)";
+        var extraNota = r.FilesExtra > 0
+            ? (dryRun ? "  (verrebbero rimossi in mirror)" : "  (in dest, non in sorgente)")
+            : "";
+        return new[]
+        {
+            "",
+            "====== " + titolo + " ======",
+            $"Esito           : {(r.Success ? "OK" : "ERRORE")} (exit {r.ExitCode}) - {r.Status}",
+            $"Cartelle copiate: {r.DirsCopied}",
+            $"File copiati    : {r.FilesCopied}",
+            $"File invariati  : {r.FilesSkipped}",
+            $"File extra      : {r.FilesExtra}{extraNota}",
+            $"File falliti    : {r.FilesFailed}",
+            $"Durata          : {r.Duration:hh\\:mm\\:ss}",
+            "==========================================",
+        };
     }
 
     /// <summary>Esegue tutti i job abilitati in sequenza, poi pulisce i log vecchi.</summary>
