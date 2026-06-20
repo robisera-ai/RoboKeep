@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Windows;
+using Wpf.Ui.Appearance;
 
 namespace RobocopySW;
 
@@ -28,6 +29,9 @@ public partial class App : Application
             Shutdown(exit);
             return;
         }
+
+        // Applica il tema (chiaro/scuro) seguendo le impostazioni di sistema.
+        ApplicationThemeManager.ApplySystemTheme();
 
         var window = new MainWindow();
         window.Show();

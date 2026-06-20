@@ -8,7 +8,7 @@ using RobocopySW.ViewModels;
 
 namespace RobocopySW;
 
-public partial class SettingsWindow : Window
+public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
 {
     private const string ScheduledTaskName = "AvviaTutti";
     private readonly SettingsViewModel _vm;

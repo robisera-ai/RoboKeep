@@ -6,7 +6,7 @@ using RobocopySW.ViewModels;
 
 namespace RobocopySW;
 
-public partial class JobEditorWindow : Window
+public partial class JobEditorWindow : Wpf.Ui.Controls.FluentWindow
 {
     private readonly JobEditorViewModel _vm;
 

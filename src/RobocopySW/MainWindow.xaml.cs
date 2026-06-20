@@ -4,7 +4,7 @@ using RobocopySW.ViewModels;
 
 namespace RobocopySW;
 
-public partial class MainWindow : Window
+public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 {
     private readonly AppHost _host;
     private readonly MainViewModel _vm;

@@ -1,67 +1,100 @@
-<Window x:Class="RobocopySW.MainWindow"
+<ui:FluentWindow x:Class="RobocopySW.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:local="clr-namespace:RobocopySW"
         mc:Ignorable="d"
-        Title="RobocopySW — Backup configurabile" Height="640" Width="1000"
+        Title="RobocopySW" Height="680" Width="1040"
+        ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="Mica"
+        WindowCornerPreference="Round"
         WindowStartupLocation="CenterScreen">
-    <DockPanel>
-        <ToolBar DockPanel.Dock="Top">
-            <Button Style="{StaticResource ToolButton}" Click="OnNewJob" Content="➕ Nuovo"/>
-            <Button Style="{StaticResource ToolButton}" Click="OnEditJob" Content="✏ Modifica"/>
-            <Button Style="{StaticResource ToolButton}" Click="OnDeleteJob" Content="🗑 Elimina"/>
-            <Separator/>
-            <Button Style="{StaticResource ToolButton}" Command="{Binding PreviewSelectedCommand}" Content="👁 Anteprima"/>
-            <Button Style="{StaticResource ToolButton}" Command="{Binding RunSelectedCommand}" Content="▶ Avvia selezionato"/>
-            <Separator/>
-            <Button Style="{StaticResource ToolButton}" Command="{Binding PreviewAllCommand}" Content="👁 Anteprima tutti"/>
-            <Button Style="{StaticResource ToolButton}" Command="{Binding RunAllCommand}" Content="⏩ Avvia tutti"/>
-            <Separator/>
-            <Button Style="{StaticResource ToolButton}" Click="OnSettings" Content="⚙ Impostazioni"/>
-        </ToolBar>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-        <StatusBar DockPanel.Dock="Bottom">
-            <StatusBarItem><TextBlock Text="{Binding StatusText}"/></StatusBarItem>
-            <StatusBarItem HorizontalAlignment="Right">
-                <ProgressBar Width="140" Height="14" IsIndeterminate="{Binding IsBusy}"/>
-            </StatusBarItem>
-        </StatusBar>
+        <ui:TitleBar Grid.Row="0" Title="RobocopySW — Backup configurabile">
+            <ui:TitleBar.Icon>
+                <ui:SymbolIcon Symbol="FolderArrowRight24"/>
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
 
-        <Grid Margin="8">
+        <!-- Barra azioni -->
+        <Grid Grid.Row="1" Margin="16,4,16,8">
+            <StackPanel Orientation="Horizontal">
+                <ui:Button Icon="{ui:SymbolIcon Add24}" Content="Nuovo" Click="OnNewJob" Margin="0,0,8,0"/>
+                <ui:Button Icon="{ui:SymbolIcon Edit24}" Content="Modifica" Click="OnEditJob" Margin="0,0,8,0"/>
+                <ui:Button Icon="{ui:SymbolIcon Delete24}" Content="Elimina" Click="OnDeleteJob" Margin="0,0,8,0"/>
+                <Separator Margin="6,4" Background="#33888888"/>
+                <ui:Button Icon="{ui:SymbolIcon Eye24}" Content="Anteprima" Command="{Binding PreviewSelectedCommand}" Margin="0,0,8,0"/>
+                <ui:Button Icon="{ui:SymbolIcon Play24}" Content="Avvia selezionato" Appearance="Primary"
+                           Command="{Binding RunSelectedCommand}" Margin="0,0,8,0"/>
+                <ui:Button Icon="{ui:SymbolIcon FastForward24}" Content="Avvia tutti"
+                           Command="{Binding RunAllCommand}" Margin="0,0,8,0"/>
+            </StackPanel>
+            <ui:Button HorizontalAlignment="Right" Icon="{ui:SymbolIcon Settings24}" Content="Impostazioni" Click="OnSettings"/>
+        </Grid>
+
+        <!-- Contenuto: tabella job + log -->
+        <Grid Grid.Row="2" Margin="16,0,16,8">
             <Grid.RowDefinitions>
                 <RowDefinition Height="2*"/>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="1.2*"/>
+                <RowDefinition Height="1.1*"/>
             </Grid.RowDefinitions>
 
-            <DataGrid Grid.Row="0" ItemsSource="{Binding Jobs}" SelectedItem="{Binding SelectedJob}"
-                      AutoGenerateColumns="False" IsReadOnly="False" CanUserAddRows="False"
-                      HeadersVisibility="Column" GridLinesVisibility="Horizontal"
-                      MouseDoubleClick="OnEditJob">
-                <DataGrid.Columns>
-                    <DataGridCheckBoxColumn Header="Attivo" Binding="{Binding Enabled, UpdateSourceTrigger=PropertyChanged}" Width="56"/>
-                    <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="160" IsReadOnly="True"/>
-                    <DataGridTextColumn Header="Modalità" Binding="{Binding ModeLabel}" Width="90" IsReadOnly="True"/>
-                    <DataGridTextColumn Header="Sorgente" Binding="{Binding Source}" Width="*" IsReadOnly="True"/>
-                    <DataGridTextColumn Header="Destinazione" Binding="{Binding Destination}" Width="*" IsReadOnly="True"/>
-                    <DataGridTextColumn Header="Ultimo esito" Binding="{Binding LastStatus}" Width="220" IsReadOnly="True"/>
-                </DataGrid.Columns>
-            </DataGrid>
+            <ui:Card Grid.Row="0" Padding="0">
+                <DataGrid ItemsSource="{Binding Jobs}" SelectedItem="{Binding SelectedJob}"
+                          AutoGenerateColumns="False" IsReadOnly="False" CanUserAddRows="False"
+                          HeadersVisibility="Column" GridLinesVisibility="None"
+                          Background="Transparent" BorderThickness="0"
+                          MouseDoubleClick="OnEditJob">
+                    <DataGrid.Columns>
+                        <DataGridCheckBoxColumn Header="Attivo" Binding="{Binding Enabled, UpdateSourceTrigger=PropertyChanged}" Width="60"/>
+                        <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="170" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Modalità" Binding="{Binding ModeLabel}" Width="100" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Sorgente" Binding="{Binding Source}" Width="*" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Destinazione" Binding="{Binding Destination}" Width="*" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Ultimo esito" Binding="{Binding LastStatus}" Width="220" IsReadOnly="True"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </ui:Card>
 
-            <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" Background="#DDD"/>
+            <GridSplitter Grid.Row="1" Height="10" HorizontalAlignment="Stretch" Background="Transparent"/>
 
-            <DockPanel Grid.Row="2">
-                <DockPanel DockPanel.Dock="Top" LastChildFill="False" Margin="0,4">
-                    <TextBlock Text="Log esecuzione" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <Button DockPanel.Dock="Right" Content="Pulisci" Command="{Binding ClearLogCommand}" Padding="8,2"/>
+            <ui:Card Grid.Row="2" Padding="0">
+                <DockPanel>
+                    <Grid DockPanel.Dock="Top" Margin="12,10,12,6">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="SlideText24" Margin="0,0,8,0"/>
+                            <TextBlock Text="Log esecuzione" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <ui:Button HorizontalAlignment="Right" Icon="{ui:SymbolIcon Eraser24}" Content="Pulisci"
+                                   Appearance="Secondary" Command="{Binding ClearLogCommand}"/>
+                    </Grid>
+                    <Border Margin="12,0,12,12" CornerRadius="6" Background="#1E1E1E">
+                        <TextBox x:Name="LogBox" Text="{Binding LogText, Mode=OneWay}" IsReadOnly="True"
+                                 FontFamily="Cascadia Mono, Consolas" FontSize="12" TextWrapping="NoWrap"
+                                 VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                                 Background="Transparent" Foreground="#DDDDDD" BorderThickness="0" Padding="8"/>
+                    </Border>
                 </DockPanel>
-                <TextBox x:Name="LogBox" Text="{Binding LogText, Mode=OneWay}" IsReadOnly="True"
-                         FontFamily="Consolas" FontSize="12" TextWrapping="NoWrap"
-                         VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
-                         Background="#1E1E1E" Foreground="#DDDDDD"/>
-            </DockPanel>
+            </ui:Card>
         </Grid>
-    </DockPanel>
-</Window>
+
+        <!-- Barra di stato -->
+        <Border Grid.Row="3" Padding="16,8" Background="#11888888">
+            <Grid>
+                <TextBlock Text="{Binding StatusText}" VerticalAlignment="Center" Opacity="0.8"/>
+                <ui:ProgressRing HorizontalAlignment="Right" Width="20" Height="20"
+                                 IsIndeterminate="{Binding IsBusy}" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</ui:FluentWindow>
