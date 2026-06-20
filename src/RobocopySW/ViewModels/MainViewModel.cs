@@ -24,6 +24,12 @@ public sealed class MainViewModel : ObservableObject
     {
         _host = host;
         Jobs = new ObservableCollection<JobViewModel>();
+        Jobs.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(IsEmpty));
+            OnPropertyChanged(nameof(HasJobs));
+            OnPropertyChanged(nameof(StatusText));
+        };
         ReloadJobs();
 
         // Le righe di output arrivano dai thread di lettura del processo e vengono
@@ -45,6 +51,12 @@ public sealed class MainViewModel : ObservableObject
 
     public AppHost Host => _host;
     public ObservableCollection<JobViewModel> Jobs { get; }
+
+    /// <summary>true quando non ci sono job: la UI mostra lo stato vuoto.</summary>
+    public bool IsEmpty => Jobs.Count == 0;
+
+    /// <summary>Opposto di <see cref="IsEmpty"/>: c'è almeno un job.</summary>
+    public bool HasJobs => Jobs.Count > 0;
 
     private JobViewModel? _selectedJob;
     public JobViewModel? SelectedJob

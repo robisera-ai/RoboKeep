@@ -53,20 +53,36 @@
             </Grid.RowDefinitions>
 
             <ui:Card Grid.Row="0" Padding="0">
-                <DataGrid ItemsSource="{Binding Jobs}" SelectedItem="{Binding SelectedJob}"
-                          AutoGenerateColumns="False" IsReadOnly="False" CanUserAddRows="False"
-                          HeadersVisibility="Column" GridLinesVisibility="None"
-                          Background="Transparent" BorderThickness="0"
-                          MouseDoubleClick="OnEditJob">
-                    <DataGrid.Columns>
-                        <DataGridCheckBoxColumn Header="Attivo" Binding="{Binding Enabled, UpdateSourceTrigger=PropertyChanged}" Width="60"/>
-                        <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="170" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Modalità" Binding="{Binding ModeLabel}" Width="100" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Sorgente" Binding="{Binding Source}" Width="*" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Destinazione" Binding="{Binding Destination}" Width="*" IsReadOnly="True"/>
-                        <DataGridTextColumn Header="Ultimo esito" Binding="{Binding LastStatus}" Width="220" IsReadOnly="True"/>
-                    </DataGrid.Columns>
-                </DataGrid>
+                <Grid>
+                    <DataGrid ItemsSource="{Binding Jobs}" SelectedItem="{Binding SelectedJob}"
+                              AutoGenerateColumns="False" IsReadOnly="False" CanUserAddRows="False"
+                              HeadersVisibility="Column" GridLinesVisibility="None"
+                              Background="Transparent" BorderThickness="0"
+                              VerticalContentAlignment="Top"
+                              Visibility="{Binding HasJobs, Converter={StaticResource BoolToVis}}"
+                              MouseDoubleClick="OnEditJob">
+                        <DataGrid.Columns>
+                            <DataGridCheckBoxColumn Header="Attivo" Binding="{Binding Enabled, UpdateSourceTrigger=PropertyChanged}" Width="60"/>
+                            <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="170" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Modalità" Binding="{Binding ModeLabel}" Width="100" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Sorgente" Binding="{Binding Source}" Width="*" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Destinazione" Binding="{Binding Destination}" Width="*" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Ultimo esito" Binding="{Binding LastStatus}" Width="220" IsReadOnly="True"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Stato vuoto -->
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="380"
+                                Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}">
+                        <ui:SymbolIcon Symbol="FolderAdd24" FontSize="46" HorizontalAlignment="Center" Opacity="0.55"/>
+                        <TextBlock Text="Nessun job configurato" FontSize="18" FontWeight="SemiBold"
+                                   HorizontalAlignment="Center" Margin="0,12,0,4"/>
+                        <TextBlock TextAlignment="Center" TextWrapping="Wrap" Opacity="0.7"
+                                   Text="Crea il primo backup: scegli una cartella sorgente e una destinazione."/>
+                        <ui:Button Content="Crea il primo job" Icon="{ui:SymbolIcon Add24}" Appearance="Primary"
+                                   HorizontalAlignment="Center" Margin="0,16,0,0" Click="OnNewJob"/>
+                    </StackPanel>
+                </Grid>
             </ui:Card>
 
             <GridSplitter Grid.Row="1" Height="10" HorizontalAlignment="Stretch" Background="Transparent"/>
