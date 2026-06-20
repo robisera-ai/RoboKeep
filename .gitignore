@@ -27,6 +27,10 @@ Vecchi CMD/logs/
 Vecchi CMD/temp/
 Vecchi CMD/errorlogs/
 
+# Screenshot/feedback locali
+Feedback/
+inserisci.jpg
+
 # Sistema
 Thumbs.db
 desktop.ini

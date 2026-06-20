@@ -98,10 +98,11 @@
                                    Appearance="Secondary" Command="{Binding ClearLogCommand}"/>
                     </Grid>
                     <Border Margin="12,0,12,12" CornerRadius="6" Background="#1E1E1E">
-                        <TextBox x:Name="LogBox" IsReadOnly="True"
+                        <TextBox x:Name="LogBox" IsReadOnly="True" Style="{x:Null}"
                                  FontFamily="Cascadia Mono, Consolas" FontSize="12" TextWrapping="NoWrap"
                                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
-                                 Background="Transparent" Foreground="#DDDDDD" BorderThickness="0" Padding="8"/>
+                                 Background="#1E1E1E" Foreground="#DDDDDD" CaretBrush="#DDDDDD"
+                                 BorderThickness="0" Padding="8"/>
                     </Border>
                 </DockPanel>
             </ui:Card>

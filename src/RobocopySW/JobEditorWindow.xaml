@@ -118,9 +118,10 @@
 
                 <TextBlock Text="Anteprima comando robocopy" Style="{StaticResource Label}"/>
                 <Border CornerRadius="6" Background="#1E1E1E" Padding="10" Margin="0,0,0,12">
-                    <TextBox Text="{Binding CommandPreview, Mode=OneWay}" IsReadOnly="True"
+                    <TextBox Text="{Binding CommandPreview, Mode=OneWay}" IsReadOnly="True" Style="{x:Null}"
                              FontFamily="Cascadia Mono, Consolas" FontSize="12" TextWrapping="Wrap"
-                             Background="Transparent" Foreground="#9CDCFE" BorderThickness="0" MinHeight="48"/>
+                             Background="#1E1E1E" Foreground="#9CDCFE" CaretBrush="#9CDCFE"
+                             BorderThickness="0" MinHeight="48"/>
                 </Border>
             </StackPanel>
         </ScrollViewer>
