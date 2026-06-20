@@ -154,7 +154,9 @@ public sealed class MainViewModel : ObservableObject
                 try
                 {
                     var result = await runner.RunJobAsync(jvm.Model, dryRun, progress, _cts.Token);
-                    jvm.LastStatus = $"{(result.Success ? "OK" : "ERRORE")} · {result.FilesCopied} copiati · {result.FilesExtra} extra";
+                    var esito = result.Success ? "OK" : "ERRORE";
+                    var errori = result.FilesFailed > 0 ? $" · {result.FilesFailed} errori" : "";
+                    jvm.LastStatus = $"{esito} · {result.FilesCopied} copiati · {result.FilesSkipped} invariati · {result.FilesExtra} extra{errori}";
                     Enqueue($"=> {jvm.Name}: {result.Status} (exit {result.ExitCode})");
                 }
                 catch (OperationCanceledException)

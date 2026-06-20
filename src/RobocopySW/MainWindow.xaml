@@ -67,7 +67,7 @@
                             <DataGridTextColumn Header="Modalità" Binding="{Binding ModeLabel}" Width="100" IsReadOnly="True"/>
                             <DataGridTextColumn Header="Sorgente" Binding="{Binding Source}" Width="*" IsReadOnly="True"/>
                             <DataGridTextColumn Header="Destinazione" Binding="{Binding Destination}" Width="*" IsReadOnly="True"/>
-                            <DataGridTextColumn Header="Ultimo esito" Binding="{Binding LastStatus}" Width="220" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Ultimo esito" Binding="{Binding LastStatus}" Width="320" IsReadOnly="True"/>
                         </DataGrid.Columns>
                     </DataGrid>
 
