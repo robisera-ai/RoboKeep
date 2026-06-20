@@ -57,5 +57,11 @@ Exit code: `0` tutti i job riusciti, `1` almeno un errore, `2` job non trovato.
 
 ## Configurazione
 
-Il file `config.json` risiede di default in `%ProgramData%\RobocopySW\config.json`
-(modificabile dalla GUI). Esempio in [config/config.example.json](config/config.example.json).
+Modello **portabile**: per default `config.json`, `logs\` e `temp\` stanno **nella stessa
+cartella dell'eseguibile**. Basta copiare la cartella per spostare tutto.
+
+> Tieni l'app in una cartella scrivibile (es. `D:\Programmi\RobocopySW`), **non** sotto
+> `C:\Program Files` (in sola lettura per gli utenti). Se la installi lì, imposta percorsi
+> log/temp in una cartella scrivibile dalle Impostazioni.
+
+Esempio di configurazione in [config/config.example.json](config/config.example.json).

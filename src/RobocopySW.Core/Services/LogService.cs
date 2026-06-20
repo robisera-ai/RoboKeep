@@ -20,7 +20,7 @@ public sealed class LogService
 
     private string TempRoot =>
         string.IsNullOrWhiteSpace(_settings.TempRoot)
-            ? Path.Combine(Path.GetTempPath(), "RobocopySW")
+            ? Path.Combine(AppContext.BaseDirectory, "temp")
             : _settings.TempRoot;
 
     /// <summary>Rimuove dal nome i caratteri non validi per un file.</summary>

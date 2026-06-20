@@ -22,11 +22,13 @@ public sealed class ConfigStore
 
     public ConfigStore(string path) => _path = path;
 
-    /// <summary>Percorso di default del file di configurazione.</summary>
+    /// <summary>
+    /// Percorso di default del file di configurazione: <c>config.json</c> accanto
+    /// all'eseguibile (modello "portabile": app, config, log e temp nella stessa cartella).
+    /// NB: tenere l'app fuori da <c>C:\Program Files</c>, che è in sola lettura per gli utenti.
+    /// </summary>
     public static string DefaultConfigPath =>
-        Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
-            "RobocopySW", "config.json");
+        Path.Combine(AppContext.BaseDirectory, "config.json");
 
     /// <summary>Carica la configurazione; se il file non esiste restituisce una config vuota di default.</summary>
     public AppConfig Load()
