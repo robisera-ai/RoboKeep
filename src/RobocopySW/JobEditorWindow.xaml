@@ -36,7 +36,7 @@
             </ui:TitleBar.Icon>
         </ui:TitleBar>
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="20,4,20,0">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="20,4,8,0" Padding="0,0,16,0">
             <StackPanel>
                 <TextBlock Text="Nome" Style="{StaticResource Label}"/>
                 <ui:TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="es. Documenti"/>
