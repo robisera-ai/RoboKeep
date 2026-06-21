@@ -52,7 +52,8 @@
                 <RowDefinition Height="1.1*"/>
             </Grid.RowDefinitions>
 
-            <ui:Card Grid.Row="0" Padding="0">
+            <ui:Card Grid.Row="0" Padding="0"
+                     VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch">
                 <Grid>
                     <DataGrid ItemsSource="{Binding Jobs}" SelectedItem="{Binding SelectedJob}"
                               AutoGenerateColumns="False" IsReadOnly="False" CanUserAddRows="False"
