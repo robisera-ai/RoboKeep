@@ -24,8 +24,14 @@ public sealed class MainViewModel : ObservableObject
     {
         _host = host;
         Jobs = new ObservableCollection<JobViewModel>();
-        Jobs.CollectionChanged += (_, _) =>
+        Jobs.CollectionChanged += (_, e) =>
         {
+            // Aggancia/sgancia il salvataggio quando un job viene attivato/disattivato dalla griglia.
+            if (e.OldItems is not null)
+                foreach (JobViewModel j in e.OldItems) j.PropertyChanged -= OnJobPropertyChanged;
+            if (e.NewItems is not null)
+                foreach (JobViewModel j in e.NewItems) j.PropertyChanged += OnJobPropertyChanged;
+
             OnPropertyChanged(nameof(IsEmpty));
             OnPropertyChanged(nameof(HasJobs));
             OnPropertyChanged(nameof(StatusText));
@@ -47,6 +53,36 @@ public sealed class MainViewModel : ObservableObject
             lock (_bufLock) _buffer.Clear();
             LogCleared?.Invoke();
         });
+        MoveUpCommand = new RelayCommand(() => MoveSelected(-1), () => CanMove(-1));
+        MoveDownCommand = new RelayCommand(() => MoveSelected(+1), () => CanMove(+1));
+    }
+
+    // Salva la configurazione quando un job viene attivato/disattivato dalla griglia.
+    private void OnJobPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(JobViewModel.Enabled))
+            PersistJobs();
+    }
+
+    private bool CanMove(int direction)
+    {
+        if (SelectedJob is null) return false;
+        var i = Jobs.IndexOf(SelectedJob);
+        var target = i + direction;
+        return i >= 0 && target >= 0 && target < Jobs.Count;
+    }
+
+    private void MoveSelected(int direction)
+    {
+        var sel = SelectedJob;
+        if (sel is null) return;
+        var i = Jobs.IndexOf(sel);
+        var target = i + direction;
+        if (i < 0 || target < 0 || target >= Jobs.Count) return;
+
+        Jobs.Move(i, target);
+        SelectedJob = sel;          // mantiene la selezione sulla riga spostata
+        PersistJobs();              // l'ordine dei job è la priorità di esecuzione
     }
 
     public AppHost Host => _host;
@@ -87,6 +123,8 @@ public sealed class MainViewModel : ObservableObject
     public AsyncRelayCommand PreviewAllCommand { get; }
     public RelayCommand StopCommand { get; }
     public RelayCommand ClearLogCommand { get; }
+    public RelayCommand MoveUpCommand { get; }
+    public RelayCommand MoveDownCommand { get; }
 
     /// <summary>Ricostruisce la collezione dei job dalla configurazione corrente.</summary>
     public void ReloadJobs()

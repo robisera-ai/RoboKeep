@@ -31,6 +31,8 @@
                 <ui:Button Icon="{ui:SymbolIcon Add24}" Content="Nuovo" Click="OnNewJob" Margin="0,0,8,0"/>
                 <ui:Button Icon="{ui:SymbolIcon Edit24}" Content="Modifica" Click="OnEditJob" Margin="0,0,8,0"/>
                 <ui:Button Icon="{ui:SymbolIcon Delete24}" Content="Elimina" Click="OnDeleteJob" Margin="0,0,8,0"/>
+                <ui:Button Icon="{ui:SymbolIcon ArrowUp24}" ToolTip="Sposta su (priorità più alta)" Command="{Binding MoveUpCommand}" Margin="0,0,4,0"/>
+                <ui:Button Icon="{ui:SymbolIcon ArrowDown24}" ToolTip="Sposta giù (priorità più bassa)" Command="{Binding MoveDownCommand}" Margin="0,0,8,0"/>
                 <Separator Margin="6,4" Background="#33888888"/>
                 <ui:Button Icon="{ui:SymbolIcon Eye24}" Content="Anteprima" Command="{Binding PreviewSelectedCommand}" Margin="0,0,8,0"/>
                 <ui:Button Icon="{ui:SymbolIcon Play24}" Content="Avvia selezionato" Appearance="Primary"
@@ -64,7 +66,14 @@
                               Visibility="{Binding HasJobs, Converter={StaticResource BoolToVis}}"
                               MouseDoubleClick="OnEditJob">
                         <DataGrid.Columns>
-                            <DataGridCheckBoxColumn Header="Attivo" Binding="{Binding Enabled, UpdateSourceTrigger=PropertyChanged}" Width="60"/>
+                            <DataGridTemplateColumn Header="Attivo" Width="80">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ui:ToggleSwitch IsChecked="{Binding Enabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                     HorizontalAlignment="Center"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                             <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="170" IsReadOnly="True"/>
                             <DataGridTextColumn Header="Modalità" Binding="{Binding ModeLabel}" Width="100" IsReadOnly="True"/>
                             <DataGridTextColumn Header="Sorgente" Binding="{Binding Source}" Width="*" IsReadOnly="True"/>

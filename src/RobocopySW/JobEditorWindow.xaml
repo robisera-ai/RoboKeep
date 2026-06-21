@@ -70,7 +70,6 @@
                                    Text="Disattivato = copia e aggiorna soltanto, senza mai cancellare in destinazione."/>
                         <CheckBox Content="Non sovrascrivere i file più recenti in destinazione (/XO)" IsChecked="{Binding ExcludeOlder}" Margin="0,6,0,0"/>
                         <CheckBox Content="Copia anche ACL/owner (/COPYALL — utile su share di rete)" IsChecked="{Binding CopyAll}" Margin="0,6,0,0"/>
-                        <CheckBox Content="Job attivo (incluso in «Avvia tutti»)" IsChecked="{Binding Enabled}" Margin="0,6,0,0"/>
 
                         <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
                             <CheckBox Content="Ottimizza file grandi (/J — I/O non bufferizzato)" IsChecked="{Binding UnbufferedIO}"/>

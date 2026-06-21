@@ -14,6 +14,12 @@
         <Style TargetType="TextBlock" x:Key="Label">
             <Setter Property="Margin" Value="0,12,8,4"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
+            <Style.Triggers>
+                <!-- Quando il contenitore è disabilitato (es. email spenta), sbiadisci anche le etichette. -->
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.4"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
     </ui:FluentWindow.Resources>
 
@@ -117,8 +123,10 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,6,0">
-                                    <TextBlock Text="Id" Style="{StaticResource Label}"/>
+                                    <TextBlock Text="Nome di riferimento" Style="{StaticResource Label}"/>
                                     <ui:TextBox x:Name="CredId"/>
+                                    <TextBlock Opacity="0.7" FontSize="11" TextWrapping="Wrap" Margin="0,2,0,0"
+                                               Text="Solo un'etichetta per riconoscere questa credenziale e sceglierla nei job (es. NAS-ufficio). NON è l'utente di accesso."/>
                                     <TextBlock Text="Host/Share (\\server\share)" Style="{StaticResource Label}"/>
                                     <ui:TextBox x:Name="CredHost"/>
                                 </StackPanel>
@@ -141,7 +149,7 @@
                               Background="Transparent" BorderThickness="0" GridLinesVisibility="None"
                               SelectionChanged="OnCredentialSelected">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="*"/>
+                            <DataGridTextColumn Header="Nome" Binding="{Binding Id}" Width="*"/>
                             <DataGridTextColumn Header="Host" Binding="{Binding Host}" Width="2*"/>
                             <DataGridTextColumn Header="Utente" Binding="{Binding User}" Width="2*"/>
                         </DataGrid.Columns>
