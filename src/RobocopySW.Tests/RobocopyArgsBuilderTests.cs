@@ -117,6 +117,41 @@ public class RobocopyArgsBuilderTests
     }
 
     [Fact]
+    public void UnbufferedIO_AddsJ()
+    {
+        var job = NewJob();
+        job.UnbufferedIO = true;
+        Assert.Contains("/J", RobocopyArgsBuilder.Build(job));
+    }
+
+    [Fact]
+    public void Restartable_AddsZ()
+    {
+        var job = NewJob();
+        job.Restartable = true;
+        Assert.Contains("/Z", RobocopyArgsBuilder.Build(job));
+    }
+
+    [Fact]
+    public void JandZ_AreMutuallyExclusive_JWins()
+    {
+        var job = NewJob();
+        job.UnbufferedIO = true;
+        job.Restartable = true;
+        var args = RobocopyArgsBuilder.Build(job);
+        Assert.Contains("/J", args);
+        Assert.DoesNotContain("/Z", args);
+    }
+
+    [Fact]
+    public void NoLargeFileFlags_ByDefault()
+    {
+        var args = RobocopyArgsBuilder.Build(NewJob());
+        Assert.DoesNotContain("/J", args);
+        Assert.DoesNotContain("/Z", args);
+    }
+
+    [Fact]
     public void RetriesAndWait_AreMapped()
     {
         var job = NewJob();

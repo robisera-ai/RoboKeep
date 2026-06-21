@@ -87,6 +87,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         ExcludeOlder = j.ExcludeOlder,
         CopyAll = j.CopyAll,
         MultiThread = j.MultiThread,
+        UnbufferedIO = j.UnbufferedIO,
+        Restartable = j.Restartable,
         ExcludeFiles = new List<string>(j.ExcludeFiles),
         ExcludeDirs = new List<string>(j.ExcludeDirs),
         Retries = j.Retries,
@@ -104,6 +106,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         to.ExcludeOlder = from.ExcludeOlder;
         to.CopyAll = from.CopyAll;
         to.MultiThread = from.MultiThread;
+        to.UnbufferedIO = from.UnbufferedIO;
+        to.Restartable = from.Restartable;
         to.ExcludeFiles = new List<string>(from.ExcludeFiles);
         to.ExcludeDirs = new List<string>(from.ExcludeDirs);
         to.Retries = from.Retries;

@@ -66,6 +66,34 @@ public sealed class JobEditorViewModel : ObservableObject
         set { _job.MultiThread = value; OnPropertyChanged(); RaisePreview(); }
     }
 
+    /// <summary>/J — ottimizza file grandi. Attivandolo si disattiva <see cref="Restartable"/>.</summary>
+    public bool UnbufferedIO
+    {
+        get => _job.UnbufferedIO;
+        set
+        {
+            _job.UnbufferedIO = value;
+            if (value) _job.Restartable = false;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(Restartable));
+            RaisePreview();
+        }
+    }
+
+    /// <summary>/Z — copia riavviabile. Attivandolo si disattiva <see cref="UnbufferedIO"/>.</summary>
+    public bool Restartable
+    {
+        get => _job.Restartable;
+        set
+        {
+            _job.Restartable = value;
+            if (value) _job.UnbufferedIO = false;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(UnbufferedIO));
+            RaisePreview();
+        }
+    }
+
     public int Retries
     {
         get => _job.Retries;

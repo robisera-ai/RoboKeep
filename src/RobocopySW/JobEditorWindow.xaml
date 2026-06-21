@@ -71,6 +71,15 @@
                         <CheckBox Content="Non sovrascrivere i file più recenti in destinazione (/XO)" IsChecked="{Binding ExcludeOlder}" Margin="0,6,0,0"/>
                         <CheckBox Content="Copia anche ACL/owner (/COPYALL — utile su share di rete)" IsChecked="{Binding CopyAll}" Margin="0,6,0,0"/>
                         <CheckBox Content="Job attivo (incluso in «Avvia tutti»)" IsChecked="{Binding Enabled}" Margin="0,6,0,0"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <CheckBox Content="Ottimizza file grandi (/J — I/O non bufferizzato)" IsChecked="{Binding UnbufferedIO}"/>
+                            <ctl:InfoHint Margin="6,0,0,0" Text="Per file molto grandi (multi-GB): bypassa la cache del file system, spesso più veloce su SSD/NVMe e reti veloci. Non aiuta i file piccoli. Si esclude a vicenda con la copia riavviabile."/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <CheckBox Content="Copia riavviabile (/Z — riprende se interrotta)" IsChecked="{Binding Restartable}"/>
+                            <ctl:InfoHint Margin="6,0,0,0" Text="Riprende la copia di un file grande se si interrompe (utile su VPN, Wi-Fi o reti inaffidabili). Ha un po' di overhead: su reti stabili è meglio lasciarla spenta. Si esclude a vicenda con l'ottimizzazione file grandi."/>
+                        </StackPanel>
                     </StackPanel>
                 </ui:Card>
 

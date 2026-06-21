@@ -34,6 +34,18 @@ public sealed class BackupJob
     /// <summary>Numero di thread per <c>/MT:n</c>. 0 o meno = multi-thread disattivato.</summary>
     public int MultiThread { get; set; } = 8;
 
+    /// <summary>
+    /// <c>/J</c>: I/O non bufferizzato, ottimizza i file molto grandi (multi-GB).
+    /// Mutuamente esclusivo con <see cref="Restartable"/>.
+    /// </summary>
+    public bool UnbufferedIO { get; set; }
+
+    /// <summary>
+    /// <c>/Z</c>: modalità riavviabile, riprende la copia interrotta di un file grande.
+    /// Mutuamente esclusivo con <see cref="UnbufferedIO"/>.
+    /// </summary>
+    public bool Restartable { get; set; }
+
     /// <summary>Pattern di file da escludere (<c>/XF</c>), es. <c>*.tmp</c>.</summary>
     public List<string> ExcludeFiles { get; set; } = new();
 

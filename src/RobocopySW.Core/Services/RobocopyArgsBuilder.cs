@@ -50,6 +50,13 @@ public static class RobocopyArgsBuilder
             args.Add($"/MT:{threads}");
         }
 
+        // Ottimizzazioni per file grandi: /J e /Z sono mutuamente esclusivi in robocopy,
+        // quindi /J ha la precedenza se per errore fossero entrambi attivi.
+        if (job.UnbufferedIO)
+            args.Add("/J");
+        else if (job.Restartable)
+            args.Add("/Z");
+
         // Esclusioni file.
         if (job.ExcludeFiles is { Count: > 0 })
         {
