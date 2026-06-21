@@ -16,7 +16,7 @@ public sealed class AppHost
     {
         Store = store;
         Config = config;
-        Credentials = new CredentialService();
+        Credentials = new CredentialService(config.Settings.CredentialScope);
     }
 
     public static AppHost Load(string? configPath = null)

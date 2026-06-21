@@ -10,11 +10,25 @@ public sealed class SettingsViewModel : ObservableObject
     private readonly AppSettings _s;
     private readonly CredentialService _credentials;
 
+    private readonly CredentialProtectionScope _originalScope;
+
     public SettingsViewModel(AppSettings settings, IList<CredentialEntry> credentials, CredentialService credentialService)
     {
         _s = settings;
         _credentials = credentialService;
         CredentialList = credentials;
+        _originalScope = settings.CredentialScope;
+    }
+
+    /// <summary>true = cifra le password solo per l'utente Windows corrente (DPAPI CurrentUser).</summary>
+    public bool CredentialScopeUser
+    {
+        get => _s.CredentialScope == CredentialProtectionScope.User;
+        set
+        {
+            _s.CredentialScope = value ? CredentialProtectionScope.User : CredentialProtectionScope.Machine;
+            OnPropertyChanged();
+        }
     }
 
     public IList<CredentialEntry> CredentialList { get; }
@@ -36,11 +50,37 @@ public sealed class SettingsViewModel : ObservableObject
     /// <summary>Password SMTP in chiaro inserita dall'utente; verrà cifrata DPAPI al salvataggio.</summary>
     public string EmailPasswordPlain { get; set; } = "";
 
-    /// <summary>Applica le modifiche che richiedono elaborazione (cifratura password).</summary>
+    /// <summary>Applica le modifiche che richiedono elaborazione (cifratura/migrazione password).</summary>
     public void Commit()
     {
+        // Se l'ambito di cifratura è cambiato, ri-cifra i segreti esistenti dal vecchio
+        // ambito al nuovo (best-effort: ciò che non si decifra resta com'è e andrà reinserito).
+        if (_s.CredentialScope != _originalScope)
+        {
+            foreach (var c in CredentialList)
+                c.PasswordProtected = Reencrypt(c.PasswordProtected);
+            _s.Email.PasswordProtected = Reencrypt(_s.Email.PasswordProtected);
+            _credentials.Scope = _s.CredentialScope;
+        }
+
+        // Nuova password email digitata: cifrala con l'ambito (ormai) corrente.
         if (!string.IsNullOrEmpty(EmailPasswordPlain))
             _s.Email.PasswordProtected = _credentials.Protect(EmailPasswordPlain);
+    }
+
+    private string Reencrypt(string? protectedBase64)
+    {
+        if (string.IsNullOrEmpty(protectedBase64))
+            return protectedBase64 ?? "";
+        try
+        {
+            var plain = CredentialService.UnprotectWith(protectedBase64, _originalScope);
+            return CredentialService.ProtectWith(plain, _s.CredentialScope);
+        }
+        catch
+        {
+            return protectedBase64; // non decifrabile col vecchio ambito: lascia invariato
+        }
     }
 
     /// <summary>Crea/aggiorna una credenziale di rete cifrandone la password.</summary>

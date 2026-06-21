@@ -4,6 +4,7 @@
     "tempRoot": "D:\\Progetti\\RobocopySW\\temp",
     "compressLogs": true,
     "logRetentionDays": 30,
+    "credentialScope": "Machine",
     "email": {
       "enabled": false,
       "smtpHost": "smtp.example.com",

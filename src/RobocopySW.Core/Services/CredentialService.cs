@@ -1,36 +1,50 @@
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using RobocopySW.Core.Models;
 
 namespace RobocopySW.Core.Services;
 
 /// <summary>
 /// Gestisce le credenziali per le share di rete:
 /// cifratura/decifratura password con DPAPI e apertura/chiusura della connessione UNC.
+/// L'ambito DPAPI (macchina o utente) è configurabile.
 /// </summary>
 public sealed class CredentialService
 {
-    // DPAPI a livello macchina: consente la decifratura anche all'utente dell'attività
-    // pianificata (potenzialmente diverso da chi ha salvato la password).
-    private const DataProtectionScope Scope = DataProtectionScope.LocalMachine;
+    public CredentialService(CredentialProtectionScope scope = CredentialProtectionScope.Machine) => Scope = scope;
 
-    /// <summary>Cifra una password in chiaro restituendo una stringa Base64 (DPAPI).</summary>
-    public string Protect(string plain)
+    /// <summary>Ambito DPAPI usato per cifrare/decifrare con i metodi di istanza.</summary>
+    public CredentialProtectionScope Scope { get; set; }
+
+    /// <summary>Cifra una password in chiaro (DPAPI, ambito corrente) restituendo Base64.</summary>
+    public string Protect(string plain) => ProtectWith(plain, Scope);
+
+    /// <summary>Decifra una password cifrata con <see cref="Protect"/> (ambito corrente).</summary>
+    public string Unprotect(string protectedBase64) => UnprotectWith(protectedBase64, Scope);
+
+    /// <summary>Cifra con un ambito esplicito (usato anche per migrare tra ambiti).</summary>
+    public static string ProtectWith(string plain, CredentialProtectionScope scope)
     {
         var bytes = Encoding.UTF8.GetBytes(plain ?? "");
-        var enc = ProtectedData.Protect(bytes, optionalEntropy: null, Scope);
+        var enc = ProtectedData.Protect(bytes, optionalEntropy: null, Map(scope));
         return Convert.ToBase64String(enc);
     }
 
-    /// <summary>Decifra una password cifrata con <see cref="Protect"/>.</summary>
-    public string Unprotect(string protectedBase64)
+    /// <summary>Decifra con un ambito esplicito.</summary>
+    public static string UnprotectWith(string protectedBase64, CredentialProtectionScope scope)
     {
         if (string.IsNullOrEmpty(protectedBase64))
             return "";
         var enc = Convert.FromBase64String(protectedBase64);
-        var dec = ProtectedData.Unprotect(enc, optionalEntropy: null, Scope);
+        var dec = ProtectedData.Unprotect(enc, optionalEntropy: null, Map(scope));
         return Encoding.UTF8.GetString(dec);
     }
+
+    private static DataProtectionScope Map(CredentialProtectionScope scope) =>
+        scope == CredentialProtectionScope.User
+            ? DataProtectionScope.CurrentUser
+            : DataProtectionScope.LocalMachine;
 
     /// <summary>
     /// Apre una connessione autenticata alla share di rete (equivalente a <c>net use</c>).

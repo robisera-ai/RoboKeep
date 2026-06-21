@@ -1,8 +1,20 @@
 namespace RobocopySW.Core.Models;
 
+/// <summary>Ambito di cifratura DPAPI delle password.</summary>
+public enum CredentialProtectionScope
+{
+    /// <summary>Legata al PC: decifrabile da qualunque utente della macchina (comodo per la schedulazione).</summary>
+    Machine,
+    /// <summary>Legata all'utente: decifrabile solo dall'utente Windows che l'ha salvata (più sicuro).</summary>
+    User,
+}
+
 /// <summary>Impostazioni globali dell'applicazione (non legate al singolo job).</summary>
 public sealed class AppSettings
 {
+    /// <summary>Ambito di cifratura DPAPI per le password (credenziali ed email).</summary>
+    public CredentialProtectionScope CredentialScope { get; set; } = CredentialProtectionScope.Machine;
+
     /// <summary>Cartella radice dei log archiviati (sotto vengono creati i giorni AAAAMMGG).</summary>
     public string LogRoot { get; set; } = "";
 

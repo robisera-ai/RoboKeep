@@ -58,6 +58,12 @@
 
                     <TextBlock Text="Giorni di conservazione log (0 = non eliminare)" Style="{StaticResource Label}"/>
                     <ui:TextBox Width="140" HorizontalAlignment="Left" Text="{Binding LogRetentionDays, UpdateSourceTrigger=PropertyChanged}"/>
+
+                    <TextBlock Text="Sicurezza credenziali" Style="{StaticResource Label}"/>
+                    <CheckBox Content="Cifra le password solo per il mio utente Windows (più sicuro)"
+                              IsChecked="{Binding CredentialScopeUser}"/>
+                    <TextBlock Opacity="0.7" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
+                               Text="Attivo: password (credenziali ed email) decifrabili solo dal tuo utente; in compenso l'esecuzione pianificata deve girare con il tuo stesso utente. Disattivo: legate al PC, funzionano con qualsiasi utente (comodo per la schedulazione). Cambiando l'opzione, le password già salvate vengono ri-cifrate in automatico."/>
                 </StackPanel>
             </TabItem>
 
