@@ -52,14 +52,15 @@
                 <RowDefinition Height="1.1*"/>
             </Grid.RowDefinitions>
 
-            <ui:Card Grid.Row="0" Padding="0"
-                     VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch">
+            <Border Grid.Row="0" CornerRadius="8" BorderThickness="1"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
                 <Grid>
                     <DataGrid ItemsSource="{Binding Jobs}" SelectedItem="{Binding SelectedJob}"
                               AutoGenerateColumns="False" IsReadOnly="False" CanUserAddRows="False"
                               HeadersVisibility="Column" GridLinesVisibility="None"
                               Background="Transparent" BorderThickness="0"
-                              VerticalContentAlignment="Top"
+                              VerticalAlignment="Stretch" VerticalContentAlignment="Top"
                               Visibility="{Binding HasJobs, Converter={StaticResource BoolToVis}}"
                               MouseDoubleClick="OnEditJob">
                         <DataGrid.Columns>
@@ -84,7 +85,7 @@
                                    HorizontalAlignment="Center" Margin="0,16,0,0" Click="OnNewJob"/>
                     </StackPanel>
                 </Grid>
-            </ui:Card>
+            </Border>
 
             <GridSplitter Grid.Row="1" Height="10" HorizontalAlignment="Stretch" Background="Transparent"/>
 
