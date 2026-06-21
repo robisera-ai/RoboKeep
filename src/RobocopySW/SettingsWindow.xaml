@@ -71,33 +71,37 @@
             <TabItem Header="Email">
                 <StackPanel Margin="4,12">
                     <CheckBox Content="Abilita notifiche email" IsChecked="{Binding EmailEnabled}"/>
-                    <CheckBox Content="Invia solo in caso di errore" IsChecked="{Binding OnlyOnError}" Margin="0,6,0,0"/>
 
-                    <Grid Margin="0,8,0,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="2*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                            <TextBlock Text="Server SMTP" Style="{StaticResource Label}"/>
-                            <ui:TextBox Text="{Binding SmtpHost, UpdateSourceTrigger=PropertyChanged}"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="1">
-                            <TextBlock Text="Porta" Style="{StaticResource Label}"/>
-                            <ui:TextBox Text="{Binding SmtpPort, UpdateSourceTrigger=PropertyChanged}"/>
-                        </StackPanel>
-                    </Grid>
+                    <!-- Campi disabilitati (ma compilati e conservati) quando l'email è spenta -->
+                    <StackPanel IsEnabled="{Binding EmailEnabled}" Margin="0,4,0,0">
+                        <CheckBox Content="Invia solo in caso di errore" IsChecked="{Binding OnlyOnError}" Margin="0,4,0,0"/>
 
-                    <CheckBox Content="Usa SSL/TLS" IsChecked="{Binding UseSsl}" Margin="0,8,0,0"/>
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                <TextBlock Text="Server SMTP" Style="{StaticResource Label}"/>
+                                <ui:TextBox Text="{Binding SmtpHost, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Porta" Style="{StaticResource Label}"/>
+                                <ui:TextBox Text="{Binding SmtpPort, UpdateSourceTrigger=PropertyChanged}"/>
+                            </StackPanel>
+                        </Grid>
 
-                    <TextBlock Text="Da (mittente)" Style="{StaticResource Label}"/>
-                    <ui:TextBox Text="{Binding EmailFrom, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBlock Text="A (destinatario)" Style="{StaticResource Label}"/>
-                    <ui:TextBox Text="{Binding EmailTo, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBlock Text="Utente SMTP (facoltativo)" Style="{StaticResource Label}"/>
-                    <ui:TextBox Text="{Binding EmailUser, UpdateSourceTrigger=PropertyChanged}"/>
-                    <TextBlock Text="Password SMTP (lascia vuoto per non modificare)" Style="{StaticResource Label}"/>
-                    <PasswordBox x:Name="EmailPasswordBox"/>
+                        <CheckBox Content="Usa SSL/TLS" IsChecked="{Binding UseSsl}" Margin="0,8,0,0"/>
+
+                        <TextBlock Text="Da (mittente)" Style="{StaticResource Label}"/>
+                        <ui:TextBox Text="{Binding EmailFrom, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="A (destinatario)" Style="{StaticResource Label}"/>
+                        <ui:TextBox Text="{Binding EmailTo, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="Utente SMTP (facoltativo)" Style="{StaticResource Label}"/>
+                        <ui:TextBox Text="{Binding EmailUser, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="Password SMTP (lascia vuoto per non modificare)" Style="{StaticResource Label}"/>
+                        <PasswordBox x:Name="EmailPasswordBox"/>
+                    </StackPanel>
                 </StackPanel>
             </TabItem>
 
