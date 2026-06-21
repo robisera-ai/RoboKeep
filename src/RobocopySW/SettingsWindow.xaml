@@ -4,6 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:ctl="clr-namespace:RobocopySW.Controls"
         mc:Ignorable="d"
         Title="Impostazioni" Height="660" Width="740"
         ExtendsContentIntoTitleBar="True"
@@ -123,10 +124,11 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,6,0">
-                                    <TextBlock Text="Nome di riferimento" Style="{StaticResource Label}"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Nome" Style="{StaticResource Label}"/>
+                                        <ctl:InfoHint Margin="0,12,0,0" Text="Solo un'etichetta per riconoscere questa credenziale e sceglierla nei job (es. NAS-ufficio). NON è l'utente di accesso."/>
+                                    </StackPanel>
                                     <ui:TextBox x:Name="CredId"/>
-                                    <TextBlock Opacity="0.7" FontSize="11" TextWrapping="Wrap" Margin="0,2,0,0"
-                                               Text="Solo un'etichetta per riconoscere questa credenziale e sceglierla nei job (es. NAS-ufficio). NON è l'utente di accesso."/>
                                     <TextBlock Text="Host/Share (\\server\share)" Style="{StaticResource Label}"/>
                                     <ui:TextBox x:Name="CredHost"/>
                                 </StackPanel>
