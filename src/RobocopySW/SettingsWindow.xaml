@@ -46,6 +46,9 @@
                         <ComboBoxItem Tag="auto" Content="{l:Tr Lang_Auto}"/>
                         <ComboBoxItem Tag="it" Content="Italiano"/>
                         <ComboBoxItem Tag="en" Content="English"/>
+                        <ComboBoxItem Tag="es" Content="Español"/>
+                        <ComboBoxItem Tag="fr" Content="Français"/>
+                        <ComboBoxItem Tag="de" Content="Deutsch"/>
                     </ComboBox>
 
                     <TextBlock Text="{l:Tr Set_LogFolder}" Style="{StaticResource Label}"/>

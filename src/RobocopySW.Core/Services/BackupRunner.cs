@@ -82,14 +82,10 @@ public sealed class BackupRunner
 
     private static string[] BuildRecap(JobResult r, bool dryRun)
     {
-        var title = dryRun
-            ? CoreLoc.S("RIEPILOGO ANTEPRIMA (RobocopySW)", "PREVIEW SUMMARY (RobocopySW)")
-            : CoreLoc.S("RIEPILOGO (RobocopySW)", "SUMMARY (RobocopySW)");
-        var ok = r.Success ? "OK" : CoreLoc.S("ERRORE", "ERROR");
+        var title = dryRun ? CoreLoc.S("Recap_TitlePreview") : CoreLoc.S("Recap_Title");
+        var ok = r.Success ? "OK" : CoreLoc.S("Lbl_Error");
         var extraNote = r.FilesExtra > 0
-            ? (dryRun
-                ? CoreLoc.S("  (verrebbero rimossi in mirror)", "  (would be removed in mirror)")
-                : CoreLoc.S("  (in dest, non in sorgente)", "  (in dest, not in source)"))
+            ? (dryRun ? CoreLoc.S("Recap_ExtraDry") : CoreLoc.S("Recap_ExtraReal"))
             : "";
 
         static string Line(string label, string value) => $"{label,-18}: {value}";
@@ -98,13 +94,13 @@ public sealed class BackupRunner
         {
             "",
             "====== " + title + " ======",
-            Line(CoreLoc.S("Esito", "Result"), $"{ok} (exit {r.ExitCode}) - {r.Status}"),
-            Line(CoreLoc.S("Cartelle copiate", "Folders copied"), r.DirsCopied.ToString()),
-            Line(CoreLoc.S("File copiati", "Files copied"), r.FilesCopied.ToString()),
-            Line(CoreLoc.S("File invariati", "Files unchanged"), r.FilesSkipped.ToString()),
-            Line(CoreLoc.S("File extra", "Extra files"), $"{r.FilesExtra}{extraNote}"),
-            Line(CoreLoc.S("File falliti", "Files failed"), r.FilesFailed.ToString()),
-            Line(CoreLoc.S("Durata", "Duration"), r.Duration.ToString(@"hh\:mm\:ss")),
+            Line(CoreLoc.S("Lbl_Result"), $"{ok} (exit {r.ExitCode}) - {r.Status}"),
+            Line(CoreLoc.S("Lbl_FoldersCopied"), r.DirsCopied.ToString()),
+            Line(CoreLoc.S("Lbl_FilesCopied"), r.FilesCopied.ToString()),
+            Line(CoreLoc.S("Lbl_FilesUnchanged"), r.FilesSkipped.ToString()),
+            Line(CoreLoc.S("Lbl_FilesExtra"), $"{r.FilesExtra}{extraNote}"),
+            Line(CoreLoc.S("Lbl_FilesFailed"), r.FilesFailed.ToString()),
+            Line(CoreLoc.S("Lbl_Duration"), r.Duration.ToString(@"hh\:mm\:ss")),
             "==========================================",
         };
     }

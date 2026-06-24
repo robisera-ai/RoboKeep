@@ -4,75 +4,86 @@ using System.Globalization;
 namespace RobocopySW.Localization;
 
 /// <summary>
-/// Provider di localizzazione runtime (IT/EN). Espone le stringhe tramite indicizzatore
-/// e notifica <c>Item[]</c> al cambio lingua, così i binding XAML si aggiornano in tempo reale.
+/// Provider di localizzazione runtime (IT/EN/ES/FR/DE). Espone le stringhe tramite
+/// indicizzatore e notifica <c>Item[]</c> al cambio lingua, così i binding XAML si
+/// aggiornano in tempo reale. Le chiavi mancanti ripiegano sull'inglese.
 /// </summary>
 public sealed class Loc : INotifyPropertyChanged
 {
     public static Loc Instance { get; } = new();
 
+    /// <summary>Lingue supportate (codice ISO a 2 lettere).</summary>
+    public static readonly string[] Supported = { "it", "en", "es", "fr", "de" };
+
+    private static readonly Dictionary<string, Dictionary<string, string>> Langs = new()
+    {
+        ["it"] = It,
+        ["en"] = En,
+        ["es"] = Es,
+        ["fr"] = Fr,
+        ["de"] = De,
+    };
+
     private Dictionary<string, string> _cur;
 
     private Loc()
     {
-        // Lingua iniziale dedotta da Windows: italiano se il sistema è italiano, altrimenti inglese.
         Language = DetectSystemLanguage();
-        _cur = Language == "it" ? It : En;
+        _cur = Langs[Language];
     }
 
-    /// <summary>Codice lingua corrente: "it" o "en".</summary>
+    /// <summary>Codice lingua corrente.</summary>
     public string Language { get; private set; }
 
-    public bool IsItalian => Language == "it";
+    /// <summary>Stringa localizzata; se mancante ripiega sull'inglese, poi sulla chiave.</summary>
+    public string this[string key] =>
+        _cur.TryGetValue(key, out var v) ? v
+        : En.TryGetValue(key, out var e) ? e
+        : key;
 
-    /// <summary>Stringa localizzata per la chiave; se mancante restituisce la chiave stessa.</summary>
-    public string this[string key] => _cur.TryGetValue(key, out var v) ? v : key;
-
-    /// <summary>Comodo per il codice: stringa localizzata della chiave.</summary>
     public string T(string key) => this[key];
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    /// <summary>Imposta esplicitamente la lingua ("it" o "en") e aggiorna i binding.</summary>
     public void SetLanguage(string lang)
     {
-        lang = lang == "it" ? "it" : "en";
+        lang = Normalize(lang);
         if (lang == Language) return;
-        Language = lang;
-        _cur = lang == "it" ? It : En;
-        ApplyCulture(lang);
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item[]"));
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Language)));
+        Apply(lang);
     }
 
-    /// <summary>Applica l'impostazione salvata: "it"/"en" forzano la lingua, altro = auto da Windows.</summary>
+    /// <summary>Applica l'impostazione: codice lingua valido = forzata, altro = auto da Windows.</summary>
     public void ApplyFromSetting(string? setting)
     {
-        var lang = setting switch
-        {
-            "it" => "it",
-            "en" => "en",
-            _ => DetectSystemLanguage(),
-        };
+        var lang = (setting is not null && Supported.Contains(setting)) ? setting : DetectSystemLanguage();
+        Apply(lang);
+    }
+
+    private void Apply(string lang)
+    {
         Language = lang;
-        _cur = lang == "it" ? It : En;
+        _cur = Langs[lang];
         ApplyCulture(lang);
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item[]"));
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Language)));
     }
 
-    private static string DetectSystemLanguage() =>
-        CultureInfo.InstalledUICulture.TwoLetterISOLanguageName == "it" ? "it" : "en";
+    private static string Normalize(string lang) => Supported.Contains(lang) ? lang : "en";
+
+    private static string DetectSystemLanguage()
+    {
+        var code = CultureInfo.InstalledUICulture.TwoLetterISOLanguageName;
+        return Supported.Contains(code) ? code : "en";
+    }
 
     private static void ApplyCulture(string lang)
     {
         var ci = new CultureInfo(lang);
         CultureInfo.CurrentUICulture = ci;
-        CultureInfo.DefaultThreadCurrentUICulture = ci; // così anche Core (recap/esiti) usa la lingua giusta
+        CultureInfo.DefaultThreadCurrentUICulture = ci; // così anche Core usa la lingua giusta
     }
 
-    // ----- Dizionari -----
-
+    // ---------------- ITALIANO ----------------
     private static readonly Dictionary<string, string> It = new()
     {
         ["Common_Browse"] = "Sfoglia…",
@@ -210,6 +221,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Error"] = "Errore: {0}",
     };
 
+    // ---------------- ENGLISH ----------------
     private static readonly Dictionary<string, string> En = new()
     {
         ["Common_Browse"] = "Browse…",
@@ -345,5 +357,419 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Created"] = "Scheduled task created/updated for {0}.",
         ["Sched_Removed"] = "Scheduled task removed.",
         ["Sched_Error"] = "Error: {0}",
+    };
+
+    // ---------------- ESPAÑOL ----------------
+    private static readonly Dictionary<string, string> Es = new()
+    {
+        ["Common_Browse"] = "Examinar…",
+        ["Common_Save"] = "Guardar",
+        ["Common_Cancel"] = "Cancelar",
+        ["Common_MissingData"] = "Faltan datos",
+        ["Common_Confirm"] = "Confirmar",
+
+        ["Main_Title"] = "RobocopySW — Copia de seguridad configurable",
+        ["Main_New"] = "Nuevo",
+        ["Main_Edit"] = "Editar",
+        ["Main_Delete"] = "Eliminar",
+        ["Main_MoveUpTip"] = "Subir (mayor prioridad)",
+        ["Main_MoveDownTip"] = "Bajar (menor prioridad)",
+        ["Main_Preview"] = "Vista previa",
+        ["Main_RunSelected"] = "Ejecutar seleccionado",
+        ["Main_RunAll"] = "Ejecutar todos",
+        ["Main_Settings"] = "Configuración",
+        ["Main_LogTitle"] = "Registro de ejecución",
+        ["Main_Clear"] = "Limpiar",
+
+        ["Col_Active"] = "Activo",
+        ["Col_Name"] = "Nombre",
+        ["Col_Mode"] = "Modo",
+        ["Col_Source"] = "Origen",
+        ["Col_Dest"] = "Destino",
+        ["Col_LastResult"] = "Último resultado",
+
+        ["Empty_Title"] = "Ningún trabajo configurado",
+        ["Empty_Desc"] = "Crea tu primera copia: elige una carpeta de origen y un destino.",
+        ["Empty_Button"] = "Crear el primer trabajo",
+
+        ["Status_Running"] = "Ejecutando…",
+        ["Status_JobsConfigured"] = "{0} trabajos configurados",
+
+        ["Mode_Mirror"] = "Espejo",
+        ["Mode_CopyOnly"] = "Solo copiar",
+
+        ["Run_Preview"] = "VISTA PREVIA",
+        ["Run_Execution"] = "EJECUCIÓN",
+        ["Run_PreviewStatus"] = "vista previa…",
+        ["Run_InProgress"] = "en curso…",
+        ["Run_OK"] = "OK",
+        ["Run_Error"] = "ERROR",
+        ["Run_Cancelled"] = "cancelado",
+        ["Run_CancelledUser"] = "cancelado por el usuario",
+        ["Stat_Copied"] = "copiados",
+        ["Stat_Unchanged"] = "sin cambios",
+        ["Stat_Extra"] = "extra",
+        ["Stat_Errors"] = "errores",
+
+        ["Delete_Confirm"] = "¿Eliminar el trabajo '{0}'?",
+
+        ["Editor_TitleEdit"] = "Editar trabajo",
+        ["Editor_NewJobName"] = "Nuevo trabajo",
+        ["Editor_Name"] = "Nombre",
+        ["Editor_NamePlaceholder"] = "p. ej. Documentos",
+        ["Editor_Source"] = "Origen",
+        ["Editor_Dest"] = "Destino",
+        ["Editor_Mirror"] = "Espejo — hace el destino idéntico al origen (ELIMINA los archivos quitados)",
+        ["Editor_MirrorHint"] = "Desactivado = solo copia y actualiza, nunca elimina en el destino.",
+        ["Editor_ExcludeOlder"] = "No sobrescribir los archivos más nuevos del destino (/XO)",
+        ["Editor_CopyAll"] = "Copiar también ACL/propietario (/COPYALL — útil en recursos de red)",
+        ["Editor_BigJ"] = "Optimizar archivos grandes (/J — E/S sin búfer)",
+        ["Editor_BigJTip"] = "Para archivos muy grandes (varios GB): omite la caché del sistema de archivos, a menudo más rápido en SSD/NVMe y redes rápidas. No ayuda con archivos pequeños. Se excluye mutuamente con la copia reanudable.",
+        ["Editor_RestartZ"] = "Copia reanudable (/Z — continúa si se interrumpe)",
+        ["Editor_RestartZTip"] = "Reanuda la copia de un archivo grande si se interrumpe (útil en VPN, Wi-Fi o redes poco fiables). Tiene cierta sobrecarga: en redes estables es mejor dejarla desactivada. Se excluye mutuamente con la optimización de archivos grandes.",
+        ["Editor_Threads"] = "Subprocesos (/MT)",
+        ["Editor_ThreadsTip"] = "Número de archivos copiados en paralelo (multiproceso). Más alto = más rápido, sobre todo con muchos archivos pequeños. 8 va bien casi siempre; 16+ en SSD o recursos de red rápidos; en discos duros mecánicos no exageres (puede mover mucho el cabezal). 0 desactiva el multiproceso.",
+        ["Editor_Retries"] = "Reintentos (/R)",
+        ["Editor_RetriesTip"] = "Cuántas veces reintentar copiar un archivo si la copia falla (p. ej. archivo en uso o red inestable). Con archivos a menudo abiertos usa un valor bajo (1) para no esperar mucho.",
+        ["Editor_Wait"] = "Espera seg (/W)",
+        ["Editor_WaitTip"] = "Segundos de espera entre reintentos. Se combina con los Reintentos (p. ej. 1 reintento × 5 s). Valores altos alargan mucho los tiempos si hay archivos problemáticos.",
+        ["Editor_Credential"] = "Credencial de red (para recursos UNC)",
+        ["Editor_CredentialTip"] = "Solo se necesita si el origen o el destino es una carpeta de red compartida (\\\\servidor\\recurso) que requiere usuario y contraseña. Las credenciales se crean en Configuración → Credenciales. Para discos locales o USB deja «ninguna».",
+        ["Editor_ExcludeFiles"] = "Excluir archivos (uno por línea)",
+        ["Editor_ExcludeFilesTip"] = "Patrones de archivos que NO copiar, uno por línea. Ejemplos: *.tmp (todos los .tmp), ~$* (temporales de Office), *.log. Déjalo vacío para copiar todo.",
+        ["Editor_ExcludeDirs"] = "Excluir carpetas (una por línea)",
+        ["Editor_ExcludeDirsTip"] = "Nombres de carpetas que omitir, una por línea. Ejemplos: cache, node_modules, Temp. Se excluyen dondequiera que aparezcan en el árbol.",
+        ["Editor_CommandPreview"] = "Vista previa del comando robocopy",
+        ["Editor_Val_Name"] = "El nombre del trabajo es obligatorio.",
+        ["Editor_Val_Source"] = "La carpeta de origen es obligatoria.",
+        ["Editor_Val_Dest"] = "La carpeta de destino es obligatoria.",
+        ["Editor_BrowseTitle"] = "Seleccionar carpeta",
+        ["Cred_NoneLocal"] = "(ninguna — ruta local)",
+
+        ["Settings_Title"] = "Configuración",
+        ["Tab_General"] = "General",
+        ["Tab_Email"] = "Correo",
+        ["Tab_Credentials"] = "Credenciales de red",
+        ["Tab_Schedule"] = "Programación",
+
+        ["Set_Language"] = "Idioma",
+        ["Lang_Auto"] = "Automático (Windows)",
+        ["Set_LogFolder"] = "Carpeta de registros (archivado por fecha)",
+        ["Set_TempFolder"] = "Carpeta temporal",
+        ["Set_PathsHint"] = "Los registros están SIEMPRE activos. Si dejas estos campos vacíos, los registros y los archivos temporales van a las subcarpetas predeterminadas mostradas en gris (junto a la app). Rellena una ruta solo para moverlos a otro sitio.",
+        ["Set_Compress"] = "Comprimir los registros en .zip",
+        ["Set_Retention"] = "Días de conservación de registros (0 = no eliminar)",
+        ["Set_CredSecurity"] = "Seguridad de credenciales",
+        ["Set_CredScopeUser"] = "Cifrar las contraseñas solo para mi usuario de Windows (más seguro)",
+        ["Set_CredScopeHint"] = "Activo: contraseñas (credenciales y correo) descifrables solo por tu usuario; a cambio la tarea programada debe ejecutarse con tu mismo usuario. Inactivo: ligadas al PC, funcionan con cualquier usuario (cómodo para la programación). Al cambiar la opción, las contraseñas ya guardadas se vuelven a cifrar automáticamente.",
+
+        ["Email_Enable"] = "Activar notificaciones por correo",
+        ["Email_OnlyError"] = "Enviar solo en caso de error",
+        ["Email_Smtp"] = "Servidor SMTP",
+        ["Email_Port"] = "Puerto",
+        ["Email_Ssl"] = "Usar SSL/TLS",
+        ["Email_From"] = "De (remitente)",
+        ["Email_To"] = "Para (destinatario)",
+        ["Email_User"] = "Usuario SMTP (opcional)",
+        ["Email_Pwd"] = "Contraseña SMTP (deja en blanco para no cambiar)",
+
+        ["Cred_AddUpdate"] = "Añadir / actualizar credencial",
+        ["Cred_Name"] = "Nombre",
+        ["Cred_Host"] = "Host/Recurso (\\\\servidor\\recurso)",
+        ["Cred_User"] = "Usuario (DOMINIO\\usuario)",
+        ["Cred_Pwd"] = "Contraseña",
+        ["Cred_Save"] = "Guardar credencial",
+        ["Cred_Remove"] = "Quitar seleccionada",
+        ["Cred_ColUser"] = "Usuario",
+        ["Cred_NameRequired"] = "El nombre de la credencial es obligatorio.",
+
+        ["Sched_InfoTitle"] = "Ejecución automática",
+        ["Sched_InfoMsg"] = "Registra una tarea en el Programador de tareas de Windows que ejecuta «Ejecutar todos» en silencio a la hora elegida.",
+        ["Sched_Time"] = "Hora (HH:mm)",
+        ["Sched_Freq"] = "Frecuencia",
+        ["Sched_Daily"] = "Diaria",
+        ["Sched_Weekly"] = "Semanal",
+        ["Sched_Create"] = "Crear / actualizar tarea",
+        ["Sched_Remove"] = "Quitar tarea",
+        ["Sched_BadTime"] = "Hora no válida. Usa el formato HH:mm.",
+        ["Sched_Created"] = "Tarea programada creada/actualizada para las {0}.",
+        ["Sched_Removed"] = "Tarea programada eliminada.",
+        ["Sched_Error"] = "Error: {0}",
+    };
+
+    // ---------------- FRANÇAIS ----------------
+    private static readonly Dictionary<string, string> Fr = new()
+    {
+        ["Common_Browse"] = "Parcourir…",
+        ["Common_Save"] = "Enregistrer",
+        ["Common_Cancel"] = "Annuler",
+        ["Common_MissingData"] = "Données manquantes",
+        ["Common_Confirm"] = "Confirmer",
+
+        ["Main_Title"] = "RobocopySW — Sauvegarde configurable",
+        ["Main_New"] = "Nouveau",
+        ["Main_Edit"] = "Modifier",
+        ["Main_Delete"] = "Supprimer",
+        ["Main_MoveUpTip"] = "Monter (priorité plus élevée)",
+        ["Main_MoveDownTip"] = "Descendre (priorité plus basse)",
+        ["Main_Preview"] = "Aperçu",
+        ["Main_RunSelected"] = "Lancer la sélection",
+        ["Main_RunAll"] = "Tout lancer",
+        ["Main_Settings"] = "Paramètres",
+        ["Main_LogTitle"] = "Journal d'exécution",
+        ["Main_Clear"] = "Effacer",
+
+        ["Col_Active"] = "Actif",
+        ["Col_Name"] = "Nom",
+        ["Col_Mode"] = "Mode",
+        ["Col_Source"] = "Source",
+        ["Col_Dest"] = "Destination",
+        ["Col_LastResult"] = "Dernier résultat",
+
+        ["Empty_Title"] = "Aucune tâche configurée",
+        ["Empty_Desc"] = "Créez votre première sauvegarde : choisissez un dossier source et une destination.",
+        ["Empty_Button"] = "Créer la première tâche",
+
+        ["Status_Running"] = "Exécution en cours…",
+        ["Status_JobsConfigured"] = "{0} tâches configurées",
+
+        ["Mode_Mirror"] = "Miroir",
+        ["Mode_CopyOnly"] = "Copie seule",
+
+        ["Run_Preview"] = "APERÇU",
+        ["Run_Execution"] = "EXÉCUTION",
+        ["Run_PreviewStatus"] = "aperçu…",
+        ["Run_InProgress"] = "en cours…",
+        ["Run_OK"] = "OK",
+        ["Run_Error"] = "ERREUR",
+        ["Run_Cancelled"] = "annulé",
+        ["Run_CancelledUser"] = "annulé par l'utilisateur",
+        ["Stat_Copied"] = "copiés",
+        ["Stat_Unchanged"] = "inchangés",
+        ["Stat_Extra"] = "en trop",
+        ["Stat_Errors"] = "erreurs",
+
+        ["Delete_Confirm"] = "Supprimer la tâche '{0}' ?",
+
+        ["Editor_TitleEdit"] = "Modifier la tâche",
+        ["Editor_NewJobName"] = "Nouvelle tâche",
+        ["Editor_Name"] = "Nom",
+        ["Editor_NamePlaceholder"] = "ex. Documents",
+        ["Editor_Source"] = "Source",
+        ["Editor_Dest"] = "Destination",
+        ["Editor_Mirror"] = "Miroir — rend la destination identique à la source (SUPPRIME les fichiers retirés)",
+        ["Editor_MirrorHint"] = "Désactivé = copie et met à jour seulement, ne supprime jamais à la destination.",
+        ["Editor_ExcludeOlder"] = "Ne pas écraser les fichiers plus récents à la destination (/XO)",
+        ["Editor_CopyAll"] = "Copier aussi ACL/propriétaire (/COPYALL — utile sur les partages réseau)",
+        ["Editor_BigJ"] = "Optimiser les gros fichiers (/J — E/S sans tampon)",
+        ["Editor_BigJTip"] = "Pour les très gros fichiers (plusieurs Go) : contourne le cache du système de fichiers, souvent plus rapide sur SSD/NVMe et réseaux rapides. N'aide pas les petits fichiers. Mutuellement exclusif avec la copie reprenable.",
+        ["Editor_RestartZ"] = "Copie reprenable (/Z — reprend si interrompue)",
+        ["Editor_RestartZTip"] = "Reprend la copie d'un gros fichier s'il est interrompu (utile sur VPN, Wi-Fi ou réseaux peu fiables). Elle a un certain surcoût : sur les réseaux stables, mieux vaut la laisser désactivée. Mutuellement exclusive avec l'optimisation des gros fichiers.",
+        ["Editor_Threads"] = "Threads (/MT)",
+        ["Editor_ThreadsTip"] = "Nombre de fichiers copiés en parallèle (multi-thread). Plus élevé = plus rapide, surtout avec beaucoup de petits fichiers. 8 convient presque toujours ; 16+ sur SSD ou partages réseau rapides ; sur disques durs mécaniques, n'exagérez pas (cela peut faire travailler la tête). 0 désactive le multi-thread.",
+        ["Editor_Retries"] = "Tentatives (/R)",
+        ["Editor_RetriesTip"] = "Combien de fois réessayer de copier un fichier si la copie échoue (ex. fichier temporairement utilisé ou réseau instable). Avec des fichiers souvent ouverts, gardez une valeur basse (1) pour ne pas attendre longtemps.",
+        ["Editor_Wait"] = "Attente sec (/W)",
+        ["Editor_WaitTip"] = "Secondes d'attente entre les tentatives. Se combine avec les Tentatives (ex. 1 tentative × 5 s). Des valeurs élevées allongent beaucoup les durées en cas de fichiers problématiques.",
+        ["Editor_Credential"] = "Identifiant réseau (pour les partages UNC)",
+        ["Editor_CredentialTip"] = "Nécessaire seulement si la source ou la destination est un dossier réseau partagé (\\\\serveur\\partage) demandant un identifiant et un mot de passe. Les identifiants se créent dans Paramètres → Identifiants. Pour les disques locaux ou USB, laissez « aucun ».",
+        ["Editor_ExcludeFiles"] = "Exclure des fichiers (un par ligne)",
+        ["Editor_ExcludeFilesTip"] = "Motifs de fichiers à NE PAS copier, un par ligne. Exemples : *.tmp (tous les .tmp), ~$* (fichiers temporaires Office), *.log. Laissez vide pour tout copier.",
+        ["Editor_ExcludeDirs"] = "Exclure des dossiers (un par ligne)",
+        ["Editor_ExcludeDirsTip"] = "Noms de dossiers à ignorer, un par ligne. Exemples : cache, node_modules, Temp. Ils sont exclus partout où ils apparaissent dans l'arborescence.",
+        ["Editor_CommandPreview"] = "Aperçu de la commande robocopy",
+        ["Editor_Val_Name"] = "Le nom de la tâche est obligatoire.",
+        ["Editor_Val_Source"] = "Le dossier source est obligatoire.",
+        ["Editor_Val_Dest"] = "Le dossier de destination est obligatoire.",
+        ["Editor_BrowseTitle"] = "Sélectionner un dossier",
+        ["Cred_NoneLocal"] = "(aucun — chemin local)",
+
+        ["Settings_Title"] = "Paramètres",
+        ["Tab_General"] = "Général",
+        ["Tab_Email"] = "E-mail",
+        ["Tab_Credentials"] = "Identifiants réseau",
+        ["Tab_Schedule"] = "Planification",
+
+        ["Set_Language"] = "Langue",
+        ["Lang_Auto"] = "Automatique (Windows)",
+        ["Set_LogFolder"] = "Dossier des journaux (archivés par date)",
+        ["Set_TempFolder"] = "Dossier temporaire",
+        ["Set_PathsHint"] = "Les journaux sont TOUJOURS actifs. Si vous laissez ces champs vides, les journaux et les fichiers temporaires vont dans les sous-dossiers par défaut affichés en gris (à côté de l'app). Renseignez un chemin uniquement pour les déplacer ailleurs.",
+        ["Set_Compress"] = "Compresser les journaux en .zip",
+        ["Set_Retention"] = "Jours de conservation des journaux (0 = ne pas supprimer)",
+        ["Set_CredSecurity"] = "Sécurité des identifiants",
+        ["Set_CredScopeUser"] = "Chiffrer les mots de passe uniquement pour mon utilisateur Windows (plus sûr)",
+        ["Set_CredScopeHint"] = "Activé : mots de passe (identifiants et e-mail) déchiffrables uniquement par votre utilisateur ; en contrepartie la tâche planifiée doit s'exécuter avec votre même utilisateur. Désactivé : liés au PC, fonctionnent avec n'importe quel utilisateur (pratique pour la planification). En changeant l'option, les mots de passe déjà enregistrés sont re-chiffrés automatiquement.",
+
+        ["Email_Enable"] = "Activer les notifications par e-mail",
+        ["Email_OnlyError"] = "Envoyer uniquement en cas d'erreur",
+        ["Email_Smtp"] = "Serveur SMTP",
+        ["Email_Port"] = "Port",
+        ["Email_Ssl"] = "Utiliser SSL/TLS",
+        ["Email_From"] = "De (expéditeur)",
+        ["Email_To"] = "À (destinataire)",
+        ["Email_User"] = "Utilisateur SMTP (facultatif)",
+        ["Email_Pwd"] = "Mot de passe SMTP (laisser vide pour ne pas changer)",
+
+        ["Cred_AddUpdate"] = "Ajouter / mettre à jour un identifiant",
+        ["Cred_Name"] = "Nom",
+        ["Cred_Host"] = "Hôte/Partage (\\\\serveur\\partage)",
+        ["Cred_User"] = "Utilisateur (DOMAINE\\utilisateur)",
+        ["Cred_Pwd"] = "Mot de passe",
+        ["Cred_Save"] = "Enregistrer l'identifiant",
+        ["Cred_Remove"] = "Retirer la sélection",
+        ["Cred_ColUser"] = "Utilisateur",
+        ["Cred_NameRequired"] = "Le nom de l'identifiant est obligatoire.",
+
+        ["Sched_InfoTitle"] = "Exécution automatique",
+        ["Sched_InfoMsg"] = "Enregistre une tâche dans le Planificateur de tâches Windows qui exécute « Tout lancer » en silence à l'heure choisie.",
+        ["Sched_Time"] = "Heure (HH:mm)",
+        ["Sched_Freq"] = "Fréquence",
+        ["Sched_Daily"] = "Quotidienne",
+        ["Sched_Weekly"] = "Hebdomadaire",
+        ["Sched_Create"] = "Créer / mettre à jour la tâche",
+        ["Sched_Remove"] = "Supprimer la tâche",
+        ["Sched_BadTime"] = "Heure non valide. Utilisez le format HH:mm.",
+        ["Sched_Created"] = "Tâche planifiée créée/mise à jour pour {0}.",
+        ["Sched_Removed"] = "Tâche planifiée supprimée.",
+        ["Sched_Error"] = "Erreur : {0}",
+    };
+
+    // ---------------- DEUTSCH ----------------
+    private static readonly Dictionary<string, string> De = new()
+    {
+        ["Common_Browse"] = "Durchsuchen…",
+        ["Common_Save"] = "Speichern",
+        ["Common_Cancel"] = "Abbrechen",
+        ["Common_MissingData"] = "Fehlende Daten",
+        ["Common_Confirm"] = "Bestätigen",
+
+        ["Main_Title"] = "RobocopySW — Konfigurierbares Backup",
+        ["Main_New"] = "Neu",
+        ["Main_Edit"] = "Bearbeiten",
+        ["Main_Delete"] = "Löschen",
+        ["Main_MoveUpTip"] = "Nach oben (höhere Priorität)",
+        ["Main_MoveDownTip"] = "Nach unten (niedrigere Priorität)",
+        ["Main_Preview"] = "Vorschau",
+        ["Main_RunSelected"] = "Ausgewählten starten",
+        ["Main_RunAll"] = "Alle starten",
+        ["Main_Settings"] = "Einstellungen",
+        ["Main_LogTitle"] = "Ausführungsprotokoll",
+        ["Main_Clear"] = "Leeren",
+
+        ["Col_Active"] = "Aktiv",
+        ["Col_Name"] = "Name",
+        ["Col_Mode"] = "Modus",
+        ["Col_Source"] = "Quelle",
+        ["Col_Dest"] = "Ziel",
+        ["Col_LastResult"] = "Letztes Ergebnis",
+
+        ["Empty_Title"] = "Keine Aufträge konfiguriert",
+        ["Empty_Desc"] = "Erstelle dein erstes Backup: Wähle einen Quellordner und ein Ziel.",
+        ["Empty_Button"] = "Ersten Auftrag erstellen",
+
+        ["Status_Running"] = "Wird ausgeführt…",
+        ["Status_JobsConfigured"] = "{0} konfigurierte Aufträge",
+
+        ["Mode_Mirror"] = "Spiegel",
+        ["Mode_CopyOnly"] = "Nur kopieren",
+
+        ["Run_Preview"] = "VORSCHAU",
+        ["Run_Execution"] = "AUSFÜHRUNG",
+        ["Run_PreviewStatus"] = "Vorschau…",
+        ["Run_InProgress"] = "läuft…",
+        ["Run_OK"] = "OK",
+        ["Run_Error"] = "FEHLER",
+        ["Run_Cancelled"] = "abgebrochen",
+        ["Run_CancelledUser"] = "vom Benutzer abgebrochen",
+        ["Stat_Copied"] = "kopiert",
+        ["Stat_Unchanged"] = "unverändert",
+        ["Stat_Extra"] = "zusätzlich",
+        ["Stat_Errors"] = "Fehler",
+
+        ["Delete_Confirm"] = "Auftrag '{0}' löschen?",
+
+        ["Editor_TitleEdit"] = "Auftrag bearbeiten",
+        ["Editor_NewJobName"] = "Neuer Auftrag",
+        ["Editor_Name"] = "Name",
+        ["Editor_NamePlaceholder"] = "z. B. Dokumente",
+        ["Editor_Source"] = "Quelle",
+        ["Editor_Dest"] = "Ziel",
+        ["Editor_Mirror"] = "Spiegel — macht das Ziel identisch zur Quelle (LÖSCHT entfernte Dateien)",
+        ["Editor_MirrorHint"] = "Deaktiviert = kopiert und aktualisiert nur, löscht nie am Ziel.",
+        ["Editor_ExcludeOlder"] = "Neuere Dateien am Ziel nicht überschreiben (/XO)",
+        ["Editor_CopyAll"] = "Auch ACLs/Besitzer kopieren (/COPYALL — nützlich bei Netzwerkfreigaben)",
+        ["Editor_BigJ"] = "Große Dateien optimieren (/J — ungepufferte E/A)",
+        ["Editor_BigJTip"] = "Für sehr große Dateien (mehrere GB): umgeht den Dateisystem-Cache, oft schneller auf SSD/NVMe und schnellen Netzwerken. Hilft nicht bei kleinen Dateien. Schließt sich mit der fortsetzbaren Kopie gegenseitig aus.",
+        ["Editor_RestartZ"] = "Fortsetzbare Kopie (/Z — setzt nach Abbruch fort)",
+        ["Editor_RestartZTip"] = "Setzt das Kopieren einer großen Datei fort, wenn es unterbrochen wird (nützlich bei VPN, WLAN oder unzuverlässigen Netzwerken). Hat etwas Mehraufwand: in stabilen Netzwerken besser deaktiviert lassen. Schließt sich mit der Optimierung großer Dateien gegenseitig aus.",
+        ["Editor_Threads"] = "Threads (/MT)",
+        ["Editor_ThreadsTip"] = "Anzahl der parallel kopierten Dateien (Multithread). Höher = schneller, besonders bei vielen kleinen Dateien. 8 passt fast immer; 16+ auf SSDs oder schnellen Netzwerkfreigaben; bei mechanischen Festplatten nicht übertreiben (kann den Kopf stark bewegen). 0 deaktiviert Multithread.",
+        ["Editor_Retries"] = "Wiederholungen (/R)",
+        ["Editor_RetriesTip"] = "Wie oft das Kopieren einer Datei wiederholt wird, wenn es fehlschlägt (z. B. Datei vorübergehend in Benutzung oder instabiles Netzwerk). Bei oft geöffneten Dateien einen niedrigen Wert (1) wählen, um nicht lange zu warten.",
+        ["Editor_Wait"] = "Wartezeit Sek (/W)",
+        ["Editor_WaitTip"] = "Sekunden Wartezeit zwischen den Versuchen. Kombiniert sich mit den Wiederholungen (z. B. 1 Versuch × 5 Sek). Hohe Werte verlängern die Zeiten stark, wenn es problematische Dateien gibt.",
+        ["Editor_Credential"] = "Netzwerk-Anmeldedaten (für UNC-Freigaben)",
+        ["Editor_CredentialTip"] = "Nur nötig, wenn Quelle oder Ziel ein freigegebener Netzwerkordner (\\\\Server\\Freigabe) ist, der Benutzer und Passwort erfordert. Anmeldedaten werden in Einstellungen → Anmeldedaten erstellt. Für lokale oder USB-Laufwerke « keine » lassen.",
+        ["Editor_ExcludeFiles"] = "Dateien ausschließen (eine pro Zeile)",
+        ["Editor_ExcludeFilesTip"] = "Dateimuster, die NICHT kopiert werden, eines pro Zeile. Beispiele: *.tmp (alle .tmp), ~$* (Office-Temporärdateien), *.log. Leer lassen, um alles zu kopieren.",
+        ["Editor_ExcludeDirs"] = "Ordner ausschließen (einer pro Zeile)",
+        ["Editor_ExcludeDirsTip"] = "Ordnernamen, die übersprungen werden, einer pro Zeile. Beispiele: cache, node_modules, Temp. Sie werden überall im Baum ausgeschlossen, wo sie vorkommen.",
+        ["Editor_CommandPreview"] = "Vorschau des robocopy-Befehls",
+        ["Editor_Val_Name"] = "Der Auftragsname ist erforderlich.",
+        ["Editor_Val_Source"] = "Der Quellordner ist erforderlich.",
+        ["Editor_Val_Dest"] = "Der Zielordner ist erforderlich.",
+        ["Editor_BrowseTitle"] = "Ordner auswählen",
+        ["Cred_NoneLocal"] = "(keine — lokaler Pfad)",
+
+        ["Settings_Title"] = "Einstellungen",
+        ["Tab_General"] = "Allgemein",
+        ["Tab_Email"] = "E-Mail",
+        ["Tab_Credentials"] = "Netzwerk-Anmeldedaten",
+        ["Tab_Schedule"] = "Planung",
+
+        ["Set_Language"] = "Sprache",
+        ["Lang_Auto"] = "Automatisch (Windows)",
+        ["Set_LogFolder"] = "Protokollordner (nach Datum archiviert)",
+        ["Set_TempFolder"] = "Temporärer Ordner",
+        ["Set_PathsHint"] = "Protokolle sind IMMER aktiv. Wenn du diese Felder leer lässt, gehen Protokolle und temporäre Dateien in die grau angezeigten Standard-Unterordner (neben der App). Gib einen Pfad nur an, um sie woanders hin zu verschieben.",
+        ["Set_Compress"] = "Protokolle als .zip komprimieren",
+        ["Set_Retention"] = "Aufbewahrungstage für Protokolle (0 = nicht löschen)",
+        ["Set_CredSecurity"] = "Anmeldedaten-Sicherheit",
+        ["Set_CredScopeUser"] = "Passwörter nur für meinen Windows-Benutzer verschlüsseln (sicherer)",
+        ["Set_CredScopeHint"] = "Aktiv: Passwörter (Anmeldedaten und E-Mail) nur von deinem Benutzer entschlüsselbar; dafür muss die geplante Aufgabe mit deinem Benutzer laufen. Inaktiv: an den PC gebunden, funktionieren mit jedem Benutzer (praktisch für die Planung). Beim Ändern der Option werden bereits gespeicherte Passwörter automatisch neu verschlüsselt.",
+
+        ["Email_Enable"] = "E-Mail-Benachrichtigungen aktivieren",
+        ["Email_OnlyError"] = "Nur bei Fehler senden",
+        ["Email_Smtp"] = "SMTP-Server",
+        ["Email_Port"] = "Port",
+        ["Email_Ssl"] = "SSL/TLS verwenden",
+        ["Email_From"] = "Von (Absender)",
+        ["Email_To"] = "An (Empfänger)",
+        ["Email_User"] = "SMTP-Benutzer (optional)",
+        ["Email_Pwd"] = "SMTP-Passwort (leer lassen zum Beibehalten)",
+
+        ["Cred_AddUpdate"] = "Anmeldedaten hinzufügen / aktualisieren",
+        ["Cred_Name"] = "Name",
+        ["Cred_Host"] = "Host/Freigabe (\\\\Server\\Freigabe)",
+        ["Cred_User"] = "Benutzer (DOMÄNE\\Benutzer)",
+        ["Cred_Pwd"] = "Passwort",
+        ["Cred_Save"] = "Anmeldedaten speichern",
+        ["Cred_Remove"] = "Auswahl entfernen",
+        ["Cred_ColUser"] = "Benutzer",
+        ["Cred_NameRequired"] = "Der Name der Anmeldedaten ist erforderlich.",
+
+        ["Sched_InfoTitle"] = "Automatische Ausführung",
+        ["Sched_InfoMsg"] = "Registriert eine Aufgabe in der Windows-Aufgabenplanung, die « Alle starten » zur gewählten Zeit unbeaufsichtigt ausführt.",
+        ["Sched_Time"] = "Uhrzeit (HH:mm)",
+        ["Sched_Freq"] = "Häufigkeit",
+        ["Sched_Daily"] = "Täglich",
+        ["Sched_Weekly"] = "Wöchentlich",
+        ["Sched_Create"] = "Aufgabe erstellen / aktualisieren",
+        ["Sched_Remove"] = "Aufgabe entfernen",
+        ["Sched_BadTime"] = "Ungültige Uhrzeit. Verwende das Format HH:mm.",
+        ["Sched_Created"] = "Geplante Aufgabe erstellt/aktualisiert für {0}.",
+        ["Sched_Removed"] = "Geplante Aufgabe entfernt.",
+        ["Sched_Error"] = "Fehler: {0}",
     };
 }
