@@ -34,6 +34,9 @@ public sealed class SettingsViewModel : ObservableObject
 
     public IList<CredentialEntry> CredentialList { get; }
 
+    /// <summary>Impostazioni email correnti (per l'invio di prova).</summary>
+    public EmailSettings EmailSettings => _s.Email;
+
     /// <summary>Lingua selezionata: "auto", "it" o "en". Il cambio si applica subito (live).</summary>
     public string LanguageSetting
     {

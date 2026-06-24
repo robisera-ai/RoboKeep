@@ -111,5 +111,13 @@ internal static class CoreLoc
         ["Email_Yes"] = L("sì", "yes", "sí", "oui", "ja"),
         ["Email_No"] = L("no", "no", "no", "non", "nein"),
         ["Email_Start"] = L("Inizio", "Start", "Inicio", "Début", "Start"),
+
+        ["Test_Subject"] = L("Email di prova", "Test email", "Correo de prueba", "E-mail de test", "Test-E-Mail"),
+        ["Test_Body"] = L(
+            "Questa è un'email di prova inviata da RobocopySW. Se la ricevi, la configurazione SMTP funziona.",
+            "This is a test email sent by RobocopySW. If you receive it, your SMTP configuration works.",
+            "Este es un correo de prueba enviado por RobocopySW. Si lo recibes, tu configuración SMTP funciona.",
+            "Ceci est un e-mail de test envoyé par RobocopySW. Si vous le recevez, votre configuration SMTP fonctionne.",
+            "Dies ist eine von RobocopySW gesendete Test-E-Mail. Wenn du sie erhältst, funktioniert deine SMTP-Konfiguration."),
     };
 }

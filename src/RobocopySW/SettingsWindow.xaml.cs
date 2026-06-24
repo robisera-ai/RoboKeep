@@ -14,10 +14,12 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
     private const string ScheduledTaskName = "AvviaTutti";
     private readonly SettingsViewModel _vm;
     private readonly SchedulerService _scheduler = new();
+    private readonly CredentialService _credentials;
 
     public SettingsWindow(AppHost host)
     {
         InitializeComponent();
+        _credentials = host.Credentials;
         _vm = new SettingsViewModel(host.Config.Settings, host.Config.Credentials, host.Credentials);
         DataContext = _vm;
 
@@ -120,6 +122,31 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
         {
             ScheduleStatus.Foreground = System.Windows.Media.Brushes.Red;
             ScheduleStatus.Text = string.Format(Loc.Instance["Sched_Error"], ex.Message);
+        }
+    }
+
+    private async void OnSendTestEmail(object sender, RoutedEventArgs e)
+    {
+        EmailTestStatus.Foreground = System.Windows.Media.Brushes.Gray;
+        EmailTestStatus.Text = Loc.Instance["Email_TestSending"];
+        TestEmailButton.IsEnabled = false;
+        try
+        {
+            var email = new EmailService(_credentials);
+            // Usa la password appena digitata (se presente), altrimenti quella già salvata.
+            await email.SendTestAsync(_vm.EmailSettings, EmailPasswordBox.Password);
+            EmailTestStatus.Foreground = System.Windows.Media.Brushes.Green;
+            EmailTestStatus.Text = Loc.Instance["Email_TestSent"];
+        }
+        catch (Exception ex)
+        {
+            EmailTestStatus.Foreground = System.Windows.Media.Brushes.Red;
+            var msg = ex.InnerException?.Message ?? ex.Message;
+            EmailTestStatus.Text = string.Format(Loc.Instance["Common_Error"], msg);
+        }
+        finally
+        {
+            TestEmailButton.IsEnabled = true;
         }
     }
 

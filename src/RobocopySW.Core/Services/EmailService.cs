@@ -57,4 +57,30 @@ public sealed class EmailService
         await client.SendMailAsync(message).ConfigureAwait(false);
         return true;
     }
+
+    /// <summary>
+    /// Invia un'email di prova con le impostazioni date (ignora Enabled/OnlyOnError).
+    /// Se <paramref name="plainPassword"/> è valorizzata, usa quella invece di quella salvata.
+    /// Solleva eccezione in caso di errore, così la UI può mostrare il messaggio SMTP.
+    /// </summary>
+    public async Task SendTestAsync(EmailSettings settings, string? plainPassword = null)
+    {
+        var subject = "[RobocopySW] " + CoreLoc.S("Test_Subject");
+        using var message = new MailMessage(settings.From, settings.To, subject, CoreLoc.S("Test_Body"));
+
+        using var client = new SmtpClient(settings.SmtpHost, settings.SmtpPort)
+        {
+            EnableSsl = settings.UseSsl,
+            Timeout = 20000, // 20s: una config errata fallisce in fretta
+        };
+        if (!string.IsNullOrWhiteSpace(settings.Username))
+        {
+            var pwd = !string.IsNullOrEmpty(plainPassword)
+                ? plainPassword
+                : _credentials.Unprotect(settings.PasswordProtected ?? "");
+            client.Credentials = new NetworkCredential(settings.Username, pwd);
+        }
+
+        await client.SendMailAsync(message).ConfigureAwait(false);
+    }
 }
