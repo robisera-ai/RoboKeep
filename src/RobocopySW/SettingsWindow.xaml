@@ -206,6 +206,13 @@
                 <StackPanel Margin="4,12">
                     <ui:InfoBar IsOpen="True" Severity="Informational" IsClosable="False"
                                 Title="{l:Tr Sched_InfoTitle}" Message="{l:Tr Sched_InfoMsg}"/>
+
+                    <ui:Card Margin="0,10,0,0" Padding="12">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Clock24" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="ScheduleInfo" VerticalAlignment="Center" TextWrapping="Wrap" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </ui:Card>
                     <Grid Margin="0,12,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -220,6 +227,7 @@
                             <ComboBox x:Name="ScheduleFreq" SelectedIndex="0">
                                 <ComboBoxItem Content="{l:Tr Sched_Daily}"/>
                                 <ComboBoxItem Content="{l:Tr Sched_Weekly}"/>
+                                <ComboBoxItem Content="{l:Tr Sched_Once}"/>
                             </ComboBox>
                         </StackPanel>
                     </Grid>

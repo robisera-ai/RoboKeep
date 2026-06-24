@@ -4,7 +4,7 @@ using System.Text;
 namespace RobocopySW.Core.Services;
 
 /// <summary>Frequenza di una pianificazione.</summary>
-public enum ScheduleFrequency { Daily, Weekly }
+public enum ScheduleFrequency { Daily, Weekly, Once }
 
 /// <summary>
 /// Registra/rimuove attività nell'Utilità di pianificazione di Windows tramite <c>schtasks.exe</c>,
@@ -23,7 +23,12 @@ public sealed class SchedulerService
         ScheduleFrequency frequency, TimeOnly time)
     {
         var tr = $"\"{exePath}\" {arguments}".Trim();
-        var sc = frequency == ScheduleFrequency.Weekly ? "WEEKLY" : "DAILY";
+        var sc = frequency switch
+        {
+            ScheduleFrequency.Weekly => "WEEKLY",
+            ScheduleFrequency.Once => "ONCE",
+            _ => "DAILY",
+        };
 
         // Niente /RL HIGHEST: richiederebbe privilegi di amministratore (Accesso negato).
         // L'attività gira come utente corrente, sufficiente per i backup utente.
@@ -35,6 +40,17 @@ public sealed class SchedulerService
             "/SC", sc,
             "/ST", time.ToString("HH:mm"),
         };
+
+        // ONCE richiede una data: oggi se l'orario non è ancora passato, altrimenti domani.
+        if (frequency == ScheduleFrequency.Once)
+        {
+            var runDate = DateTime.Today.Add(time.ToTimeSpan());
+            if (runDate <= DateTime.Now)
+                runDate = runDate.AddDays(1);
+            args.Add("/SD");
+            args.Add(runDate.ToString("d")); // formato data della cultura di sistema (atteso da schtasks)
+        }
+
         Run(args);
     }
 
@@ -45,6 +61,38 @@ public sealed class SchedulerService
     /// <summary>Indica se l'attività pianificata esiste.</summary>
     public bool Exists(string taskName) =>
         Run(new List<string> { "/Query", "/TN", TaskPrefix + taskName }, throwOnError: false) == 0;
+
+    /// <summary>
+    /// Restituisce la "prossima esecuzione" dell'attività (stringa data/ora di sistema),
+    /// oppure null se l'attività non esiste.
+    /// </summary>
+    public string? GetNextRunTime(string taskName)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = "schtasks.exe",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+        foreach (var a in new[] { "/Query", "/TN", TaskPrefix + taskName, "/FO", "CSV", "/V" })
+            psi.ArgumentList.Add(a);
+
+        using var p = Process.Start(psi);
+        if (p is null) return null;
+        var output = p.StandardOutput.ReadToEnd();
+        p.WaitForExit();
+        if (p.ExitCode != 0) return null; // attività non trovata
+
+        // CSV: riga 0 = intestazioni, riga 1 = dati. La 3ª colonna (indice 2) è "Next Run Time".
+        var lines = output.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        if (lines.Length < 2) return null;
+        var fields = lines[1].Trim().Trim('"').Split("\",\"");
+        if (fields.Length <= 2) return null;
+        var value = fields[2].Trim();
+        return string.IsNullOrWhiteSpace(value) ? null : value;
+    }
 
     private static int Run(List<string> args, bool throwOnError = true)
     {

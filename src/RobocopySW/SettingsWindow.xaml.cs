@@ -27,6 +27,17 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
         // i log ci sono comunque, nelle sottocartelle accanto all'app.
         LogRootBox.PlaceholderText = LogService.DefaultLogRoot;
         TempRootBox.PlaceholderText = LogService.DefaultTempRoot;
+
+        RefreshScheduleStatus();
+    }
+
+    // Mostra la prossima esecuzione pianificata (o "nessuna pianificazione").
+    private void RefreshScheduleStatus()
+    {
+        var next = _scheduler.GetNextRunTime(ScheduledTaskName);
+        ScheduleInfo.Text = next is null
+            ? Loc.Instance["Sched_None"]
+            : string.Format(Loc.Instance["Sched_Next"], next);
     }
 
     private void OnBrowseLog(object sender, RoutedEventArgs e)
@@ -95,13 +106,17 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
 
             var exe = Environment.ProcessPath
                 ?? throw new InvalidOperationException("Percorso eseguibile non disponibile.");
-            var freq = ScheduleFreq.SelectedIndex == 1
-                ? ScheduleFrequency.Weekly
-                : ScheduleFrequency.Daily;
+            var freq = ScheduleFreq.SelectedIndex switch
+            {
+                1 => ScheduleFrequency.Weekly,
+                2 => ScheduleFrequency.Once,
+                _ => ScheduleFrequency.Daily,
+            };
 
             _scheduler.CreateOrUpdate(ScheduledTaskName, exe, "--run-all", freq, time);
             ScheduleStatus.Foreground = System.Windows.Media.Brushes.Green;
             ScheduleStatus.Text = string.Format(Loc.Instance["Sched_Created"], time.ToString("HH:mm"));
+            RefreshScheduleStatus();
         }
         catch (Exception ex)
         {
@@ -117,6 +132,7 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
             _scheduler.Delete(ScheduledTaskName);
             ScheduleStatus.Foreground = System.Windows.Media.Brushes.Green;
             ScheduleStatus.Text = Loc.Instance["Sched_Removed"];
+            RefreshScheduleStatus();
         }
         catch (Exception ex)
         {
