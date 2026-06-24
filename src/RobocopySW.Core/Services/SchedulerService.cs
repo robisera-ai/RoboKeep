@@ -12,7 +12,8 @@ public enum ScheduleFrequency { Daily, Weekly }
 /// </summary>
 public sealed class SchedulerService
 {
-    private const string TaskPrefix = "RobocopySW\\";
+    // Nome piatto (niente sottocartella): evita richieste di permessi sul percorso.
+    private const string TaskPrefix = "RobocopySW_";
 
     /// <summary>
     /// Crea o aggiorna un'attività pianificata che lancia <paramref name="exePath"/> con
@@ -24,6 +25,8 @@ public sealed class SchedulerService
         var tr = $"\"{exePath}\" {arguments}".Trim();
         var sc = frequency == ScheduleFrequency.Weekly ? "WEEKLY" : "DAILY";
 
+        // Niente /RL HIGHEST: richiederebbe privilegi di amministratore (Accesso negato).
+        // L'attività gira come utente corrente, sufficiente per i backup utente.
         var args = new List<string>
         {
             "/Create", "/F",
@@ -31,7 +34,6 @@ public sealed class SchedulerService
             "/TR", tr,
             "/SC", sc,
             "/ST", time.ToString("HH:mm"),
-            "/RL", "HIGHEST",
         };
         Run(args);
     }
