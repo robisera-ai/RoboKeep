@@ -19,6 +19,11 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
         InitializeComponent();
         _vm = new SettingsViewModel(host.Config.Settings, host.Config.Credentials, host.Credentials);
         DataContext = _vm;
+
+        // Mostra il percorso predefinito (grigio) quando il campo è vuoto: chiarisce che
+        // i log ci sono comunque, nelle sottocartelle accanto all'app.
+        LogRootBox.PlaceholderText = LogService.DefaultLogRoot;
+        TempRootBox.PlaceholderText = LogService.DefaultTempRoot;
     }
 
     private void OnBrowseLog(object sender, RoutedEventArgs e)

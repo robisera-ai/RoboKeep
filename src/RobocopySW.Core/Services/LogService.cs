@@ -13,15 +13,17 @@ public sealed class LogService
 
     public LogService(AppSettings settings) => _settings = settings;
 
+    /// <summary>Cartella log predefinita: sottocartella <c>logs</c> accanto all'eseguibile.</summary>
+    public static string DefaultLogRoot => Path.Combine(AppContext.BaseDirectory, "logs");
+
+    /// <summary>Cartella temporanea predefinita: sottocartella <c>temp</c> accanto all'eseguibile.</summary>
+    public static string DefaultTempRoot => Path.Combine(AppContext.BaseDirectory, "temp");
+
     private string LogRoot =>
-        string.IsNullOrWhiteSpace(_settings.LogRoot)
-            ? Path.Combine(AppContext.BaseDirectory, "logs")
-            : _settings.LogRoot;
+        string.IsNullOrWhiteSpace(_settings.LogRoot) ? DefaultLogRoot : _settings.LogRoot;
 
     private string TempRoot =>
-        string.IsNullOrWhiteSpace(_settings.TempRoot)
-            ? Path.Combine(AppContext.BaseDirectory, "temp")
-            : _settings.TempRoot;
+        string.IsNullOrWhiteSpace(_settings.TempRoot) ? DefaultTempRoot : _settings.TempRoot;
 
     /// <summary>Rimuove dal nome i caratteri non validi per un file.</summary>
     public static string SanitizeName(string name)

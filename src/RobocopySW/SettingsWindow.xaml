@@ -46,7 +46,7 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <ui:TextBox Grid.Column="0" Text="{Binding LogRoot, UpdateSourceTrigger=PropertyChanged}"/>
+                        <ui:TextBox Grid.Column="0" x:Name="LogRootBox" Text="{Binding LogRoot, UpdateSourceTrigger=PropertyChanged}"/>
                         <ui:Button Grid.Column="1" Content="Sfoglia…" Icon="{ui:SymbolIcon FolderOpen24}" Margin="8,0,0,0" Click="OnBrowseLog"/>
                     </Grid>
 
@@ -56,9 +56,12 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <ui:TextBox Grid.Column="0" Text="{Binding TempRoot, UpdateSourceTrigger=PropertyChanged}"/>
+                        <ui:TextBox Grid.Column="0" x:Name="TempRootBox" Text="{Binding TempRoot, UpdateSourceTrigger=PropertyChanged}"/>
                         <ui:Button Grid.Column="1" Content="Sfoglia…" Icon="{ui:SymbolIcon FolderOpen24}" Margin="8,0,0,0" Click="OnBrowseTemp"/>
                     </Grid>
+
+                    <TextBlock Opacity="0.7" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,0"
+                               Text="I log sono SEMPRE attivi. Se lasci vuoti questi campi, log e file temporanei vanno nelle sottocartelle predefinite mostrate in grigio (accanto all'app). Compila un percorso solo per spostarli altrove."/>
 
                     <CheckBox Content="Comprimi i log in .zip" IsChecked="{Binding CompressLogs}" Margin="0,16,0,0"/>
 
