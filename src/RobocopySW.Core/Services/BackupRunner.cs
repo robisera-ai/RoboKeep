@@ -77,6 +77,7 @@ public sealed class BackupRunner
                     FilesSkipped = run.Result.FilesSkipped,
                     FilesExtra = run.Result.FilesExtra,
                     FilesFailed = run.Result.FilesFailed,
+                    DirsFailed = run.Result.DirsFailed,
                     FinishedAt = DateTime.Now,
                 });
             }
@@ -120,6 +121,7 @@ public sealed class BackupRunner
             Line(CoreLoc.S("Lbl_FilesUnchanged"), r.FilesSkipped.ToString()),
             Line(CoreLoc.S("Lbl_FilesExtra"), $"{r.FilesExtra}{extraNote}"),
             Line(CoreLoc.S("Lbl_FilesFailed"), r.FilesFailed.ToString()),
+            Line(CoreLoc.S("Lbl_DirsFailed"), r.DirsFailed.ToString()),
             Line(CoreLoc.S("Lbl_Duration"), r.Duration.ToString(@"hh\:mm\:ss")),
             "==========================================",
         };

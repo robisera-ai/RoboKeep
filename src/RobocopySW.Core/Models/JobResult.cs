@@ -32,4 +32,7 @@ public sealed class JobResult
     public long FilesExtra { get; set; }
 
     public long FilesFailed { get; set; }
+
+    /// <summary>Cartelle non copiate (es. accesso negato): contribuiscono a un esito di errore.</summary>
+    public long DirsFailed { get; set; }
 }

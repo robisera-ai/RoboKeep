@@ -47,7 +47,7 @@ public sealed class JobViewModel : ObservableObject
     {
         LastStatus = r is null
             ? "—"
-            : RunStatus.Format(r.Success, r.FilesCopied, r.FilesSkipped, r.FilesExtra, r.FilesFailed, r.FinishedAt);
+            : RunStatus.Format(r.Success, r.FilesCopied, r.FilesSkipped, r.FilesExtra, r.FilesFailed + r.DirsFailed, r.FinishedAt);
     }
 
     /// <summary>Notifica la UI dopo una modifica del modello sottostante.</summary>

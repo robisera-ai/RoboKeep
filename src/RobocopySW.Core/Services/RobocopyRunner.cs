@@ -113,6 +113,7 @@ public sealed class RobocopyRunner
             FilesSkipped = counts.FilesSkipped,
             FilesExtra = counts.FilesExtra,
             FilesFailed = counts.FilesFailed,
+            DirsFailed = counts.DirsFailed,
         };
 
         return new RobocopyRunResult { Result = result, Output = text };

@@ -10,5 +10,6 @@ public sealed class JobLastResult
     public long FilesSkipped { get; set; }
     public long FilesExtra { get; set; }
     public long FilesFailed { get; set; }
+    public long DirsFailed { get; set; }
     public DateTime FinishedAt { get; set; }
 }

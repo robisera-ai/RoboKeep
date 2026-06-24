@@ -41,6 +41,7 @@ public sealed class EmailService
             .AppendLine($"{CoreLoc.S("Lbl_FilesUnchanged"),-16}: {result.FilesSkipped}")
             .AppendLine($"{CoreLoc.S("Lbl_FilesExtra"),-16}: {result.FilesExtra}")
             .AppendLine($"{CoreLoc.S("Lbl_FilesFailed"),-16}: {result.FilesFailed}")
+            .AppendLine($"{CoreLoc.S("Lbl_DirsFailed"),-16}: {result.DirsFailed}")
             .ToString();
 
         using var message = new MailMessage(settings.From, settings.To, subject, body);

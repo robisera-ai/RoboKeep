@@ -51,6 +51,23 @@ public class RobocopyOutputParserTests
     }
 
     [Fact]
+    public void Parse_DirsFailed_IsExtracted()
+    {
+        // Riga Dirs con FAILED = 1 (colonna 5): una cartella non copiata (es. accesso negato).
+        var summary = """
+            ------------------------------------------------------------------------------
+
+                           Total    Copied   Skipped  Mismatch    FAILED    Extras
+                Dirs :      2729      2728         0         0         1         0
+               Files :     20486         0     20486         0         0         0
+            """;
+        var c = RobocopyOutputParser.ParseCounts(summary.Split('\n'));
+        Assert.Equal(1, c.DirsFailed);
+        Assert.Equal(0, c.FilesFailed);
+        Assert.Equal(2728, c.DirsCopied);
+    }
+
+    [Fact]
     public void Parse_EmptyOrNoise_ReturnsZeroes()
     {
         var c = RobocopyOutputParser.ParseCounts(new[] { "", "qualcosa", "Inizio: ..." });
