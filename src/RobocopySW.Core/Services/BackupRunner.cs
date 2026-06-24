@@ -14,19 +14,22 @@ public sealed class BackupRunner
     private readonly LogService _log;
     private readonly EmailService _email;
     private readonly CredentialService _credentials;
+    private readonly LastResultStore? _results;
 
     public BackupRunner(
         AppConfig config,
         RobocopyRunner runner,
         LogService log,
         EmailService email,
-        CredentialService credentials)
+        CredentialService credentials,
+        LastResultStore? results = null)
     {
         _config = config;
         _runner = runner;
         _log = log;
         _email = email;
         _credentials = credentials;
+        _results = results;
     }
 
     /// <summary>Trova un job per nome (case-insensitive).</summary>
@@ -60,6 +63,23 @@ public sealed class BackupRunner
 
             var logContent = run.Output + Environment.NewLine + string.Join(Environment.NewLine, recap);
             run.Result.LogPath = _log.WriteAndArchive(job.Name, logContent, run.Result.StartedAt);
+
+            // Persisti l'ultimo esito (solo esecuzioni reali, non le anteprime), così la GUI
+            // può mostrarlo anche dopo un backup eseguito dall'attività pianificata.
+            if (!dryRun)
+            {
+                _results?.Update(new JobLastResult
+                {
+                    JobName = job.Name,
+                    Success = run.Result.Success,
+                    ExitCode = run.Result.ExitCode,
+                    FilesCopied = run.Result.FilesCopied,
+                    FilesSkipped = run.Result.FilesSkipped,
+                    FilesExtra = run.Result.FilesExtra,
+                    FilesFailed = run.Result.FilesFailed,
+                    FinishedAt = DateTime.Now,
+                });
+            }
 
             try
             {

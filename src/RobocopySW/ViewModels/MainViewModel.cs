@@ -56,6 +56,7 @@ public sealed class MainViewModel : ObservableObject
         });
         MoveUpCommand = new RelayCommand(() => MoveSelected(-1), () => CanMove(-1));
         MoveDownCommand = new RelayCommand(() => MoveSelected(+1), () => CanMove(+1));
+        RefreshCommand = new RelayCommand(ReloadLastResults);
 
         Loc.Instance.PropertyChanged += (_, _) => OnPropertyChanged(nameof(StatusText));
     }
@@ -130,6 +131,7 @@ public sealed class MainViewModel : ObservableObject
     public RelayCommand ClearLogCommand { get; }
     public RelayCommand MoveUpCommand { get; }
     public RelayCommand MoveDownCommand { get; }
+    public RelayCommand RefreshCommand { get; }
 
     /// <summary>Ricostruisce la collezione dei job dalla configurazione corrente.</summary>
     public void ReloadJobs()
@@ -137,7 +139,16 @@ public sealed class MainViewModel : ObservableObject
         Jobs.Clear();
         foreach (var job in _host.Config.Jobs)
             Jobs.Add(new JobViewModel(job));
+        ReloadLastResults();
         OnPropertyChanged(nameof(StatusText));
+    }
+
+    /// <summary>Ricarica da disco l'ultimo esito di ogni job (anche da backup pianificati).</summary>
+    public void ReloadLastResults()
+    {
+        var map = _host.Results.Load();
+        foreach (var jvm in Jobs)
+            jvm.ApplyLastResult(map.TryGetValue(jvm.Name, out var r) ? r : null);
     }
 
     /// <summary>Riallinea la lista dei job nella config e salva su disco.</summary>
@@ -198,9 +209,11 @@ public sealed class MainViewModel : ObservableObject
                 try
                 {
                     var result = await runner.RunJobAsync(jvm.Model, dryRun, progress, _cts.Token);
-                    var esito = result.Success ? Loc.Instance["Run_OK"] : Loc.Instance["Run_Error"];
-                    var errori = result.FilesFailed > 0 ? $" · {result.FilesFailed} {Loc.Instance["Stat_Errors"]}" : "";
-                    jvm.LastStatus = $"{esito} · {result.FilesCopied} {Loc.Instance["Stat_Copied"]} · {result.FilesSkipped} {Loc.Instance["Stat_Unchanged"]} · {result.FilesExtra} {Loc.Instance["Stat_Extra"]}{errori}";
+                    if (dryRun)
+                        jvm.LastStatus = $"{Loc.Instance["Run_OK"]} · {Loc.Instance["Run_Preview"]}";
+                    else
+                        jvm.LastStatus = RunStatus.Format(result.Success, result.FilesCopied, result.FilesSkipped,
+                            result.FilesExtra, result.FilesFailed, DateTime.Now);
                     Enqueue($"=> {jvm.Name}: {result.Status} (exit {result.ExitCode})");
                 }
                 catch (OperationCanceledException)

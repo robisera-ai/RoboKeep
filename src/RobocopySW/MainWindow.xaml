@@ -44,7 +44,11 @@
                            Command="{Binding StopCommand}"
                            Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
             </StackPanel>
-            <ui:Button HorizontalAlignment="Right" Icon="{ui:SymbolIcon Settings24}" Content="{l:Tr Main_Settings}" Click="OnSettings"/>
+            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                <ui:Button Icon="{ui:SymbolIcon ArrowSync24}" ToolTip="{l:Tr Main_Refresh}"
+                           Command="{Binding RefreshCommand}" Margin="0,0,8,0"/>
+                <ui:Button Icon="{ui:SymbolIcon Settings24}" Content="{l:Tr Main_Settings}" Click="OnSettings"/>
+            </StackPanel>
         </Grid>
 
         <!-- Contenuto: tabella job + log -->
@@ -79,7 +83,7 @@
                             <DataGridTextColumn Header="{l:Tr Col_Mode}" Binding="{Binding ModeLabel}" Width="100" IsReadOnly="True"/>
                             <DataGridTextColumn Header="{l:Tr Col_Source}" Binding="{Binding Source}" Width="*" IsReadOnly="True"/>
                             <DataGridTextColumn Header="{l:Tr Col_Dest}" Binding="{Binding Destination}" Width="*" IsReadOnly="True"/>
-                            <DataGridTextColumn Header="{l:Tr Col_LastResult}" Binding="{Binding LastStatus}" Width="320" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="{l:Tr Col_LastResult}" Binding="{Binding LastStatus}" Width="380" IsReadOnly="True"/>
                         </DataGrid.Columns>
                     </DataGrid>
 

@@ -1,3 +1,4 @@
+using System.IO;
 using RobocopySW.Core.Models;
 using RobocopySW.Core.Services;
 
@@ -11,12 +12,14 @@ public sealed class AppHost
     public AppConfig Config { get; private set; }
     public ConfigStore Store { get; }
     public CredentialService Credentials { get; }
+    public LastResultStore Results { get; }
 
     private AppHost(ConfigStore store, AppConfig config)
     {
         Store = store;
         Config = config;
         Credentials = new CredentialService(config.Settings.CredentialScope);
+        Results = new LastResultStore(Path.Combine(store.DirectoryPath, "lastresults.json"));
     }
 
     public static AppHost Load(string? configPath = null)
@@ -35,7 +38,7 @@ public sealed class AppHost
         var runner = new RobocopyRunner();
         var log = new LogService(Config.Settings);
         var email = new EmailService(Credentials);
-        return new BackupRunner(Config, runner, log, email, Credentials);
+        return new BackupRunner(Config, runner, log, email, Credentials, Results);
     }
 
     /// <summary>

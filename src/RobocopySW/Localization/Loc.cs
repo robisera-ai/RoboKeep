@@ -97,6 +97,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Main_Settings"] = "Impostazioni",
         ["Main_LogTitle"] = "Log esecuzione",
         ["Main_Clear"] = "Pulisci",
+        ["Main_Refresh"] = "Aggiorna",
 
         ["Col_Active"] = "Attivo",
         ["Col_Name"] = "Nome",
@@ -242,6 +243,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Main_Settings"] = "Settings",
         ["Main_LogTitle"] = "Execution log",
         ["Main_Clear"] = "Clear",
+        ["Main_Refresh"] = "Refresh",
 
         ["Col_Active"] = "Enabled",
         ["Col_Name"] = "Name",
@@ -387,6 +389,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Main_Settings"] = "Configuración",
         ["Main_LogTitle"] = "Registro de ejecución",
         ["Main_Clear"] = "Limpiar",
+        ["Main_Refresh"] = "Actualizar",
 
         ["Col_Active"] = "Activo",
         ["Col_Name"] = "Nombre",
@@ -532,6 +535,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Main_Settings"] = "Paramètres",
         ["Main_LogTitle"] = "Journal d'exécution",
         ["Main_Clear"] = "Effacer",
+        ["Main_Refresh"] = "Actualiser",
 
         ["Col_Active"] = "Actif",
         ["Col_Name"] = "Nom",
@@ -677,6 +681,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Main_Settings"] = "Einstellungen",
         ["Main_LogTitle"] = "Ausführungsprotokoll",
         ["Main_Clear"] = "Leeren",
+        ["Main_Refresh"] = "Aktualisieren",
 
         ["Col_Active"] = "Aktiv",
         ["Col_Name"] = "Name",

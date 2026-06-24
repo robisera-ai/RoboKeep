@@ -42,6 +42,14 @@ public sealed class JobViewModel : ObservableObject
         set => SetField(ref _isRunning, value);
     }
 
+    /// <summary>Imposta l'esito a partire dall'ultimo risultato persistito (o "—" se assente).</summary>
+    public void ApplyLastResult(JobLastResult? r)
+    {
+        LastStatus = r is null
+            ? "—"
+            : RunStatus.Format(r.Success, r.FilesCopied, r.FilesSkipped, r.FilesExtra, r.FilesFailed, r.FinishedAt);
+    }
+
     /// <summary>Notifica la UI dopo una modifica del modello sottostante.</summary>
     public void RefreshAll()
     {

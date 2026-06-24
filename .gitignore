@@ -18,6 +18,7 @@ coverage*.json
 
 # Configurazione runtime con credenziali (DPAPI) e log generati
 config.local.json
+lastresults.json
 /logs/
 /temp/
 /errorlogs/

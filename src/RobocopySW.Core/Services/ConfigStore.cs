@@ -23,6 +23,9 @@ public sealed class ConfigStore
 
     public ConfigStore(string path) => _path = path;
 
+    /// <summary>Cartella che contiene il file di configurazione (per file affini, es. esiti).</summary>
+    public string DirectoryPath => Path.GetDirectoryName(_path) ?? AppContext.BaseDirectory;
+
     /// <summary>
     /// Percorso di default del file di configurazione: <c>config.json</c> accanto
     /// all'eseguibile (modello "portabile": app, config, log e temp nella stessa cartella).
