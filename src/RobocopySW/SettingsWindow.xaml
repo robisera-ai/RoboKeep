@@ -39,6 +39,7 @@
         <TabControl Grid.Row="1" Margin="20,4,20,0">
             <!-- GENERALE -->
             <TabItem Header="{l:Tr Tab_General}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,14,0">
                 <StackPanel Margin="4,12">
                     <TextBlock Text="{l:Tr Set_Language}" Style="{StaticResource Label}"/>
                     <ComboBox Width="260" HorizontalAlignment="Left"
@@ -82,49 +83,78 @@
                     <CheckBox Content="{l:Tr Set_CredScopeUser}" IsChecked="{Binding CredentialScopeUser}"/>
                     <TextBlock Opacity="0.7" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0" Text="{l:Tr Set_CredScopeHint}"/>
                 </StackPanel>
+                </ScrollViewer>
             </TabItem>
 
             <!-- EMAIL -->
             <TabItem Header="{l:Tr Tab_Email}">
-                <StackPanel Margin="4,12">
-                    <CheckBox Content="{l:Tr Email_Enable}" IsChecked="{Binding EmailEnabled}"/>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,14,0">
+                    <StackPanel Margin="4,12">
+                        <CheckBox Content="{l:Tr Email_Enable}" IsChecked="{Binding EmailEnabled}"/>
 
-                    <StackPanel IsEnabled="{Binding EmailEnabled}" Margin="0,4,0,0">
-                        <CheckBox Content="{l:Tr Email_OnlyError}" IsChecked="{Binding OnlyOnError}" Margin="0,4,0,0"/>
+                        <StackPanel IsEnabled="{Binding EmailEnabled}" Margin="0,4,0,0">
+                            <CheckBox Content="{l:Tr Email_OnlyError}" IsChecked="{Binding OnlyOnError}" Margin="0,4,0,0"/>
 
-                        <Grid Margin="0,8,0,0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                <TextBlock Text="{l:Tr Email_Smtp}" Style="{StaticResource Label}"/>
-                                <ui:TextBox Text="{Binding SmtpHost, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1">
-                                <TextBlock Text="{l:Tr Email_Port}" Style="{StaticResource Label}"/>
-                                <ui:TextBox Text="{Binding SmtpPort, UpdateSourceTrigger=PropertyChanged}"/>
-                            </StackPanel>
-                        </Grid>
+                            <Grid Margin="0,8,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                    <TextBlock Text="{l:Tr Email_Smtp}" Style="{StaticResource Label}"/>
+                                    <ui:TextBox Text="{Binding SmtpHost, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{l:Tr Email_Port}" Style="{StaticResource Label}"/>
+                                    <ui:TextBox Text="{Binding SmtpPort, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                            </Grid>
 
-                        <CheckBox Content="{l:Tr Email_Ssl}" IsChecked="{Binding UseSsl}" Margin="0,8,0,0"/>
+                            <CheckBox Content="{l:Tr Email_Ssl}" IsChecked="{Binding UseSsl}" Margin="0,8,0,0"/>
 
-                        <TextBlock Text="{l:Tr Email_From}" Style="{StaticResource Label}"/>
-                        <ui:TextBox Text="{Binding EmailFrom, UpdateSourceTrigger=PropertyChanged}"/>
-                        <TextBlock Text="{l:Tr Email_To}" Style="{StaticResource Label}"/>
-                        <ui:TextBox Text="{Binding EmailTo, UpdateSourceTrigger=PropertyChanged}"/>
-                        <TextBlock Text="{l:Tr Email_User}" Style="{StaticResource Label}"/>
-                        <ui:TextBox Text="{Binding EmailUser, UpdateSourceTrigger=PropertyChanged}"/>
-                        <TextBlock Text="{l:Tr Email_Pwd}" Style="{StaticResource Label}"/>
-                        <PasswordBox x:Name="EmailPasswordBox"/>
+                            <!-- Da | A affiancati -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                    <TextBlock Text="{l:Tr Email_From}" Style="{StaticResource Label}"/>
+                                    <ui:TextBox Text="{Binding EmailFrom, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{l:Tr Email_To}" Style="{StaticResource Label}"/>
+                                    <ui:TextBox Text="{Binding EmailTo, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                            </Grid>
 
-                        <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                            <ui:Button x:Name="TestEmailButton" Content="{l:Tr Email_TestButton}"
-                                       Icon="{ui:SymbolIcon Send24}" Click="OnSendTestEmail"/>
+                            <!-- Utente | Password affiancati -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                    <TextBlock Text="{l:Tr Email_User}" Style="{StaticResource Label}"/>
+                                    <ui:TextBox Text="{Binding EmailUser, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{l:Tr Email_Pwd}" Style="{StaticResource Label}"/>
+                                    <PasswordBox x:Name="EmailPasswordBox"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Stato a sinistra, pulsante in basso a destra -->
+                            <Grid Margin="0,14,0,0">
+                                <TextBlock x:Name="EmailTestStatus" VerticalAlignment="Center"
+                                           TextWrapping="Wrap" Margin="0,0,12,0"/>
+                                <ui:Button x:Name="TestEmailButton" HorizontalAlignment="Right"
+                                           Content="{l:Tr Email_TestButton}" Icon="{ui:SymbolIcon Send24}"
+                                           Appearance="Primary" Click="OnSendTestEmail"/>
+                            </Grid>
                         </StackPanel>
-                        <TextBlock x:Name="EmailTestStatus" Margin="0,8,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
-                </StackPanel>
+                </ScrollViewer>
             </TabItem>
 
             <!-- CREDENZIALI -->
