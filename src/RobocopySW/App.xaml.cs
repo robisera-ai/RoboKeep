@@ -25,6 +25,7 @@ public partial class App : Application
             // Modalità headless: aggancia la console del processo padre (se presente) per l'output.
             AttachConsole(AttachParentProcess);
             var host = AppHost.Load(options.ConfigPath);
+            Localization.Loc.Instance.ApplyFromSetting(host.Config.Settings.Language);
             var exit = await host.RunHeadlessAsync(options);
             Shutdown(exit);
             return;

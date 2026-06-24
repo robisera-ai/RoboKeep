@@ -1,6 +1,7 @@
 using RobocopySW.Core.Models;
 using RobocopySW.Core.Services;
 using RobocopySW.Infra;
+using RobocopySW.Localization;
 
 namespace RobocopySW.ViewModels;
 
@@ -32,6 +33,18 @@ public sealed class SettingsViewModel : ObservableObject
     }
 
     public IList<CredentialEntry> CredentialList { get; }
+
+    /// <summary>Lingua selezionata: "auto", "it" o "en". Il cambio si applica subito (live).</summary>
+    public string LanguageSetting
+    {
+        get => _s.Language ?? "auto";
+        set
+        {
+            _s.Language = value == "auto" ? null : value;
+            Loc.Instance.ApplyFromSetting(_s.Language);
+            OnPropertyChanged();
+        }
+    }
 
     public string LogRoot { get => _s.LogRoot; set { _s.LogRoot = value; OnPropertyChanged(); } }
     public string TempRoot { get => _s.TempRoot; set { _s.TempRoot = value; OnPropertyChanged(); } }

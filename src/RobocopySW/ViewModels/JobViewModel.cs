@@ -1,5 +1,6 @@
 using RobocopySW.Core.Models;
 using RobocopySW.Infra;
+using RobocopySW.Localization;
 
 namespace RobocopySW.ViewModels;
 
@@ -8,7 +9,12 @@ public sealed class JobViewModel : ObservableObject
 {
     public BackupJob Model { get; }
 
-    public JobViewModel(BackupJob model) => Model = model;
+    public JobViewModel(BackupJob model)
+    {
+        Model = model;
+        // Aggiorna l'etichetta modalità quando cambia la lingua.
+        Loc.Instance.PropertyChanged += (_, _) => OnPropertyChanged(nameof(ModeLabel));
+    }
 
     public string Name => Model.Name;
     public string Source => Model.Source;
@@ -20,7 +26,7 @@ public sealed class JobViewModel : ObservableObject
         set { Model.Enabled = value; OnPropertyChanged(); }
     }
 
-    public string ModeLabel => Model.Mirror ? "Mirror" : "Solo copia";
+    public string ModeLabel => Model.Mirror ? Loc.Instance["Mode_Mirror"] : Loc.Instance["Mode_CopyOnly"];
 
     private string _lastStatus = "—";
     public string LastStatus

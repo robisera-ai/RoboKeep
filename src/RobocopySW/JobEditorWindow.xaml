@@ -5,8 +5,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:ctl="clr-namespace:RobocopySW.Controls"
+        xmlns:l="clr-namespace:RobocopySW.Localization"
         mc:Ignorable="d"
-        Title="Modifica job" Height="740" Width="740"
+        Title="{l:Tr Editor_TitleEdit}" Height="740" Width="740"
         ExtendsContentIntoTitleBar="True"
         WindowBackdropType="Mica"
         WindowCornerPreference="Round"
@@ -31,7 +32,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Title="Modifica job">
+        <ui:TitleBar Grid.Row="0" Title="{l:Tr Editor_TitleEdit}">
             <ui:TitleBar.Icon>
                 <ui:SymbolIcon Symbol="Edit24"/>
             </ui:TitleBar.Icon>
@@ -39,45 +40,43 @@
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="20,4,8,0" Padding="0,0,16,0">
             <StackPanel>
-                <TextBlock Text="Nome" Style="{StaticResource Label}"/>
-                <ui:TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="es. Documenti"/>
+                <TextBlock Text="{l:Tr Editor_Name}" Style="{StaticResource Label}"/>
+                <ui:TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="{l:Tr Editor_NamePlaceholder}"/>
 
-                <TextBlock Text="Sorgente" Style="{StaticResource Label}"/>
+                <TextBlock Text="{l:Tr Editor_Source}" Style="{StaticResource Label}"/>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <ui:TextBox Grid.Column="0" Text="{Binding Source, UpdateSourceTrigger=PropertyChanged}"/>
-                    <ui:Button Grid.Column="1" Content="Sfoglia…" Icon="{ui:SymbolIcon FolderOpen24}" Margin="8,0,0,0" Click="OnBrowseSource"/>
+                    <ui:Button Grid.Column="1" Content="{l:Tr Common_Browse}" Icon="{ui:SymbolIcon FolderOpen24}" Margin="8,0,0,0" Click="OnBrowseSource"/>
                 </Grid>
 
-                <TextBlock Text="Destinazione" Style="{StaticResource Label}"/>
+                <TextBlock Text="{l:Tr Editor_Dest}" Style="{StaticResource Label}"/>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <ui:TextBox Grid.Column="0" Text="{Binding Destination, UpdateSourceTrigger=PropertyChanged}"/>
-                    <ui:Button Grid.Column="1" Content="Sfoglia…" Icon="{ui:SymbolIcon FolderOpen24}" Margin="8,0,0,0" Click="OnBrowseDest"/>
+                    <ui:Button Grid.Column="1" Content="{l:Tr Common_Browse}" Icon="{ui:SymbolIcon FolderOpen24}" Margin="8,0,0,0" Click="OnBrowseDest"/>
                 </Grid>
 
                 <ui:Card Margin="0,16,0,0" Padding="14">
                     <StackPanel>
-                        <CheckBox Content="Mirror — rende la destinazione identica alla sorgente (CANCELLA i file rimossi)"
-                                  IsChecked="{Binding Mirror}"/>
-                        <TextBlock Style="{StaticResource Hint}"
-                                   Text="Disattivato = copia e aggiorna soltanto, senza mai cancellare in destinazione."/>
-                        <CheckBox Content="Non sovrascrivere i file più recenti in destinazione (/XO)" IsChecked="{Binding ExcludeOlder}" Margin="0,6,0,0"/>
-                        <CheckBox Content="Copia anche ACL/owner (/COPYALL — utile su share di rete)" IsChecked="{Binding CopyAll}" Margin="0,6,0,0"/>
+                        <CheckBox Content="{l:Tr Editor_Mirror}" IsChecked="{Binding Mirror}"/>
+                        <TextBlock Style="{StaticResource Hint}" Text="{l:Tr Editor_MirrorHint}"/>
+                        <CheckBox Content="{l:Tr Editor_ExcludeOlder}" IsChecked="{Binding ExcludeOlder}" Margin="0,6,0,0"/>
+                        <CheckBox Content="{l:Tr Editor_CopyAll}" IsChecked="{Binding CopyAll}" Margin="0,6,0,0"/>
 
                         <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                            <CheckBox Content="Ottimizza file grandi (/J — I/O non bufferizzato)" IsChecked="{Binding UnbufferedIO}"/>
-                            <ctl:InfoHint Margin="6,0,0,0" Text="Per file molto grandi (multi-GB): bypassa la cache del file system, spesso più veloce su SSD/NVMe e reti veloci. Non aiuta i file piccoli. Si esclude a vicenda con la copia riavviabile."/>
+                            <CheckBox Content="{l:Tr Editor_BigJ}" IsChecked="{Binding UnbufferedIO}"/>
+                            <ctl:InfoHint Margin="6,0,0,0" Text="{l:Tr Editor_BigJTip}"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                            <CheckBox Content="Copia riavviabile (/Z — riprende se interrotta)" IsChecked="{Binding Restartable}"/>
-                            <ctl:InfoHint Margin="6,0,0,0" Text="Riprende la copia di un file grande se si interrompe (utile su VPN, Wi-Fi o reti inaffidabili). Ha un po' di overhead: su reti stabili è meglio lasciarla spenta. Si esclude a vicenda con l'ottimizzazione file grandi."/>
+                            <CheckBox Content="{l:Tr Editor_RestartZ}" IsChecked="{Binding Restartable}"/>
+                            <ctl:InfoHint Margin="6,0,0,0" Text="{l:Tr Editor_RestartZTip}"/>
                         </StackPanel>
                     </StackPanel>
                 </ui:Card>
@@ -90,30 +89,30 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Thread (/MT)" Style="{StaticResource Label}"/>
-                            <ctl:InfoHint Margin="0,12,0,0" Text="Numero di file copiati in parallelo (multi-thread). Più alto = più veloce, soprattutto con tanti file piccoli. 8 va bene quasi sempre; 16+ su SSD o share di rete veloci; su hard disk meccanici meglio non esagerare. 0 disattiva il multi-thread."/>
+                            <TextBlock Text="{l:Tr Editor_Threads}" Style="{StaticResource Label}"/>
+                            <ctl:InfoHint Margin="0,12,0,0" Text="{l:Tr Editor_ThreadsTip}"/>
                         </StackPanel>
                         <ui:TextBox Text="{Binding MultiThread, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Tentativi (/R)" Style="{StaticResource Label}"/>
-                            <ctl:InfoHint Margin="0,12,0,0" Text="Quante volte riprovare a copiare un file se la copia fallisce (es. file temporaneamente in uso o rete instabile). Con file spesso aperti tieni un valore basso (1) per non aspettare a lungo."/>
+                            <TextBlock Text="{l:Tr Editor_Retries}" Style="{StaticResource Label}"/>
+                            <ctl:InfoHint Margin="0,12,0,0" Text="{l:Tr Editor_RetriesTip}"/>
                         </StackPanel>
                         <ui:TextBox Text="{Binding Retries, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                     <StackPanel Grid.Column="2">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Attesa sec (/W)" Style="{StaticResource Label}"/>
-                            <ctl:InfoHint Margin="0,12,0,0" Text="Secondi di attesa tra un tentativo e l'altro. Si combina con i Tentativi (es. 1 tentativo × 5 sec). Valori alti allungano molto i tempi se ci sono file problematici."/>
+                            <TextBlock Text="{l:Tr Editor_Wait}" Style="{StaticResource Label}"/>
+                            <ctl:InfoHint Margin="0,12,0,0" Text="{l:Tr Editor_WaitTip}"/>
                         </StackPanel>
                         <ui:TextBox Text="{Binding Wait, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                 </Grid>
 
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Credenziale di rete (per share UNC)" Style="{StaticResource Label}"/>
-                    <ctl:InfoHint Margin="0,12,0,0" Text="Serve solo se sorgente o destinazione è una cartella di rete condivisa (\\server\condivisione) che richiede utente e password. Le credenziali si creano in Impostazioni → Credenziali. Per dischi locali o USB lascia «nessuna»."/>
+                    <TextBlock Text="{l:Tr Editor_Credential}" Style="{StaticResource Label}"/>
+                    <ctl:InfoHint Margin="0,12,0,0" Text="{l:Tr Editor_CredentialTip}"/>
                 </StackPanel>
                 <ComboBox ItemsSource="{Binding Credentials}" SelectedItem="{Binding SelectedCredential}"
                           DisplayMemberPath="Display"/>
@@ -125,8 +124,8 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0" Margin="0,0,8,0">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Escludi file (uno per riga)" Style="{StaticResource Label}"/>
-                            <ctl:InfoHint Margin="0,12,0,0" Text="Schemi di file da NON copiare, uno per riga. Esempi: *.tmp (tutti i .tmp), ~$* (temporanei di Office), *.log. Lascia vuoto per copiare tutto."/>
+                            <TextBlock Text="{l:Tr Editor_ExcludeFiles}" Style="{StaticResource Label}"/>
+                            <ctl:InfoHint Margin="0,12,0,0" Text="{l:Tr Editor_ExcludeFilesTip}"/>
                         </StackPanel>
                         <ui:TextBox Text="{Binding ExcludeFilesText, UpdateSourceTrigger=PropertyChanged}"
                                  AcceptsReturn="True" Height="76" TextWrapping="NoWrap"
@@ -134,8 +133,8 @@
                     </StackPanel>
                     <StackPanel Grid.Column="1">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Escludi cartelle (una per riga)" Style="{StaticResource Label}"/>
-                            <ctl:InfoHint Margin="0,12,0,0" Text="Nomi di cartelle da saltare, una per riga. Esempi: cache, node_modules, Temp. Vengono escluse ovunque compaiano nell'albero."/>
+                            <TextBlock Text="{l:Tr Editor_ExcludeDirs}" Style="{StaticResource Label}"/>
+                            <ctl:InfoHint Margin="0,12,0,0" Text="{l:Tr Editor_ExcludeDirsTip}"/>
                         </StackPanel>
                         <ui:TextBox Text="{Binding ExcludeDirsText, UpdateSourceTrigger=PropertyChanged}"
                                  AcceptsReturn="True" Height="76" TextWrapping="NoWrap"
@@ -143,7 +142,7 @@
                     </StackPanel>
                 </Grid>
 
-                <TextBlock Text="Anteprima comando robocopy" Style="{StaticResource Label}"/>
+                <TextBlock Text="{l:Tr Editor_CommandPreview}" Style="{StaticResource Label}"/>
                 <Border CornerRadius="6" Background="#1E1E1E" Padding="10" Margin="0,0,0,12">
                     <TextBox Text="{Binding CommandPreview, Mode=OneWay}" IsReadOnly="True" Style="{x:Null}"
                              FontFamily="Cascadia Mono, Consolas" FontSize="12" TextWrapping="Wrap"
@@ -155,8 +154,8 @@
 
         <Border Grid.Row="2" Padding="20,12" Background="#11888888">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <ui:Button Content="Annulla" Width="110" Margin="0,0,8,0" IsCancel="True" Click="OnCancel"/>
-                <ui:Button Content="Salva" Width="110" Appearance="Primary" Icon="{ui:SymbolIcon Save24}" IsDefault="True" Click="OnSave"/>
+                <ui:Button Content="{l:Tr Common_Cancel}" Width="110" Margin="0,0,8,0" IsCancel="True" Click="OnCancel"/>
+                <ui:Button Content="{l:Tr Common_Save}" Width="110" Appearance="Primary" Icon="{ui:SymbolIcon Save24}" IsDefault="True" Click="OnSave"/>
             </StackPanel>
         </Border>
     </Grid>

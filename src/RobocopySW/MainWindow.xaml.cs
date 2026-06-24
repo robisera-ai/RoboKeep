@@ -1,5 +1,6 @@
 using System.Windows;
 using RobocopySW.Core.Models;
+using RobocopySW.Localization;
 using RobocopySW.ViewModels;
 
 namespace RobocopySW;
@@ -11,8 +12,9 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
     public MainWindow()
     {
-        InitializeComponent();
         _host = AppHost.Load();
+        Loc.Instance.ApplyFromSetting(_host.Config.Settings.Language);
+        InitializeComponent();
         _vm = new MainViewModel(_host);
         DataContext = _vm;
 
@@ -27,7 +29,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
     private void OnNewJob(object sender, RoutedEventArgs e)
     {
-        var job = new BackupJob { Name = "Nuovo job" };
+        var job = new BackupJob { Name = Loc.Instance["Editor_NewJobName"] };
         if (ShowEditor(job))
         {
             _vm.Jobs.Add(new JobViewModel(job));
@@ -56,7 +58,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         if (selected is null) return;
 
         var confirm = MessageBox.Show(
-            $"Eliminare il job '{selected.Name}'?", "Conferma",
+            string.Format(Loc.Instance["Delete_Confirm"], selected.Name),
+            Loc.Instance["Common_Confirm"],
             MessageBoxButton.YesNo, MessageBoxImage.Question);
         if (confirm == MessageBoxResult.Yes)
         {

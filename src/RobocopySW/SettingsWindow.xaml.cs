@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using Microsoft.Win32;
 using RobocopySW.Core.Models;
 using RobocopySW.Core.Services;
+using RobocopySW.Localization;
 using RobocopySW.ViewModels;
 
 namespace RobocopySW;
@@ -40,7 +41,7 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
 
     private static string? BrowseFolder(string? initial)
     {
-        var dlg = new OpenFolderDialog { Title = "Seleziona cartella" };
+        var dlg = new OpenFolderDialog { Title = Loc.Instance["Editor_BrowseTitle"] };
         if (!string.IsNullOrWhiteSpace(initial) && Directory.Exists(initial))
             dlg.InitialDirectory = initial;
         return dlg.ShowDialog() == true ? dlg.FolderName : null;
@@ -61,7 +62,7 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
     {
         if (string.IsNullOrWhiteSpace(CredId.Text))
         {
-            MessageBox.Show("L'Id della credenziale è obbligatorio.", "Dati mancanti",
+            MessageBox.Show(Loc.Instance["Cred_NameRequired"], Loc.Instance["Common_MissingData"],
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -85,7 +86,7 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
         {
             if (!TimeOnly.TryParse(ScheduleTime.Text, out var time))
             {
-                MessageBox.Show("Orario non valido. Usa il formato HH:mm.", "Pianificazione",
+                MessageBox.Show(Loc.Instance["Sched_BadTime"], Loc.Instance["Tab_Schedule"],
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -98,12 +99,12 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
 
             _scheduler.CreateOrUpdate(ScheduledTaskName, exe, "--run-all", freq, time);
             ScheduleStatus.Foreground = System.Windows.Media.Brushes.Green;
-            ScheduleStatus.Text = $"Attività pianificata creata/aggiornata per le {time:HH:mm}.";
+            ScheduleStatus.Text = string.Format(Loc.Instance["Sched_Created"], time.ToString("HH:mm"));
         }
         catch (Exception ex)
         {
             ScheduleStatus.Foreground = System.Windows.Media.Brushes.Red;
-            ScheduleStatus.Text = "Errore: " + ex.Message;
+            ScheduleStatus.Text = string.Format(Loc.Instance["Sched_Error"], ex.Message);
         }
     }
 
@@ -113,12 +114,12 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
         {
             _scheduler.Delete(ScheduledTaskName);
             ScheduleStatus.Foreground = System.Windows.Media.Brushes.Green;
-            ScheduleStatus.Text = "Attività pianificata rimossa.";
+            ScheduleStatus.Text = Loc.Instance["Sched_Removed"];
         }
         catch (Exception ex)
         {
             ScheduleStatus.Foreground = System.Windows.Media.Brushes.Red;
-            ScheduleStatus.Text = "Errore: " + ex.Message;
+            ScheduleStatus.Text = string.Format(Loc.Instance["Sched_Error"], ex.Message);
         }
     }
 

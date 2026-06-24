@@ -26,20 +26,21 @@ public sealed class EmailService
         if (settings.OnlyOnError && result.Success)
             return false;
 
-        var esito = result.Success ? "OK" : "ERRORE";
+        var esito = result.Success ? "OK" : CoreLoc.S("ERRORE", "ERROR");
         var subject = $"[RobocopySW] {esito} - {result.JobName}";
 
+        var yesNo = result.DryRun ? CoreLoc.S("sì", "yes") : CoreLoc.S("no", "no");
         var body = new StringBuilder()
             .AppendLine($"Job: {result.JobName}")
-            .AppendLine($"Esito: {esito} (exit code {result.ExitCode}) - {result.Status}")
-            .AppendLine($"Anteprima: {(result.DryRun ? "sì" : "no")}")
-            .AppendLine($"Inizio: {result.StartedAt:yyyy-MM-dd HH:mm:ss}  Durata: {result.Duration:hh\\:mm\\:ss}")
+            .AppendLine($"{CoreLoc.S("Esito", "Result")}: {esito} (exit {result.ExitCode}) - {result.Status}")
+            .AppendLine($"{CoreLoc.S("Anteprima", "Preview")}: {yesNo}")
+            .AppendLine($"{CoreLoc.S("Inizio", "Start")}: {result.StartedAt:yyyy-MM-dd HH:mm:ss}  {CoreLoc.S("Durata", "Duration")}: {result.Duration:hh\\:mm\\:ss}")
             .AppendLine()
-            .AppendLine($"Cartelle copiate: {result.DirsCopied}")
-            .AppendLine($"File copiati:     {result.FilesCopied}")
-            .AppendLine($"File ignorati:    {result.FilesSkipped}")
-            .AppendLine($"File extra:       {result.FilesExtra}")
-            .AppendLine($"File falliti:     {result.FilesFailed}")
+            .AppendLine($"{CoreLoc.S("Cartelle copiate", "Folders copied"),-16}: {result.DirsCopied}")
+            .AppendLine($"{CoreLoc.S("File copiati", "Files copied"),-16}: {result.FilesCopied}")
+            .AppendLine($"{CoreLoc.S("File invariati", "Files unchanged"),-16}: {result.FilesSkipped}")
+            .AppendLine($"{CoreLoc.S("File extra", "Extra files"),-16}: {result.FilesExtra}")
+            .AppendLine($"{CoreLoc.S("File falliti", "Files failed"),-16}: {result.FilesFailed}")
             .ToString();
 
         using var message = new MailMessage(settings.From, settings.To, subject, body);

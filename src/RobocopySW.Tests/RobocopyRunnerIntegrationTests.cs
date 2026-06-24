@@ -109,24 +109,33 @@ public sealed class RobocopyRunnerIntegrationTests : IDisposable
     [Fact]
     public async Task BackupRunner_AppendsItalianRecapToLog()
     {
-        var config = new RobocopySW.Core.Models.AppConfig
+        var prevDefault = System.Globalization.CultureInfo.DefaultThreadCurrentUICulture;
+        System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = new System.Globalization.CultureInfo("it");
+        try
         {
-            Settings = new RobocopySW.Core.Models.AppSettings
+            var config = new RobocopySW.Core.Models.AppConfig
             {
-                LogRoot = Path.Combine(_base, "logs"),
-                TempRoot = Path.Combine(_base, "temp"),
-                CompressLogs = false,
-            },
-        };
-        var creds = new CredentialService();
-        var runner = new BackupRunner(config, new RobocopyRunner(), new LogService(config.Settings), new EmailService(creds), creds);
+                Settings = new RobocopySW.Core.Models.AppSettings
+                {
+                    LogRoot = Path.Combine(_base, "logs"),
+                    TempRoot = Path.Combine(_base, "temp"),
+                    CompressLogs = false,
+                },
+            };
+            var creds = new CredentialService();
+            var runner = new BackupRunner(config, new RobocopyRunner(), new LogService(config.Settings), new EmailService(creds), creds);
 
-        var result = await runner.RunJobAsync(Job(mirror: true));
+            var result = await runner.RunJobAsync(Job(mirror: true));
 
-        Assert.NotNull(result.LogPath);
-        var logText = File.ReadAllText(result.LogPath!);
-        Assert.Contains("RIEPILOGO", logText);
-        Assert.Contains("File invariati", logText);
+            Assert.NotNull(result.LogPath);
+            var logText = File.ReadAllText(result.LogPath!);
+            Assert.Contains("RIEPILOGO", logText);
+            Assert.Contains("File invariati", logText);
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.DefaultThreadCurrentUICulture = prevDefault;
+        }
     }
 
     [Fact]

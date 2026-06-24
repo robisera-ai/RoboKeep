@@ -15,6 +15,9 @@ public sealed class AppSettings
     /// <summary>Ambito di cifratura DPAPI per le password (credenziali ed email).</summary>
     public CredentialProtectionScope CredentialScope { get; set; } = CredentialProtectionScope.Machine;
 
+    /// <summary>Lingua dell'interfaccia: "it", "en" oppure null/"auto" = segue Windows.</summary>
+    public string? Language { get; set; }
+
     /// <summary>Cartella radice dei log archiviati (sotto vengono creati i giorni AAAAMMGG).</summary>
     public string LogRoot { get; set; } = "";
 

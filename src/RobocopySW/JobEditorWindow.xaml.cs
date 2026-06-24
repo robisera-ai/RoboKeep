@@ -2,6 +2,7 @@ using System.IO;
 using System.Windows;
 using Microsoft.Win32;
 using RobocopySW.Core.Models;
+using RobocopySW.Localization;
 using RobocopySW.ViewModels;
 
 namespace RobocopySW;
@@ -31,7 +32,7 @@ public partial class JobEditorWindow : Wpf.Ui.Controls.FluentWindow
 
     private static string? BrowseFolder(string? initial)
     {
-        var dlg = new OpenFolderDialog { Title = "Seleziona cartella" };
+        var dlg = new OpenFolderDialog { Title = Loc.Instance["Editor_BrowseTitle"] };
         if (!string.IsNullOrWhiteSpace(initial) && Directory.Exists(initial))
             dlg.InitialDirectory = initial;
         return dlg.ShowDialog() == true ? dlg.FolderName : null;
@@ -42,7 +43,7 @@ public partial class JobEditorWindow : Wpf.Ui.Controls.FluentWindow
         var error = _vm.Validate();
         if (error is not null)
         {
-            MessageBox.Show(error, "Dati mancanti", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(error, Loc.Instance["Common_MissingData"], MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
         DialogResult = true;

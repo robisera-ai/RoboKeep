@@ -1,6 +1,7 @@
 using RobocopySW.Core.Models;
 using RobocopySW.Core.Services;
 using RobocopySW.Infra;
+using RobocopySW.Localization;
 
 namespace RobocopySW.ViewModels;
 
@@ -15,7 +16,7 @@ public sealed class JobEditorViewModel : ObservableObject
     public JobEditorViewModel(BackupJob job, IEnumerable<CredentialEntry> credentials)
     {
         _job = job;
-        Credentials = new List<CredentialOption> { new(null, "(nessuna — percorso locale)") };
+        Credentials = new List<CredentialOption> { new(null, Loc.Instance["Cred_NoneLocal"]) };
         foreach (var c in credentials)
             Credentials.Add(new CredentialOption(c.Id, $"{c.Id} ({c.Host})"));
         _selectedCredential = Credentials.FirstOrDefault(o => o.Id == job.CredentialId) ?? Credentials[0];
@@ -152,9 +153,9 @@ public sealed class JobEditorViewModel : ObservableObject
     /// <summary>Validazione minima prima del salvataggio.</summary>
     public string? Validate()
     {
-        if (string.IsNullOrWhiteSpace(Name)) return "Il nome del job è obbligatorio.";
-        if (string.IsNullOrWhiteSpace(Source)) return "La cartella sorgente è obbligatoria.";
-        if (string.IsNullOrWhiteSpace(Destination)) return "La cartella destinazione è obbligatoria.";
+        if (string.IsNullOrWhiteSpace(Name)) return Loc.Instance["Editor_Val_Name"];
+        if (string.IsNullOrWhiteSpace(Source)) return Loc.Instance["Editor_Val_Source"];
+        if (string.IsNullOrWhiteSpace(Destination)) return Loc.Instance["Editor_Val_Dest"];
         return null;
     }
 

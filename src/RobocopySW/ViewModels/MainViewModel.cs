@@ -3,6 +3,7 @@ using System.Text;
 using System.Windows.Input;
 using System.Windows.Threading;
 using RobocopySW.Infra;
+using RobocopySW.Localization;
 
 namespace RobocopySW.ViewModels;
 
@@ -55,6 +56,8 @@ public sealed class MainViewModel : ObservableObject
         });
         MoveUpCommand = new RelayCommand(() => MoveSelected(-1), () => CanMove(-1));
         MoveDownCommand = new RelayCommand(() => MoveSelected(+1), () => CanMove(+1));
+
+        Loc.Instance.PropertyChanged += (_, _) => OnPropertyChanged(nameof(StatusText));
     }
 
     // Salva la configurazione quando un job viene attivato/disattivato dalla griglia.
@@ -115,7 +118,9 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
-    public string StatusText => IsBusy ? "Esecuzione in corso…" : $"{Jobs.Count} job configurati";
+    public string StatusText => IsBusy
+        ? Loc.Instance["Status_Running"]
+        : string.Format(Loc.Instance["Status_JobsConfigured"], Jobs.Count);
 
     public AsyncRelayCommand RunSelectedCommand { get; }
     public AsyncRelayCommand PreviewSelectedCommand { get; }
@@ -182,29 +187,30 @@ public sealed class MainViewModel : ObservableObject
         _logTimer.Start();
         try
         {
-            Enqueue($"===== {(dryRun ? "ANTEPRIMA" : "ESECUZIONE")} {DateTime.Now:HH:mm:ss} =====");
+            var header = dryRun ? Loc.Instance["Run_Preview"] : Loc.Instance["Run_Execution"];
+            Enqueue($"===== {header} {DateTime.Now:HH:mm:ss} =====");
             foreach (var jvm in jobs)
             {
                 if (_cts.IsCancellationRequested) break;
                 jvm.IsRunning = true;
-                jvm.LastStatus = dryRun ? "anteprima…" : "in corso…";
+                jvm.LastStatus = dryRun ? Loc.Instance["Run_PreviewStatus"] : Loc.Instance["Run_InProgress"];
                 Enqueue($"--- {jvm.Name} ---");
                 try
                 {
                     var result = await runner.RunJobAsync(jvm.Model, dryRun, progress, _cts.Token);
-                    var esito = result.Success ? "OK" : "ERRORE";
-                    var errori = result.FilesFailed > 0 ? $" · {result.FilesFailed} errori" : "";
-                    jvm.LastStatus = $"{esito} · {result.FilesCopied} copiati · {result.FilesSkipped} invariati · {result.FilesExtra} extra{errori}";
+                    var esito = result.Success ? Loc.Instance["Run_OK"] : Loc.Instance["Run_Error"];
+                    var errori = result.FilesFailed > 0 ? $" · {result.FilesFailed} {Loc.Instance["Stat_Errors"]}" : "";
+                    jvm.LastStatus = $"{esito} · {result.FilesCopied} {Loc.Instance["Stat_Copied"]} · {result.FilesSkipped} {Loc.Instance["Stat_Unchanged"]} · {result.FilesExtra} {Loc.Instance["Stat_Extra"]}{errori}";
                     Enqueue($"=> {jvm.Name}: {result.Status} (exit {result.ExitCode})");
                 }
                 catch (OperationCanceledException)
                 {
-                    jvm.LastStatus = "annullato";
-                    Enqueue($"!! {jvm.Name}: annullato dall'utente");
+                    jvm.LastStatus = Loc.Instance["Run_Cancelled"];
+                    Enqueue($"!! {jvm.Name}: {Loc.Instance["Run_CancelledUser"]}");
                 }
                 catch (Exception ex)
                 {
-                    jvm.LastStatus = "ERRORE";
+                    jvm.LastStatus = Loc.Instance["Run_Error"];
                     Enqueue($"!! {jvm.Name}: {ex.Message}");
                 }
                 finally

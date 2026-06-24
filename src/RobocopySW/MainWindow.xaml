@@ -4,9 +4,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:l="clr-namespace:RobocopySW.Localization"
         xmlns:local="clr-namespace:RobocopySW"
         mc:Ignorable="d"
-        Title="RobocopySW" Height="680" Width="1040"
+        Title="{l:Tr Main_Title}" Height="680" Width="1040"
         ExtendsContentIntoTitleBar="True"
         WindowBackdropType="Mica"
         WindowCornerPreference="Round"
@@ -19,7 +20,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Title="RobocopySW — Backup configurabile">
+        <ui:TitleBar Grid.Row="0" Title="{l:Tr Main_Title}">
             <ui:TitleBar.Icon>
                 <ui:SymbolIcon Symbol="FolderArrowRight24"/>
             </ui:TitleBar.Icon>
@@ -28,22 +29,22 @@
         <!-- Barra azioni -->
         <Grid Grid.Row="1" Margin="16,4,16,8">
             <StackPanel Orientation="Horizontal">
-                <ui:Button Icon="{ui:SymbolIcon Add24}" Content="Nuovo" Click="OnNewJob" Margin="0,0,8,0"/>
-                <ui:Button Icon="{ui:SymbolIcon Edit24}" Content="Modifica" Click="OnEditJob" Margin="0,0,8,0"/>
-                <ui:Button Icon="{ui:SymbolIcon Delete24}" Content="Elimina" Click="OnDeleteJob" Margin="0,0,8,0"/>
-                <ui:Button Icon="{ui:SymbolIcon ArrowUp24}" ToolTip="Sposta su (priorità più alta)" Command="{Binding MoveUpCommand}" Margin="0,0,4,0"/>
-                <ui:Button Icon="{ui:SymbolIcon ArrowDown24}" ToolTip="Sposta giù (priorità più bassa)" Command="{Binding MoveDownCommand}" Margin="0,0,8,0"/>
+                <ui:Button Icon="{ui:SymbolIcon Add24}" Content="{l:Tr Main_New}" Click="OnNewJob" Margin="0,0,8,0"/>
+                <ui:Button Icon="{ui:SymbolIcon Edit24}" Content="{l:Tr Main_Edit}" Click="OnEditJob" Margin="0,0,8,0"/>
+                <ui:Button Icon="{ui:SymbolIcon Delete24}" Content="{l:Tr Main_Delete}" Click="OnDeleteJob" Margin="0,0,8,0"/>
+                <ui:Button Icon="{ui:SymbolIcon ArrowUp24}" ToolTip="{l:Tr Main_MoveUpTip}" Command="{Binding MoveUpCommand}" Margin="0,0,4,0"/>
+                <ui:Button Icon="{ui:SymbolIcon ArrowDown24}" ToolTip="{l:Tr Main_MoveDownTip}" Command="{Binding MoveDownCommand}" Margin="0,0,8,0"/>
                 <Separator Margin="6,4" Background="#33888888"/>
-                <ui:Button Icon="{ui:SymbolIcon Eye24}" Content="Anteprima" Command="{Binding PreviewSelectedCommand}" Margin="0,0,8,0"/>
-                <ui:Button Icon="{ui:SymbolIcon Play24}" Content="Avvia selezionato" Appearance="Primary"
+                <ui:Button Icon="{ui:SymbolIcon Eye24}" Content="{l:Tr Main_Preview}" Command="{Binding PreviewSelectedCommand}" Margin="0,0,8,0"/>
+                <ui:Button Icon="{ui:SymbolIcon Play24}" Content="{l:Tr Main_RunSelected}" Appearance="Primary"
                            Command="{Binding RunSelectedCommand}" Margin="0,0,8,0"/>
-                <ui:Button Icon="{ui:SymbolIcon FastForward24}" Content="Avvia tutti"
+                <ui:Button Icon="{ui:SymbolIcon FastForward24}" Content="{l:Tr Main_RunAll}"
                            Command="{Binding RunAllCommand}" Margin="0,0,8,0"/>
-                <ui:Button Icon="{ui:SymbolIcon Stop24}" Content="Annulla" Appearance="Danger"
+                <ui:Button Icon="{ui:SymbolIcon Stop24}" Content="{l:Tr Common_Cancel}" Appearance="Danger"
                            Command="{Binding StopCommand}"
                            Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
             </StackPanel>
-            <ui:Button HorizontalAlignment="Right" Icon="{ui:SymbolIcon Settings24}" Content="Impostazioni" Click="OnSettings"/>
+            <ui:Button HorizontalAlignment="Right" Icon="{ui:SymbolIcon Settings24}" Content="{l:Tr Main_Settings}" Click="OnSettings"/>
         </Grid>
 
         <!-- Contenuto: tabella job + log -->
@@ -66,19 +67,19 @@
                               Visibility="{Binding HasJobs, Converter={StaticResource BoolToVis}}"
                               MouseDoubleClick="OnEditJob">
                         <DataGrid.Columns>
-                            <DataGridTemplateColumn Header="Attivo" Width="80">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate>
-                                    <ui:ToggleSwitch IsChecked="{Binding Enabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                     HorizontalAlignment="Center"/>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="170" IsReadOnly="True"/>
-                            <DataGridTextColumn Header="Modalità" Binding="{Binding ModeLabel}" Width="100" IsReadOnly="True"/>
-                            <DataGridTextColumn Header="Sorgente" Binding="{Binding Source}" Width="*" IsReadOnly="True"/>
-                            <DataGridTextColumn Header="Destinazione" Binding="{Binding Destination}" Width="*" IsReadOnly="True"/>
-                            <DataGridTextColumn Header="Ultimo esito" Binding="{Binding LastStatus}" Width="320" IsReadOnly="True"/>
+                            <DataGridTemplateColumn Header="{l:Tr Col_Active}" Width="80">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <ui:ToggleSwitch IsChecked="{Binding Enabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                         HorizontalAlignment="Center"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="{l:Tr Col_Name}" Binding="{Binding Name}" Width="170" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="{l:Tr Col_Mode}" Binding="{Binding ModeLabel}" Width="100" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="{l:Tr Col_Source}" Binding="{Binding Source}" Width="*" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="{l:Tr Col_Dest}" Binding="{Binding Destination}" Width="*" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="{l:Tr Col_LastResult}" Binding="{Binding LastStatus}" Width="320" IsReadOnly="True"/>
                         </DataGrid.Columns>
                     </DataGrid>
 
@@ -86,11 +87,10 @@
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="380"
                                 Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}">
                         <ui:SymbolIcon Symbol="FolderAdd24" FontSize="46" HorizontalAlignment="Center" Opacity="0.55"/>
-                        <TextBlock Text="Nessun job configurato" FontSize="18" FontWeight="SemiBold"
+                        <TextBlock Text="{l:Tr Empty_Title}" FontSize="18" FontWeight="SemiBold"
                                    HorizontalAlignment="Center" Margin="0,12,0,4"/>
-                        <TextBlock TextAlignment="Center" TextWrapping="Wrap" Opacity="0.7"
-                                   Text="Crea il primo backup: scegli una cartella sorgente e una destinazione."/>
-                        <ui:Button Content="Crea il primo job" Icon="{ui:SymbolIcon Add24}" Appearance="Primary"
+                        <TextBlock Text="{l:Tr Empty_Desc}" TextAlignment="Center" TextWrapping="Wrap" Opacity="0.7"/>
+                        <ui:Button Content="{l:Tr Empty_Button}" Icon="{ui:SymbolIcon Add24}" Appearance="Primary"
                                    HorizontalAlignment="Center" Margin="0,16,0,0" Click="OnNewJob"/>
                     </StackPanel>
                 </Grid>
@@ -103,9 +103,9 @@
                     <Grid DockPanel.Dock="Top" Margin="12,10,12,6">
                         <StackPanel Orientation="Horizontal">
                             <ui:SymbolIcon Symbol="SlideText24" Margin="0,0,8,0"/>
-                            <TextBlock Text="Log esecuzione" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <TextBlock Text="{l:Tr Main_LogTitle}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         </StackPanel>
-                        <ui:Button HorizontalAlignment="Right" Icon="{ui:SymbolIcon Eraser24}" Content="Pulisci"
+                        <ui:Button HorizontalAlignment="Right" Icon="{ui:SymbolIcon Eraser24}" Content="{l:Tr Main_Clear}"
                                    Appearance="Secondary" Command="{Binding ClearLogCommand}"/>
                     </Grid>
                     <Border Margin="12,0,12,12" CornerRadius="6" Background="#1E1E1E">

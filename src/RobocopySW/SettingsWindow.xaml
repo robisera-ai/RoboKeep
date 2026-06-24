@@ -4,8 +4,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:l="clr-namespace:RobocopySW.Localization"
         mc:Ignorable="d"
-        Title="Impostazioni" Height="660" Width="740"
+        Title="{l:Tr Settings_Title}" Height="660" Width="740"
         ExtendsContentIntoTitleBar="True"
         WindowBackdropType="Mica"
         WindowCornerPreference="Round"
@@ -15,7 +16,6 @@
             <Setter Property="Margin" Value="0,12,8,4"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Style.Triggers>
-                <!-- Quando il contenitore è disabilitato (es. email spenta), sbiadisci anche le etichette. -->
                 <Trigger Property="IsEnabled" Value="False">
                     <Setter Property="Opacity" Value="0.4"/>
                 </Trigger>
@@ -30,7 +30,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <ui:TitleBar Grid.Row="0" Title="Impostazioni">
+        <ui:TitleBar Grid.Row="0" Title="{l:Tr Settings_Title}">
             <ui:TitleBar.Icon>
                 <ui:SymbolIcon Symbol="Settings24"/>
             </ui:TitleBar.Icon>
@@ -38,52 +38,56 @@
 
         <TabControl Grid.Row="1" Margin="20,4,20,0">
             <!-- GENERALE -->
-            <TabItem Header="Generale">
+            <TabItem Header="{l:Tr Tab_General}">
                 <StackPanel Margin="4,12">
-                    <TextBlock Text="Cartella log (archivio per data)" Style="{StaticResource Label}"/>
+                    <TextBlock Text="{l:Tr Set_Language}" Style="{StaticResource Label}"/>
+                    <ComboBox Width="260" HorizontalAlignment="Left"
+                              SelectedValuePath="Tag" SelectedValue="{Binding LanguageSetting}">
+                        <ComboBoxItem Tag="auto" Content="{l:Tr Lang_Auto}"/>
+                        <ComboBoxItem Tag="it" Content="Italiano"/>
+                        <ComboBoxItem Tag="en" Content="English"/>
+                    </ComboBox>
+
+                    <TextBlock Text="{l:Tr Set_LogFolder}" Style="{StaticResource Label}"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <ui:TextBox Grid.Column="0" x:Name="LogRootBox" Text="{Binding LogRoot, UpdateSourceTrigger=PropertyChanged}"/>
-                        <ui:Button Grid.Column="1" Content="Sfoglia…" Icon="{ui:SymbolIcon FolderOpen24}" Margin="8,0,0,0" Click="OnBrowseLog"/>
+                        <ui:Button Grid.Column="1" Content="{l:Tr Common_Browse}" Icon="{ui:SymbolIcon FolderOpen24}" Margin="8,0,0,0" Click="OnBrowseLog"/>
                     </Grid>
 
-                    <TextBlock Text="Cartella temporanea" Style="{StaticResource Label}"/>
+                    <TextBlock Text="{l:Tr Set_TempFolder}" Style="{StaticResource Label}"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <ui:TextBox Grid.Column="0" x:Name="TempRootBox" Text="{Binding TempRoot, UpdateSourceTrigger=PropertyChanged}"/>
-                        <ui:Button Grid.Column="1" Content="Sfoglia…" Icon="{ui:SymbolIcon FolderOpen24}" Margin="8,0,0,0" Click="OnBrowseTemp"/>
+                        <ui:Button Grid.Column="1" Content="{l:Tr Common_Browse}" Icon="{ui:SymbolIcon FolderOpen24}" Margin="8,0,0,0" Click="OnBrowseTemp"/>
                     </Grid>
 
-                    <TextBlock Opacity="0.7" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,0"
-                               Text="I log sono SEMPRE attivi. Se lasci vuoti questi campi, log e file temporanei vanno nelle sottocartelle predefinite mostrate in grigio (accanto all'app). Compila un percorso solo per spostarli altrove."/>
+                    <TextBlock Opacity="0.7" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,0" Text="{l:Tr Set_PathsHint}"/>
 
-                    <CheckBox Content="Comprimi i log in .zip" IsChecked="{Binding CompressLogs}" Margin="0,16,0,0"/>
+                    <CheckBox Content="{l:Tr Set_Compress}" IsChecked="{Binding CompressLogs}" Margin="0,16,0,0"/>
 
-                    <TextBlock Text="Giorni di conservazione log (0 = non eliminare)" Style="{StaticResource Label}"/>
+                    <TextBlock Text="{l:Tr Set_Retention}" Style="{StaticResource Label}"/>
                     <ui:TextBox Width="140" HorizontalAlignment="Left" Text="{Binding LogRetentionDays, UpdateSourceTrigger=PropertyChanged}"/>
 
-                    <TextBlock Text="Sicurezza credenziali" Style="{StaticResource Label}"/>
-                    <CheckBox Content="Cifra le password solo per il mio utente Windows (più sicuro)"
-                              IsChecked="{Binding CredentialScopeUser}"/>
-                    <TextBlock Opacity="0.7" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0"
-                               Text="Attivo: password (credenziali ed email) decifrabili solo dal tuo utente; in compenso l'esecuzione pianificata deve girare con il tuo stesso utente. Disattivo: legate al PC, funzionano con qualsiasi utente (comodo per la schedulazione). Cambiando l'opzione, le password già salvate vengono ri-cifrate in automatico."/>
+                    <TextBlock Text="{l:Tr Set_CredSecurity}" Style="{StaticResource Label}"/>
+                    <CheckBox Content="{l:Tr Set_CredScopeUser}" IsChecked="{Binding CredentialScopeUser}"/>
+                    <TextBlock Opacity="0.7" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0" Text="{l:Tr Set_CredScopeHint}"/>
                 </StackPanel>
             </TabItem>
 
             <!-- EMAIL -->
-            <TabItem Header="Email">
+            <TabItem Header="{l:Tr Tab_Email}">
                 <StackPanel Margin="4,12">
-                    <CheckBox Content="Abilita notifiche email" IsChecked="{Binding EmailEnabled}"/>
+                    <CheckBox Content="{l:Tr Email_Enable}" IsChecked="{Binding EmailEnabled}"/>
 
-                    <!-- Campi disabilitati (ma compilati e conservati) quando l'email è spenta -->
                     <StackPanel IsEnabled="{Binding EmailEnabled}" Margin="0,4,0,0">
-                        <CheckBox Content="Invia solo in caso di errore" IsChecked="{Binding OnlyOnError}" Margin="0,4,0,0"/>
+                        <CheckBox Content="{l:Tr Email_OnlyError}" IsChecked="{Binding OnlyOnError}" Margin="0,4,0,0"/>
 
                         <Grid Margin="0,8,0,0">
                             <Grid.ColumnDefinitions>
@@ -91,56 +95,56 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                <TextBlock Text="Server SMTP" Style="{StaticResource Label}"/>
+                                <TextBlock Text="{l:Tr Email_Smtp}" Style="{StaticResource Label}"/>
                                 <ui:TextBox Text="{Binding SmtpHost, UpdateSourceTrigger=PropertyChanged}"/>
                             </StackPanel>
                             <StackPanel Grid.Column="1">
-                                <TextBlock Text="Porta" Style="{StaticResource Label}"/>
+                                <TextBlock Text="{l:Tr Email_Port}" Style="{StaticResource Label}"/>
                                 <ui:TextBox Text="{Binding SmtpPort, UpdateSourceTrigger=PropertyChanged}"/>
                             </StackPanel>
                         </Grid>
 
-                        <CheckBox Content="Usa SSL/TLS" IsChecked="{Binding UseSsl}" Margin="0,8,0,0"/>
+                        <CheckBox Content="{l:Tr Email_Ssl}" IsChecked="{Binding UseSsl}" Margin="0,8,0,0"/>
 
-                        <TextBlock Text="Da (mittente)" Style="{StaticResource Label}"/>
+                        <TextBlock Text="{l:Tr Email_From}" Style="{StaticResource Label}"/>
                         <ui:TextBox Text="{Binding EmailFrom, UpdateSourceTrigger=PropertyChanged}"/>
-                        <TextBlock Text="A (destinatario)" Style="{StaticResource Label}"/>
+                        <TextBlock Text="{l:Tr Email_To}" Style="{StaticResource Label}"/>
                         <ui:TextBox Text="{Binding EmailTo, UpdateSourceTrigger=PropertyChanged}"/>
-                        <TextBlock Text="Utente SMTP (facoltativo)" Style="{StaticResource Label}"/>
+                        <TextBlock Text="{l:Tr Email_User}" Style="{StaticResource Label}"/>
                         <ui:TextBox Text="{Binding EmailUser, UpdateSourceTrigger=PropertyChanged}"/>
-                        <TextBlock Text="Password SMTP (lascia vuoto per non modificare)" Style="{StaticResource Label}"/>
+                        <TextBlock Text="{l:Tr Email_Pwd}" Style="{StaticResource Label}"/>
                         <PasswordBox x:Name="EmailPasswordBox"/>
                     </StackPanel>
                 </StackPanel>
             </TabItem>
 
             <!-- CREDENZIALI -->
-            <TabItem Header="Credenziali di rete">
+            <TabItem Header="{l:Tr Tab_Credentials}">
                 <DockPanel Margin="4,12">
                     <ui:Card DockPanel.Dock="Bottom" Margin="0,10,0,0" Padding="14">
                         <StackPanel>
-                            <TextBlock Text="Aggiungi / aggiorna credenziale" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                            <TextBlock Text="{l:Tr Cred_AddUpdate}" FontWeight="SemiBold" Margin="0,0,0,6"/>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,6,0">
-                                    <TextBlock Text="Nome" Style="{StaticResource Label}"/>
+                                    <TextBlock Text="{l:Tr Cred_Name}" Style="{StaticResource Label}"/>
                                     <ui:TextBox x:Name="CredId"/>
-                                    <TextBlock Text="Utente (DOMINIO\utente)" Style="{StaticResource Label}"/>
+                                    <TextBlock Text="{l:Tr Cred_User}" Style="{StaticResource Label}"/>
                                     <ui:TextBox x:Name="CredUser"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Margin="6,0,0,0">
-                                    <TextBlock Text="Host/Share (\\server\share)" Style="{StaticResource Label}"/>
+                                    <TextBlock Text="{l:Tr Cred_Host}" Style="{StaticResource Label}"/>
                                     <ui:TextBox x:Name="CredHost"/>
-                                    <TextBlock Text="Password" Style="{StaticResource Label}"/>
+                                    <TextBlock Text="{l:Tr Cred_Pwd}" Style="{StaticResource Label}"/>
                                     <PasswordBox x:Name="CredPassword"/>
                                 </StackPanel>
                             </Grid>
                             <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                <ui:Button Content="Salva credenziale" Icon="{ui:SymbolIcon Save24}" Appearance="Primary" Click="OnUpsertCredential"/>
-                                <ui:Button Content="Rimuovi selezionata" Icon="{ui:SymbolIcon Delete24}" Margin="8,0,0,0" Click="OnRemoveCredential"/>
+                                <ui:Button Content="{l:Tr Cred_Save}" Icon="{ui:SymbolIcon Save24}" Appearance="Primary" Click="OnUpsertCredential"/>
+                                <ui:Button Content="{l:Tr Cred_Remove}" Icon="{ui:SymbolIcon Delete24}" Margin="8,0,0,0" Click="OnRemoveCredential"/>
                             </StackPanel>
                         </StackPanel>
                     </ui:Card>
@@ -150,40 +154,39 @@
                               Background="Transparent" BorderThickness="0" GridLinesVisibility="None"
                               SelectionChanged="OnCredentialSelected">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Nome" Binding="{Binding Id}" Width="*"/>
+                            <DataGridTextColumn Header="{l:Tr Cred_Name}" Binding="{Binding Id}" Width="*"/>
                             <DataGridTextColumn Header="Host" Binding="{Binding Host}" Width="2*"/>
-                            <DataGridTextColumn Header="Utente" Binding="{Binding User}" Width="2*"/>
+                            <DataGridTextColumn Header="{l:Tr Cred_ColUser}" Binding="{Binding User}" Width="2*"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
             </TabItem>
 
             <!-- PIANIFICAZIONE -->
-            <TabItem Header="Pianificazione">
+            <TabItem Header="{l:Tr Tab_Schedule}">
                 <StackPanel Margin="4,12">
                     <ui:InfoBar IsOpen="True" Severity="Informational" IsClosable="False"
-                                Title="Esecuzione automatica"
-                                Message="Registra un'attività in Utilità di pianificazione di Windows che esegue «Avvia tutti» in modalità silenziosa all'orario scelto."/>
+                                Title="{l:Tr Sched_InfoTitle}" Message="{l:Tr Sched_InfoMsg}"/>
                     <Grid Margin="0,12,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                            <TextBlock Text="Orario (HH:mm)" Style="{StaticResource Label}"/>
+                            <TextBlock Text="{l:Tr Sched_Time}" Style="{StaticResource Label}"/>
                             <ui:TextBox x:Name="ScheduleTime" Text="22:00"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1">
-                            <TextBlock Text="Frequenza" Style="{StaticResource Label}"/>
+                            <TextBlock Text="{l:Tr Sched_Freq}" Style="{StaticResource Label}"/>
                             <ComboBox x:Name="ScheduleFreq" SelectedIndex="0">
-                                <ComboBoxItem Content="Giornaliera"/>
-                                <ComboBoxItem Content="Settimanale"/>
+                                <ComboBoxItem Content="{l:Tr Sched_Daily}"/>
+                                <ComboBoxItem Content="{l:Tr Sched_Weekly}"/>
                             </ComboBox>
                         </StackPanel>
                     </Grid>
                     <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
-                        <ui:Button Content="Crea / aggiorna attività" Icon="{ui:SymbolIcon CalendarClock24}" Appearance="Primary" Click="OnCreateSchedule"/>
-                        <ui:Button Content="Rimuovi attività" Icon="{ui:SymbolIcon Delete24}" Margin="8,0,0,0" Click="OnRemoveSchedule"/>
+                        <ui:Button Content="{l:Tr Sched_Create}" Icon="{ui:SymbolIcon CalendarClock24}" Appearance="Primary" Click="OnCreateSchedule"/>
+                        <ui:Button Content="{l:Tr Sched_Remove}" Icon="{ui:SymbolIcon Delete24}" Margin="8,0,0,0" Click="OnRemoveSchedule"/>
                     </StackPanel>
                     <TextBlock x:Name="ScheduleStatus" Margin="0,12,0,0" TextWrapping="Wrap"/>
                 </StackPanel>
@@ -192,8 +195,8 @@
 
         <Border Grid.Row="2" Padding="20,12" Background="#11888888">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <ui:Button Content="Annulla" Width="110" Margin="0,0,8,0" IsCancel="True" Click="OnCancel"/>
-                <ui:Button Content="Salva" Width="110" Appearance="Primary" Icon="{ui:SymbolIcon Save24}" IsDefault="True" Click="OnSave"/>
+                <ui:Button Content="{l:Tr Common_Cancel}" Width="110" Margin="0,0,8,0" IsCancel="True" Click="OnCancel"/>
+                <ui:Button Content="{l:Tr Common_Save}" Width="110" Appearance="Primary" Icon="{ui:SymbolIcon Save24}" IsDefault="True" Click="OnSave"/>
             </StackPanel>
         </Border>
     </Grid>
