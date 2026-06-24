@@ -10,19 +10,12 @@ namespace RobocopySW.Localization;
 /// </summary>
 public sealed class Loc : INotifyPropertyChanged
 {
-    public static Loc Instance { get; } = new();
+    // Lazy: garantisce che i dizionari static (sotto) siano inizializzati prima del costruttore.
+    private static Loc? _instance;
+    public static Loc Instance => _instance ??= new Loc();
 
     /// <summary>Lingue supportate (codice ISO a 2 lettere).</summary>
     public static readonly string[] Supported = { "it", "en", "es", "fr", "de" };
-
-    private static readonly Dictionary<string, Dictionary<string, string>> Langs = new()
-    {
-        ["it"] = It,
-        ["en"] = En,
-        ["es"] = Es,
-        ["fr"] = Fr,
-        ["de"] = De,
-    };
 
     private Dictionary<string, string> _cur;
 
@@ -771,5 +764,16 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Created"] = "Geplante Aufgabe erstellt/aktualisiert für {0}.",
         ["Sched_Removed"] = "Geplante Aufgabe entfernt.",
         ["Sched_Error"] = "Fehler: {0}",
+    };
+
+    // Mappa lingua → dizionario. Dichiarata DOPO i dizionari, così sono già inizializzati
+    // quando questo inizializzatore viene eseguito (ordine testuale degli static).
+    private static readonly Dictionary<string, Dictionary<string, string>> Langs = new()
+    {
+        ["it"] = It,
+        ["en"] = En,
+        ["es"] = Es,
+        ["fr"] = Fr,
+        ["de"] = De,
     };
 }
