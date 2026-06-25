@@ -52,8 +52,6 @@ public sealed class MainViewModel : ObservableObject
             lock (_bufLock) _buffer.Clear();
             LogCleared?.Invoke();
         });
-        MoveUpCommand = new RelayCommand(() => MoveSelected(-1), () => CanMove(-1));
-        MoveDownCommand = new RelayCommand(() => MoveSelected(+1), () => CanMove(+1));
         RefreshCommand = new RelayCommand(ReloadLastResults);
 
         Loc.Instance.PropertyChanged += (_, _) =>
@@ -68,27 +66,6 @@ public sealed class MainViewModel : ObservableObject
     {
         if (e.PropertyName == nameof(JobViewModel.Enabled))
             PersistJobs();
-    }
-
-    private bool CanMove(int direction)
-    {
-        if (SelectedJob is null) return false;
-        var i = Jobs.IndexOf(SelectedJob);
-        var target = i + direction;
-        return i >= 0 && target >= 0 && target < Jobs.Count;
-    }
-
-    private void MoveSelected(int direction)
-    {
-        var sel = SelectedJob;
-        if (sel is null) return;
-        var i = Jobs.IndexOf(sel);
-        var target = i + direction;
-        if (i < 0 || target < 0 || target >= Jobs.Count) return;
-
-        Jobs.Move(i, target);
-        SelectedJob = sel;          // mantiene la selezione sulla riga spostata
-        PersistJobs();              // l'ordine dei job è la priorità di esecuzione
     }
 
     /// <summary>Sposta un job alla posizione di un altro (riordino drag &amp; drop). Salva l'ordine.</summary>
@@ -141,8 +118,6 @@ public sealed class MainViewModel : ObservableObject
     public RelayCommand RunSelectedCommand { get; }
     public RelayCommand RunAllCommand { get; }
     public RelayCommand ClearLogCommand { get; }
-    public RelayCommand MoveUpCommand { get; }
-    public RelayCommand MoveDownCommand { get; }
     public RelayCommand RefreshCommand { get; }
 
     // --- Esecuzione: il pulsante premuto si trasforma in "Annulla" ---

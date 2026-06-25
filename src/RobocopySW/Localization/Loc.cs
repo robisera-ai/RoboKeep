@@ -98,6 +98,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Main_LogTitle"] = "Log esecuzione",
         ["Main_Clear"] = "Pulisci",
         ["Main_Refresh"] = "Aggiorna",
+        ["DragHint"] = "Trascina per riordinare",
 
         ["Col_Active"] = "Attivo",
         ["Col_Name"] = "Nome",
@@ -244,6 +245,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Main_LogTitle"] = "Execution log",
         ["Main_Clear"] = "Clear",
         ["Main_Refresh"] = "Refresh",
+        ["DragHint"] = "Drag to reorder",
 
         ["Col_Active"] = "Enabled",
         ["Col_Name"] = "Name",
@@ -390,6 +392,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Main_LogTitle"] = "Registro de ejecución",
         ["Main_Clear"] = "Limpiar",
         ["Main_Refresh"] = "Actualizar",
+        ["DragHint"] = "Arrastra para reordenar",
 
         ["Col_Active"] = "Activo",
         ["Col_Name"] = "Nombre",
@@ -536,6 +539,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Main_LogTitle"] = "Journal d'exécution",
         ["Main_Clear"] = "Effacer",
         ["Main_Refresh"] = "Actualiser",
+        ["DragHint"] = "Glisser pour réordonner",
 
         ["Col_Active"] = "Actif",
         ["Col_Name"] = "Nom",
@@ -682,6 +686,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Main_LogTitle"] = "Ausführungsprotokoll",
         ["Main_Clear"] = "Leeren",
         ["Main_Refresh"] = "Aktualisieren",
+        ["DragHint"] = "Zum Umsortieren ziehen",
 
         ["Col_Active"] = "Aktiv",
         ["Col_Name"] = "Name",

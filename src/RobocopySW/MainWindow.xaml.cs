@@ -1,8 +1,10 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using RobocopySW.Core.Models;
+using RobocopySW.Infra;
 using RobocopySW.Localization;
 using RobocopySW.ViewModels;
 
@@ -13,9 +15,11 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private readonly AppHost _host;
     private readonly MainViewModel _vm;
 
-    // Stato per il drag &amp; drop di riordino dei job.
+    // Stato per il drag &amp; drop di riordino dei job (solo dalla maniglia).
     private JobViewModel? _dragItem;
     private Point _dragStart;
+    private DragAdorner? _adorner;
+    private AdornerLayer? _adornerLayer;
 
     public MainWindow()
     {
@@ -36,10 +40,11 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
     // ----- Riordino dei job via drag & drop -----
 
-    private void OnGridPreviewMouseDown(object sender, MouseButtonEventArgs e)
+    // Il drag parte SOLO dalla maniglia (≡), non dall'intera riga.
+    private void OnDragHandleMouseDown(object sender, MouseButtonEventArgs e)
     {
         _dragStart = e.GetPosition(null);
-        _dragItem = (FindAncestor<DataGridRow>(e.OriginalSource as DependencyObject))?.Item as JobViewModel;
+        _dragItem = (sender as FrameworkElement)?.DataContext as JobViewModel;
     }
 
     private void OnGridMouseMove(object sender, MouseEventArgs e)
@@ -52,21 +57,48 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             Math.Abs(pos.Y - _dragStart.Y) < SystemParameters.MinimumVerticalDragDistance)
             return;
 
-        DragDrop.DoDragDrop(JobsGrid, _dragItem, DragDropEffects.Move);
+        // "Fantasma" semitrasparente della riga trascinata.
+        if (JobsGrid.ItemContainerGenerator.ContainerFromItem(_dragItem) is DataGridRow row)
+        {
+            _adornerLayer = AdornerLayer.GetAdornerLayer(JobsGrid);
+            if (_adornerLayer is not null)
+            {
+                _adorner = new DragAdorner(JobsGrid, row, row.RenderSize);
+                _adornerLayer.Add(_adorner);
+            }
+        }
+
+        try
+        {
+            DragDrop.DoDragDrop(JobsGrid, _dragItem, DragDropEffects.Move);
+        }
+        finally
+        {
+            if (_adorner is not null && _adornerLayer is not null)
+                _adornerLayer.Remove(_adorner);
+            _adorner = null;
+            _adornerLayer = null;
+            _dragItem = null;
+        }
     }
 
     private void OnGridDragOver(object sender, DragEventArgs e)
     {
         e.Effects = _dragItem is not null ? DragDropEffects.Move : DragDropEffects.None;
+        if (_adorner is not null)
+        {
+            var p = e.GetPosition(JobsGrid);
+            _adorner.SetPosition(p.X + 10, p.Y - 6);
+        }
         e.Handled = true;
     }
 
     private void OnGridDrop(object sender, DragEventArgs e)
     {
+        // _dragItem è ancora valido qui (DoDragDrop è modale); viene azzerato nel finally.
         var target = (FindAncestor<DataGridRow>(e.OriginalSource as DependencyObject))?.Item as JobViewModel;
         if (_dragItem is not null && target is not null && !ReferenceEquals(_dragItem, target))
             _vm.MoveJob(_dragItem, target);
-        _dragItem = null;
     }
 
     private static T? FindAncestor<T>(DependencyObject? current) where T : DependencyObject
