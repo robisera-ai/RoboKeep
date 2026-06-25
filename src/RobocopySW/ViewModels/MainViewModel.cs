@@ -44,11 +44,9 @@ public sealed class MainViewModel : ObservableObject
         _logTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
         _logTimer.Tick += (_, _) => FlushLog();
 
-        RunSelectedCommand = new AsyncRelayCommand(_ => RunSelectedAsync(false), _ => SelectedJob is not null && !IsBusy);
-        PreviewSelectedCommand = new AsyncRelayCommand(_ => RunSelectedAsync(true), _ => SelectedJob is not null && !IsBusy);
-        RunAllCommand = new AsyncRelayCommand(_ => RunAllAsync(false), _ => Jobs.Count > 0 && !IsBusy);
-        PreviewAllCommand = new AsyncRelayCommand(_ => RunAllAsync(true), _ => Jobs.Count > 0 && !IsBusy);
-        StopCommand = new RelayCommand(() => _cts?.Cancel(), () => IsBusy);
+        PreviewSelectedCommand = new RelayCommand(() => Toggle(RunKind.Preview), () => CanToggle(RunKind.Preview));
+        RunSelectedCommand = new RelayCommand(() => Toggle(RunKind.Selected), () => CanToggle(RunKind.Selected));
+        RunAllCommand = new RelayCommand(() => Toggle(RunKind.All), () => CanToggle(RunKind.All));
         ClearLogCommand = new RelayCommand(() =>
         {
             lock (_bufLock) _buffer.Clear();
@@ -58,7 +56,11 @@ public sealed class MainViewModel : ObservableObject
         MoveDownCommand = new RelayCommand(() => MoveSelected(+1), () => CanMove(+1));
         RefreshCommand = new RelayCommand(ReloadLastResults);
 
-        Loc.Instance.PropertyChanged += (_, _) => OnPropertyChanged(nameof(StatusText));
+        Loc.Instance.PropertyChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(StatusText));
+            RaiseRunButtons();
+        };
     }
 
     // Salva la configurazione quando un job viene attivato/disattivato dalla griglia.
@@ -123,15 +125,73 @@ public sealed class MainViewModel : ObservableObject
         ? Loc.Instance["Status_Running"]
         : string.Format(Loc.Instance["Status_JobsConfigured"], Jobs.Count);
 
-    public AsyncRelayCommand RunSelectedCommand { get; }
-    public AsyncRelayCommand PreviewSelectedCommand { get; }
-    public AsyncRelayCommand RunAllCommand { get; }
-    public AsyncRelayCommand PreviewAllCommand { get; }
-    public RelayCommand StopCommand { get; }
+    public RelayCommand PreviewSelectedCommand { get; }
+    public RelayCommand RunSelectedCommand { get; }
+    public RelayCommand RunAllCommand { get; }
     public RelayCommand ClearLogCommand { get; }
     public RelayCommand MoveUpCommand { get; }
     public RelayCommand MoveDownCommand { get; }
     public RelayCommand RefreshCommand { get; }
+
+    // --- Esecuzione: il pulsante premuto si trasforma in "Annulla" ---
+    private enum RunKind { None, Preview, Selected, All }
+    private RunKind _running = RunKind.None;
+
+    public string PreviewLabel => _running == RunKind.Preview ? Loc.Instance["Common_Cancel"] : Loc.Instance["Main_Preview"];
+    public string RunSelectedLabel => _running == RunKind.Selected ? Loc.Instance["Common_Cancel"] : Loc.Instance["Main_RunSelected"];
+    public string RunAllLabel => _running == RunKind.All ? Loc.Instance["Common_Cancel"] : Loc.Instance["Main_RunAll"];
+    public bool PreviewCancel => _running == RunKind.Preview;
+    public bool RunSelectedCancel => _running == RunKind.Selected;
+    public bool RunAllCancel => _running == RunKind.All;
+
+    private void SetRunning(RunKind k)
+    {
+        _running = k;
+        RaiseRunButtons();
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    private void RaiseRunButtons()
+    {
+        OnPropertyChanged(nameof(PreviewLabel));
+        OnPropertyChanged(nameof(RunSelectedLabel));
+        OnPropertyChanged(nameof(RunAllLabel));
+        OnPropertyChanged(nameof(PreviewCancel));
+        OnPropertyChanged(nameof(RunSelectedCancel));
+        OnPropertyChanged(nameof(RunAllCancel));
+    }
+
+    private bool CanToggle(RunKind k)
+    {
+        if (_running == k) return true;             // posso annullare la mia operazione
+        if (_running != RunKind.None) return false; // un'altra è in corso
+        return k == RunKind.All ? Jobs.Count > 0 : SelectedJob is not null;
+    }
+
+    private void Toggle(RunKind k)
+    {
+        if (_running == k) { _cts?.Cancel(); return; }
+        if (_running != RunKind.None) return;
+        _ = StartAsync(k);
+    }
+
+    private async Task StartAsync(RunKind k)
+    {
+        var dryRun = k == RunKind.Preview;
+        List<JobViewModel> jobs;
+        if (k == RunKind.All)
+        {
+            jobs = Jobs.Where(j => j.Enabled).ToList();
+        }
+        else
+        {
+            var sel = SelectedJob;
+            if (sel is null) return;
+            jobs = new List<JobViewModel> { sel };
+        }
+        if (jobs.Count == 0) return;
+        await RunJobsAsync(jobs, dryRun, k);
+    }
 
     /// <summary>Ricostruisce la collezione dei job dalla configurazione corrente.</summary>
     public void ReloadJobs()
@@ -178,20 +238,10 @@ public sealed class MainViewModel : ObservableObject
         LogFlushed?.Invoke(text);
     }
 
-    private async Task RunSelectedAsync(bool dryRun)
-    {
-        if (SelectedJob is null) return;
-        await RunJobsAsync(new[] { SelectedJob }, dryRun);
-    }
-
-    private async Task RunAllAsync(bool dryRun)
-    {
-        await RunJobsAsync(Jobs.Where(j => j.Enabled).ToList(), dryRun);
-    }
-
-    private async Task RunJobsAsync(IReadOnlyList<JobViewModel> jobs, bool dryRun)
+    private async Task RunJobsAsync(IReadOnlyList<JobViewModel> jobs, bool dryRun, RunKind kind)
     {
         IsBusy = true;
+        SetRunning(kind);
         _cts = new CancellationTokenSource();
         var runner = _host.BuildRunner();
         IProgress<string> progress = new DirectProgress(Enqueue);
@@ -239,6 +289,7 @@ public sealed class MainViewModel : ObservableObject
             _cts.Dispose();
             _cts = null;
             IsBusy = false;
+            SetRunning(RunKind.None);
         }
     }
 }

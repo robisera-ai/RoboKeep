@@ -39,14 +39,12 @@
                 <ui:Button Icon="{ui:SymbolIcon ArrowUp24}" ToolTip="{l:Tr Main_MoveUpTip}" Command="{Binding MoveUpCommand}" Margin="0,0,4,0"/>
                 <ui:Button Icon="{ui:SymbolIcon ArrowDown24}" ToolTip="{l:Tr Main_MoveDownTip}" Command="{Binding MoveDownCommand}" Margin="0,0,8,0"/>
                 <Separator Margin="6,4" Background="#33888888"/>
-                <ui:Button Icon="{ui:SymbolIcon Eye24}" Content="{l:Tr Main_Preview}" Command="{Binding PreviewSelectedCommand}" Margin="0,0,8,0"/>
-                <ui:Button Icon="{ui:SymbolIcon Play24}" Content="{l:Tr Main_RunSelected}" Appearance="Primary"
-                           Command="{Binding RunSelectedCommand}" Margin="0,0,8,0"/>
-                <ui:Button Icon="{ui:SymbolIcon FastForward24}" Content="{l:Tr Main_RunAll}"
-                           Command="{Binding RunAllCommand}" Margin="0,0,8,0"/>
-                <ui:Button Icon="{ui:SymbolIcon Stop24}" Content="{l:Tr Common_Cancel}" Appearance="Danger"
-                           Command="{Binding StopCommand}"
-                           Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
+                <ui:Button Icon="{ui:SymbolIcon Eye24}" Content="{Binding PreviewLabel}" Command="{Binding PreviewSelectedCommand}"
+                           Appearance="{Binding PreviewCancel, Converter={StaticResource CancelAppearance}, ConverterParameter=Secondary}" Margin="0,0,8,0"/>
+                <ui:Button Icon="{ui:SymbolIcon Play24}" Content="{Binding RunSelectedLabel}" Command="{Binding RunSelectedCommand}"
+                           Appearance="{Binding RunSelectedCancel, Converter={StaticResource CancelAppearance}, ConverterParameter=Primary}" Margin="0,0,8,0"/>
+                <ui:Button Icon="{ui:SymbolIcon FastForward24}" Content="{Binding RunAllLabel}" Command="{Binding RunAllCommand}"
+                           Appearance="{Binding RunAllCancel, Converter={StaticResource CancelAppearance}, ConverterParameter=Secondary}" Margin="0,0,8,0"/>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <ui:Button Icon="{ui:SymbolIcon ArrowSync24}" ToolTip="{l:Tr Main_Refresh}"
