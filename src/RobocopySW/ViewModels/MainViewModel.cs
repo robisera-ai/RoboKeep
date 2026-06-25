@@ -91,6 +91,18 @@ public sealed class MainViewModel : ObservableObject
         PersistJobs();              // l'ordine dei job è la priorità di esecuzione
     }
 
+    /// <summary>Sposta un job alla posizione di un altro (riordino drag &amp; drop). Salva l'ordine.</summary>
+    public void MoveJob(JobViewModel item, JobViewModel target)
+    {
+        var from = Jobs.IndexOf(item);
+        var to = Jobs.IndexOf(target);
+        if (from < 0 || to < 0 || from == to) return;
+
+        Jobs.Move(from, to);
+        SelectedJob = item;
+        PersistJobs();
+    }
+
     public AppHost Host => _host;
     public ObservableCollection<JobViewModel> Jobs { get; }
 

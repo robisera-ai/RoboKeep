@@ -65,12 +65,17 @@
                     Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                     BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
                 <Grid>
-                    <DataGrid ItemsSource="{Binding Jobs}" SelectedItem="{Binding SelectedJob}"
+                    <DataGrid x:Name="JobsGrid" ItemsSource="{Binding Jobs}" SelectedItem="{Binding SelectedJob}"
                               AutoGenerateColumns="False" IsReadOnly="False" CanUserAddRows="False"
                               HeadersVisibility="Column" GridLinesVisibility="None"
                               Background="Transparent" BorderThickness="0"
                               VerticalAlignment="Stretch" VerticalContentAlignment="Top"
                               Visibility="{Binding HasJobs, Converter={StaticResource BoolToVis}}"
+                              AllowDrop="True"
+                              PreviewMouseLeftButtonDown="OnGridPreviewMouseDown"
+                              MouseMove="OnGridMouseMove"
+                              DragOver="OnGridDragOver"
+                              Drop="OnGridDrop"
                               MouseDoubleClick="OnEditJob">
                         <DataGrid.Columns>
                             <DataGridTemplateColumn Header="{l:Tr Col_Active}" Width="80">

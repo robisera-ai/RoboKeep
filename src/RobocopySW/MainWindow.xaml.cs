@@ -1,4 +1,7 @@
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
 using RobocopySW.Core.Models;
 using RobocopySW.Localization;
 using RobocopySW.ViewModels;
@@ -9,6 +12,10 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 {
     private readonly AppHost _host;
     private readonly MainViewModel _vm;
+
+    // Stato per il drag &amp; drop di riordino dei job.
+    private JobViewModel? _dragItem;
+    private Point _dragStart;
 
     public MainWindow()
     {
@@ -25,6 +32,48 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             LogBox.ScrollToEnd();
         };
         _vm.LogCleared += () => LogBox.Clear();
+    }
+
+    // ----- Riordino dei job via drag & drop -----
+
+    private void OnGridPreviewMouseDown(object sender, MouseButtonEventArgs e)
+    {
+        _dragStart = e.GetPosition(null);
+        _dragItem = (FindAncestor<DataGridRow>(e.OriginalSource as DependencyObject))?.Item as JobViewModel;
+    }
+
+    private void OnGridMouseMove(object sender, MouseEventArgs e)
+    {
+        if (e.LeftButton != MouseButtonState.Pressed || _dragItem is null)
+            return;
+
+        var pos = e.GetPosition(null);
+        if (Math.Abs(pos.X - _dragStart.X) < SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(pos.Y - _dragStart.Y) < SystemParameters.MinimumVerticalDragDistance)
+            return;
+
+        DragDrop.DoDragDrop(JobsGrid, _dragItem, DragDropEffects.Move);
+    }
+
+    private void OnGridDragOver(object sender, DragEventArgs e)
+    {
+        e.Effects = _dragItem is not null ? DragDropEffects.Move : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void OnGridDrop(object sender, DragEventArgs e)
+    {
+        var target = (FindAncestor<DataGridRow>(e.OriginalSource as DependencyObject))?.Item as JobViewModel;
+        if (_dragItem is not null && target is not null && !ReferenceEquals(_dragItem, target))
+            _vm.MoveJob(_dragItem, target);
+        _dragItem = null;
+    }
+
+    private static T? FindAncestor<T>(DependencyObject? current) where T : DependencyObject
+    {
+        while (current is not null and not T)
+            current = VisualTreeHelper.GetParent(current);
+        return current as T;
     }
 
     private void OnNewJob(object sender, RoutedEventArgs e)
