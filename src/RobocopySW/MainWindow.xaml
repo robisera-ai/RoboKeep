@@ -28,7 +28,11 @@
 
         <!-- Barra azioni -->
         <Grid Grid.Row="1" Margin="16,4,16,8">
-            <StackPanel Orientation="Horizontal">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
                 <ui:Button Icon="{ui:SymbolIcon Add24}" Content="{l:Tr Main_New}" Click="OnNewJob" Margin="0,0,8,0"/>
                 <ui:Button Icon="{ui:SymbolIcon Edit24}" Content="{l:Tr Main_Edit}" Click="OnEditJob" Margin="0,0,8,0"/>
                 <ui:Button Icon="{ui:SymbolIcon Delete24}" Content="{l:Tr Main_Delete}" Click="OnDeleteJob" Margin="0,0,8,0"/>
@@ -44,7 +48,7 @@
                            Command="{Binding StopCommand}"
                            Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
             </StackPanel>
-            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <ui:Button Icon="{ui:SymbolIcon ArrowSync24}" ToolTip="{l:Tr Main_Refresh}"
                            Command="{Binding RefreshCommand}" Margin="0,0,8,0"/>
                 <ui:Button Icon="{ui:SymbolIcon Settings24}" Content="{l:Tr Main_Settings}" Click="OnSettings"/>

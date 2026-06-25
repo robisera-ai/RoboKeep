@@ -84,7 +84,7 @@ public sealed class BackupRunner
 
             try
             {
-                await _email.SendResultAsync(_config.Settings.Email, run.Result, run.Result.LogPath)
+                await _email.SendResultAsync(_config.Settings.Email, run.Result, run.Result.LogPath, ct)
                     .ConfigureAwait(false);
             }
             catch (Exception ex)

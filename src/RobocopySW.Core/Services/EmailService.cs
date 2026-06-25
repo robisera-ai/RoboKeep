@@ -19,7 +19,7 @@ public sealed class EmailService
     /// Invia l'email di esito se le impostazioni lo prevedono.
     /// Rispetta <see cref="EmailSettings.OnlyOnError"/>. Restituisce true se l'email è stata inviata.
     /// </summary>
-    public async Task<bool> SendResultAsync(EmailSettings settings, JobResult result, string? attachmentPath = null)
+    public async Task<bool> SendResultAsync(EmailSettings settings, JobResult result, string? attachmentPath = null, CancellationToken ct = default)
     {
         if (!settings.Enabled)
             return false;
@@ -48,14 +48,18 @@ public sealed class EmailService
         if (!string.IsNullOrWhiteSpace(attachmentPath) && File.Exists(attachmentPath))
             message.Attachments.Add(new Attachment(attachmentPath));
 
-        using var client = new SmtpClient(settings.SmtpHost, settings.SmtpPort) { EnableSsl = settings.UseSsl };
+        using var client = new SmtpClient(settings.SmtpHost, settings.SmtpPort)
+        {
+            EnableSsl = settings.UseSsl,
+            Timeout = 20000, // 20s: un SMTP che non risponde non blocca il job
+        };
         if (!string.IsNullOrWhiteSpace(settings.Username))
         {
             var pwd = _credentials.Unprotect(settings.PasswordProtected ?? "");
             client.Credentials = new NetworkCredential(settings.Username, pwd);
         }
 
-        await client.SendMailAsync(message).ConfigureAwait(false);
+        await client.SendMailAsync(message, ct).ConfigureAwait(false);
         return true;
     }
 
