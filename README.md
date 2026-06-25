@@ -1,7 +1,7 @@
 # RobocopySW
 
 Applicazione desktop Windows (.NET 10, WPF) per backup/mirroring configurabili, basata sul
-motore **robocopy** di sistema. Sostituisce i vecchi script batch (`Vecchi CMD/`) con una
+motore **robocopy** di sistema. Sostituisce i vecchi script batch con una
 configurazione centralizzata in un unico file, gestibile da interfaccia grafica.
 
 Vedi [ANALISI.md](ANALISI.md) per l'analisi del sistema precedente e le scelte tecniche.

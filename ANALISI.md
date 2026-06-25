@@ -4,14 +4,14 @@
 
 ## 1. Scopo
 
-Sostituire l'attuale insieme di script batch (`Vecchi CMD/`) che pilotano **robocopy** per i backup/mirroring, con un'**applicazione desktop Windows configurabile da interfaccia grafica**, mantenendo invariato il comportamento di copia ma eliminando la modifica manuale dei file.
+Sostituire l'insieme di script batch che pilotano **robocopy** per i backup/mirroring, con un'**applicazione desktop Windows configurabile da interfaccia grafica**, mantenendo invariato il comportamento di copia ma eliminando la modifica manuale dei file.
 
 Comportamento di backup richiesto (invariato): per ogni coppia sorgente→destinazione, ricorsivo su sottocartelle, robocopy
 - **salta** i file identici (stessa data/ora di ultima modifica e dimensione),
 - **sovrascrive** in destinazione i file la cui sorgente è più recente,
 - **rimuove** dalla destinazione i file/cartelle non più presenti in sorgente (modalità mirror).
 
-## 2. Analisi del sistema esistente (`Vecchi CMD/`)
+## 2. Analisi del sistema esistente (script batch)
 
 Sistema a 3 livelli in batch + robocopy:
 
@@ -35,7 +35,7 @@ Switch robocopy usati nei `.RCJ` e negli script: `/MIR /XJ /COPY:DATS` (o `/COPY
 - **robocopy è ancora pienamente supportato e attuale.** Microsoft lo documenta per Windows 10/11 e Windows Server 2016→2025; **nessuna deprecazione** annunciata.
 - È **parte integrante di Windows**: non esiste un pacchetto/versione scaricabile separatamente; si aggiorna **solo con Windows Update**. La versione interna del motore (`XP010`) è stabile da anni.
 - Versione presente su **questa macchina** (Windows 11, build 26100): **`Robocopy.exe 10.0.26100.8457`** → è la **più recente** disponibile per questo sistema.
-- Decisione: l'app userà **il robocopy di sistema** (`%WINDIR%\System32\Robocopy.exe`), così erediterà sempre l'ultima versione fornita da Windows. Il `robocopy.exe` datato in `Vecchi CMD/bin/` **non** verrà usato.
+- Decisione: l'app userà **il robocopy di sistema** (`%WINDIR%\System32\Robocopy.exe`), così erediterà sempre l'ultima versione fornita da Windows. Il `robocopy.exe` datato fornito con i vecchi script **non** verrà usato.
 
 ### 3.2 Alternative valutate (e perché restiamo su robocopy)
 | Alternativa | Tipo | Verdetto |
@@ -94,4 +94,4 @@ Log zip per data + pulizia automatica oltre N giorni · notifiche email (sempre/
 - [ ] CLI headless per schedulazione
 - [ ] Build + unit test + verifica end-to-end su cartelle di prova
 
-La cartella `Vecchi CMD/` resta intatta come riferimento storico.
+Gli script batch originali sono stati rimossi dal repository (anonimizzazione dei riferimenti interni).

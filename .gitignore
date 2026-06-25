@@ -23,11 +23,6 @@ lastresults.json
 /temp/
 /errorlogs/
 
-# Artefatti generati dal vecchio sistema (riferimento storico, non versionati)
-Vecchi CMD/logs/
-Vecchi CMD/temp/
-Vecchi CMD/errorlogs/
-
 # Screenshot/feedback locali
 Feedback/
 inserisci.jpg
