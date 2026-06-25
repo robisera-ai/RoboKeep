@@ -20,6 +20,9 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private Point _dragStart;
     private DragAdorner? _adorner;
     private AdornerLayer? _adornerLayer;
+    private InsertionAdorner? _insertAdorner;
+    private DataGridRow? _insertRow;
+    private bool _insertBelow;
 
     public MainWindow()
     {
@@ -76,6 +79,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         {
             if (_adorner is not null && _adornerLayer is not null)
                 _adornerLayer.Remove(_adorner);
+            ClearInsertion();
             _adorner = null;
             _adornerLayer = null;
             _dragItem = null;
@@ -85,10 +89,11 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private void OnGridDragOver(object sender, DragEventArgs e)
     {
         e.Effects = _dragItem is not null ? DragDropEffects.Move : DragDropEffects.None;
-        if (_adorner is not null)
+        if (_dragItem is not null)
         {
             var p = e.GetPosition(JobsGrid);
-            _adorner.SetPosition(p.X + 10, p.Y - 6);
+            _adorner?.SetPosition(p.X + 10, p.Y - 6);
+            UpdateInsertion(p);
         }
         e.Handled = true;
     }
@@ -96,9 +101,35 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private void OnGridDrop(object sender, DragEventArgs e)
     {
         // _dragItem è ancora valido qui (DoDragDrop è modale); viene azzerato nel finally.
-        var target = (FindAncestor<DataGridRow>(e.OriginalSource as DependencyObject))?.Item as JobViewModel;
-        if (_dragItem is not null && target is not null && !ReferenceEquals(_dragItem, target))
-            _vm.MoveJob(_dragItem, target);
+        if (_dragItem is not null && _insertRow?.Item is JobViewModel target)
+            _vm.MoveJobToGap(_dragItem, target, _insertBelow);
+    }
+
+    // Aggiorna la linea di inserimento in base alla riga e alla metà (sopra/sotto) sotto il cursore.
+    private void UpdateInsertion(Point gridPoint)
+    {
+        var row = FindAncestor<DataGridRow>(JobsGrid.InputHitTest(gridPoint) as DependencyObject);
+        if (row is null) { ClearInsertion(); return; }
+
+        var rel = JobsGrid.TranslatePoint(gridPoint, row);
+        var below = rel.Y > row.ActualHeight / 2;
+        if (ReferenceEquals(row, _insertRow) && below == _insertBelow) return;
+
+        ClearInsertion();
+        var layer = AdornerLayer.GetAdornerLayer(row);
+        if (layer is null) return;
+        _insertRow = row;
+        _insertBelow = below;
+        _insertAdorner = new InsertionAdorner(row, below);
+        layer.Add(_insertAdorner);
+    }
+
+    private void ClearInsertion()
+    {
+        if (_insertAdorner is not null && _insertRow is not null)
+            AdornerLayer.GetAdornerLayer(_insertRow)?.Remove(_insertAdorner);
+        _insertAdorner = null;
+        _insertRow = null;
     }
 
     private static T? FindAncestor<T>(DependencyObject? current) where T : DependencyObject

@@ -68,14 +68,19 @@ public sealed class MainViewModel : ObservableObject
             PersistJobs();
     }
 
-    /// <summary>Sposta un job alla posizione di un altro (riordino drag &amp; drop). Salva l'ordine.</summary>
-    public void MoveJob(JobViewModel item, JobViewModel target)
+    /// <summary>Sposta un job nel "gap" sopra/sotto la riga di destinazione (drag &amp; drop). Salva l'ordine.</summary>
+    public void MoveJobToGap(JobViewModel item, JobViewModel target, bool below)
     {
         var from = Jobs.IndexOf(item);
-        var to = Jobs.IndexOf(target);
-        if (from < 0 || to < 0 || from == to) return;
+        var t = Jobs.IndexOf(target);
+        if (from < 0 || t < 0) return;
 
-        Jobs.Move(from, to);
+        var insert = below ? t + 1 : t;   // posizione del gap nella lista con item presente
+        if (from < insert) insert--;      // rimuovendo item prima del gap, il gap scala di 1
+        insert = Math.Clamp(insert, 0, Jobs.Count - 1);
+        if (insert == from) return;
+
+        Jobs.Move(from, insert);
         SelectedJob = item;
         PersistJobs();
     }

@@ -141,6 +141,44 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
         }
     }
 
+    private async void OnTestCredential(object sender, RoutedEventArgs e)
+    {
+        var host = CredHost.Text?.Trim() ?? "";
+        var user = CredUser.Text?.Trim() ?? "";
+        var pwd = CredPassword.Password;
+
+        CredTestStatus.Foreground = System.Windows.Media.Brushes.Gray;
+        CredTestStatus.Text = Loc.Instance["Conn_Testing"];
+        TestCredButton.IsEnabled = false;
+        try
+        {
+            var code = await Task.Run(() => _credentials.TryConnect(host, user, pwd));
+            if (code == 0)
+            {
+                CredTestStatus.Foreground = System.Windows.Media.Brushes.Green;
+                CredTestStatus.Text = Loc.Instance["Conn_Ok"];
+            }
+            else
+            {
+                CredTestStatus.Foreground = System.Windows.Media.Brushes.Red;
+                CredTestStatus.Text = ConnErrorMessage(code);
+            }
+        }
+        finally
+        {
+            TestCredButton.IsEnabled = true;
+        }
+    }
+
+    private static string ConnErrorMessage(int code) => code switch
+    {
+        1326 or 86 => Loc.Instance["Conn_LogonFail"],
+        53 => Loc.Instance["Conn_PathNotFound"],
+        67 => Loc.Instance["Conn_NameNotFound"],
+        5 => Loc.Instance["Conn_AccessDenied"],
+        _ => string.Format(Loc.Instance["Conn_Generic"], code),
+    };
+
     private async void OnSendTestEmail(object sender, RoutedEventArgs e)
     {
         EmailTestStatus.Foreground = System.Windows.Media.Brushes.Gray;

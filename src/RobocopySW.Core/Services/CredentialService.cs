@@ -72,6 +72,22 @@ public sealed class CredentialService
         WNetCancelConnection2(remoteName, 1, fForce: true);
     }
 
+    /// <summary>
+    /// Prova la connessione alla share senza sollevare eccezioni: restituisce 0 in caso di
+    /// successo (disconnettendo subito), altrimenti il codice di errore di Windows.
+    /// </summary>
+    public int TryConnect(string remoteName, string? user, string? password)
+    {
+        var nr = new NetResource { dwType = ResourceTypeDisk, lpRemoteName = remoteName };
+        var result = WNetAddConnection2(nr, password, user, ConnectFlags: 0);
+        if (result is 0 or 1219 or 85)
+        {
+            Disconnect(remoteName);
+            return 0;
+        }
+        return result;
+    }
+
     private const int ResourceTypeDisk = 0x00000001;
 
     [StructLayout(LayoutKind.Sequential)]
