@@ -20,7 +20,7 @@
   "credentials": [
     {
       "id": "nasufficio",
-      "host": "\\\\nas01\\backupshare",
+      "host": "\\\\nas01\\share.intranet",
       "user": "DOMINIO\\backup",
       "passwordProtected": "<impostata-dalla-GUI-cifrata-DPAPI>"
     }
@@ -43,7 +43,7 @@
     },
     {
       "name": "Cartella-di-rete",
-      "source": "\\\\nas01\\backupshare\\sezioni\\Acquisti",
+      "source": "\\\\nas01\\share.intranet\\sezioni\\Acquisti",
       "destination": "\\\\srvbackup\\h$\\RootShare\\sezionitemp\\Acquisti",
       "mirror": true,
       "excludeOlder": false,
@@ -54,7 +54,7 @@
       "retries": 3,
       "wait": 15,
       "enabled": true,
-      "credentialId": "nasufficio"
+      "credentialId": "userid"
     }
   ]
 }
