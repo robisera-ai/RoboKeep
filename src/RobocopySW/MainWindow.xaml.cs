@@ -206,6 +206,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         Restartable = j.Restartable,
         ExcludeFiles = new List<string>(j.ExcludeFiles),
         ExcludeDirs = new List<string>(j.ExcludeDirs),
+        ForceCopyFiles = new List<string>(j.ForceCopyFiles),
+        ForceCopySmart = j.ForceCopySmart,
         Retries = j.Retries,
         Wait = j.Wait,
         Enabled = j.Enabled,
@@ -225,6 +227,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         to.Restartable = from.Restartable;
         to.ExcludeFiles = new List<string>(from.ExcludeFiles);
         to.ExcludeDirs = new List<string>(from.ExcludeDirs);
+        to.ForceCopyFiles = new List<string>(from.ForceCopyFiles);
+        to.ForceCopySmart = from.ForceCopySmart;
         to.Retries = from.Retries;
         to.Wait = from.Wait;
         to.Enabled = from.Enabled;

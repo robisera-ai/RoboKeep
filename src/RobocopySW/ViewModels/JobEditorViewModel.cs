@@ -127,6 +127,29 @@ public sealed class JobEditorViewModel : ObservableObject
         set { _job.ExcludeDirs = SplitLines(value); OnPropertyChanged(); RaisePreview(); }
     }
 
+    /// <summary>Pattern "Forza copia", uno per riga (es. <c>*.pst</c>).</summary>
+    public string ForceCopyFilesText
+    {
+        get => string.Join(Environment.NewLine, _job.ForceCopyFiles);
+        set
+        {
+            _job.ForceCopyFiles = SplitLines(value);
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasForceCopy));
+            RaisePreview();
+        }
+    }
+
+    /// <summary>Modalità smart (copia solo se l'hash è cambiato).</summary>
+    public bool ForceCopySmart
+    {
+        get => _job.ForceCopySmart;
+        set { _job.ForceCopySmart = value; OnPropertyChanged(); RaisePreview(); }
+    }
+
+    /// <summary>true se la lista "Forza copia" contiene almeno un pattern (abilita la spunta smart).</summary>
+    public bool HasForceCopy => _job.ForceCopyFiles.Count > 0;
+
     private CredentialOption _selectedCredential;
     public CredentialOption SelectedCredential
     {
@@ -141,7 +164,16 @@ public sealed class JobEditorViewModel : ObservableObject
         {
             try
             {
-                return RobocopyArgsBuilder.ToDisplayString(RobocopyArgsBuilder.Build(_job));
+                var preview = RobocopyArgsBuilder.ToDisplayString(RobocopyArgsBuilder.Build(_job));
+                if (_job.ForceCopyFiles.Count > 0)
+                {
+                    var filters = _job.ForceCopySmart
+                        ? new List<string> { Loc.Instance["Editor_ForceCopyPreviewSmart"] }
+                        : _job.ForceCopyFiles;
+                    preview += Environment.NewLine +
+                        RobocopyArgsBuilder.ToDisplayString(RobocopyArgsBuilder.BuildForceCopyPass(_job, filters));
+                }
+                return preview;
             }
             catch (Exception ex)
             {

@@ -194,4 +194,44 @@ public class RobocopyArgsBuilderTests
         Assert.Contains("\"C:\\Cartella con spazi\"", display);
         Assert.StartsWith("robocopy ", display);
     }
+
+    [Fact]
+    public void ForceCopyPass_FiltersFollowSourceAndDestination()
+    {
+        var args = RobocopyArgsBuilder.BuildForceCopyPass(NewJob(), new[] { "*.pst", "db.dat" });
+        Assert.Equal(@"C:\src", args[0]);
+        Assert.Equal(@"D:\dst", args[1]);
+        Assert.Equal("*.pst", args[2]);
+        Assert.Equal("db.dat", args[3]);
+    }
+
+    [Fact]
+    public void ForceCopyPass_IncludesIsItAndE_NotMirNotXo()
+    {
+        var args = RobocopyArgsBuilder.BuildForceCopyPass(NewJob(), new[] { "*.pst" });
+        Assert.Contains("/IS", args);
+        Assert.Contains("/IT", args);
+        Assert.Contains("/E", args);
+        Assert.DoesNotContain("/MIR", args);
+        Assert.DoesNotContain("/XO", args);
+    }
+
+    [Fact]
+    public void ForceCopyPass_RespectsCopyAllMtAndZ()
+    {
+        var job = NewJob();
+        job.CopyAll = true;
+        job.Restartable = true;
+        var args = RobocopyArgsBuilder.BuildForceCopyPass(job, new[] { "*.pst" });
+        Assert.Contains("/COPYALL", args);
+        Assert.Contains("/MT:8", args);
+        Assert.Contains("/Z", args);
+    }
+
+    [Fact]
+    public void ForceCopyPass_DryRunAddsListOnly()
+    {
+        Assert.Contains("/L", RobocopyArgsBuilder.BuildForceCopyPass(NewJob(), new[] { "*.pst" }, dryRun: true));
+        Assert.DoesNotContain("/L", RobocopyArgsBuilder.BuildForceCopyPass(NewJob(), new[] { "*.pst" }, dryRun: false));
+    }
 }

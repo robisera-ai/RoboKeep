@@ -13,6 +13,7 @@ public sealed class AppHost
     public ConfigStore Store { get; }
     public CredentialService Credentials { get; }
     public LastResultStore Results { get; }
+    public ForceCopyHashStore ForceCopyHashes { get; }
 
     private AppHost(ConfigStore store, AppConfig config)
     {
@@ -20,6 +21,7 @@ public sealed class AppHost
         Config = config;
         Credentials = new CredentialService(config.Settings.CredentialScope);
         Results = new LastResultStore(Path.Combine(store.DirectoryPath, "lastresults.json"));
+        ForceCopyHashes = new ForceCopyHashStore(Path.Combine(store.DirectoryPath, "forcecopy-hashes.json"));
     }
 
     public static AppHost Load(string? configPath = null)
@@ -35,7 +37,8 @@ public sealed class AppHost
     /// <summary>Costruisce l'orchestratore con la configurazione corrente.</summary>
     public BackupRunner BuildRunner()
     {
-        var runner = new RobocopyRunner();
+        var planner = new ForceCopyPlanner(ForceCopyHashes);
+        var runner = new RobocopyRunner(forceCopyPlanner: planner);
         var log = new LogService(Config.Settings);
         var email = new EmailService(Credentials);
         return new BackupRunner(Config, runner, log, email, Credentials, Results);

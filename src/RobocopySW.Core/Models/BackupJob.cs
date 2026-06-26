@@ -52,6 +52,15 @@ public sealed class BackupJob
     /// <summary>Cartelle da escludere (<c>/XD</c>), es. <c>cache</c>.</summary>
     public List<string> ExcludeDirs { get; set; } = new();
 
+    /// <summary>Pattern di file da forzare in copia anche se data/dimensione non cambiano
+    /// (seconda passata robocopy con /IS /IT). Es. *.pst, database.dat. Vuoto = feature disattivata.</summary>
+    public List<string> ForceCopyFiles { get; set; } = new();
+
+    /// <summary>Modalità della lista <see cref="ForceCopyFiles"/>:
+    /// false = "copia sempre" (ricopia integrale a ogni run);
+    /// true = "smart" (ricopia solo i file il cui hash è cambiato dall'ultimo backup).</summary>
+    public bool ForceCopySmart { get; set; }
+
     /// <summary>Numero di tentativi su errore (<c>/R:n</c>).</summary>
     public int Retries { get; set; } = 1;
 
