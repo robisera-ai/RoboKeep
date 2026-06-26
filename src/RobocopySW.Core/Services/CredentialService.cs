@@ -1,3 +1,4 @@
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -100,6 +101,14 @@ public sealed class CredentialService
             Disconnect(remoteName);
             return 0;
         }
+
+        // Fallback per credenziali integrate (campo utente vuoto): WNetAddConnection2 NON
+        // gestisce il loopback verso la propria macchina e restituisce sempre 67 (anche per
+        // localhost, 127.0.0.1 o il nome del PC), pur essendo la share raggiungibile.
+        // Se la cartella è accessibile con l'utente corrente, la connessione di fatto esiste.
+        if (u is null && Directory.Exists(remoteName))
+            return 0;
+
         return result;
     }
 

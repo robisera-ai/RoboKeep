@@ -181,11 +181,13 @@
                                     <PasswordBox x:Name="CredPassword"/>
                                 </StackPanel>
                             </Grid>
-                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                <ui:Button Content="{l:Tr Cred_Save}" Icon="{ui:SymbolIcon Save24}" Appearance="Primary" Click="OnUpsertCredential"/>
-                                <ui:Button Content="{l:Tr Cred_Remove}" Icon="{ui:SymbolIcon Delete24}" Margin="8,0,0,0" Click="OnRemoveCredential"/>
-                                <ui:Button x:Name="TestCredButton" Content="{l:Tr Conn_Test}" Icon="{ui:SymbolIcon PlugConnected24}" Margin="8,0,0,0" Click="OnTestCredential"/>
-                            </StackPanel>
+                            <Grid Margin="0,10,0,0">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                    <ui:Button x:Name="TestCredButton" Content="{l:Tr Conn_Test}" Icon="{ui:SymbolIcon PlugConnected24}" Click="OnTestCredential"/>
+                                    <ui:Button Content="{l:Tr Cred_Remove}" Icon="{ui:SymbolIcon Delete24}" Margin="8,0,0,0" Click="OnRemoveCredential"/>
+                                </StackPanel>
+                                <ui:Button Content="{l:Tr Cred_Save}" Icon="{ui:SymbolIcon Save24}" Appearance="Primary" HorizontalAlignment="Right" Click="OnUpsertCredential"/>
+                            </Grid>
                             <TextBlock x:Name="CredTestStatus" Margin="0,8,0,0" TextWrapping="Wrap"/>
                         </StackPanel>
                     </ui:Card>
