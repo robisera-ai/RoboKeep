@@ -141,7 +141,12 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
     private void OnNewJob(object sender, RoutedEventArgs e)
     {
-        var job = new BackupJob { Name = Loc.Instance["Editor_NewJobName"] };
+        // Creazione guidata; "Salta" restituisce ResultJob = null -> editor vuoto come prima.
+        var wizard = new JobWizardWindow { Owner = this };
+        if (wizard.ShowDialog() != true)
+            return;
+
+        var job = wizard.ResultJob ?? new BackupJob { Name = Loc.Instance["Editor_NewJobName"] };
         if (ShowEditor(job))
         {
             _vm.Jobs.Add(new JobViewModel(job));
