@@ -90,6 +90,55 @@ public static class RobocopyArgsBuilder
     }
 
     /// <summary>
+    /// Costruisce gli argomenti della passata "forza copia": copia i file indicati da
+    /// <paramref name="filters"/> anche se identici (<c>/IS /IT</c>), senza mai cancellare
+    /// (niente <c>/MIR</c>) e senza saltare i più vecchi (niente <c>/XO</c>).
+    /// </summary>
+    public static IReadOnlyList<string> BuildForceCopyPass(
+        BackupJob job, IReadOnlyList<string> filters, bool dryRun = false, string? logFile = null)
+    {
+        ArgumentNullException.ThrowIfNull(job);
+        ArgumentNullException.ThrowIfNull(filters);
+
+        var source = (job.Source ?? "").Trim();
+        var dest = (job.Destination ?? "").Trim();
+        if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(dest))
+            throw new InvalidOperationException(
+                $"Il job '{job.Name}' deve avere sorgente e destinazione valorizzate.");
+
+        var args = new List<string> { source, dest };
+        args.AddRange(filters.Where(f => !string.IsNullOrWhiteSpace(f)));
+
+        args.Add("/E");                 // ricorsivo, mai /MIR (la passata forzata non cancella)
+        args.Add("/IS");                // include same: copia anche i file identici
+        args.Add("/IT");                // include tweaked
+        args.Add(job.CopyAll ? "/COPYALL" : "/COPY:DAT");
+        args.Add("/XJ");
+
+        if (job.MultiThread > 0)
+            args.Add($"/MT:{Math.Min(job.MultiThread, MaxThreads)}");
+
+        if (job.UnbufferedIO)
+            args.Add("/J");
+        else if (job.Restartable)
+            args.Add("/Z");
+
+        args.Add($"/R:{Math.Max(0, job.Retries)}");
+        args.Add($"/W:{Math.Max(0, job.Wait)}");
+
+        if (dryRun)
+            args.Add("/L");
+
+        if (!string.IsNullOrWhiteSpace(logFile))
+        {
+            args.Add("/TEE");
+            args.Add($"/LOG:{logFile}");
+        }
+
+        return args;
+    }
+
+    /// <summary>
     /// Rende gli argomenti come riga di comando leggibile (per anteprima nella GUI).
     /// NB: solo per visualizzazione; l'esecuzione usa la lista di argomenti, non questa stringa.
     /// </summary>
