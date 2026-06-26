@@ -76,22 +76,36 @@ prudente, l'editor mostra poi la spiegazione per attivarlo). Se Q5 = no → list
 
 ### UI
 - `JobWizardWindow.xaml(.cs)` + `ViewModels/JobWizardViewModel.cs`.
-  **Struttura: pagina unica guidata** in un `ScrollViewer` (come l'editor), con sezioni intestate
-  ("Dove", "Comportamento", "File speciali", "Avanzate"); ogni domanda ha titolo, controllo, `InfoHint`
-  con la spiegazione, e l'opzione consigliata evidenziata. In fondo un riquadro **"Cosa verrà
-  impostato"** che mostra in tempo reale il comando robocopy risultante
-  (`RobocopyArgsBuilder.ToDisplayString(JobWizardPlanner.BuildJob(answers))`). Pulsanti:
-  **Annulla** e **Apri nell'editor**. (Una variante a passi multipli è possibile in futuro; per ora la
-  pagina unica è più semplice da costruire e localizzare.)
-- I tipi sorgente/destinazione sono due `ComboBox` (SSD / HDD / USB / Rete) nella stessa pagina.
+  **Struttura: a passi multipli** con informazioni raggruppate. La finestra ha un'**intestazione**
+  ("Passo X di N" + titolo della sezione), un'**area contenuto** che cambia per passo (un `TabControl`
+  con intestazioni nascoste, `SelectedIndex` legato a `CurrentStep`, una `TabItem` per passo), e un
+  **footer** con i pulsanti **Annulla**, **Indietro**, **Avanti** (sull'ultimo passo Avanti diventa
+  **Apri nell'editor**). In basso a sinistra, sempre disponibile, **"Salta e configura a mano"**.
+
+  Passi (raggruppamento):
+  1. **Dati di base** — nome job, sorgente (percorso + Browse), destinazione (percorso + Browse).
+  2. **Tipo di dischi** — due `ComboBox` (SSD / HDD / USB / Rete) per sorgente e destinazione, con
+     l'avviso sul `/MT` (HDD = pochi thread).
+  3. **Comportamento** — rispecchia vs accumula (Q3) + file molto grandi sì/no (Q4).
+  4. **Casi speciali** — file a metadati congelati (Q5, con campo pattern) + permessi/ACL (Q6) +
+     esclusioni cache/temp (Q7).
+  5. **Riepilogo** — riquadro **"Cosa verrà impostato"** con il comando robocopy risultante
+     (`RobocopyArgsBuilder.ToDisplayString(JobWizardPlanner.BuildJob(answers))`) e l'eventuale avviso
+     "imposta la credenziale di rete nell'editor"; pulsante **Apri nell'editor**.
+
+  Ogni domanda ha titolo, controllo, `InfoHint` con la spiegazione e l'opzione consigliata evidenziata.
+
+- **Navigazione**: `CurrentStep` nel ViewModel; `Indietro` abilitato se `CurrentStep > 0`; `Avanti`
+  abilitato se il passo è valido. Validazione minima: il **passo 1** richiede nome + sorgente +
+  destinazione non vuoti; gli altri passi hanno sempre valori di default validi.
 
 ### Integrazione con "Nuovo" — `MainWindow`
 Oggi `OnNewJob` crea un `BackupJob` vuoto e apre l'editor. Diventa:
 1. apre `JobWizardWindow`;
 2. se l'utente conferma → `var job = JobWizardPlanner.BuildJob(vm.Answers)` → apre il **normale**
    `JobEditorWindow(job, …)` precompilato → se l'utente salva, aggiunge il job e `PersistJobs()`;
-3. il wizard ha anche **"Salta (job vuoto)"** → apre l'editor con un `BackupJob` vuoto (comportamento
-   odierno), per gli utenti esperti;
+3. il wizard ha anche **"Salta e configura a mano"** → chiude il wizard e apre il normale
+   `JobEditorWindow` con un `BackupJob` vuoto, cioè il comportamento odierno (configurazione manuale);
 4. se annulla il wizard → niente.
 
 `Clone`/`CopyInto` non cambiano (il wizard produce un job nuovo, l'editor lo gestisce come sempre).
@@ -117,15 +131,15 @@ pulsanti, l'avviso credenziale di rete. È la parte più voluminosa.
 
 ## Verifica end-to-end (smoke)
 
-1. "Nuovo" → si apre la creazione guidata.
-2. Compilo nome/percorsi, scelgo es. sorgente SSD + destinazione HDD, "rispecchia", file grandi sì →
-   l'anteprima mostra `/MIR /MT:2 /Z …`. "Apri nell'editor" → l'editor è precompilato con quei valori.
+1. "Nuovo" → si apre la creazione guidata al passo 1.
+2. Passo 1: nome + percorsi; passo 2: sorgente SSD + destinazione HDD; passo 3: "rispecchia" + file
+   grandi sì; passi 4 e 5 con Avanti/Indietro. Il riepilogo mostra `/MIR /MT:2 /Z …`.
+   "Apri nell'editor" → l'editor è precompilato con quei valori.
 3. Salvo → il job compare in lista e funziona come gli altri.
-4. "Salta (job vuoto)" → apre l'editor vuoto come prima.
+4. "Salta e configura a mano" (da qualsiasi passo) → apre l'editor vuoto, come oggi.
 
 ## Fuori scope (YAGNI)
 
-- Wizard a passi multipli con avanti/indietro (per ora pagina unica).
 - Rilevamento automatico del tipo di disco (SSD/HDD) dal sistema: lo chiede l'utente.
 - Creazione della credenziale di rete dentro il wizard: si fa nell'editor/Impostazioni.
 - Suggerimento automatico di `ForceCopySmart`: resta scelta manuale nell'editor.
