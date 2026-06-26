@@ -203,3 +203,10 @@ OR/somma resta semplice e verificabile nel test end-to-end.)
 - Copia a blocchi/delta per file grandi — robocopy non la supporta; non in scope.
 - Forzatura a intervalli fissi (ogni N run) — non richiesta.
 - Hash parziale/campionato — si usa hash completo per affidabilità.
+
+## Evoluzioni future (non in questo spec)
+
+- **Wizard di creazione job**: poche domande (tipo di sorgente, tipo di destinazione locale/rete, tipo
+  di dati) che **precompila** le opzioni ottimali del job — incluse mirror/`/MT`/`/Z`/`/J` e
+  l'eventuale lista "Forza copia" + modalità smart — restando comunque **tutto modificabile** a mano.
+  Da progettare separatamente dopo che la feature "Forza copia" è in uso.
