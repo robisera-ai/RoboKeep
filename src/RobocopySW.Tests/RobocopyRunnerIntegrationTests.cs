@@ -167,4 +167,25 @@ public sealed class RobocopyRunnerIntegrationTests : IDisposable
         Assert.True(run.Result.Success);
         Assert.True(File.Exists(Path.Combine(_dst, "b.txt")));
     }
+
+    [Fact]
+    public async Task ForceCopy_Simple_ReCopiesOtherwiseSkippedFile()
+    {
+        var hashPath = Path.Combine(_base, "hashes.json");
+        var planner = new ForceCopyPlanner(new ForceCopyHashStore(hashPath));
+        var runner = new RobocopyRunner(null, planner);
+
+        var job = Job(mirror: true);
+        job.ForceCopyFiles = new() { "a.txt" }; // modalità semplice (ForceCopySmart = false)
+
+        // Primo backup: copia tutto.
+        var first = await runner.RunAsync(job);
+        Assert.True(first.Result.Success);
+
+        // Secondo backup: la passata normale salterebbe a.txt (identico),
+        // ma la passata forza copia lo ricopia comunque.
+        var second = await runner.RunAsync(job);
+        Assert.True(second.Result.Success);
+        Assert.True(second.Result.FilesCopied >= 1);
+    }
 }
