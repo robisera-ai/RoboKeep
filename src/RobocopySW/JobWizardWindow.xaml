@@ -40,7 +40,7 @@
 
         <ui:TitleBar Grid.Row="0" Title="{l:Tr Wiz_Title}">
             <ui:TitleBar.Icon>
-                <ui:SymbolIcon Symbol="WandSparkle24"/>
+                <ui:SymbolIcon Symbol="Add24"/>
             </ui:TitleBar.Icon>
         </ui:TitleBar>
 
