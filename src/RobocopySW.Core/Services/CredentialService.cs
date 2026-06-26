@@ -52,6 +52,7 @@ public sealed class CredentialService
     /// </summary>
     public void Connect(string remoteName, string user, string password)
     {
+        remoteName = NormalizeShare(remoteName);
         var nr = new NetResource
         {
             dwType = ResourceTypeDisk,
@@ -69,8 +70,16 @@ public sealed class CredentialService
     public void Disconnect(string remoteName)
     {
         // 0x00000001 = aggiorna il profilo; force = true.
-        WNetCancelConnection2(remoteName, 1, fForce: true);
+        WNetCancelConnection2(NormalizeShare(remoteName), 1, fForce: true);
     }
+
+    /// <summary>
+    /// Normalizza un nome UNC per le API mpr.dll: rimuove spazi e barre finali.
+    /// WNetAddConnection2 vuole esattamente <c>\\server\share</c> e rifiuta con errore 67
+    /// un nome con la barra finale (es. <c>\\server\share\</c>) che invece Explorer/Chrome tollerano.
+    /// </summary>
+    private static string NormalizeShare(string remoteName) =>
+        (remoteName ?? "").Trim().TrimEnd('\\', '/');
 
     /// <summary>
     /// Prova la connessione alla share senza sollevare eccezioni: restituisce 0 in caso di
@@ -78,6 +87,7 @@ public sealed class CredentialService
     /// </summary>
     public int TryConnect(string remoteName, string? user, string? password)
     {
+        remoteName = NormalizeShare(remoteName);
         // RESOURCETYPE_ANY: accetta qualsiasi tipo di share (incluso IPC$, non solo dischi).
         var nr = new NetResource { dwType = ResourceTypeAny, lpRemoteName = remoteName };
         // Credenziali vuote => null: usa l'autenticazione integrata (utente corrente).
