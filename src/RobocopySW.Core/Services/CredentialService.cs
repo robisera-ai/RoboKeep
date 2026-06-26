@@ -78,8 +78,13 @@ public sealed class CredentialService
     /// </summary>
     public int TryConnect(string remoteName, string? user, string? password)
     {
-        var nr = new NetResource { dwType = ResourceTypeDisk, lpRemoteName = remoteName };
-        var result = WNetAddConnection2(nr, password, user, ConnectFlags: 0);
+        // RESOURCETYPE_ANY: accetta qualsiasi tipo di share (incluso IPC$, non solo dischi).
+        var nr = new NetResource { dwType = ResourceTypeAny, lpRemoteName = remoteName };
+        // Credenziali vuote => null: usa l'autenticazione integrata (utente corrente).
+        var u = string.IsNullOrWhiteSpace(user) ? null : user;
+        var p = string.IsNullOrEmpty(password) ? null : password;
+
+        var result = WNetAddConnection2(nr, p, u, ConnectFlags: 0);
         if (result is 0 or 1219 or 85)
         {
             Disconnect(remoteName);
@@ -89,6 +94,7 @@ public sealed class CredentialService
     }
 
     private const int ResourceTypeDisk = 0x00000001;
+    private const int ResourceTypeAny = 0x00000000;
 
     [StructLayout(LayoutKind.Sequential)]
     private sealed class NetResource
