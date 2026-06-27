@@ -1,151 +1,152 @@
 # RoboKeep
 
-**Una GUI moderna per `robocopy`: backup e mirroring su Windows, semplici, trasparenti e affidabili.**
+*Read in: English · [Italiano](readmeita.md)*
+
+**A modern GUI for `robocopy`: simple, transparent, and reliable backup and mirroring on Windows.**
 
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
 ![Windows 10/11](https://img.shields.io/badge/Windows-10%20%2F%2011-0078D6)
-![Lingue](https://img.shields.io/badge/lingue-5-success)
+![Languages](https://img.shields.io/badge/languages-5-success)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
 
-RoboKeep mette una GUI moderna e una configurazione centralizzata sopra `robocopy`, lo
-strumento di copia di Windows: definisci i tuoi backup (sorgente → destinazione) una volta, e li
-avvii a mano, da riga di comando o pianificati — senza scrivere né tenere aggiornati script a mano.
+RoboKeep puts a modern graphical interface and centralized configuration on top of `robocopy`, Windows'
+built-in copy tool: define your backup jobs (source → destination) once, and run them manually, from the
+command line, or on a schedule — without writing or maintaining scripts by hand.
 
-![Finestra principale di RoboKeep](docs/images/main-window.jpg)
+![Main window of RoboKeep](docs/images/main-window.jpg)
 
-*Lista dei job con l'ultimo esito a colpo d'occhio e il log di esecuzione in tempo reale.*
+*Job list with the latest result at a glance and a real-time execution log.*
 
-## Perché RoboKeep
+## Why RoboKeep
 
-- **Motore collaudato, non reinventato.** La copia la fa il `robocopy` di Windows: veloce,
-  multi-thread, affidabile, sempre aggiornato col sistema. RoboKeep ci mette sopra comodità e
-  chiarezza, non un nuovo algoritmo di copia da fidarsi al buio.
-- **Trasparente.** L'editor mostra in tempo reale **l'esatto comando robocopy** che verrà eseguito:
-  nessuna scatola nera, sai sempre cosa succede.
-- **Una sola configurazione.** Tutti i job in un unico file JSON, editabili da GUI, invece che
-  scritti e duplicati a mano.
-- **Creazione guidata.** Un wizard ti fa poche domande (tipo di dischi, comportamento, file
-  speciali) e **imposta le opzioni ottimali**, evitando gli errori classici di robocopy.
-- **Locale, gratuito, senza cloud.** Nessuna telemetria, nessun account. Le credenziali delle share
-  di rete sono cifrate con DPAPI di Windows.
-- **Portatile.** App, configurazione e log nella stessa cartella: copi la cartella e hai spostato tutto.
-- **Multilingua:** italiano, inglese, spagnolo, francese, tedesco.
+- **Proven engine, not reinvented.** Copying is handled by Windows `robocopy`: fast, multi-threaded,
+  reliable, and always up to date with the system. RoboKeep adds convenience and clarity on top — no new
+  copy algorithm to blindly trust.
+- **Fully transparent.** The editor shows, in real time, the **exact robocopy command** that will be
+  executed. No black box — you always know what's happening.
+- **Single configuration.** All jobs in one JSON file, editable from the GUI, instead of hand-written and
+  duplicated scripts.
+- **Guided creation.** A wizard asks a few questions (disk types, behavior, special files) and **sets the
+  optimal options**, avoiding common robocopy mistakes.
+- **Local, free, no cloud.** No telemetry, no account. Network-share credentials are encrypted with
+  Windows DPAPI.
+- **Portable.** App, configuration, and logs all in the same folder — copy the folder and everything moves
+  with you.
+- **Multilingual:** Italian, English, Spanish, French, German.
 
-## Come funziona un backup
+## How a backup works
 
-Per ogni job (coppia sorgente → destinazione, ricorsivo sulle sottocartelle):
+For each job (source → destination pair, recursive over subfolders):
 
-- **salta** i file identici (stessa data/ora e dimensione);
-- **sovrascrive** in destinazione i file la cui sorgente è più recente;
-- in **mirror** (`/MIR`, default) **rimuove** dalla destinazione i file/cartelle non più presenti in sorgente;
-- con mirror disattivato (`/E`) copia e aggiorna soltanto, **senza mai cancellare**.
+- **skips** identical files (same last-modified date/time and size);
+- **overwrites** destination files when the source is newer;
+- in **mirror** mode (`/MIR`, default) it **removes** from the destination files/folders that no longer exist in the source;
+- with mirror disabled (`/E`) it only copies and updates, **never deletes**.
 
-## Requisiti
+## Requirements
 
-- **Windows 10 o 11** (usa il `robocopy` di sistema).
-- **[.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)** per eseguire
-  l'app. In alternativa, il **.NET 10 SDK** se vuoi compilarla dai sorgenti.
+- **Windows 10 or 11** (uses the system `robocopy`).
+- **[.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)** to run the app.
+  Alternatively, the **.NET 10 SDK** if you want to build from source.
 
-## Installazione
+## Installation
 
-### Opzione A — Release pronta all'uso (consigliata)
+### Option A — Ready-to-use release (recommended)
 
-1. Scarica l'ultima versione dalla pagina **[Releases](../../releases)** del progetto.
-2. Estrai lo `.zip` in una cartella **scrivibile** (es. `D:\Programmi\RoboKeep`).
-   > Evita `C:\Program Files` (sola lettura per gli utenti): se la metti lì, imposta percorsi
-   > log/temp scrivibili dalle Impostazioni.
-3. Avvia **`RoboKeep.exe`**. Nessuna installazione: l'app è portatile.
+1. Download the latest version from the project's **[Releases](../../releases)** page.
+2. Extract the `.zip` into a **writable folder** (e.g. `D:\Programs\RoboKeep`).
+   > Avoid `C:\Program Files` (read-only for standard users): if you put it there, set writable log/temp
+   > paths in Settings.
+3. Run **`RoboKeep.exe`**. No installation required — the app is portable.
 
-Se all'avvio Windows segnala la mancanza del runtime, installa il
-[.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) e riprova.
+If Windows reports a missing runtime, install the
+[.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) and try again.
 
-### Opzione B — Compila dai sorgenti
+### Option B — Build from source
 
 ```powershell
 git clone https://github.com/robisera-ai/RoboKeep.git
 cd RoboKeep
 dotnet build src/RoboKeep.sln -c Release
-dotnet test  src/RoboKeep.Tests/RoboKeep.Tests.csproj   # facoltativo
-# eseguibile in: src/RoboKeep/bin/Release/net10.0-windows/RoboKeep.exe
+dotnet test  src/RoboKeep.Tests/RoboKeep.Tests.csproj   # optional
+# executable at: src/RoboKeep/bin/Release/net10.0-windows/RoboKeep.exe
 ```
 
-## Uso
+## Usage
 
-### Interfaccia grafica
+### Graphical interface
 
-Avvia `RoboKeep.exe` senza argomenti. In breve:
+Run `RoboKeep.exe` with no arguments. In short:
 
-1. **Nuovo** → la **creazione guidata** ti accompagna in 5 passi (dati di base, tipo di dischi
-   sorgente/destinazione, comportamento, casi speciali, riepilogo) e precompila l'editor con le
-   opzioni consigliate. In alternativa **Salta e configura a mano**.
-2. Controlla l'**anteprima del comando robocopy** nell'editor, poi **Salva**.
-3. **Anteprima** (dry-run) per vedere cosa verrebbe copiato/cancellato **senza toccare nulla**;
-   quando sei sicuro, **Avvia selezionato** o **Avvia tutti**. Il log scorre in tempo reale.
+1. **New** → the **guided wizard** walks you through 5 steps (basics, disk types, behavior, special cases,
+   summary) and pre-fills the editor with recommended options. Or **Skip and configure manually**.
+2. Review the **robocopy command preview** in the editor, then **Save**.
+3. **Preview** (dry-run) to see what would be copied/deleted **without touching anything**; when ready,
+   **Run selected** or **Run all**. The log scrolls in real time.
 
-![Creazione guidata di un nuovo job](docs/images/wizard.jpg)
+![Job creation wizard](docs/images/wizard.jpg)
 
-*La creazione guidata: poche domande e le opzioni robocopy vengono impostate per te.*
+*The wizard: a few questions and the optimal robocopy options are set for you.*
 
-![Editor con anteprima del comando robocopy](docs/images/editor-preview.jpg)
+![Editor with the robocopy command preview](docs/images/editor-preview.jpg)
 
-*L'editor mostra in tempo reale l'esatto comando robocopy che verrà eseguito.*
+*The editor shows, in real time, the exact robocopy command that will be executed.*
 
-### Riga di comando (per la pianificazione)
+### Command line (for scheduling)
 
 ```text
-RoboKeep.exe --run-all              Esegue tutti i job abilitati
-RoboKeep.exe --job "Documenti"      Esegue un singolo job
-RoboKeep.exe --run-all --dry-run    Anteprima (nessuna modifica)
-RoboKeep.exe --job "Foto" --config "D:\percorso\config.json"
+RoboKeep.exe --run-all              Runs all enabled jobs
+RoboKeep.exe --job "Documents"      Runs a single job
+RoboKeep.exe --run-all --dry-run    Preview (no changes)
+RoboKeep.exe --job "Photos" --config "D:\path\config.json"
 ```
 
-Exit code: `0` tutti i job riusciti · `1` almeno un errore · `2` job non trovato.
+Exit codes: `0` all jobs succeeded · `1` at least one error · `2` job not found.
 
-La pianificazione si crea dalle **Impostazioni → Pianificazione** (usa l'Utilità di pianificazione
-di Windows) e lancia l'app con `--run-all` all'orario scelto.
+Scheduling is created from **Settings → Scheduling** (uses Windows Task Scheduler) and launches the app
+with `--run-all` at the chosen time.
 
-## Funzioni
+## Features
 
-- **Creazione guidata** del job, con spiegazioni e opzioni consigliate per tipo di disco/dati.
-- **Editor** completo con **anteprima del comando** e **log live**.
-- **Anteprima / dry-run** (`/L`): mostra le azioni senza modificare nulla.
-- **Mirror** (`/MIR`) o **copia/accumulo** (`/E`); **non sovrascrivere i più recenti** (`/XO`);
-  **copia ACL/owner** (`/COPYALL`).
-- **Multi-thread** (`/MT`), **esclusioni** file e cartelle per job.
-- **File grandi:** modalità **riavviabile** (`/Z`, riprende le copie interrotte) o **I/O non
-  bufferizzato** (`/J`).
-- **Forza copia:** ricopia i file a **data/dimensione congelate** (container cifrati, DB) anche
-  quando robocopy li salterebbe; modalità **smart** che ricopia solo se l'hash del contenuto è cambiato.
-- **Log dettagliato** opzionale (`/V`, registra anche i file saltati).
-- **Log per job** compressi in `.zip`, archiviati per data, con **pulizia automatica**.
-- **Notifiche email** (SMTP) con esito e **report** conteggi (copiati / saltati / extra / falliti).
-- **Credenziali** per share di rete UNC, cifrate con **DPAPI** (ambito utente o macchina), con
-  test di connessione.
-- **Pianificazione** integrata via Utilità di pianificazione di Windows.
-- Riordino dei job con **drag &amp; drop**; ultimo esito visibile in lista (anche dopo i run pianificati).
+- **Guided job creation**, with explanations and recommended options per disk/data type.
+- Full **editor** with **command preview** and **live log**.
+- **Preview / dry-run** (`/L`): shows the actions without changing anything.
+- **Mirror** (`/MIR`) or **copy/accumulate** (`/E`); **don't overwrite newer** files (`/XO`);
+  **copy ACL/owner** (`/COPYALL`).
+- **Multi-thread** (`/MT`), per-job file and folder **exclusions**.
+- **Large files:** **restartable** mode (`/Z`, resumes interrupted copies) or **unbuffered I/O** (`/J`).
+- **Force copy:** recopy files with frozen date/size (encrypted containers, DBs) even when robocopy would
+  skip them; **smart** mode that recopies only if the content hash changed.
+- Optional **detailed logging** (`/V`, also lists skipped files).
+- **Per-job logs** compressed to `.zip`, archived by date, with **automatic cleanup**.
+- **Email notifications** (SMTP) with outcome and **counts** (copied / skipped / extra / failed).
+- **Credentials** for UNC network shares, encrypted with **DPAPI**, with a connection test.
+- Integrated **scheduling** via Windows Task Scheduler.
+- Job reordering by **drag &amp; drop**; latest result shown in the list (also after scheduled runs).
 
-## Limitazioni
+## Limitations
 
-- **Solo Windows:** dipende da `robocopy`. Niente versione macOS/Linux.
-- **Nessuna copia a blocchi/delta:** quando un file cambia, robocopy lo ricopia **per intero**. Per
-  file molto grandi che cambiano spesso il costo è quello del trasferimento completo.
-- **Non è un sistema di versioni/snapshot:** è mirror/copia, non conserva versioni storiche dei file.
-  Per il versioning serve uno strumento dedicato.
-- La **pianificazione** e l'opzione credenziali “ambito utente” richiedono che l'attività giri con
-  l'utente adeguato; alcune azioni (es. `/COPYALL`) possono richiedere privilegi sufficienti.
+- **Windows only:** depends on `robocopy`. No macOS/Linux version.
+- **No block-level/delta copy:** when a file changes, robocopy recopies it **entirely**. For very large
+  files that change often, the cost is a full transfer.
+- **Not a versioning/snapshot system:** it's mirror/copy, it does not keep historical file versions. For
+  versioning you need a dedicated tool.
+- The **scheduling** and the user-scope credential option require the task to run under the appropriate
+  user; some actions (e.g. `/COPYALL`) may require sufficient privileges.
 
-## Configurazione
+## Configuration
 
-Modello **portatile**: per default `config.json`, `logs\` e `temp\` stanno **nella stessa cartella
-dell'eseguibile**. Esempio in **[config/config.example.json](config/config.example.json)**.
+Portable by design: by default `config.json`, `logs\`, and `temp\` live **in the same folder as the
+executable**. Example in **[config/config.example.json](config/config.example.json)**.
 
-Le password (credenziali di rete ed email) non sono mai in chiaro: vengono cifrate con **DPAPI**.
-Il file `config.json` reale e `lastresults.json` restano locali (non versionati).
+Passwords (network and email) are never stored in plain text — they are encrypted with **DPAPI**. The real
+`config.json` and `lastresults.json` stay local (not versioned).
 
-## Approfondimenti
+## Further reading
 
-Vedi **[ANALISI.md](ANALISI.md)** per l'obiettivo del progetto e le scelte tecniche (perché robocopy e .NET nativi).
+See **[ANALISI.md](ANALISI.md)** for the project goals and technical decisions (why robocopy and native
+.NET). *(The analysis document is written in Italian.)*
 
-## Licenza
+## License
 
-Distribuito con licenza **MIT** — vedi il file [LICENSE](LICENSE). © 2026 Roberto Serafini.
+Distributed under the **MIT License** — see the [LICENSE](LICENSE) file. © 2026 Roberto Serafini.
