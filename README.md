@@ -1,6 +1,11 @@
 # RoboKeep
 
-**Backup e mirroring per Windows con interfaccia grafica, basato sul motore `robocopy` di sistema.**
+**Una GUI moderna per `robocopy`: backup e mirroring su Windows, semplici, trasparenti e affidabili.**
+
+![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
+![Windows 10/11](https://img.shields.io/badge/Windows-10%20%2F%2011-0078D6)
+![Lingue](https://img.shields.io/badge/lingue-5-success)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
 
 RoboKeep mette una GUI moderna e una configurazione centralizzata sopra `robocopy`, lo
 strumento di copia di Windows: definisci i tuoi backup (sorgente → destinazione) una volta, e li
@@ -140,3 +145,7 @@ Il file `config.json` reale e `lastresults.json` restano locali (non versionati)
 ## Approfondimenti
 
 Vedi **[ANALISI.md](ANALISI.md)** per l'obiettivo del progetto e le scelte tecniche (perché robocopy e .NET nativi).
+
+## Licenza
+
+Distribuito con licenza **MIT** — vedi il file [LICENSE](LICENSE). © 2026 Roberto Serafini.
