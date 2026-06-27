@@ -1,0 +1,183 @@
+<ui:FluentWindow x:Class="RoboKeep.JobEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:ctl="clr-namespace:RoboKeep.Controls"
+        xmlns:l="clr-namespace:RoboKeep.Localization"
+        mc:Ignorable="d"
+        Title="{l:Tr Editor_TitleEdit}" Height="740" Width="740"
+        ExtendsContentIntoTitleBar="True"
+        WindowBackdropType="Mica"
+        WindowCornerPreference="Round"
+        WindowStartupLocation="CenterOwner">
+    <ui:FluentWindow.Resources>
+        <Style TargetType="TextBlock" x:Key="Label">
+            <Setter Property="Margin" Value="0,12,8,4"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style TargetType="TextBlock" x:Key="Hint">
+            <Setter Property="Opacity" Value="0.7"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,0,0,4"/>
+        </Style>
+    </ui:FluentWindow.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="{l:Tr Editor_TitleEdit}">
+            <ui:TitleBar.Icon>
+                <ui:SymbolIcon Symbol="Edit24"/>
+            </ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="20,4,8,0" Padding="0,0,16,0">
+            <StackPanel>
+                <TextBlock Text="{l:Tr Editor_Name}" Style="{StaticResource Label}"/>
+                <ui:TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="{l:Tr Editor_NamePlaceholder}"/>
+
+                <TextBlock Text="{l:Tr Editor_Source}" Style="{StaticResource Label}"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBox Grid.Column="0" Text="{Binding Source, UpdateSourceTrigger=PropertyChanged}"/>
+                    <ui:Button Grid.Column="1" Content="{l:Tr Common_Browse}" Icon="{ui:SymbolIcon FolderOpen24}" Margin="8,0,0,0" Click="OnBrowseSource"/>
+                </Grid>
+
+                <TextBlock Text="{l:Tr Editor_Dest}" Style="{StaticResource Label}"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBox Grid.Column="0" Text="{Binding Destination, UpdateSourceTrigger=PropertyChanged}"/>
+                    <ui:Button Grid.Column="1" Content="{l:Tr Common_Browse}" Icon="{ui:SymbolIcon FolderOpen24}" Margin="8,0,0,0" Click="OnBrowseDest"/>
+                </Grid>
+
+                <ui:Card Margin="0,16,0,0" Padding="14">
+                    <StackPanel>
+                        <CheckBox Content="{l:Tr Editor_Mirror}" IsChecked="{Binding Mirror}"/>
+                        <TextBlock Style="{StaticResource Hint}" Text="{l:Tr Editor_MirrorHint}"/>
+                        <CheckBox Content="{l:Tr Editor_ExcludeOlder}" IsChecked="{Binding ExcludeOlder}" Margin="0,6,0,0"/>
+                        <CheckBox Content="{l:Tr Editor_CopyAll}" IsChecked="{Binding CopyAll}" Margin="0,6,0,0"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <CheckBox Content="{l:Tr Editor_BigJ}" IsChecked="{Binding UnbufferedIO}"/>
+                            <ctl:InfoHint Margin="6,0,0,0" Text="{l:Tr Editor_BigJTip}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <CheckBox Content="{l:Tr Editor_RestartZ}" IsChecked="{Binding Restartable}"/>
+                            <ctl:InfoHint Margin="6,0,0,0" Text="{l:Tr Editor_RestartZTip}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <CheckBox Content="{l:Tr Editor_LogAll}" IsChecked="{Binding LogAllFiles}"/>
+                            <ctl:InfoHint Margin="6,0,0,0" Text="{l:Tr Editor_LogAllTip}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ui:Card>
+
+                <Grid Margin="0,4,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{l:Tr Editor_Threads}" Style="{StaticResource Label}"/>
+                            <ctl:InfoHint Margin="0,12,0,0" Text="{l:Tr Editor_ThreadsTip}"/>
+                        </StackPanel>
+                        <ui:TextBox Text="{Binding MultiThread, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{l:Tr Editor_Retries}" Style="{StaticResource Label}"/>
+                            <ctl:InfoHint Margin="0,12,0,0" Text="{l:Tr Editor_RetriesTip}"/>
+                        </StackPanel>
+                        <ui:TextBox Text="{Binding Retries, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{l:Tr Editor_Wait}" Style="{StaticResource Label}"/>
+                            <ctl:InfoHint Margin="0,12,0,0" Text="{l:Tr Editor_WaitTip}"/>
+                        </StackPanel>
+                        <ui:TextBox Text="{Binding Wait, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                </Grid>
+
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{l:Tr Editor_Credential}" Style="{StaticResource Label}"/>
+                    <ctl:InfoHint Margin="0,12,0,0" Text="{l:Tr Editor_CredentialTip}"/>
+                </StackPanel>
+                <ComboBox ItemsSource="{Binding Credentials}" SelectedItem="{Binding SelectedCredential}"
+                          DisplayMemberPath="Display"/>
+
+                <Grid Margin="0,4,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{l:Tr Editor_ExcludeFiles}" Style="{StaticResource Label}"/>
+                            <ctl:InfoHint Margin="0,12,0,0" Text="{l:Tr Editor_ExcludeFilesTip}"/>
+                        </StackPanel>
+                        <ui:TextBox Text="{Binding ExcludeFilesText, UpdateSourceTrigger=PropertyChanged}"
+                                 AcceptsReturn="True" Height="76" TextWrapping="NoWrap"
+                                 VerticalScrollBarVisibility="Auto" PlaceholderText="*.tmp"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{l:Tr Editor_ExcludeDirs}" Style="{StaticResource Label}"/>
+                            <ctl:InfoHint Margin="0,12,0,0" Text="{l:Tr Editor_ExcludeDirsTip}"/>
+                        </StackPanel>
+                        <ui:TextBox Text="{Binding ExcludeDirsText, UpdateSourceTrigger=PropertyChanged}"
+                                 AcceptsReturn="True" Height="76" TextWrapping="NoWrap"
+                                 VerticalScrollBarVisibility="Auto" PlaceholderText="cache"/>
+                    </StackPanel>
+                </Grid>
+
+                <ui:Card Margin="0,12,0,0" Padding="14">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{l:Tr Editor_ForceCopy}" Style="{StaticResource Label}"/>
+                            <ctl:InfoHint Margin="0,12,0,0" Text="{l:Tr Editor_ForceCopyTip}"/>
+                        </StackPanel>
+                        <ui:TextBox Text="{Binding ForceCopyFilesText, UpdateSourceTrigger=PropertyChanged}"
+                                 AcceptsReturn="True" Height="64" TextWrapping="NoWrap"
+                                 VerticalScrollBarVisibility="Auto" PlaceholderText="*.pst"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                            <CheckBox Content="{l:Tr Editor_ForceCopySmart}" IsChecked="{Binding ForceCopySmart}"
+                                      IsEnabled="{Binding HasForceCopy}"/>
+                            <ctl:InfoHint Margin="6,0,0,0" Text="{l:Tr Editor_ForceCopySmartTip}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ui:Card>
+
+                <TextBlock Text="{l:Tr Editor_CommandPreview}" Style="{StaticResource Label}"/>
+                <Border CornerRadius="6" Background="#1E1E1E" Padding="10" Margin="0,0,0,12">
+                    <TextBox Text="{Binding CommandPreview, Mode=OneWay}" IsReadOnly="True" Style="{x:Null}"
+                             FontFamily="Cascadia Mono, Consolas" FontSize="12" TextWrapping="Wrap"
+                             Background="#1E1E1E" Foreground="#9CDCFE" CaretBrush="#9CDCFE"
+                             BorderThickness="0" MinHeight="48"/>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Row="2" Padding="20,12" Background="#11888888">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <ui:Button Content="{l:Tr Common_Cancel}" Width="110" Margin="0,0,8,0" IsCancel="True" Click="OnCancel"/>
+                <ui:Button Content="{l:Tr Common_Save}" Width="110" Appearance="Primary" Icon="{ui:SymbolIcon Save24}" IsDefault="True" Click="OnSave"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</ui:FluentWindow>

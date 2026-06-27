@@ -1,19 +1,19 @@
-# RobocopySW
+# RoboKeep
 
 **Backup e mirroring per Windows con interfaccia grafica, basato sul motore `robocopy` di sistema.**
 
-RobocopySW mette una GUI moderna e una configurazione centralizzata sopra `robocopy`, lo
+RoboKeep mette una GUI moderna e una configurazione centralizzata sopra `robocopy`, lo
 strumento di copia di Windows: definisci i tuoi backup (sorgente → destinazione) una volta, e li
 avvii a mano, da riga di comando o pianificati — senza scrivere né tenere aggiornati script a mano.
 
-![Finestra principale di RobocopySW](docs/images/main-window.jpg)
+![Finestra principale di RoboKeep](docs/images/main-window.jpg)
 
 *Lista dei job con l'ultimo esito a colpo d'occhio e il log di esecuzione in tempo reale.*
 
-## Perché RobocopySW
+## Perché RoboKeep
 
 - **Motore collaudato, non reinventato.** La copia la fa il `robocopy` di Windows: veloce,
-  multi-thread, affidabile, sempre aggiornato col sistema. RobocopySW ci mette sopra comodità e
+  multi-thread, affidabile, sempre aggiornato col sistema. RoboKeep ci mette sopra comodità e
   chiarezza, non un nuovo algoritmo di copia da fidarsi al buio.
 - **Trasparente.** L'editor mostra in tempo reale **l'esatto comando robocopy** che verrà eseguito:
   nessuna scatola nera, sai sempre cosa succede.
@@ -46,10 +46,10 @@ Per ogni job (coppia sorgente → destinazione, ricorsivo sulle sottocartelle):
 ### Opzione A — Release pronta all'uso (consigliata)
 
 1. Scarica l'ultima versione dalla pagina **[Releases](../../releases)** del progetto.
-2. Estrai lo `.zip` in una cartella **scrivibile** (es. `D:\Programmi\RobocopySW`).
+2. Estrai lo `.zip` in una cartella **scrivibile** (es. `D:\Programmi\RoboKeep`).
    > Evita `C:\Program Files` (sola lettura per gli utenti): se la metti lì, imposta percorsi
    > log/temp scrivibili dalle Impostazioni.
-3. Avvia **`RobocopySW.exe`**. Nessuna installazione: l'app è portatile.
+3. Avvia **`RoboKeep.exe`**. Nessuna installazione: l'app è portatile.
 
 Se all'avvio Windows segnala la mancanza del runtime, installa il
 [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) e riprova.
@@ -57,18 +57,18 @@ Se all'avvio Windows segnala la mancanza del runtime, installa il
 ### Opzione B — Compila dai sorgenti
 
 ```powershell
-git clone https://github.com/robisera-ai/copia_backup.git
-cd copia_backup
-dotnet build src/RobocopySW.sln -c Release
-dotnet test  src/RobocopySW.Tests/RobocopySW.Tests.csproj   # facoltativo
-# eseguibile in: src/RobocopySW/bin/Release/net10.0-windows/RobocopySW.exe
+git clone https://github.com/robisera-ai/RoboKeep.git
+cd RoboKeep
+dotnet build src/RoboKeep.sln -c Release
+dotnet test  src/RoboKeep.Tests/RoboKeep.Tests.csproj   # facoltativo
+# eseguibile in: src/RoboKeep/bin/Release/net10.0-windows/RoboKeep.exe
 ```
 
 ## Uso
 
 ### Interfaccia grafica
 
-Avvia `RobocopySW.exe` senza argomenti. In breve:
+Avvia `RoboKeep.exe` senza argomenti. In breve:
 
 1. **Nuovo** → la **creazione guidata** ti accompagna in 5 passi (dati di base, tipo di dischi
    sorgente/destinazione, comportamento, casi speciali, riepilogo) e precompila l'editor con le
@@ -88,10 +88,10 @@ Avvia `RobocopySW.exe` senza argomenti. In breve:
 ### Riga di comando (per la pianificazione)
 
 ```text
-RobocopySW.exe --run-all              Esegue tutti i job abilitati
-RobocopySW.exe --job "Documenti"      Esegue un singolo job
-RobocopySW.exe --run-all --dry-run    Anteprima (nessuna modifica)
-RobocopySW.exe --job "Foto" --config "D:\percorso\config.json"
+RoboKeep.exe --run-all              Esegue tutti i job abilitati
+RoboKeep.exe --job "Documenti"      Esegue un singolo job
+RoboKeep.exe --run-all --dry-run    Anteprima (nessuna modifica)
+RoboKeep.exe --job "Foto" --config "D:\percorso\config.json"
 ```
 
 Exit code: `0` tutti i job riusciti · `1` almeno un errore · `2` job non trovato.

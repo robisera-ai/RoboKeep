@@ -1,7 +1,7 @@
 {
   "settings": {
-    "logRoot": "D:\\Progetti\\RobocopySW\\logs",
-    "tempRoot": "D:\\Progetti\\RobocopySW\\temp",
+    "logRoot": "D:\\Progetti\\RoboKeep\\logs",
+    "tempRoot": "D:\\Progetti\\RoboKeep\\temp",
     "compressLogs": true,
     "logRetentionDays": 30,
     "credentialScope": "Machine",

@@ -1,4 +1,4 @@
-# RobocopySW — Obiettivo e scelte di progetto
+# RoboKeep — Obiettivo e scelte di progetto
 
 Cosa si voleva ottenere e come è stato realizzato, sfruttando gli strumenti già presenti in Windows.
 
@@ -37,14 +37,14 @@ di **GUI + configurazione** sopra robocopy.
 App **WPF .NET 10 (MVVM)**, configurazione centralizzata in **un unico `config.json`** editabile da
 GUI. Due modalità d'uso:
 - **Interattiva (GUI):** gestione job, creazione guidata, avvio manuale, **anteprima/dry-run**, log e report.
-- **Silenziosa (CLI):** `RobocopySW.exe --run-all` / `--job "Nome"` → per le attività pianificate di Task Scheduler.
+- **Silenziosa (CLI):** `RoboKeep.exe --run-all` / `--job "Nome"` → per le attività pianificate di Task Scheduler.
 
 ### Architettura (3 progetti)
 ```
 src/
-  RobocopySW.Core/    libreria pura e testabile: Models + Services (engine, config, log, email, scheduler, credenziali, planner)
-  RobocopySW/         app WPF (Views + ViewModels + entry/CLI) → eseguibile RobocopySW.exe
-  RobocopySW.Tests/   xUnit (args builder, exit-code interpreter, config round-trip, planner forza copia/wizard, integrazione runner)
+  RoboKeep.Core/    libreria pura e testabile: Models + Services (engine, config, log, email, scheduler, credenziali, planner)
+  RoboKeep/         app WPF (Views + ViewModels + entry/CLI) → eseguibile RoboKeep.exe
+  RoboKeep.Tests/   xUnit (args builder, exit-code interpreter, config round-trip, planner forza copia/wizard, integrazione runner)
 ```
 
 Il cuore della logica è **puro e testabile** (nessun I/O): `RobocopyArgsBuilder` (opzioni →

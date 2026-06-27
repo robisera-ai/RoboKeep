@@ -12,21 +12,21 @@
 
 ## File Structure
 
-- **Modifica** `src/RobocopySW.Core/Models/BackupJob.cs` — due nuove proprietà.
-- **Modifica** `src/RobocopySW.Core/Services/RobocopyArgsBuilder.cs` — metodo `BuildForceCopyPass`.
-- **Crea** `src/RobocopySW.Core/Services/ForceCopyHashStore.cs` — persistenza hash per job (JSON).
-- **Crea** `src/RobocopySW.Core/Services/ForceCopyPlanner.cs` — pianifica i filtri (semplice/smart).
-- **Modifica** `src/RobocopySW.Core/Services/RobocopyRunner.cs` — due passate + aggregazione.
-- **Modifica** `src/RobocopySW/AppHost.cs` — costruisce store+planner e li passa al runner.
-- **Modifica** `src/RobocopySW/Localization/Loc.cs` — 5 chiavi × 5 lingue.
-- **Modifica** `src/RobocopySW/ViewModels/JobEditorViewModel.cs` — proprietà + preview.
-- **Modifica** `src/RobocopySW/JobEditorWindow.xaml` — riquadro UI.
-- **Test** `src/RobocopySW.Tests/RobocopyArgsBuilderTests.cs`, `ForceCopyHashStoreTests.cs` (nuovo), `ForceCopyPlannerTests.cs` (nuovo), `RobocopyRunnerIntegrationTests.cs`.
+- **Modifica** `src/RoboKeep.Core/Models/BackupJob.cs` — due nuove proprietà.
+- **Modifica** `src/RoboKeep.Core/Services/RobocopyArgsBuilder.cs` — metodo `BuildForceCopyPass`.
+- **Crea** `src/RoboKeep.Core/Services/ForceCopyHashStore.cs` — persistenza hash per job (JSON).
+- **Crea** `src/RoboKeep.Core/Services/ForceCopyPlanner.cs` — pianifica i filtri (semplice/smart).
+- **Modifica** `src/RoboKeep.Core/Services/RobocopyRunner.cs` — due passate + aggregazione.
+- **Modifica** `src/RoboKeep/AppHost.cs` — costruisce store+planner e li passa al runner.
+- **Modifica** `src/RoboKeep/Localization/Loc.cs` — 5 chiavi × 5 lingue.
+- **Modifica** `src/RoboKeep/ViewModels/JobEditorViewModel.cs` — proprietà + preview.
+- **Modifica** `src/RoboKeep/JobEditorWindow.xaml` — riquadro UI.
+- **Test** `src/RoboKeep.Tests/RobocopyArgsBuilderTests.cs`, `ForceCopyHashStoreTests.cs` (nuovo), `ForceCopyPlannerTests.cs` (nuovo), `RobocopyRunnerIntegrationTests.cs`.
 
 **Comandi comuni:**
-- Build: `dotnet build src/RobocopySW.sln -c Debug --nologo`
-- Tutti i test: `dotnet test src/RobocopySW.sln --nologo`
-- Test filtrati: `dotnet test src/RobocopySW.sln --nologo --filter "FullyQualifiedName~ForceCopyPlannerTests"`
+- Build: `dotnet build src/RoboKeep.sln -c Debug --nologo`
+- Tutti i test: `dotnet test src/RoboKeep.sln --nologo`
+- Test filtrati: `dotnet test src/RoboKeep.sln --nologo --filter "FullyQualifiedName~ForceCopyPlannerTests"`
 
 **Nota commit:** messaggi senza virgolette doppie (rompono PowerShell), e terminare con `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
 
@@ -35,18 +35,18 @@
 ### Task 1: Modello — proprietà ForceCopyFiles + ForceCopySmart
 
 **Files:**
-- Modify: `src/RobocopySW.Core/Models/BackupJob.cs`
-- Test: `src/RobocopySW.Tests/ConfigStoreTests.cs` (se assente, crearlo)
+- Modify: `src/RoboKeep.Core/Models/BackupJob.cs`
+- Test: `src/RoboKeep.Tests/ConfigStoreTests.cs` (se assente, crearlo)
 
 - [ ] **Step 1: Scrivi il test di round-trip**
 
 Aggiungi in `ConfigStoreTests.cs` (se il file non esiste, crealo con questo contenuto e gli `using` mostrati):
 
 ```csharp
-using RobocopySW.Core.Models;
-using RobocopySW.Core.Services;
+using RoboKeep.Core.Models;
+using RoboKeep.Core.Services;
 
-namespace RobocopySW.Tests;
+namespace RoboKeep.Tests;
 
 public sealed class ForceCopyConfigRoundTripTests : IDisposable
 {
@@ -82,7 +82,7 @@ public sealed class ForceCopyConfigRoundTripTests : IDisposable
 
 - [ ] **Step 2: Esegui il test e verifica che fallisca**
 
-Run: `dotnet test src/RobocopySW.sln --nologo --filter "FullyQualifiedName~ForceCopyConfigRoundTripTests"`
+Run: `dotnet test src/RoboKeep.sln --nologo --filter "FullyQualifiedName~ForceCopyConfigRoundTripTests"`
 Atteso: FAIL di compilazione (`ForceCopyFiles`/`ForceCopySmart` non esistono).
 
 - [ ] **Step 3: Aggiungi le proprietà al modello**
@@ -102,13 +102,13 @@ In `BackupJob.cs`, subito dopo la proprietà `ExcludeDirs` (riga ~53), aggiungi:
 
 - [ ] **Step 4: Esegui il test e verifica che passi**
 
-Run: `dotnet test src/RobocopySW.sln --nologo --filter "FullyQualifiedName~ForceCopyConfigRoundTripTests"`
+Run: `dotnet test src/RoboKeep.sln --nologo --filter "FullyQualifiedName~ForceCopyConfigRoundTripTests"`
 Atteso: PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/RobocopySW.Core/Models/BackupJob.cs src/RobocopySW.Tests/ConfigStoreTests.cs
+git add src/RoboKeep.Core/Models/BackupJob.cs src/RoboKeep.Tests/ConfigStoreTests.cs
 git commit -m "feat: ForceCopyFiles e ForceCopySmart nel modello BackupJob"
 ```
 
@@ -117,8 +117,8 @@ git commit -m "feat: ForceCopyFiles e ForceCopySmart nel modello BackupJob"
 ### Task 2: Motore — RobocopyArgsBuilder.BuildForceCopyPass
 
 **Files:**
-- Modify: `src/RobocopySW.Core/Services/RobocopyArgsBuilder.cs`
-- Test: `src/RobocopySW.Tests/RobocopyArgsBuilderTests.cs`
+- Modify: `src/RoboKeep.Core/Services/RobocopyArgsBuilder.cs`
+- Test: `src/RoboKeep.Tests/RobocopyArgsBuilderTests.cs`
 
 - [ ] **Step 1: Scrivi i test della seconda passata**
 
@@ -168,7 +168,7 @@ Aggiungi in fondo a `RobocopyArgsBuilderTests.cs` (prima della `}` finale):
 
 - [ ] **Step 2: Esegui e verifica fallimento**
 
-Run: `dotnet test src/RobocopySW.sln --nologo --filter "FullyQualifiedName~RobocopyArgsBuilderTests"`
+Run: `dotnet test src/RoboKeep.sln --nologo --filter "FullyQualifiedName~RobocopyArgsBuilderTests"`
 Atteso: FAIL di compilazione (`BuildForceCopyPass` non esiste).
 
 - [ ] **Step 3: Implementa il metodo**
@@ -228,13 +228,13 @@ In `RobocopyArgsBuilder.cs`, subito dopo il metodo `Build` (prima di `ToDisplayS
 
 - [ ] **Step 4: Esegui e verifica successo**
 
-Run: `dotnet test src/RobocopySW.sln --nologo --filter "FullyQualifiedName~RobocopyArgsBuilderTests"`
+Run: `dotnet test src/RoboKeep.sln --nologo --filter "FullyQualifiedName~RobocopyArgsBuilderTests"`
 Atteso: PASS (inclusi i nuovi 4 test).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/RobocopySW.Core/Services/RobocopyArgsBuilder.cs src/RobocopySW.Tests/RobocopyArgsBuilderTests.cs
+git add src/RoboKeep.Core/Services/RobocopyArgsBuilder.cs src/RoboKeep.Tests/RobocopyArgsBuilderTests.cs
 git commit -m "feat: BuildForceCopyPass per la seconda passata robocopy"
 ```
 
@@ -243,17 +243,17 @@ git commit -m "feat: BuildForceCopyPass per la seconda passata robocopy"
 ### Task 3: Persistenza — ForceCopyHashStore
 
 **Files:**
-- Create: `src/RobocopySW.Core/Services/ForceCopyHashStore.cs`
-- Test: `src/RobocopySW.Tests/ForceCopyHashStoreTests.cs`
+- Create: `src/RoboKeep.Core/Services/ForceCopyHashStore.cs`
+- Test: `src/RoboKeep.Tests/ForceCopyHashStoreTests.cs`
 
 - [ ] **Step 1: Scrivi i test**
 
-Crea `src/RobocopySW.Tests/ForceCopyHashStoreTests.cs`:
+Crea `src/RoboKeep.Tests/ForceCopyHashStoreTests.cs`:
 
 ```csharp
-using RobocopySW.Core.Services;
+using RoboKeep.Core.Services;
 
-namespace RobocopySW.Tests;
+namespace RoboKeep.Tests;
 
 public sealed class ForceCopyHashStoreTests : IDisposable
 {
@@ -298,17 +298,17 @@ public sealed class ForceCopyHashStoreTests : IDisposable
 
 - [ ] **Step 2: Esegui e verifica fallimento**
 
-Run: `dotnet test src/RobocopySW.sln --nologo --filter "FullyQualifiedName~ForceCopyHashStoreTests"`
+Run: `dotnet test src/RoboKeep.sln --nologo --filter "FullyQualifiedName~ForceCopyHashStoreTests"`
 Atteso: FAIL di compilazione (`ForceCopyHashStore` non esiste).
 
 - [ ] **Step 3: Implementa lo store**
 
-Crea `src/RobocopySW.Core/Services/ForceCopyHashStore.cs`:
+Crea `src/RoboKeep.Core/Services/ForceCopyHashStore.cs`:
 
 ```csharp
 using System.Text.Json;
 
-namespace RobocopySW.Core.Services;
+namespace RoboKeep.Core.Services;
 
 /// <summary>
 /// Persistenza degli hash dei file in modalità "Forza copia smart", per job, in un file JSON.
@@ -368,13 +368,13 @@ public sealed class ForceCopyHashStore
 
 - [ ] **Step 4: Esegui e verifica successo**
 
-Run: `dotnet test src/RobocopySW.sln --nologo --filter "FullyQualifiedName~ForceCopyHashStoreTests"`
+Run: `dotnet test src/RoboKeep.sln --nologo --filter "FullyQualifiedName~ForceCopyHashStoreTests"`
 Atteso: PASS.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/RobocopySW.Core/Services/ForceCopyHashStore.cs src/RobocopySW.Tests/ForceCopyHashStoreTests.cs
+git add src/RoboKeep.Core/Services/ForceCopyHashStore.cs src/RoboKeep.Tests/ForceCopyHashStoreTests.cs
 git commit -m "feat: ForceCopyHashStore per la persistenza degli hash"
 ```
 
@@ -383,18 +383,18 @@ git commit -m "feat: ForceCopyHashStore per la persistenza degli hash"
 ### Task 4: Pianificazione — ForceCopyPlanner
 
 **Files:**
-- Create: `src/RobocopySW.Core/Services/ForceCopyPlanner.cs`
-- Test: `src/RobocopySW.Tests/ForceCopyPlannerTests.cs`
+- Create: `src/RoboKeep.Core/Services/ForceCopyPlanner.cs`
+- Test: `src/RoboKeep.Tests/ForceCopyPlannerTests.cs`
 
 - [ ] **Step 1: Scrivi i test**
 
-Crea `src/RobocopySW.Tests/ForceCopyPlannerTests.cs`:
+Crea `src/RoboKeep.Tests/ForceCopyPlannerTests.cs`:
 
 ```csharp
-using RobocopySW.Core.Models;
-using RobocopySW.Core.Services;
+using RoboKeep.Core.Models;
+using RoboKeep.Core.Services;
 
-namespace RobocopySW.Tests;
+namespace RoboKeep.Tests;
 
 public sealed class ForceCopyPlannerTests : IDisposable
 {
@@ -480,18 +480,18 @@ public sealed class ForceCopyPlannerTests : IDisposable
 
 - [ ] **Step 2: Esegui e verifica fallimento**
 
-Run: `dotnet test src/RobocopySW.sln --nologo --filter "FullyQualifiedName~ForceCopyPlannerTests"`
+Run: `dotnet test src/RoboKeep.sln --nologo --filter "FullyQualifiedName~ForceCopyPlannerTests"`
 Atteso: FAIL di compilazione (`ForceCopyPlanner`/`ForceCopyPlan` non esistono).
 
 - [ ] **Step 3: Implementa pianificatore e record**
 
-Crea `src/RobocopySW.Core/Services/ForceCopyPlanner.cs`:
+Crea `src/RoboKeep.Core/Services/ForceCopyPlanner.cs`:
 
 ```csharp
 using System.Security.Cryptography;
-using RobocopySW.Core.Models;
+using RoboKeep.Core.Models;
 
-namespace RobocopySW.Core.Services;
+namespace RoboKeep.Core.Services;
 
 /// <summary>
 /// Piano della passata "Forza copia": <paramref name="Filters"/> sono i filtri robocopy
@@ -584,13 +584,13 @@ public sealed class ForceCopyPlanner
 
 - [ ] **Step 4: Esegui e verifica successo**
 
-Run: `dotnet test src/RobocopySW.sln --nologo --filter "FullyQualifiedName~ForceCopyPlannerTests"`
+Run: `dotnet test src/RoboKeep.sln --nologo --filter "FullyQualifiedName~ForceCopyPlannerTests"`
 Atteso: PASS (5 test).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/RobocopySW.Core/Services/ForceCopyPlanner.cs src/RobocopySW.Tests/ForceCopyPlannerTests.cs
+git add src/RoboKeep.Core/Services/ForceCopyPlanner.cs src/RoboKeep.Tests/ForceCopyPlannerTests.cs
 git commit -m "feat: ForceCopyPlanner con rilevamento modifiche via SHA256"
 ```
 
@@ -599,8 +599,8 @@ git commit -m "feat: ForceCopyPlanner con rilevamento modifiche via SHA256"
 ### Task 5: Esecuzione — due passate in RobocopyRunner
 
 **Files:**
-- Modify: `src/RobocopySW.Core/Services/RobocopyRunner.cs`
-- Test: `src/RobocopySW.Tests/RobocopyRunnerIntegrationTests.cs`
+- Modify: `src/RoboKeep.Core/Services/RobocopyRunner.cs`
+- Test: `src/RoboKeep.Tests/RobocopyRunnerIntegrationTests.cs`
 
 - [ ] **Step 1: Scrivi il test di integrazione**
 
@@ -631,20 +631,20 @@ Aggiungi in `RobocopyRunnerIntegrationTests.cs`, prima della `}` finale della cl
 
 - [ ] **Step 2: Esegui e verifica fallimento**
 
-Run: `dotnet test src/RobocopySW.sln --nologo --filter "FullyQualifiedName~RobocopyRunnerIntegrationTests.ForceCopy_Simple_ReCopiesOtherwiseSkippedFile"`
+Run: `dotnet test src/RoboKeep.sln --nologo --filter "FullyQualifiedName~RobocopyRunnerIntegrationTests.ForceCopy_Simple_ReCopiesOtherwiseSkippedFile"`
 Atteso: FAIL di compilazione (`RobocopyRunner` non ha il costruttore con `ForceCopyPlanner`).
 
 - [ ] **Step 3: Riscrivi RobocopyRunner con le due passate**
 
-Sostituisci **interamente** il contenuto di `src/RobocopySW.Core/Services/RobocopyRunner.cs` con:
+Sostituisci **interamente** il contenuto di `src/RoboKeep.Core/Services/RobocopyRunner.cs` con:
 
 ```csharp
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
-using RobocopySW.Core.Models;
+using RoboKeep.Core.Models;
 
-namespace RobocopySW.Core.Services;
+namespace RoboKeep.Core.Services;
 
 /// <summary>Risultato grezzo di un'esecuzione robocopy: esito + output testuale completo.</summary>
 public sealed class RobocopyRunResult
@@ -799,13 +799,13 @@ public sealed class RobocopyRunner
 
 - [ ] **Step 4: Esegui i test del runner e verifica successo**
 
-Run: `dotnet test src/RobocopySW.sln --nologo --filter "FullyQualifiedName~RobocopyRunnerIntegrationTests"`
+Run: `dotnet test src/RoboKeep.sln --nologo --filter "FullyQualifiedName~RobocopyRunnerIntegrationTests"`
 Atteso: PASS (tutti i test esistenti + il nuovo).
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add src/RobocopySW.Core/Services/RobocopyRunner.cs src/RobocopySW.Tests/RobocopyRunnerIntegrationTests.cs
+git add src/RoboKeep.Core/Services/RobocopyRunner.cs src/RoboKeep.Tests/RobocopyRunnerIntegrationTests.cs
 git commit -m "feat: seconda passata Forza copia in RobocopyRunner con aggregazione"
 ```
 
@@ -814,7 +814,7 @@ git commit -m "feat: seconda passata Forza copia in RobocopyRunner con aggregazi
 ### Task 6: Wiring — AppHost costruisce planner e store
 
 **Files:**
-- Modify: `src/RobocopySW/AppHost.cs`
+- Modify: `src/RoboKeep/AppHost.cs`
 
 - [ ] **Step 1: Aggiungi il campo store e collega il planner**
 
@@ -841,13 +841,13 @@ In `AppHost.cs`:
 
 - [ ] **Step 2: Build**
 
-Run: `dotnet build src/RobocopySW.sln -c Debug --nologo`
+Run: `dotnet build src/RoboKeep.sln -c Debug --nologo`
 Atteso: 0 errori.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add src/RobocopySW/AppHost.cs
+git add src/RoboKeep/AppHost.cs
 git commit -m "feat: AppHost collega ForceCopyPlanner e hash store al runner"
 ```
 
@@ -856,7 +856,7 @@ git commit -m "feat: AppHost collega ForceCopyPlanner e hash store al runner"
 ### Task 7: Localizzazione — 5 chiavi × 5 lingue
 
 **Files:**
-- Modify: `src/RobocopySW/Localization/Loc.cs`
+- Modify: `src/RoboKeep/Localization/Loc.cs`
 
 - [ ] **Step 1: Aggiungi le chiavi in ciascun blocco lingua**
 
@@ -914,13 +914,13 @@ Deutsch (dopo riga ~780):
 
 - [ ] **Step 2: Build (verifica parità chiavi)**
 
-Run: `dotnet build src/RobocopySW.sln -c Debug --nologo`
-Atteso: 0 errori. (Se esiste un test di parità delle chiavi di localizzazione, eseguilo: `dotnet test src/RobocopySW.sln --nologo --filter "FullyQualifiedName~Loc"`.)
+Run: `dotnet build src/RoboKeep.sln -c Debug --nologo`
+Atteso: 0 errori. (Se esiste un test di parità delle chiavi di localizzazione, eseguilo: `dotnet test src/RoboKeep.sln --nologo --filter "FullyQualifiedName~Loc"`.)
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add src/RobocopySW/Localization/Loc.cs
+git add src/RoboKeep/Localization/Loc.cs
 git commit -m "i18n: chiavi Forza copia in 5 lingue"
 ```
 
@@ -929,7 +929,7 @@ git commit -m "i18n: chiavi Forza copia in 5 lingue"
 ### Task 8: ViewModel — proprietà e anteprima
 
 **Files:**
-- Modify: `src/RobocopySW/ViewModels/JobEditorViewModel.cs`
+- Modify: `src/RoboKeep/ViewModels/JobEditorViewModel.cs`
 
 - [ ] **Step 1: Aggiungi le proprietà**
 
@@ -986,13 +986,13 @@ Nella proprietà `CommandPreview`, sostituisci il corpo del blocco `try` con:
 
 - [ ] **Step 3: Build**
 
-Run: `dotnet build src/RobocopySW.sln -c Debug --nologo`
+Run: `dotnet build src/RoboKeep.sln -c Debug --nologo`
 Atteso: 0 errori.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add src/RobocopySW/ViewModels/JobEditorViewModel.cs
+git add src/RoboKeep/ViewModels/JobEditorViewModel.cs
 git commit -m "feat: ViewModel Forza copia (lista, smart, anteprima seconda passata)"
 ```
 
@@ -1001,7 +1001,7 @@ git commit -m "feat: ViewModel Forza copia (lista, smart, anteprima seconda pass
 ### Task 9: UI — riquadro Forza copia nell'editor
 
 **Files:**
-- Modify: `src/RobocopySW/JobEditorWindow.xaml`
+- Modify: `src/RoboKeep/JobEditorWindow.xaml`
 
 - [ ] **Step 1: Inserisci il riquadro**
 
@@ -1028,13 +1028,13 @@ In `JobEditorWindow.xaml`, tra la chiusura del `Grid` delle esclusioni (riga ~14
 
 - [ ] **Step 2: Build**
 
-Run: `dotnet build src/RobocopySW.sln -c Debug --nologo`
+Run: `dotnet build src/RoboKeep.sln -c Debug --nologo`
 Atteso: 0 errori.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add src/RobocopySW/JobEditorWindow.xaml
+git add src/RoboKeep/JobEditorWindow.xaml
 git commit -m "feat: riquadro Forza copia nell'editor job"
 ```
 
@@ -1046,13 +1046,13 @@ git commit -m "feat: riquadro Forza copia nell'editor job"
 
 - [ ] **Step 1: Build pulita con app chiusa**
 
-Assicurati che `RobocopySW.exe` non sia in esecuzione, poi:
-Run: `dotnet build src/RobocopySW.sln -c Debug --nologo`
+Assicurati che `RoboKeep.exe` non sia in esecuzione, poi:
+Run: `dotnet build src/RoboKeep.sln -c Debug --nologo`
 Atteso: 0 errori, 0 warning.
 
 - [ ] **Step 2: Tutti i test**
 
-Run: `dotnet test src/RobocopySW.sln --nologo`
+Run: `dotnet test src/RoboKeep.sln --nologo`
 Atteso: tutti PASS (66 esistenti + i nuovi).
 
 - [ ] **Step 3: Smoke manuale (a cura dell'utente)**
