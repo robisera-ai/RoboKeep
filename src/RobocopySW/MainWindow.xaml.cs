@@ -50,6 +50,39 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         _dragItem = (sender as FrameworkElement)?.DataContext as JobViewModel;
     }
 
+    // Permette di DESELEZIONARE: un clic su una riga già selezionata la deseleziona,
+    // e un clic nell'area vuota azzera la selezione. Senza interferire con doppio clic
+    // (modifica), trascinamento dalla maniglia e switch Attivo.
+    private void OnGridPreviewLeftDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ClickCount != 1) return; // lascia passare il doppio clic (modifica)
+
+        var src = e.OriginalSource as DependencyObject;
+
+        // I clic sulle intestazioni di colonna non toccano la selezione (servono all'ordinamento).
+        if (FindAncestor<System.Windows.Controls.Primitives.DataGridColumnHeader>(src) is not null)
+            return;
+
+        var row = FindAncestor<DataGridRow>(src);
+        if (row is null)
+        {
+            JobsGrid.SelectedItem = null; // clic nell'area vuota
+            return;
+        }
+
+        if (!row.IsSelected) return; // selezione normale di una riga non ancora selezionata
+
+        // Non deselezionare se il clic è sulla maniglia (col. 0) o sullo switch Attivo (col. 1),
+        // che hanno una loro interazione.
+        var cell = FindAncestor<DataGridCell>(src);
+        if (cell is not null && JobsGrid.Columns.Count >= 2 &&
+            (cell.Column == JobsGrid.Columns[0] || cell.Column == JobsGrid.Columns[1]))
+            return;
+
+        JobsGrid.SelectedItem = null; // riga già selezionata: il clic la deseleziona
+        e.Handled = true;
+    }
+
     private void OnGridMouseMove(object sender, MouseEventArgs e)
     {
         if (e.LeftButton != MouseButtonState.Pressed || _dragItem is null)

@@ -73,6 +73,7 @@
                               MouseMove="OnGridMouseMove"
                               DragOver="OnGridDragOver"
                               Drop="OnGridDrop"
+                              PreviewMouseLeftButtonDown="OnGridPreviewLeftDown"
                               MouseDoubleClick="OnEditJob">
                         <DataGrid.Columns>
                             <DataGridTemplateColumn Width="40" CanUserResize="False" CanUserReorder="False" CanUserSort="False">
