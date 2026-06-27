@@ -1,0 +1,136 @@
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
+using RoboKeep.Core.Models;
+
+namespace RoboKeep.Core.Services;
+
+/// <summary>
+/// Gestisce le credenziali per le share di rete:
+/// cifratura/decifratura password con DPAPI e apertura/chiusura della connessione UNC.
+/// L'ambito DPAPI (macchina o utente) è configurabile.
+/// </summary>
+public sealed class CredentialService
+{
+    public CredentialService(CredentialProtectionScope scope = CredentialProtectionScope.Machine) => Scope = scope;
+
+    /// <summary>Ambito DPAPI usato per cifrare/decifrare con i metodi di istanza.</summary>
+    public CredentialProtectionScope Scope { get; set; }
+
+    /// <summary>Cifra una password in chiaro (DPAPI, ambito corrente) restituendo Base64.</summary>
+    public string Protect(string plain) => ProtectWith(plain, Scope);
+
+    /// <summary>Decifra una password cifrata con <see cref="Protect"/> (ambito corrente).</summary>
+    public string Unprotect(string protectedBase64) => UnprotectWith(protectedBase64, Scope);
+
+    /// <summary>Cifra con un ambito esplicito (usato anche per migrare tra ambiti).</summary>
+    public static string ProtectWith(string plain, CredentialProtectionScope scope)
+    {
+        var bytes = Encoding.UTF8.GetBytes(plain ?? "");
+        var enc = ProtectedData.Protect(bytes, optionalEntropy: null, Map(scope));
+        return Convert.ToBase64String(enc);
+    }
+
+    /// <summary>Decifra con un ambito esplicito.</summary>
+    public static string UnprotectWith(string protectedBase64, CredentialProtectionScope scope)
+    {
+        if (string.IsNullOrEmpty(protectedBase64))
+            return "";
+        var enc = Convert.FromBase64String(protectedBase64);
+        var dec = ProtectedData.Unprotect(enc, optionalEntropy: null, Map(scope));
+        return Encoding.UTF8.GetString(dec);
+    }
+
+    private static DataProtectionScope Map(CredentialProtectionScope scope) =>
+        scope == CredentialProtectionScope.User
+            ? DataProtectionScope.CurrentUser
+            : DataProtectionScope.LocalMachine;
+
+    /// <summary>
+    /// Apre una connessione autenticata alla share di rete (equivalente a <c>net use</c>).
+    /// Idempotente: se già connessa non solleva eccezioni.
+    /// </summary>
+    public void Connect(string remoteName, string user, string password)
+    {
+        remoteName = NormalizeShare(remoteName);
+        var nr = new NetResource
+        {
+            dwType = ResourceTypeDisk,
+            lpRemoteName = remoteName,
+        };
+
+        var result = WNetAddConnection2(nr, password, user, ConnectFlags: 0);
+        // 0 = successo; 1219 (ERROR_SESSION_CREDENTIAL_CONFLICT) e 85 (già connessa) sono tollerabili.
+        if (result is not (0 or 1219 or 85))
+            throw new InvalidOperationException(
+                $"Impossibile connettersi a '{remoteName}' (codice errore {result}).");
+    }
+
+    /// <summary>Chiude la connessione alla share, se presente.</summary>
+    public void Disconnect(string remoteName)
+    {
+        // 0x00000001 = aggiorna il profilo; force = true.
+        WNetCancelConnection2(NormalizeShare(remoteName), 1, fForce: true);
+    }
+
+    /// <summary>
+    /// Normalizza un nome UNC per le API mpr.dll: rimuove spazi e barre finali.
+    /// WNetAddConnection2 vuole esattamente <c>\\server\share</c> e rifiuta con errore 67
+    /// un nome con la barra finale (es. <c>\\server\share\</c>) che invece Explorer/Chrome tollerano.
+    /// </summary>
+    private static string NormalizeShare(string remoteName) =>
+        (remoteName ?? "").Trim().TrimEnd('\\', '/');
+
+    /// <summary>
+    /// Prova la connessione alla share senza sollevare eccezioni: restituisce 0 in caso di
+    /// successo (disconnettendo subito), altrimenti il codice di errore di Windows.
+    /// </summary>
+    public int TryConnect(string remoteName, string? user, string? password)
+    {
+        remoteName = NormalizeShare(remoteName);
+        // RESOURCETYPE_ANY: accetta qualsiasi tipo di share (incluso IPC$, non solo dischi).
+        var nr = new NetResource { dwType = ResourceTypeAny, lpRemoteName = remoteName };
+        // Credenziali vuote => null: usa l'autenticazione integrata (utente corrente).
+        var u = string.IsNullOrWhiteSpace(user) ? null : user;
+        var p = string.IsNullOrEmpty(password) ? null : password;
+
+        var result = WNetAddConnection2(nr, p, u, ConnectFlags: 0);
+        if (result is 0 or 1219 or 85)
+        {
+            Disconnect(remoteName);
+            return 0;
+        }
+
+        // Fallback per credenziali integrate (campo utente vuoto): WNetAddConnection2 NON
+        // gestisce il loopback verso la propria macchina e restituisce sempre 67 (anche per
+        // localhost, 127.0.0.1 o il nome del PC), pur essendo la share raggiungibile.
+        // Se la cartella è accessibile con l'utente corrente, la connessione di fatto esiste.
+        if (u is null && Directory.Exists(remoteName))
+            return 0;
+
+        return result;
+    }
+
+    private const int ResourceTypeDisk = 0x00000001;
+    private const int ResourceTypeAny = 0x00000000;
+
+    [StructLayout(LayoutKind.Sequential)]
+    private sealed class NetResource
+    {
+        public int dwScope;
+        public int dwType;
+        public int dwDisplayType;
+        public int dwUsage;
+        public string? lpLocalName;
+        public string? lpRemoteName;
+        public string? lpComment;
+        public string? lpProvider;
+    }
+
+    [DllImport("mpr.dll", CharSet = CharSet.Unicode)]
+    private static extern int WNetAddConnection2(NetResource netResource, string? password, string? username, int ConnectFlags);
+
+    [DllImport("mpr.dll", CharSet = CharSet.Unicode)]
+    private static extern int WNetCancelConnection2(string name, int flags, bool fForce);
+}

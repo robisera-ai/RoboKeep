@@ -6,27 +6,27 @@
 
 **Architecture:** La logica risposte→`BackupJob` è una funzione pura testabile (`JobWizardPlanner`) nel progetto Core. La UI è una `JobWizardWindow` WPF a 5 passi (TabControl con intestazioni nascoste) guidata da un `JobWizardViewModel`. Il pulsante "Nuovo" della MainWindow apre il wizard; alla conferma costruisce un `BackupJob` e apre il normale editor precompilato. "Salta" apre l'editor vuoto (comportamento odierno).
 
-**Tech Stack:** .NET 10 (net10.0-windows), C#, xUnit, WPF + WPF-UI (FluentWindow), MVVM (ObservableObject in `RobocopySW.Infra`).
+**Tech Stack:** .NET 10 (net10.0-windows), C#, xUnit, WPF + WPF-UI (FluentWindow), MVVM (ObservableObject in `RoboKeep.Infra`).
 
 ---
 
 ## File Structure
 
-- **Crea** `src/RobocopySW.Core/Models/StorageKind.cs` — enum SSD/HDD/USB/Rete.
-- **Crea** `src/RobocopySW.Core/Models/JobWizardAnswers.cs` — input puro del planner.
-- **Crea** `src/RobocopySW.Core/Services/JobWizardPlanner.cs` — risposte → `BackupJob` (puro).
-- **Crea** `src/RobocopySW.Tests/JobWizardPlannerTests.cs` — test del planner.
-- **Modifica** `src/RobocopySW/Localization/Loc.cs` — chiavi `Wiz_*` (5 lingue).
-- **Crea** `src/RobocopySW/ViewModels/JobWizardViewModel.cs` — risposte + navigazione + anteprima.
-- **Crea** `src/RobocopySW/JobWizardWindow.xaml` (+ `.xaml.cs`) — la finestra a 5 passi.
-- **Modifica** `src/RobocopySW/MainWindow.xaml.cs` — `OnNewJob` apre il wizard.
+- **Crea** `src/RoboKeep.Core/Models/StorageKind.cs` — enum SSD/HDD/USB/Rete.
+- **Crea** `src/RoboKeep.Core/Models/JobWizardAnswers.cs` — input puro del planner.
+- **Crea** `src/RoboKeep.Core/Services/JobWizardPlanner.cs` — risposte → `BackupJob` (puro).
+- **Crea** `src/RoboKeep.Tests/JobWizardPlannerTests.cs` — test del planner.
+- **Modifica** `src/RoboKeep/Localization/Loc.cs` — chiavi `Wiz_*` (5 lingue).
+- **Crea** `src/RoboKeep/ViewModels/JobWizardViewModel.cs` — risposte + navigazione + anteprima.
+- **Crea** `src/RoboKeep/JobWizardWindow.xaml` (+ `.xaml.cs`) — la finestra a 5 passi.
+- **Modifica** `src/RoboKeep/MainWindow.xaml.cs` — `OnNewJob` apre il wizard.
 
-**Nota architettura test:** il progetto `RobocopySW.Tests` referenzia solo `RobocopySW.Core`, non il progetto WPF. Quindi i test automatici coprono il **planner** (dove sta la logica). ViewModel/XAML/integrazione si verificano con build + smoke manuale, come già fanno l'editor e i suoi ViewModel.
+**Nota architettura test:** il progetto `RoboKeep.Tests` referenzia solo `RoboKeep.Core`, non il progetto WPF. Quindi i test automatici coprono il **planner** (dove sta la logica). ViewModel/XAML/integrazione si verificano con build + smoke manuale, come già fanno l'editor e i suoi ViewModel.
 
 **Comandi comuni:**
-- Build: `dotnet build src/RobocopySW.sln -c Debug --nologo`
-- Tutti i test: `dotnet test src/RobocopySW.sln --nologo`
-- Test filtrati: `dotnet test src/RobocopySW.sln --nologo --filter "FullyQualifiedName~JobWizardPlannerTests"`
+- Build: `dotnet build src/RoboKeep.sln -c Debug --nologo`
+- Tutti i test: `dotnet test src/RoboKeep.sln --nologo`
+- Test filtrati: `dotnet test src/RoboKeep.sln --nologo --filter "FullyQualifiedName~JobWizardPlannerTests"`
 
 **Nota commit:** messaggi senza virgolette doppie; terminare con `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`. (Con la Bash tool gli apici singoli vanno bene; non raddoppiarli.)
 
@@ -35,20 +35,20 @@
 ### Task 1: Core — StorageKind, JobWizardAnswers, JobWizardPlanner
 
 **Files:**
-- Create: `src/RobocopySW.Core/Models/StorageKind.cs`
-- Create: `src/RobocopySW.Core/Models/JobWizardAnswers.cs`
-- Create: `src/RobocopySW.Core/Services/JobWizardPlanner.cs`
-- Test: `src/RobocopySW.Tests/JobWizardPlannerTests.cs`
+- Create: `src/RoboKeep.Core/Models/StorageKind.cs`
+- Create: `src/RoboKeep.Core/Models/JobWizardAnswers.cs`
+- Create: `src/RoboKeep.Core/Services/JobWizardPlanner.cs`
+- Test: `src/RoboKeep.Tests/JobWizardPlannerTests.cs`
 
 - [ ] **Step 1: Scrivi i test**
 
-Crea `src/RobocopySW.Tests/JobWizardPlannerTests.cs`:
+Crea `src/RoboKeep.Tests/JobWizardPlannerTests.cs`:
 
 ```csharp
-using RobocopySW.Core.Models;
-using RobocopySW.Core.Services;
+using RoboKeep.Core.Models;
+using RoboKeep.Core.Services;
 
-namespace RobocopySW.Tests;
+namespace RoboKeep.Tests;
 
 public class JobWizardPlannerTests
 {
@@ -160,15 +160,15 @@ public class JobWizardPlannerTests
 
 - [ ] **Step 2: Esegui e verifica fallimento**
 
-Run: `dotnet test src/RobocopySW.sln --nologo --filter "FullyQualifiedName~JobWizardPlannerTests"`
+Run: `dotnet test src/RoboKeep.sln --nologo --filter "FullyQualifiedName~JobWizardPlannerTests"`
 Atteso: FAIL di compilazione (StorageKind / JobWizardAnswers / JobWizardPlanner non esistono).
 
 - [ ] **Step 3: Crea l'enum**
 
-Crea `src/RobocopySW.Core/Models/StorageKind.cs`:
+Crea `src/RoboKeep.Core/Models/StorageKind.cs`:
 
 ```csharp
-namespace RobocopySW.Core.Models;
+namespace RoboKeep.Core.Models;
 
 /// <summary>Tipo di supporto di una sorgente/destinazione, usato dalla creazione guidata
 /// per consigliare le opzioni robocopy (soprattutto /MT). L'ordine corrisponde alle voci
@@ -184,10 +184,10 @@ public enum StorageKind
 
 - [ ] **Step 4: Crea il modello delle risposte**
 
-Crea `src/RobocopySW.Core/Models/JobWizardAnswers.cs`:
+Crea `src/RoboKeep.Core/Models/JobWizardAnswers.cs`:
 
 ```csharp
-namespace RobocopySW.Core.Models;
+namespace RoboKeep.Core.Models;
 
 /// <summary>Risposte della creazione guidata di un job: input puro per <see cref="Services.JobWizardPlanner"/>.</summary>
 public sealed class JobWizardAnswers
@@ -207,12 +207,12 @@ public sealed class JobWizardAnswers
 
 - [ ] **Step 5: Crea il planner**
 
-Crea `src/RobocopySW.Core/Services/JobWizardPlanner.cs`:
+Crea `src/RoboKeep.Core/Services/JobWizardPlanner.cs`:
 
 ```csharp
-using RobocopySW.Core.Models;
+using RoboKeep.Core.Models;
 
-namespace RobocopySW.Core.Services;
+namespace RoboKeep.Core.Services;
 
 /// <summary>Traduce le risposte della creazione guidata in un <see cref="BackupJob"/> (funzione pura).</summary>
 public static class JobWizardPlanner
@@ -270,13 +270,13 @@ public static class JobWizardPlanner
 
 - [ ] **Step 6: Esegui e verifica successo**
 
-Run: `dotnet test src/RobocopySW.sln --nologo --filter "FullyQualifiedName~JobWizardPlannerTests"`
+Run: `dotnet test src/RoboKeep.sln --nologo --filter "FullyQualifiedName~JobWizardPlannerTests"`
 Atteso: PASS (tutti i casi, incluse le 6 righe Theory).
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add src/RobocopySW.Core/Models/StorageKind.cs src/RobocopySW.Core/Models/JobWizardAnswers.cs src/RobocopySW.Core/Services/JobWizardPlanner.cs src/RobocopySW.Tests/JobWizardPlannerTests.cs
+git add src/RoboKeep.Core/Models/StorageKind.cs src/RoboKeep.Core/Models/JobWizardAnswers.cs src/RoboKeep.Core/Services/JobWizardPlanner.cs src/RoboKeep.Tests/JobWizardPlannerTests.cs
 git commit -m "feat: JobWizardPlanner (risposte guidate -> BackupJob)
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
@@ -287,7 +287,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ### Task 2: Localizzazione — chiavi Wiz_* (5 lingue)
 
 **Files:**
-- Modify: `src/RobocopySW/Localization/Loc.cs`
+- Modify: `src/RoboKeep/Localization/Loc.cs`
 
 - [ ] **Step 1: Aggiungi le chiavi in ciascun blocco lingua**
 
@@ -367,17 +367,17 @@ In `Loc.cs`, ogni lingua è un `Dictionary<string,string>`. Aggiungi le 28 chiav
 
 - [ ] **Step 2: Build + verifica parità chiavi**
 
-Run: `dotnet build src/RobocopySW.sln -c Debug --nologo`
+Run: `dotnet build src/RoboKeep.sln -c Debug --nologo`
 Atteso: 0 errori.
 
 Verifica che ogni chiave compaia **5 volte** (una per lingua). Per ciascuna chiave esegui un controllo, es.:
-Run: `grep -c "\"Wiz_Title\"" src/RobocopySW/Localization/Loc.cs` → atteso `5`.
+Run: `grep -c "\"Wiz_Title\"" src/RoboKeep/Localization/Loc.cs` → atteso `5`.
 Ripeti per `Wiz_NetCredNote`, `Wiz_KindHint`, `Wiz_SyncMirror` (campione). Se un conteggio ≠ 5, completa la lingua mancante.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add src/RobocopySW/Localization/Loc.cs
+git add src/RoboKeep/Localization/Loc.cs
 git commit -m "i18n: chiavi creazione guidata (Wiz_) in 5 lingue
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
@@ -388,21 +388,21 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ### Task 3: ViewModel — JobWizardViewModel
 
 **Files:**
-- Create: `src/RobocopySW/ViewModels/JobWizardViewModel.cs`
+- Create: `src/RoboKeep/ViewModels/JobWizardViewModel.cs`
 
 (Build-verified; la logica di mappatura è già coperta dai test del planner in Task 1.)
 
 - [ ] **Step 1: Crea il ViewModel**
 
-Crea `src/RobocopySW/ViewModels/JobWizardViewModel.cs`:
+Crea `src/RoboKeep/ViewModels/JobWizardViewModel.cs`:
 
 ```csharp
-using RobocopySW.Core.Models;
-using RobocopySW.Core.Services;
-using RobocopySW.Infra;
-using RobocopySW.Localization;
+using RoboKeep.Core.Models;
+using RoboKeep.Core.Services;
+using RoboKeep.Infra;
+using RoboKeep.Localization;
 
-namespace RobocopySW.ViewModels;
+namespace RoboKeep.ViewModels;
 
 /// <summary>ViewModel della creazione guidata: raccoglie le risposte, gestisce la navigazione a passi
 /// e mostra l'anteprima del comando robocopy risultante.</summary>
@@ -566,13 +566,13 @@ public sealed class JobWizardViewModel : ObservableObject
 
 - [ ] **Step 2: Build**
 
-Run: `dotnet build src/RobocopySW.sln -c Debug --nologo`
+Run: `dotnet build src/RoboKeep.sln -c Debug --nologo`
 Atteso: 0 errori.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add src/RobocopySW/ViewModels/JobWizardViewModel.cs
+git add src/RoboKeep/ViewModels/JobWizardViewModel.cs
 git commit -m "feat: JobWizardViewModel (risposte, navigazione passi, anteprima)
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
@@ -583,22 +583,22 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ### Task 4: Finestra — JobWizardWindow (XAML + code-behind)
 
 **Files:**
-- Create: `src/RobocopySW/JobWizardWindow.xaml`
-- Create: `src/RobocopySW/JobWizardWindow.xaml.cs`
+- Create: `src/RoboKeep/JobWizardWindow.xaml`
+- Create: `src/RoboKeep/JobWizardWindow.xaml.cs`
 
 - [ ] **Step 1: Crea lo XAML**
 
-Crea `src/RobocopySW/JobWizardWindow.xaml`:
+Crea `src/RoboKeep/JobWizardWindow.xaml`:
 
 ```xml
-<ui:FluentWindow x:Class="RobocopySW.JobWizardWindow"
+<ui:FluentWindow x:Class="RoboKeep.JobWizardWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-        xmlns:ctl="clr-namespace:RobocopySW.Controls"
-        xmlns:l="clr-namespace:RobocopySW.Localization"
+        xmlns:ctl="clr-namespace:RoboKeep.Controls"
+        xmlns:l="clr-namespace:RoboKeep.Localization"
         mc:Ignorable="d"
         Title="{l:Tr Wiz_Title}" Height="660" Width="720"
         ExtendsContentIntoTitleBar="True"
@@ -764,17 +764,17 @@ Crea `src/RobocopySW/JobWizardWindow.xaml`:
 
 - [ ] **Step 2: Crea il code-behind**
 
-Crea `src/RobocopySW/JobWizardWindow.xaml.cs`:
+Crea `src/RoboKeep/JobWizardWindow.xaml.cs`:
 
 ```csharp
 using System.IO;
 using System.Windows;
 using Microsoft.Win32;
-using RobocopySW.Core.Models;
-using RobocopySW.Localization;
-using RobocopySW.ViewModels;
+using RoboKeep.Core.Models;
+using RoboKeep.Localization;
+using RoboKeep.ViewModels;
 
-namespace RobocopySW;
+namespace RoboKeep;
 
 public partial class JobWizardWindow : Wpf.Ui.Controls.FluentWindow
 {
@@ -830,13 +830,13 @@ public partial class JobWizardWindow : Wpf.Ui.Controls.FluentWindow
 
 - [ ] **Step 3: Build**
 
-Run: `dotnet build src/RobocopySW.sln -c Debug --nologo`
+Run: `dotnet build src/RoboKeep.sln -c Debug --nologo`
 Atteso: 0 errori (XAML compila; `WandSparkle24` ed `Edit24` sono `SymbolRegular` validi — se uno non esistesse, sostituiscilo con `Options24`).
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add src/RobocopySW/JobWizardWindow.xaml src/RobocopySW/JobWizardWindow.xaml.cs
+git add src/RoboKeep/JobWizardWindow.xaml src/RoboKeep/JobWizardWindow.xaml.cs
 git commit -m "feat: finestra creazione guidata a 5 passi
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
@@ -847,11 +847,11 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ### Task 5: Integrazione — "Nuovo" apre il wizard
 
 **Files:**
-- Modify: `src/RobocopySW/MainWindow.xaml.cs` (metodo `OnNewJob`, righe ~142-150)
+- Modify: `src/RoboKeep/MainWindow.xaml.cs` (metodo `OnNewJob`, righe ~142-150)
 
 - [ ] **Step 1: Sostituisci OnNewJob**
 
-In `src/RobocopySW/MainWindow.xaml.cs`, sostituisci l'intero metodo:
+In `src/RoboKeep/MainWindow.xaml.cs`, sostituisci l'intero metodo:
 
 ```csharp
     private void OnNewJob(object sender, RoutedEventArgs e)
@@ -886,13 +886,13 @@ con:
 
 - [ ] **Step 2: Build**
 
-Run: `dotnet build src/RobocopySW.sln -c Debug --nologo`
+Run: `dotnet build src/RoboKeep.sln -c Debug --nologo`
 Atteso: 0 errori.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add src/RobocopySW/MainWindow.xaml.cs
+git add src/RoboKeep/MainWindow.xaml.cs
 git commit -m "feat: Nuovo apre la creazione guidata (con Salta verso editor vuoto)
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
@@ -906,13 +906,13 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 
 - [ ] **Step 1: Build pulita (app chiusa)**
 
-Assicurati che `RobocopySW.exe` non sia in esecuzione, poi:
-Run: `dotnet build src/RobocopySW.sln -c Debug --nologo`
+Assicurati che `RoboKeep.exe` non sia in esecuzione, poi:
+Run: `dotnet build src/RoboKeep.sln -c Debug --nologo`
 Atteso: 0 errori, 0 warning.
 
 - [ ] **Step 2: Tutti i test**
 
-Run: `dotnet test src/RobocopySW.sln --nologo`
+Run: `dotnet test src/RoboKeep.sln --nologo`
 Atteso: tutti PASS (gli 80 esistenti + i nuovi di `JobWizardPlannerTests`).
 
 - [ ] **Step 3: Smoke manuale (a cura dell'utente)**

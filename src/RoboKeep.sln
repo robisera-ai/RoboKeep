@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboKeep.Core", "RoboKeep.Core\RoboKeep.Core.csproj", "{8AB65A0E-9F04-4252-80D4-0DF07CB42111}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboKeep", "RoboKeep\RoboKeep.csproj", "{3CEBAC1F-C588-4F21-8C49-467251631A02}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoboKeep.Tests", "RoboKeep.Tests\RoboKeep.Tests.csproj", "{BAE7753E-23E2-4FB1-867F-DF5B82962D20}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8AB65A0E-9F04-4252-80D4-0DF07CB42111}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8AB65A0E-9F04-4252-80D4-0DF07CB42111}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8AB65A0E-9F04-4252-80D4-0DF07CB42111}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8AB65A0E-9F04-4252-80D4-0DF07CB42111}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3CEBAC1F-C588-4F21-8C49-467251631A02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3CEBAC1F-C588-4F21-8C49-467251631A02}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3CEBAC1F-C588-4F21-8C49-467251631A02}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3CEBAC1F-C588-4F21-8C49-467251631A02}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BAE7753E-23E2-4FB1-867F-DF5B82962D20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BAE7753E-23E2-4FB1-867F-DF5B82962D20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BAE7753E-23E2-4FB1-867F-DF5B82962D20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BAE7753E-23E2-4FB1-867F-DF5B82962D20}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

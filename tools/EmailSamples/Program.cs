@@ -1,13 +1,13 @@
 using System.Globalization;
-using RobocopySW.Core.Models;
-using RobocopySW.Core.Services;
+using RoboKeep.Core.Models;
+using RoboKeep.Core.Services;
 
 // Invia email di esempio (produzione) in 5 lingue: per ciascuna un backup riuscito e uno fallito.
 // Riusa il vero EmailService; legge SMTP/credenziali dal config.json dell'app.
 
 var configPath = args.Length > 0
     ? args[0]
-    : @"d:\Progetti\RobocopySW\src\RobocopySW\bin\Debug\net10.0-windows\config.json";
+    : @"d:\Progetti\RoboKeep\src\RoboKeep\bin\Debug\net10.0-windows\config.json";
 
 var config = new ConfigStore(configPath).Load();
 var settings = config.Settings.Email;

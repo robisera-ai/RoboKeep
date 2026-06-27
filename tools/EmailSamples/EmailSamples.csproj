@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\RobocopySW.Core\RobocopySW.Core.csproj" />
+    <ProjectReference Include="..\..\src\RoboKeep.Core\RoboKeep.Core.csproj" />
   </ItemGroup>
 
 </Project>
