@@ -30,6 +30,24 @@ public sealed class AppSettings
     /// <summary>Giorni di conservazione dei log archiviati; oltre vengono eliminati. 0 = nessuna pulizia.</summary>
     public int LogRetentionDays { get; set; } = 30;
 
+    /// <summary>Giorni dopo i quali un backup riuscito è considerato "fermo". 0 = disattiva l'allerta "fermo".</summary>
+    public int StaleAfterDays { get; set; } = 7;
+
+    /// <summary>Se true, prima di avviare un job esegue i controlli pre-avvio (raggiungibilità, spazio).</summary>
+    public bool PreflightEnabled { get; set; } = true;
+
+    /// <summary>Soglia minima di spazio libero in destinazione (MB) sotto la quale il pre-check avvisa.</summary>
+    public int MinFreeSpaceMb { get; set; } = 1024;
+
+    /// <summary>Se true mostra notifiche toast a fine job.</summary>
+    public bool NotificationsEnabled { get; set; } = true;
+
+    /// <summary>Se true la chiusura/riduzione manda l'app nell'area di notifica (tray) invece di chiudere.</summary>
+    public bool MinimizeToTray { get; set; } = false;
+
+    /// <summary>Se true l'app si avvia minimizzata nel tray.</summary>
+    public bool StartMinimized { get; set; } = false;
+
     /// <summary>Impostazioni di notifica email.</summary>
     public EmailSettings Email { get; set; } = new();
 }
