@@ -8,6 +8,7 @@
         xmlns:local="clr-namespace:RoboKeep"
         mc:Ignorable="d"
         Title="{l:Tr Main_Title}" Height="680" Width="1040"
+        Icon="pack://application:,,,/Assets/app.ico"
         ExtendsContentIntoTitleBar="True"
         WindowBackdropType="Mica"
         WindowCornerPreference="Round"
@@ -22,7 +23,7 @@
 
         <ui:TitleBar Grid.Row="0" Title="{l:Tr Main_Title}">
             <ui:TitleBar.Icon>
-                <ui:SymbolIcon Symbol="FolderArrowRight24"/>
+                <ui:ImageIcon Source="pack://application:,,,/Assets/app.ico"/>
             </ui:TitleBar.Icon>
         </ui:TitleBar>
 
