@@ -234,4 +234,14 @@ public class RobocopyArgsBuilderTests
         Assert.Contains("/L", RobocopyArgsBuilder.BuildForceCopyPass(NewJob(), new[] { "*.pst" }, dryRun: true));
         Assert.DoesNotContain("/L", RobocopyArgsBuilder.BuildForceCopyPass(NewJob(), new[] { "*.pst" }, dryRun: false));
     }
+
+    [Fact]
+    public void LogAllFiles_AddsV_WhenSet_OmittedByDefault()
+    {
+        Assert.DoesNotContain("/V", RobocopyArgsBuilder.Build(NewJob()));
+
+        var job = NewJob();
+        job.LogAllFiles = true;
+        Assert.Contains("/V", RobocopyArgsBuilder.Build(job));
+    }
 }

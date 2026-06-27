@@ -95,6 +95,13 @@ public sealed class JobEditorViewModel : ObservableObject
         }
     }
 
+    /// <summary>/V — registra tutti i file nel log (anche quelli saltati).</summary>
+    public bool LogAllFiles
+    {
+        get => _job.LogAllFiles;
+        set { _job.LogAllFiles = value; OnPropertyChanged(); RaisePreview(); }
+    }
+
     public int Retries
     {
         get => _job.Retries;

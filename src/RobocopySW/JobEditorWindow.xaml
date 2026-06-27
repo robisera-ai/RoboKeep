@@ -78,6 +78,10 @@
                             <CheckBox Content="{l:Tr Editor_RestartZ}" IsChecked="{Binding Restartable}"/>
                             <ctl:InfoHint Margin="6,0,0,0" Text="{l:Tr Editor_RestartZTip}"/>
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <CheckBox Content="{l:Tr Editor_LogAll}" IsChecked="{Binding LogAllFiles}"/>
+                            <ctl:InfoHint Margin="6,0,0,0" Text="{l:Tr Editor_LogAllTip}"/>
+                        </StackPanel>
                     </StackPanel>
                 </ui:Card>
 

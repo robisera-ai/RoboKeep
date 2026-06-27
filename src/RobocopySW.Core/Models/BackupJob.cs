@@ -46,6 +46,10 @@ public sealed class BackupJob
     /// </summary>
     public bool Restartable { get; set; }
 
+    /// <summary><c>/V</c>: registra nel log <b>tutti</b> i file, inclusi quelli identici/saltati
+    /// (output verboso). Default false: il log elenca solo i file copiati/extra.</summary>
+    public bool LogAllFiles { get; set; }
+
     /// <summary>Pattern di file da escludere (<c>/XF</c>), es. <c>*.tmp</c>.</summary>
     public List<string> ExcludeFiles { get; set; } = new();
 

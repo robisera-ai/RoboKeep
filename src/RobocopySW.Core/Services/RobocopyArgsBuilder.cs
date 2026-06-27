@@ -57,6 +57,10 @@ public static class RobocopyArgsBuilder
         else if (job.Restartable)
             args.Add("/Z");
 
+        // Log verboso: include nel log anche i file identici/saltati, non solo i copiati/extra.
+        if (job.LogAllFiles)
+            args.Add("/V");
+
         // Esclusioni file.
         if (job.ExcludeFiles is { Count: > 0 })
         {

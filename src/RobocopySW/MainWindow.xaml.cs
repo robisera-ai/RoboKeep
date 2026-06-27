@@ -209,6 +209,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         MultiThread = j.MultiThread,
         UnbufferedIO = j.UnbufferedIO,
         Restartable = j.Restartable,
+        LogAllFiles = j.LogAllFiles,
         ExcludeFiles = new List<string>(j.ExcludeFiles),
         ExcludeDirs = new List<string>(j.ExcludeDirs),
         ForceCopyFiles = new List<string>(j.ForceCopyFiles),
@@ -230,6 +231,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         to.MultiThread = from.MultiThread;
         to.UnbufferedIO = from.UnbufferedIO;
         to.Restartable = from.Restartable;
+        to.LogAllFiles = from.LogAllFiles;
         to.ExcludeFiles = new List<string>(from.ExcludeFiles);
         to.ExcludeDirs = new List<string>(from.ExcludeDirs);
         to.ForceCopyFiles = new List<string>(from.ForceCopyFiles);
