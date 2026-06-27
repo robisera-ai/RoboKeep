@@ -8,6 +8,7 @@
 ![Windows 10/11](https://img.shields.io/badge/Windows-10%20%2F%2011-0078D6)
 ![Languages](https://img.shields.io/badge/languages-5-success)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
+[![Downloads](https://img.shields.io/github/downloads/robisera-ai/RoboKeep/total)](../../releases)
 
 RoboKeep puts a modern graphical interface and centralized configuration on top of `robocopy`, Windows'
 built-in copy tool: define your backup jobs (source → destination) once, and run them manually, from the

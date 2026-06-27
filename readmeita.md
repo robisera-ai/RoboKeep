@@ -8,6 +8,7 @@
 ![Windows 10/11](https://img.shields.io/badge/Windows-10%20%2F%2011-0078D6)
 ![Lingue](https://img.shields.io/badge/lingue-5-success)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
+[![Download](https://img.shields.io/github/downloads/robisera-ai/RoboKeep/total)](../../releases)
 
 RoboKeep mette una GUI moderna e una configurazione centralizzata sopra `robocopy`, lo
 strumento di copia di Windows: definisci i tuoi backup (sorgente → destinazione) una volta, e li
