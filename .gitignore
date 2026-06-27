@@ -27,6 +27,9 @@ lastresults.json
 Feedback/
 inserisci.jpg
 
+# Strumenti / configurazione locale (Claude Code, agenti)
+.claude/
+
 # Sistema
 Thumbs.db
 desktop.ini
