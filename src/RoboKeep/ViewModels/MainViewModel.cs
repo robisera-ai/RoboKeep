@@ -318,6 +318,8 @@ public sealed class MainViewModel : ObservableObject
             _cts = null;
             IsBusy = false;
             SetRunning(RunKind.None);
+            // Ricarica gli esiti e rivaluta la salute: il banner/le righe riflettono l'esito appena ottenuto.
+            ReloadLastResults();
         }
     }
 }
