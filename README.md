@@ -46,20 +46,24 @@ For each job (source → destination pair, recursive over subfolders):
 ## Requirements
 
 - **Windows 10 or 11** (uses the system `robocopy`).
-- **[.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)** to run the app.
-  Alternatively, the **.NET 10 SDK** if you want to build from source.
+- **.NET 10 Desktop Runtime** — needed **only** for the *framework-dependent* download; the
+  *self-contained* download bundles .NET (10.0.9) and requires nothing extra. The **.NET 10 SDK** is only
+  needed to build from source.
 
 ## Installation
 
 ### Option A — Ready-to-use release (recommended)
 
-1. Download the latest version from the project's **[Releases](../../releases)** page.
+1. Download the latest version from the project's **[Releases](../../releases)** page. Two builds are available:
+   - **`…-selfcontained.zip`** — bundles **.NET 10.0.9**: just extract and run, **nothing to install** (larger download).
+   - **`…-framework-dependent.zip`** — small download, but requires the
+     **[.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)**.
 2. Extract the `.zip` into a **writable folder** (e.g. `D:\Programs\RoboKeep`).
    > Avoid `C:\Program Files` (read-only for standard users): if you put it there, set writable log/temp
    > paths in Settings.
 3. Run **`RoboKeep.exe`**. No installation required — the app is portable.
 
-If Windows reports a missing runtime, install the
+If you used the framework-dependent build and Windows reports a missing runtime, install the
 [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) and try again.
 
 ### Option B — Build from source

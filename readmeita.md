@@ -45,20 +45,24 @@ Per ogni job (coppia sorgente → destinazione, ricorsivo sulle sottocartelle):
 ## Requisiti
 
 - **Windows 10 o 11** (usa il `robocopy` di sistema).
-- **[.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)** per eseguire
-  l'app. In alternativa, il **.NET 10 SDK** se vuoi compilarla dai sorgenti.
+- **.NET 10 Desktop Runtime** — serve **solo** per il download *framework-dependent*; il download
+  *self-contained* include già .NET (10.0.9) e non richiede nulla. Il **.NET 10 SDK** serve solo per
+  compilare dai sorgenti.
 
 ## Installazione
 
 ### Opzione A — Release pronta all'uso (consigliata)
 
-1. Scarica l'ultima versione dalla pagina **[Releases](../../releases)** del progetto.
+1. Scarica l'ultima versione dalla pagina **[Releases](../../releases)** del progetto. Sono disponibili due build:
+   - **`…-selfcontained.zip`** — include **.NET 10.0.9**: estrai e avvia, **niente da installare** (download più grande).
+   - **`…-framework-dependent.zip`** — download piccolo, ma richiede il
+     **[.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)**.
 2. Estrai lo `.zip` in una cartella **scrivibile** (es. `D:\Programmi\RoboKeep`).
    > Evita `C:\Program Files` (sola lettura per gli utenti): se la metti lì, imposta percorsi
    > log/temp scrivibili dalle Impostazioni.
 3. Avvia **`RoboKeep.exe`**. Nessuna installazione: l'app è portatile.
 
-Se all'avvio Windows segnala la mancanza del runtime, installa il
+Se hai usato la build framework-dependent e Windows segnala la mancanza del runtime, installa il
 [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) e riprova.
 
 ### Opzione B — Compila dai sorgenti
