@@ -207,6 +207,9 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tab_Email"] = "Email",
         ["Tab_Credentials"] = "Credenziali di rete",
         ["Tab_Schedule"] = "Pianificazione",
+        ["Tab_About"] = "Info",
+        ["About_Version"] = "Versione",
+        ["About_Desc"] = "GUI per backup e mirroring basata sul robocopy di Windows.",
 
         ["Set_Language"] = "Lingua",
         ["Lang_Auto"] = "Automatica (Windows)",
@@ -399,6 +402,9 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tab_Email"] = "Email",
         ["Tab_Credentials"] = "Network credentials",
         ["Tab_Schedule"] = "Scheduling",
+        ["Tab_About"] = "About",
+        ["About_Version"] = "Version",
+        ["About_Desc"] = "GUI for backups and mirroring built on Windows robocopy.",
 
         ["Set_Language"] = "Language",
         ["Lang_Auto"] = "Automatic (Windows)",
@@ -591,6 +597,9 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tab_Email"] = "Correo",
         ["Tab_Credentials"] = "Credenciales de red",
         ["Tab_Schedule"] = "Programación",
+        ["Tab_About"] = "Acerca de",
+        ["About_Version"] = "Versión",
+        ["About_Desc"] = "GUI para copias de seguridad y duplicación basada en robocopy de Windows.",
 
         ["Set_Language"] = "Idioma",
         ["Lang_Auto"] = "Automático (Windows)",
@@ -783,6 +792,9 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tab_Email"] = "E-mail",
         ["Tab_Credentials"] = "Identifiants réseau",
         ["Tab_Schedule"] = "Planification",
+        ["Tab_About"] = "À propos",
+        ["About_Version"] = "Version",
+        ["About_Desc"] = "GUI de sauvegarde et de mise en miroir basée sur robocopy de Windows.",
 
         ["Set_Language"] = "Langue",
         ["Lang_Auto"] = "Automatique (Windows)",
@@ -975,6 +987,9 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tab_Email"] = "E-Mail",
         ["Tab_Credentials"] = "Netzwerk-Anmeldedaten",
         ["Tab_Schedule"] = "Planung",
+        ["Tab_About"] = "Info",
+        ["About_Version"] = "Version",
+        ["About_Desc"] = "GUI für Backups und Spiegelung auf Basis von Windows-robocopy.",
 
         ["Set_Language"] = "Sprache",
         ["Lang_Auto"] = "Automatisch (Windows)",

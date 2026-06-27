@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
@@ -29,6 +31,18 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
         TempRootBox.PlaceholderText = LogService.DefaultTempRoot;
 
         RefreshScheduleStatus();
+
+        // Versione mostrata nella scheda Info (es. 1.0.0), letta dai metadati dell'assembly.
+        var v = Assembly.GetExecutingAssembly().GetName().Version;
+        AppVersionText.Text = v is null ? "1.0.0" : $"{v.Major}.{v.Minor}.{v.Build}";
+    }
+
+    // Apre un link esterno (es. il repository) nel browser predefinito.
+    private void OnOpenLink(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
+    {
+        try { Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true }); }
+        catch { /* nessun browser/URL non valido: ignora */ }
+        e.Handled = true;
     }
 
     // Mostra la prossima esecuzione pianificata (o "nessuna pianificazione").

@@ -1,0 +1,13 @@
+<Project>
+
+  <!-- Versione e metadati condivisi da tutti i progetti sotto src/.
+       Aggiornare qui il numero di versione (SemVer: MAGGIORE.MINORE.PATCH). -->
+  <PropertyGroup>
+    <Version>1.0.0</Version>
+    <Product>RoboKeep</Product>
+    <Authors>Roberto Serafini</Authors>
+    <Company>Roberto Serafini</Company>
+    <Copyright>© 2026 Roberto Serafini</Copyright>
+  </PropertyGroup>
+
+</Project>

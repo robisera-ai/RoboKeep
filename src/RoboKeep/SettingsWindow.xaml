@@ -242,6 +242,29 @@
                     <TextBlock x:Name="ScheduleStatus" Margin="0,12,0,0" TextWrapping="Wrap"/>
                 </StackPanel>
             </TabItem>
+
+            <!-- INFO / ABOUT -->
+            <TabItem Header="{l:Tr Tab_About}">
+                <StackPanel Margin="4,16">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="FolderArrowRight24" FontSize="28" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="RoboKeep" FontSize="26" FontWeight="Bold" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock Text="{l:Tr About_Desc}" Opacity="0.85" TextWrapping="Wrap" Margin="0,6,0,0"/>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                        <TextBlock Text="{l:Tr About_Version}" FontWeight="SemiBold"/>
+                        <TextBlock x:Name="AppVersionText" Margin="6,0,0,0"/>
+                    </StackPanel>
+                    <TextBlock Text="© 2026 Roberto Serafini" Margin="0,8,0,0"/>
+                    <TextBlock Text="Licenza MIT" Margin="0,2,0,0"/>
+                    <TextBlock Text="Basato sul robocopy di sistema e .NET 10 (WPF) · 5 lingue"
+                               Opacity="0.8" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                    <TextBlock Margin="0,12,0,0">
+                        <Hyperlink NavigateUri="https://github.com/robisera-ai/RoboKeep" RequestNavigate="OnOpenLink">github.com/robisera-ai/RoboKeep</Hyperlink>
+                    </TextBlock>
+                </StackPanel>
+            </TabItem>
         </TabControl>
 
         <Border Grid.Row="2" Padding="20,12" Background="#11888888">
