@@ -19,6 +19,10 @@ public sealed class AppHost
     {
         Store = store;
         Config = config;
+        if (string.IsNullOrWhiteSpace(config.Settings.LogRoot))
+            config.Settings.LogRoot = Path.Combine(store.DirectoryPath, "logs");
+        if (string.IsNullOrWhiteSpace(config.Settings.TempRoot))
+            config.Settings.TempRoot = Path.Combine(store.DirectoryPath, "temp");
         Credentials = new CredentialService(config.Settings.CredentialScope);
         Results = new LastResultStore(Path.Combine(store.DirectoryPath, "lastresults.json"));
         ForceCopyHashes = new ForceCopyHashStore(Path.Combine(store.DirectoryPath, "forcecopy-hashes.json"));
@@ -26,7 +30,8 @@ public sealed class AppHost
 
     public static AppHost Load(string? configPath = null)
     {
-        var store = new ConfigStore(configPath ?? ConfigStore.DefaultConfigPath);
+        var path = configPath ?? Path.Combine(AppDataLocator.PrepareDataRoot(), "config.json");
+        var store = new ConfigStore(path);
         return new AppHost(store, store.Load());
     }
 
