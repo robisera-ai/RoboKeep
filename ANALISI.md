@@ -1,61 +1,41 @@
-# RobocopySW — Documento di Analisi e Design
+# RobocopySW — Obiettivo e scelte di progetto
 
-Analisi che ha portato al prodotto: dal sistema a script batch esistente all'applicazione .NET
-finita, con le scelte tecniche e il design realizzato.
+Cosa si voleva ottenere e come è stato realizzato, sfruttando gli strumenti già presenti in Windows.
 
-## 1. Scopo
+## Obiettivo
 
-Sostituire l'insieme di script batch che pilotano **robocopy** per i backup/mirroring, con un'**applicazione desktop Windows configurabile da interfaccia grafica**, mantenendo invariato il comportamento di copia ma eliminando la modifica manuale dei file.
+Partendo da alcuni semplici script batch personali costruiti attorno a **robocopy**, si voleva
+un'**applicazione desktop con interfaccia grafica** per gestire i backup/mirroring: la stessa copia
+affidabile di sempre, ma con la configurazione centralizzata in un unico file e modificabile da GUI,
+senza più editare script a mano.
 
-Comportamento di backup richiesto (invariato): per ogni coppia sorgente→destinazione, ricorsivo su sottocartelle, robocopy
-- **salta** i file identici (stessa data/ora di ultima modifica e dimensione),
-- **sovrascrive** in destinazione i file la cui sorgente è più recente,
-- **rimuove** dalla destinazione i file/cartelle non più presenti in sorgente (modalità mirror).
+Comportamento di copia (per ogni job sorgente → destinazione, ricorsivo sulle sottocartelle):
+- **salta** i file identici (stessa data/ora di ultima modifica e dimensione);
+- **sovrascrive** in destinazione i file la cui sorgente è più recente;
+- in **mirror** (`/MIR`, default) **rimuove** dalla destinazione i file/cartelle non più presenti in sorgente;
+- con mirror disattivato (`/E`) copia e aggiorna soltanto, **senza mai cancellare**.
 
-## 2. Analisi del sistema esistente (script batch)
+## Scelta di fondo: usare gli strumenti nativi di Windows
 
-Sistema a 3 livelli in batch + robocopy:
+L'idea guida è **non reinventare nulla e non aggiungere dipendenze esterne**:
 
-| Livello | Ruolo |
-|---|---|
-| **Creator** | Genera file job `.RCJ` con `robocopy … /save:` |
-| **Executor** | Esegue un `.RCJ` con `robocopy /job:`, scrive il log, lo comprime in `.zip` con 7-Zip in `logs\AAAAMMGG\`, opzionale email via `vbs/sendmail.vbs` |
-| **Orchestrator** | Esegue in sequenza i job |
+- **Motore di copia → il `robocopy` di sistema.** È già incluso in Windows, collaudato da anni,
+  multi-thread e **sempre aggiornato con Windows Update**. L'app si limita a costruire il comando
+  giusto, eseguirlo e leggerne l'esito — e ne mostra in **anteprima l'esatta riga di comando**, così
+  non è una scatola nera. Si usa `%WINDIR%\System32\Robocopy.exe`, non un eseguibile incluso a mano.
+- **Contorno → .NET nativo.** Compressione dei log (`System.IO.Compression`) e invio email
+  (`System.Net.Mail`) fatti direttamente in .NET, **senza tool esterni** di archiviazione o di posta.
+- **Piattaforma → .NET 10 (LTS) con WPF/MVVM.** Supporto a lungo termine e interfaccia desktop nativa Windows.
 
-Switch robocopy usati nei `.RCJ`: `/MIR /XJ /COPY:DATS` (o `/COPYALL`) `/R:n /W:n /V /TEE`. Naming log: `AAAAMMGG-HHMMSS-<job>.log` → zip in `logs\AAAAMMGG\`. Logica esito da exit code in `sendmail.vbs`.
+Perché non un programma di sincronizzazione già pronto (FreeFileSync, rsync e simili)? Perché si
+voleva **restare sul robocopy già in uso** e avere un'app cucita su questi job, senza imparare né
+dipendere da software di terzi: il valore aggiunto mancante non era il motore di copia, ma lo strato
+di **GUI + configurazione** sopra robocopy.
 
-### Punti deboli rilevati
-- **Configurazione sparsa e duplicata** su decine di `.cmd`, con percorsi *hardcoded* e incoerenti tra installazioni.
-- Aggiungere/modificare un backup = editare a mano più file batch (fragile, error-prone).
-- Dipendenze esterne incluse a mano: `7z.exe`, un `robocopy.exe` **datato**, `sendmail.vbs`.
-- Nessuna anteprima prima di un mirror distruttivo; nessun multi-threading; gestione data/ora fragile (dipende dal formato locale di `DATE/T`/`TIME/T`).
+## Design
 
-## 3. Verifica tecnologica ("è aggiornato o c'è qualcosa di più nuovo?")
-
-### 3.1 Motore di copia: robocopy
-- **robocopy è pienamente supportato e attuale.** Documentato da Microsoft per Windows 10/11 e Windows Server fino alle versioni più recenti; **nessuna deprecazione** annunciata.
-- È **parte integrante di Windows**: non esiste un pacchetto scaricabile separatamente; si aggiorna **solo con Windows Update**. Il motore interno è stabile da anni.
-- Decisione: l'app usa **il robocopy di sistema** (`%WINDIR%\System32\Robocopy.exe`), così eredita sempre l'ultima versione fornita da Windows. Il `robocopy.exe` datato dei vecchi script **non** viene usato.
-
-### 3.2 Alternative valutate (e perché restiamo su robocopy)
-| Alternativa | Tipo | Verdetto |
-|---|---|---|
-| **FreeFileSync** | GUI sync open source | Ottimo ma è un prodotto a sé: non riusa la logica/job esistenti, ennesima UI di terzi da imparare |
-| **rsync / cwRsync** | CLI Unix portata | Potente ma estraneo all'ecosistema, semantica e permessi NTFS meno naturali su Windows |
-| **FastCopy / TeraCopy** | GUI copia veloce | Orientati a copie manuali, non a mirroring schedulato con log/credenziali |
-| **Rclone** | CLI cloud/sync | Eccellente per cloud, sovradimensionato per mirror locale/UNC |
-| **Macrium / Acronis / Veeam** | Backup commerciale | Backup a immagine/incrementale, a pagamento, diverso caso d'uso |
-| **robocopy + GUI custom (questa soluzione)** | wrapper nativo | ✅ Mantiene **identico** il comportamento già in uso, **zero dipendenze nuove**, nativo, e aggiunge proprio lo strato GUI/config mancante |
-
-**Conclusione:** la cosa "più nuova e indicata" non è cambiare motore, ma **incapsulare robocopy in un'app moderna**. È l'approccio adottato.
-
-### 3.3 Piattaforma applicativa: .NET
-- **.NET 10 è l'attuale LTS** (supporto a lungo termine), preferito a .NET 8 che è prossimo al fine vita. Target: **`net10.0` / `net10.0-windows`**.
-- Compressione log e invio email vengono fatti **nativamente in .NET** (`System.IO.Compression`, `System.Net.Mail`): si eliminano `7z.exe` e `sendmail.vbs`.
-
-## 4. Design realizzato
-
-App **WPF .NET 10 (MVVM)**, configurazione centralizzata in **un unico `config.json`** editabile da GUI. Robocopy come motore. Due modalità d'uso:
+App **WPF .NET 10 (MVVM)**, configurazione centralizzata in **un unico `config.json`** editabile da
+GUI. Due modalità d'uso:
 - **Interattiva (GUI):** gestione job, creazione guidata, avvio manuale, **anteprima/dry-run**, log e report.
 - **Silenziosa (CLI):** `RobocopySW.exe --run-all` / `--job "Nome"` → per le attività pianificate di Task Scheduler.
 
@@ -67,7 +47,9 @@ src/
   RobocopySW.Tests/   xUnit (args builder, exit-code interpreter, config round-trip, planner forza copia/wizard, integrazione runner)
 ```
 
-Il cuore della logica è **puro e testabile** (nessun I/O): `RobocopyArgsBuilder` (opzioni → argomenti), `ExitCodeInterpreter` (exit code → esito), `ForceCopyPlanner` e `JobWizardPlanner`. L'I/O (processo robocopy, file, rete, email, scheduler) è isolato nei servizi.
+Il cuore della logica è **puro e testabile** (nessun I/O): `RobocopyArgsBuilder` (opzioni →
+argomenti), `ExitCodeInterpreter` (exit code → esito), `ForceCopyPlanner` e `JobWizardPlanner`. L'I/O
+(processo robocopy, file, rete, email, scheduler) è isolato nei servizi.
 
 ### Mappatura opzioni → switch robocopy (`RobocopyArgsBuilder`)
 | Opzione (GUI) | Switch |
@@ -101,7 +83,7 @@ cifrate con **DPAPI** (ambito utente o macchina) con test di connessione · pian
 Scheduler · riordino job in **drag &amp; drop** · ultimo esito persistito e visibile in lista (anche
 dopo i run pianificati) · interfaccia in **5 lingue** (it/en/es/fr/de).
 
-## 5. Prodotto realizzato
+## Prodotto realizzato
 
 - **Engine puro in TDD:** `RobocopyArgsBuilder`, `ExitCodeInterpreter`, `ConfigStore`,
   `ForceCopyPlanner`, `JobWizardPlanner`, con suite di unit/integration test xUnit verde.
@@ -112,4 +94,4 @@ dopo i run pianificati) · interfaccia in **5 lingue** (it/en/es/fr/de).
 - **CLI headless** per la schedulazione (`--run-all`, `--job`, `--dry-run`, `--config`).
 - **Verifica end-to-end** su cartelle di prova e su backup reali.
 
-Gli script batch originali sono stati rimossi dal repository (anonimizzazione dei riferimenti interni).
+Gli script batch iniziali non fanno parte del repository.

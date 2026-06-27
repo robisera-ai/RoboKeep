@@ -4,7 +4,7 @@
 
 RobocopySW mette una GUI moderna e una configurazione centralizzata sopra `robocopy`, lo
 strumento di copia di Windows: definisci i tuoi backup (sorgente → destinazione) una volta, e li
-avvii a mano, da riga di comando o pianificati — senza più scrivere o manutenere decine di script `.bat`.
+avvii a mano, da riga di comando o pianificati — senza scrivere né tenere aggiornati script a mano.
 
 ![Finestra principale di RobocopySW](docs/images/main-window.jpg)
 
@@ -17,8 +17,8 @@ avvii a mano, da riga di comando o pianificati — senza più scrivere o manuten
   chiarezza, non un nuovo algoritmo di copia da fidarsi al buio.
 - **Trasparente.** L'editor mostra in tempo reale **l'esatto comando robocopy** che verrà eseguito:
   nessuna scatola nera, sai sempre cosa succede.
-- **Una sola configurazione.** Tutti i job in un unico file JSON, editabili da GUI — al posto di
-  percorsi sparsi e duplicati in tanti file batch.
+- **Una sola configurazione.** Tutti i job in un unico file JSON, editabili da GUI, invece che
+  scritti e duplicati a mano.
 - **Creazione guidata.** Un wizard ti fa poche domande (tipo di dischi, comportamento, file
   speciali) e **imposta le opzioni ottimali**, evitando gli errori classici di robocopy.
 - **Locale, gratuito, senza cloud.** Nessuna telemetria, nessun account. Le credenziali delle share
@@ -141,4 +141,4 @@ Il file `config.json` reale e `lastresults.json` restano locali (non versionati)
 
 ## Approfondimenti
 
-Vedi **[ANALISI.md](ANALISI.md)** per l'analisi del sistema a script precedente e le scelte tecniche.
+Vedi **[ANALISI.md](ANALISI.md)** per l'obiettivo del progetto e le scelte tecniche (perché robocopy e .NET nativi).
