@@ -1,6 +1,7 @@
-# RobocopySW — Documento di Analisi
+# RobocopySW — Documento di Analisi e Design
 
-> Data analisi: 19 giugno 2026 · Autore: rielaborazione del sistema batch esistente in applicazione .NET
+Analisi che ha portato al prodotto: dal sistema a script batch esistente all'applicazione .NET
+finita, con le scelte tecniche e il design realizzato.
 
 ## 1. Scopo
 
@@ -15,27 +16,26 @@ Comportamento di backup richiesto (invariato): per ogni coppia sorgente→destin
 
 Sistema a 3 livelli in batch + robocopy:
 
-| Livello | File rappresentativi | Ruolo |
-|---|---|---|
-| **Creator** | `scripts/Test/CreateJobs-v1.cmd`, `scripts/old/CreateRobocopyJobs.cmd` | Generano file job `.RCJ` con `robocopy … /save:` |
-| **Executor** | `scripts/StartRobocopy.cmd` | Esegue un `.RCJ` con `robocopy /job:`, scrive il log, lo comprime in `.zip` con 7-Zip in `logs\AAAAMMGG\`, opzionale email via `vbs/sendmail.vbs` |
-| **Orchestrator** | `scripts/LaunchRobocopyJobs.cmd` | Esegue in sequenza i job |
+| Livello | Ruolo |
+|---|---|
+| **Creator** | Genera file job `.RCJ` con `robocopy … /save:` |
+| **Executor** | Esegue un `.RCJ` con `robocopy /job:`, scrive il log, lo comprime in `.zip` con 7-Zip in `logs\AAAAMMGG\`, opzionale email via `vbs/sendmail.vbs` |
+| **Orchestrator** | Esegue in sequenza i job |
 
-Switch robocopy usati nei `.RCJ` e negli script: `/MIR /XJ /COPY:DATS` (o `/COPYALL`) `/R:n /W:n /V /TEE`. Naming log: `AAAAMMGG-HHMMSS-<job>.log` → zip in `logs\AAAAMMGG\`. Logica esito da exit code in `sendmail.vbs`.
+Switch robocopy usati nei `.RCJ`: `/MIR /XJ /COPY:DATS` (o `/COPYALL`) `/R:n /W:n /V /TEE`. Naming log: `AAAAMMGG-HHMMSS-<job>.log` → zip in `logs\AAAAMMGG\`. Logica esito da exit code in `sendmail.vbs`.
 
 ### Punti deboli rilevati
-- **Configurazione sparsa e duplicata** su decine di `.cmd`, con percorsi *hardcoded* e incoerenti tra installazioni: `c:\BackupSW`, `f:\RobocopySW`, `D:\Programmi\RobocopySW`.
+- **Configurazione sparsa e duplicata** su decine di `.cmd`, con percorsi *hardcoded* e incoerenti tra installazioni.
 - Aggiungere/modificare un backup = editare a mano più file batch (fragile, error-prone).
-- Dipendenze esterne incluse a mano: `bin/7z.exe`, `bin/robocopy.exe` (copia **datata**), `vbs/sendmail.vbs`.
+- Dipendenze esterne incluse a mano: `7z.exe`, un `robocopy.exe` **datato**, `sendmail.vbs`.
 - Nessuna anteprima prima di un mirror distruttivo; nessun multi-threading; gestione data/ora fragile (dipende dal formato locale di `DATE/T`/`TIME/T`).
 
 ## 3. Verifica tecnologica ("è aggiornato o c'è qualcosa di più nuovo?")
 
 ### 3.1 Motore di copia: robocopy
-- **robocopy è ancora pienamente supportato e attuale.** Microsoft lo documenta per Windows 10/11 e Windows Server 2016→2025; **nessuna deprecazione** annunciata.
-- È **parte integrante di Windows**: non esiste un pacchetto/versione scaricabile separatamente; si aggiorna **solo con Windows Update**. La versione interna del motore (`XP010`) è stabile da anni.
-- Versione presente su **questa macchina** (Windows 11, build 26100): **`Robocopy.exe 10.0.26100.8457`** → è la **più recente** disponibile per questo sistema.
-- Decisione: l'app userà **il robocopy di sistema** (`%WINDIR%\System32\Robocopy.exe`), così erediterà sempre l'ultima versione fornita da Windows. Il `robocopy.exe` datato fornito con i vecchi script **non** verrà usato.
+- **robocopy è pienamente supportato e attuale.** Documentato da Microsoft per Windows 10/11 e Windows Server fino alle versioni più recenti; **nessuna deprecazione** annunciata.
+- È **parte integrante di Windows**: non esiste un pacchetto scaricabile separatamente; si aggiorna **solo con Windows Update**. Il motore interno è stabile da anni.
+- Decisione: l'app usa **il robocopy di sistema** (`%WINDIR%\System32\Robocopy.exe`), così eredita sempre l'ultima versione fornita da Windows. Il `robocopy.exe` datato dei vecchi script **non** viene usato.
 
 ### 3.2 Alternative valutate (e perché restiamo su robocopy)
 | Alternativa | Tipo | Verdetto |
@@ -47,27 +47,27 @@ Switch robocopy usati nei `.RCJ` e negli script: `/MIR /XJ /COPY:DATS` (o `/COPY
 | **Macrium / Acronis / Veeam** | Backup commerciale | Backup a immagine/incrementale, a pagamento, diverso caso d'uso |
 | **robocopy + GUI custom (questa soluzione)** | wrapper nativo | ✅ Mantiene **identico** il comportamento già in uso, **zero dipendenze nuove**, nativo, e aggiunge proprio lo strato GUI/config mancante |
 
-**Conclusione:** la cosa "più nuova e indicata" non è cambiare motore, ma **incapsulare robocopy in un'app moderna**. È esattamente l'approccio adottato.
+**Conclusione:** la cosa "più nuova e indicata" non è cambiare motore, ma **incapsulare robocopy in un'app moderna**. È l'approccio adottato.
 
 ### 3.3 Piattaforma applicativa: .NET
-- Inizialmente installato **.NET 8 SDK**, ma **.NET 8 va in end-of-life il 10 novembre 2026** (≈5 mesi).
-- **.NET 10 è l'attuale LTS**, supportato fino al **10 novembre 2028**. Su questa macchina: SDK **10.0.301**, runtime WindowsDesktop **10.0.9**.
-- Decisione: **target `net10.0` / `net10.0-windows`**. Il .NET 8 SDK è stato **disinstallato** (non più necessario).
+- **.NET 10 è l'attuale LTS** (supporto a lungo termine), preferito a .NET 8 che è prossimo al fine vita. Target: **`net10.0` / `net10.0-windows`**.
 - Compressione log e invio email vengono fatti **nativamente in .NET** (`System.IO.Compression`, `System.Net.Mail`): si eliminano `7z.exe` e `sendmail.vbs`.
 
-## 4. Nuovo design
+## 4. Design realizzato
 
 App **WPF .NET 10 (MVVM)**, configurazione centralizzata in **un unico `config.json`** editabile da GUI. Robocopy come motore. Due modalità d'uso:
-- **Interattiva (GUI):** gestione job, avvio manuale, **anteprima/dry-run**, log e report.
+- **Interattiva (GUI):** gestione job, creazione guidata, avvio manuale, **anteprima/dry-run**, log e report.
 - **Silenziosa (CLI):** `RobocopySW.exe --run-all` / `--job "Nome"` → per le attività pianificate di Task Scheduler.
 
 ### Architettura (3 progetti)
 ```
 src/
-  RobocopySW.Core/    libreria pura e testabile: Models + Services (engine, config, log, email, scheduler, credenziali)
+  RobocopySW.Core/    libreria pura e testabile: Models + Services (engine, config, log, email, scheduler, credenziali, planner)
   RobocopySW/         app WPF (Views + ViewModels + entry/CLI) → eseguibile RobocopySW.exe
-  RobocopySW.Tests/   xUnit (args builder, exit-code interpreter, config round-trip)
+  RobocopySW.Tests/   xUnit (args builder, exit-code interpreter, config round-trip, planner forza copia/wizard, integrazione runner)
 ```
+
+Il cuore della logica è **puro e testabile** (nessun I/O): `RobocopyArgsBuilder` (opzioni → argomenti), `ExitCodeInterpreter` (exit code → esito), `ForceCopyPlanner` e `JobWizardPlanner`. L'I/O (processo robocopy, file, rete, email, scheduler) è isolato nei servizi.
 
 ### Mappatura opzioni → switch robocopy (`RobocopyArgsBuilder`)
 | Opzione (GUI) | Switch |
@@ -78,20 +78,38 @@ src/
 | Copia ACL/owner (utile su share) | `/COPYALL` o `/COPY:DAT` (default) |
 | Esclude junction (anti-loop) | `/XJ` (sempre) |
 | Multi-thread | `/MT:<n>` |
+| File grandi — riavviabile / I/O non bufferizzato | `/Z` / `/J` (mutuamente esclusivi) |
 | Esclusioni file / cartelle | `/XF …` / `/XD …` |
+| **Forza copia** (file a data/dimensione congelate) | seconda passata `/IS /IT` sui soli pattern indicati |
+| Registra tutti i file nel log | `/V` |
 | Retry / attesa | `/R:<n>` / `/W:<n>` |
 | **Anteprima** | `/L` (elenca soltanto, non modifica) |
 
-### Funzionalità (opzionali, scelta utente)
-Log zip per data + pulizia automatica oltre N giorni · notifiche email (sempre/solo errori) · schedulazione via Task Scheduler · report riepilogo (copiati/sovrascritti/cancellati/errori da exit code) · credenziali per share UNC cifrate con **DPAPI**.
+**Forza copia — modalità smart:** per i file il cui contenuto cambia senza variare data/dimensione
+(container cifrati, DB), una seconda passata li ricopia comunque. In modalità *smart* l'app calcola
+un **hash SHA256** del file e lo ricopia solo se è davvero cambiato dall'ultimo backup (stato
+persistito), evitando ricopie inutili.
 
-## 5. Stato e roadmap
-- [x] Verifica tecnologica (robocopy attuale, .NET 10 LTS)
-- [x] Scaffold soluzione .NET 10 (build verde)
-- [ ] Modelli + engine puro in TDD (`RobocopyArgsBuilder`, `ExitCodeInterpreter`, `ConfigStore`)
-- [ ] Servizi IO (runner, log, credenziali, email, scheduler)
-- [ ] GUI WPF (lista job, editor, impostazioni, anteprima/log)
-- [ ] CLI headless per schedulazione
-- [ ] Build + unit test + verifica end-to-end su cartelle di prova
+**Creazione guidata (wizard):** poche domande (tipo di dischi sorgente/destinazione, comportamento,
+file speciali) → `JobWizardPlanner` deriva le opzioni ottimali (es. `/MT` in base al disco più lento,
+`/Z` per i file grandi, `/COPYALL` solo se servono i permessi) e **precompila l'editor**.
+
+### Funzionalità (opzionali, scelta utente)
+Log `.zip` per data + pulizia automatica oltre N giorni · notifiche email (sempre / solo errori) ·
+report riepilogo (copiati / saltati / extra / falliti da exit code) · credenziali per share UNC
+cifrate con **DPAPI** (ambito utente o macchina) con test di connessione · pianificazione via Task
+Scheduler · riordino job in **drag &amp; drop** · ultimo esito persistito e visibile in lista (anche
+dopo i run pianificati) · interfaccia in **5 lingue** (it/en/es/fr/de).
+
+## 5. Prodotto realizzato
+
+- **Engine puro in TDD:** `RobocopyArgsBuilder`, `ExitCodeInterpreter`, `ConfigStore`,
+  `ForceCopyPlanner`, `JobWizardPlanner`, con suite di unit/integration test xUnit verde.
+- **Servizi IO:** runner robocopy (output live + cancellazione), log + archiviazione zip + pulizia,
+  credenziali DPAPI + connessione UNC, email SMTP, scheduler.
+- **GUI WPF (WPF-UI / Fluent):** lista job con drag &amp; drop ed esito, editor con anteprima del
+  comando, creazione guidata, impostazioni (generale, email, credenziali, pianificazione).
+- **CLI headless** per la schedulazione (`--run-all`, `--job`, `--dry-run`, `--config`).
+- **Verifica end-to-end** su cartelle di prova e su backup reali.
 
 Gli script batch originali sono stati rimossi dal repository (anonimizzazione dei riferimenti interni).
