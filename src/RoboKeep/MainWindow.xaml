@@ -55,12 +55,21 @@
         <!-- Contenuto: tabella job + log -->
         <Grid Grid.Row="2" Margin="16,0,16,8">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="2*"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="1.1*"/>
             </Grid.RowDefinitions>
 
-            <Border Grid.Row="0" CornerRadius="8" BorderThickness="1"
+            <ui:InfoBar Grid.Row="0"
+                        Severity="Warning"
+                        IsOpen="{Binding HealthBannerVisible}"
+                        IsClosable="False"
+                        Title="{l:Tr Health_BannerTitle}"
+                        Message="{Binding HealthBannerText}"
+                        Margin="0,0,0,8"/>
+
+            <Border Grid.Row="1" CornerRadius="8" BorderThickness="1"
                     Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                     BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
                 <Grid>
@@ -76,6 +85,18 @@
                               Drop="OnGridDrop"
                               PreviewMouseLeftButtonDown="OnGridPreviewLeftDown"
                               MouseDoubleClick="OnEditJob">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Health}" Value="Failed">
+                                        <Setter Property="Background" Value="#33FF5252"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Health}" Value="Stale">
+                                        <Setter Property="Background" Value="#33FFB300"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
                         <DataGrid.Columns>
                             <DataGridTemplateColumn Width="40" CanUserResize="False" CanUserReorder="False" CanUserSort="False">
                                 <DataGridTemplateColumn.CellTemplate>
@@ -117,9 +138,9 @@
                 </Grid>
             </Border>
 
-            <GridSplitter Grid.Row="1" Height="10" HorizontalAlignment="Stretch" Background="Transparent"/>
+            <GridSplitter Grid.Row="2" Height="10" HorizontalAlignment="Stretch" Background="Transparent"/>
 
-            <ui:Card Grid.Row="2" Padding="0">
+            <ui:Card Grid.Row="3" Padding="0">
                 <DockPanel>
                     <Grid DockPanel.Dock="Top" Margin="12,10,12,6">
                         <StackPanel Orientation="Horizontal">

@@ -274,6 +274,9 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Created"] = "Attività pianificata creata/aggiornata per le {0}.",
         ["Sched_Removed"] = "Attività pianificata rimossa.",
         ["Sched_Error"] = "Errore: {0}",
+
+        ["Health_BannerTitle"] = "Attenzione ai backup",
+        ["Health_BannerFormat"] = "Job con problemi: {0} falliti, {1} fermi da troppo tempo.",
     };
 
     // ---------------- ENGLISH ----------------
@@ -471,6 +474,9 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Created"] = "Scheduled task created/updated for {0}.",
         ["Sched_Removed"] = "Scheduled task removed.",
         ["Sched_Error"] = "Error: {0}",
+
+        ["Health_BannerTitle"] = "Backup warnings",
+        ["Health_BannerFormat"] = "Jobs with issues: {0} failed, {1} stale for too long.",
     };
 
     // ---------------- ESPAÑOL ----------------
@@ -668,6 +674,9 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Created"] = "Tarea programada creada/actualizada para las {0}.",
         ["Sched_Removed"] = "Tarea programada eliminada.",
         ["Sched_Error"] = "Error: {0}",
+
+        ["Health_BannerTitle"] = "Atención a las copias",
+        ["Health_BannerFormat"] = "Trabajos con problemas: {0} fallidos, {1} sin ejecutarse hace demasiado.",
     };
 
     // ---------------- FRANÇAIS ----------------
@@ -865,6 +874,9 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Created"] = "Tâche planifiée créée/mise à jour pour {0}.",
         ["Sched_Removed"] = "Tâche planifiée supprimée.",
         ["Sched_Error"] = "Erreur : {0}",
+
+        ["Health_BannerTitle"] = "Attention aux sauvegardes",
+        ["Health_BannerFormat"] = "Tâches en problème : {0} en échec, {1} inactives depuis trop longtemps.",
     };
 
     // ---------------- DEUTSCH ----------------
@@ -1062,6 +1074,9 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Created"] = "Geplante Aufgabe erstellt/aktualisiert für {0}.",
         ["Sched_Removed"] = "Geplante Aufgabe entfernt.",
         ["Sched_Error"] = "Fehler: {0}",
+
+        ["Health_BannerTitle"] = "Achtung bei Backups",
+        ["Health_BannerFormat"] = "Jobs mit Problemen: {0} fehlgeschlagen, {1} zu lange nicht ausgeführt.",
     };
 
     // Mappa lingua → dizionario. Dichiarata DOPO i dizionari, così sono già inizializzati

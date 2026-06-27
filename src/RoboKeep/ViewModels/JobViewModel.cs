@@ -42,6 +42,13 @@ public sealed class JobViewModel : ObservableObject
         set => SetField(ref _isRunning, value);
     }
 
+    private BackupHealth _health = BackupHealth.Ok;
+    public BackupHealth Health
+    {
+        get => _health;
+        set => SetField(ref _health, value);
+    }
+
     /// <summary>Imposta l'esito a partire dall'ultimo risultato persistito (o "—" se assente).</summary>
     public void ApplyLastResult(JobLastResult? r)
     {

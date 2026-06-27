@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using System.Text;
 using System.Windows.Input;
 using System.Windows.Threading;
+using RoboKeep.Core.Models;
+using RoboKeep.Core.Services;
 using RoboKeep.Infra;
 using RoboKeep.Localization;
 
@@ -93,6 +95,20 @@ public sealed class MainViewModel : ObservableObject
 
     /// <summary>Opposto di <see cref="IsEmpty"/>: c'è almeno un job.</summary>
     public bool HasJobs => Jobs.Count > 0;
+
+    private bool _healthBannerVisible;
+    public bool HealthBannerVisible
+    {
+        get => _healthBannerVisible;
+        set => SetField(ref _healthBannerVisible, value);
+    }
+
+    private string _healthBannerText = "";
+    public string HealthBannerText
+    {
+        get => _healthBannerText;
+        set => SetField(ref _healthBannerText, value);
+    }
 
     private JobViewModel? _selectedJob;
     public JobViewModel? SelectedJob
@@ -201,6 +217,26 @@ public sealed class MainViewModel : ObservableObject
         var map = _host.Results.Load();
         foreach (var jvm in Jobs)
             jvm.ApplyLastResult(map.TryGetValue(jvm.Name, out var r) ? r : null);
+        EvaluateHealth();
+    }
+
+    /// <summary>Calcola la salute di ogni job e aggiorna il banner di avviso.</summary>
+    private void EvaluateHealth()
+    {
+        var results = _host.Results.Load();
+        var names = Jobs.Select(j => j.Name).ToList();
+        var health = StaleBackupEvaluator.Evaluate(names, results, _host.Config.Settings.StaleAfterDays, DateTime.Now);
+
+        var byName = health.ToDictionary(h => h.JobName, h => h.Health);
+        foreach (var jvm in Jobs)
+            if (byName.TryGetValue(jvm.Name, out var h)) jvm.Health = h;
+
+        var alerts = health.Where(h => h.Health is BackupHealth.Failed or BackupHealth.Stale).ToList();
+        if (alerts.Count == 0) { HealthBannerVisible = false; HealthBannerText = ""; return; }
+        var failed = alerts.Count(a => a.Health == BackupHealth.Failed);
+        var stale = alerts.Count(a => a.Health == BackupHealth.Stale);
+        HealthBannerText = string.Format(Loc.Instance["Health_BannerFormat"], failed, stale);
+        HealthBannerVisible = true;
     }
 
     /// <summary>Riallinea la lista dei job nella config e salva su disco.</summary>
