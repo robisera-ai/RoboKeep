@@ -115,7 +115,7 @@ public sealed class BackupRunner
         {
             "",
             "====== " + title + " ======",
-            Line(CoreLoc.S("Lbl_Result"), $"{ok} (exit {r.ExitCode}) - {r.Status}"),
+            Line(CoreLoc.S("Lbl_Result"), $"{ok} - {r.Status}"),
             Line(CoreLoc.S("Lbl_FoldersCopied"), r.DirsCopied.ToString()),
             Line(CoreLoc.S("Lbl_FilesCopied"), r.FilesCopied.ToString()),
             Line(CoreLoc.S("Lbl_FilesUnchanged"), r.FilesSkipped.ToString()),

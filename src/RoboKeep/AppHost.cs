@@ -71,7 +71,7 @@ public sealed class AppHost
         }
 
         foreach (var r in results)
-            Console.WriteLine($"{r.JobName}: {(r.Success ? "OK" : "ERRORE")} (exit {r.ExitCode}) - {r.Status}");
+            Console.WriteLine($"{r.JobName}: {(r.Success ? "OK" : "ERRORE")} - {r.Status}");
 
         return results.All(r => r.Success) ? 0 : 1;
     }

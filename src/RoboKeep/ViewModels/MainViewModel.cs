@@ -256,7 +256,7 @@ public sealed class MainViewModel : ObservableObject
                     else
                         jvm.LastStatus = RunStatus.Format(result.Success, result.FilesCopied, result.FilesSkipped,
                             result.FilesExtra, result.FilesFailed + result.DirsFailed, DateTime.Now);
-                    Enqueue($"=> {jvm.Name}: {result.Status} (exit {result.ExitCode})");
+                    Enqueue($"=> {jvm.Name}: {result.Status}");
                 }
                 catch (OperationCanceledException)
                 {
