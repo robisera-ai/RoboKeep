@@ -73,7 +73,10 @@ public sealed class Loc : INotifyPropertyChanged
     {
         var ci = new CultureInfo(lang);
         CultureInfo.CurrentUICulture = ci;
-        CultureInfo.DefaultThreadCurrentUICulture = ci; // così anche Core usa la lingua giusta
+        CultureInfo.DefaultThreadCurrentUICulture = ci;
+        // I testi Core (report/email) girano su thread di background: impostiamo la lingua
+        // esplicitamente, senza dipendere dalla cultura del thread.
+        RoboKeep.Core.CoreLoc.SetLanguage(lang);
     }
 
     // ---------------- ITALIANO ----------------
@@ -210,6 +213,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tab_About"] = "Info",
         ["About_Version"] = "Versione",
         ["About_Desc"] = "GUI per backup e mirroring basata sul robocopy di Windows.",
+        ["About_License"] = "Licenza MIT",
+        ["About_BuiltOn"] = "Basato sul robocopy di sistema e .NET 10 (WPF) · 5 lingue",
 
         ["Set_Language"] = "Lingua",
         ["Lang_Auto"] = "Automatica (Windows)",
@@ -405,6 +410,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tab_About"] = "About",
         ["About_Version"] = "Version",
         ["About_Desc"] = "GUI for backups and mirroring built on Windows robocopy.",
+        ["About_License"] = "MIT License",
+        ["About_BuiltOn"] = "Built on the system robocopy and .NET 10 (WPF) · 5 languages",
 
         ["Set_Language"] = "Language",
         ["Lang_Auto"] = "Automatic (Windows)",
@@ -600,6 +607,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tab_About"] = "Acerca de",
         ["About_Version"] = "Versión",
         ["About_Desc"] = "GUI para copias de seguridad y duplicación basada en robocopy de Windows.",
+        ["About_License"] = "Licencia MIT",
+        ["About_BuiltOn"] = "Basado en el robocopy del sistema y .NET 10 (WPF) · 5 idiomas",
 
         ["Set_Language"] = "Idioma",
         ["Lang_Auto"] = "Automático (Windows)",
@@ -795,6 +804,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tab_About"] = "À propos",
         ["About_Version"] = "Version",
         ["About_Desc"] = "GUI de sauvegarde et de mise en miroir basée sur robocopy de Windows.",
+        ["About_License"] = "Licence MIT",
+        ["About_BuiltOn"] = "Basé sur le robocopy du système et .NET 10 (WPF) · 5 langues",
 
         ["Set_Language"] = "Langue",
         ["Lang_Auto"] = "Automatique (Windows)",
@@ -990,6 +1001,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tab_About"] = "Info",
         ["About_Version"] = "Version",
         ["About_Desc"] = "GUI für Backups und Spiegelung auf Basis von Windows-robocopy.",
+        ["About_License"] = "MIT-Lizenz",
+        ["About_BuiltOn"] = "Basiert auf dem System-robocopy und .NET 10 (WPF) · 5 Sprachen",
 
         ["Set_Language"] = "Sprache",
         ["Lang_Auto"] = "Automatisch (Windows)",

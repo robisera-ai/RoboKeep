@@ -6,9 +6,17 @@ namespace RoboKeep.Core;
 /// Localizzazione dei testi generati da Core (esiti, riepiloghi, email) in 5 lingue,
 /// basata sulla cultura UI corrente del thread (impostata dall'app). Fallback all'inglese.
 /// </summary>
-internal static class CoreLoc
+public static class CoreLoc
 {
-    private static string Lang => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName switch
+    private static string? _forced;
+
+    /// <summary>Imposta esplicitamente la lingua dei testi Core (chiamata dall'app quando cambia la
+    /// lingua UI). Più affidabile della cultura del thread: i report/email vengono generati su thread
+    /// di background del pool, che possono avere una cultura diversa da quella impostata.</summary>
+    public static void SetLanguage(string lang) =>
+        _forced = lang is "it" or "es" or "fr" or "de" or "en" ? lang : null;
+
+    private static string Lang => _forced ?? CultureInfo.CurrentUICulture.TwoLetterISOLanguageName switch
     {
         "it" => "it",
         "es" => "es",
