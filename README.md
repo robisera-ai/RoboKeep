@@ -126,8 +126,6 @@ di Windows) e lancia l'app con `--run-all` all'orario scelto.
   file molto grandi che cambiano spesso il costo è quello del trasferimento completo.
 - **Non è un sistema di versioni/snapshot:** è mirror/copia, non conserva versioni storiche dei file.
   Per il versioning serve uno strumento dedicato.
-- **File a data/dimensione invariate** (alcuni container/DB) vanno gestiti con la lista *Forza copia*;
-  la modalità *smart* evita ricopie inutili ma deve leggere il file per calcolarne l'hash.
 - La **pianificazione** e l'opzione credenziali “ambito utente” richiedono che l'attività giri con
   l'utente adeguato; alcune azioni (es. `/COPYALL`) possono richiedere privilegi sufficienti.
 
