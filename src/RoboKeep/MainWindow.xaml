@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:tb="clr-namespace:H.NotifyIcon;assembly=H.NotifyIcon.Wpf"
         xmlns:l="clr-namespace:RoboKeep.Localization"
         xmlns:local="clr-namespace:RoboKeep"
         mc:Ignorable="d"
@@ -20,6 +21,22 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
+
+        <!-- Icona nel tray: non occupa spazio nella griglia (Visibility=Collapsed non serve, è un elemento logico). -->
+        <tb:TaskbarIcon x:Name="TrayIcon"
+                        IconSource="pack://application:,,,/Assets/app.ico"
+                        ToolTipText="RoboKeep"
+                        TrayMouseDoubleClick="OnTrayShow"
+                        Visibility="Collapsed">
+            <tb:TaskbarIcon.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="{l:Tr Tray_Open}" Click="OnTrayShow"/>
+                    <MenuItem Header="{l:Tr Tray_RunAll}" Click="OnTrayRunAll"/>
+                    <Separator/>
+                    <MenuItem Header="{l:Tr Tray_Exit}" Click="OnTrayExit"/>
+                </ContextMenu>
+            </tb:TaskbarIcon.ContextMenu>
+        </tb:TaskbarIcon>
 
         <ui:TitleBar Grid.Row="0" Title="{l:Tr Main_Title}">
             <ui:TitleBar.Icon>

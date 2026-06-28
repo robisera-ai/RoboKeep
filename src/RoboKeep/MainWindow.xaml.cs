@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using H.NotifyIcon.Core;
 using RoboKeep.Core.Models;
 using RoboKeep.Infra;
 using RoboKeep.Localization;
@@ -39,6 +40,49 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             LogBox.ScrollToEnd();
         };
         _vm.LogCleared += () => LogBox.Clear();
+
+        // Avvia minimizzato nel tray se richiesto dalle impostazioni.
+        if (_host.Config.Settings.StartMinimized)
+        {
+            WindowState = System.Windows.WindowState.Minimized;
+            if (_host.Config.Settings.MinimizeToTray)
+                Hide();
+        }
+    }
+
+    // Minimizza nel tray invece di mostrare la barra delle applicazioni (se abilitato).
+    protected override void OnStateChanged(EventArgs e)
+    {
+        base.OnStateChanged(e);
+        if (WindowState == System.Windows.WindowState.Minimized
+            && _host.Config.Settings.MinimizeToTray)
+        {
+            Hide();
+        }
+    }
+
+    // ----- Gestori icona nel tray -----
+
+    private void OnTrayShow(object sender, System.EventArgs e)
+    {
+        Show();
+        WindowState = System.Windows.WindowState.Normal;
+        Activate();
+    }
+
+    private void OnTrayRunAll(object sender, System.Windows.RoutedEventArgs e)
+        => (_vm as ViewModels.MainViewModel)?.RunAllCommand.Execute(null);
+
+    private void OnTrayExit(object sender, System.Windows.RoutedEventArgs e)
+    {
+        TrayIcon.Dispose();
+        System.Windows.Application.Current.Shutdown();
+    }
+
+    /// <summary>Mostra una notifica toast tramite l'icona del tray.</summary>
+    public void ShowJobToast(string title, string message)
+    {
+        TrayIcon.ShowNotification(title, message, NotificationIcon.Info);
     }
 
     // ----- Riordino dei job via drag & drop -----

@@ -283,6 +283,12 @@ public sealed class Loc : INotifyPropertyChanged
         ["Preflight_DestUnreachable"] = "destinazione non raggiungibile",
         ["Preflight_LowSpace"] = "spazio libero basso:",
         ["Preflight_SourceBigger"] = "la sorgente potrebbe non entrare; richiede:",
+
+        ["Tray_Open"] = "Apri",
+        ["Tray_RunAll"] = "Avvia tutti",
+        ["Tray_Exit"] = "Esci",
+        ["Toast_Ok"] = "Backup completato",
+        ["Toast_Error"] = "Backup con errori",
     };
 
     // ---------------- ENGLISH ----------------
@@ -489,6 +495,12 @@ public sealed class Loc : INotifyPropertyChanged
         ["Preflight_DestUnreachable"] = "destination not reachable",
         ["Preflight_LowSpace"] = "low free space:",
         ["Preflight_SourceBigger"] = "the source may not fit; needs:",
+
+        ["Tray_Open"] = "Open",
+        ["Tray_RunAll"] = "Run all",
+        ["Tray_Exit"] = "Exit",
+        ["Toast_Ok"] = "Backup completed",
+        ["Toast_Error"] = "Backup completed with errors",
     };
 
     // ---------------- ESPAÑOL ----------------
@@ -695,6 +707,12 @@ public sealed class Loc : INotifyPropertyChanged
         ["Preflight_DestUnreachable"] = "destino no accesible",
         ["Preflight_LowSpace"] = "poco espacio libre:",
         ["Preflight_SourceBigger"] = "el origen podría no caber; necesita:",
+
+        ["Tray_Open"] = "Abrir",
+        ["Tray_RunAll"] = "Ejecutar todo",
+        ["Tray_Exit"] = "Salir",
+        ["Toast_Ok"] = "Copia completada",
+        ["Toast_Error"] = "Copia con errores",
     };
 
     // ---------------- FRANÇAIS ----------------
@@ -901,6 +919,12 @@ public sealed class Loc : INotifyPropertyChanged
         ["Preflight_DestUnreachable"] = "destination injoignable",
         ["Preflight_LowSpace"] = "espace libre faible :",
         ["Preflight_SourceBigger"] = "la source pourrait ne pas tenir ; nécessite :",
+
+        ["Tray_Open"] = "Ouvrir",
+        ["Tray_RunAll"] = "Tout lancer",
+        ["Tray_Exit"] = "Quitter",
+        ["Toast_Ok"] = "Sauvegarde terminée",
+        ["Toast_Error"] = "Sauvegarde avec des erreurs",
     };
 
     // ---------------- DEUTSCH ----------------
@@ -1107,6 +1131,12 @@ public sealed class Loc : INotifyPropertyChanged
         ["Preflight_DestUnreachable"] = "Ziel nicht erreichbar",
         ["Preflight_LowSpace"] = "wenig freier Speicher:",
         ["Preflight_SourceBigger"] = "die Quelle passt evtl. nicht; benötigt:",
+
+        ["Tray_Open"] = "Öffnen",
+        ["Tray_RunAll"] = "Alle starten",
+        ["Tray_Exit"] = "Beenden",
+        ["Toast_Ok"] = "Backup abgeschlossen",
+        ["Toast_Error"] = "Backup mit Fehlern",
     };
 
     // Mappa lingua → dizionario. Dichiarata DOPO i dizionari, così sono già inizializzati

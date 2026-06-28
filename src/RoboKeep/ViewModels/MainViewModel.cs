@@ -334,6 +334,16 @@ public sealed class MainViewModel : ObservableObject
                         jvm.LastStatus = RunStatus.Format(result.Success, result.FilesCopied, result.FilesSkipped,
                             result.FilesExtra, result.FilesFailed + result.DirsFailed, DateTime.Now);
                     Enqueue($"=> {jvm.Name}: {result.Status}");
+
+                    if (!dryRun
+                        && _host.Config.Settings.NotificationsEnabled
+                        && System.Windows.Application.Current?.MainWindow is MainWindow mw)
+                    {
+                        var msg = result.Success
+                            ? Loc.Instance["Toast_Ok"]
+                            : Loc.Instance["Toast_Error"];
+                        mw.ShowJobToast(jvm.Name, msg);
+                    }
                 }
                 catch (OperationCanceledException)
                 {
