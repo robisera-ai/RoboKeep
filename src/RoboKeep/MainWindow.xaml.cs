@@ -19,6 +19,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     // Tray: ultimo stato non minimizzato (per ripristinarlo) e flag di uscita in corso.
     private WindowState _restoreState = WindowState.Normal;
     private bool _exiting;
+    private bool _trayHintShown;
 
     // Stato per il drag &amp; drop di riordino dei job (solo dalla maniglia).
     private JobViewModel? _dragItem;
@@ -54,6 +55,19 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }
     }
 
+    // Con "riduci nel tray" attivo, la X nasconde nel tray invece di chiudere.
+    // L'uscita vera passa da tray -> Esci, che imposta _exiting prima di Shutdown.
+    protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+    {
+        if (!_exiting && _host.Config.Settings.MinimizeToTray)
+        {
+            e.Cancel = true;
+            HideToTray();
+            return;
+        }
+        base.OnClosing(e);
+    }
+
     // Alla chiusura della finestra distrugge l'icona del tray: evita che resti un "fantasma"
     // nell'area di notifica dopo la chiusura normale.
     protected override void OnClosed(System.EventArgs e)
@@ -70,7 +84,19 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         if (WindowState != System.Windows.WindowState.Minimized)
             _restoreState = WindowState;                 // ricorda l'ultimo stato non minimizzato
         else if (_host.Config.Settings.MinimizeToTray && IsVisible)
-            Hide();                                       // IsVisible evita il doppio Hide all'avvio
+            HideToTray();                                 // IsVisible evita il doppio Hide all'avvio
+    }
+
+    // Nasconde la finestra nel tray e, solo la prima volta nella sessione, avvisa che l'app resta attiva.
+    private void HideToTray()
+    {
+        Hide();
+        if (_trayHintShown) return;
+        _trayHintShown = true;
+        TrayIcon.ShowNotification(
+            Loc.Instance["Tray_StillRunningTitle"],
+            Loc.Instance["Tray_StillRunningBody"],
+            NotificationIcon.Info);
     }
 
     // ----- Gestori icona nel tray -----

@@ -22,12 +22,13 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Icona nel tray: non occupa spazio nella griglia (Visibility=Collapsed non serve, è un elemento logico). -->
+        <!-- Icona nel tray. NB: per H.NotifyIcon, Visibility controlla la visibilità dell'icona
+             nell'area di notifica: deve restare Visible, altrimenti l'icona non compare e, con
+             "riduci nel tray", la finestra nascosta diventa irraggiungibile. -->
         <tb:TaskbarIcon x:Name="TrayIcon"
                         IconSource="pack://application:,,,/Assets/app.ico"
                         ToolTipText="RoboKeep"
-                        TrayMouseDoubleClick="OnTrayShow"
-                        Visibility="Collapsed">
+                        TrayMouseDoubleClick="OnTrayShow">
             <tb:TaskbarIcon.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="{l:Tr Tray_Open}" Click="OnTrayShow"/>
@@ -111,6 +112,14 @@
                                     <DataTrigger Binding="{Binding Health}" Value="Stale">
                                         <Setter Property="Background" Value="#33FFB300"/>
                                     </DataTrigger>
+                                    <!-- Hover e selezione vincono sull'eventuale tinta di salute (trigger in coda). -->
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#22FFFFFF"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#660078D4"/>
+                                        <Setter Property="Foreground" Value="White"/>
+                                    </Trigger>
                                 </Style.Triggers>
                             </Style>
                         </DataGrid.RowStyle>
@@ -157,7 +166,9 @@
 
             <GridSplitter Grid.Row="2" Height="10" HorizontalAlignment="Stretch" Background="Transparent"/>
 
-            <ui:Card Grid.Row="3" Padding="0">
+            <Border Grid.Row="3" CornerRadius="8" BorderThickness="1"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
                 <DockPanel>
                     <Grid DockPanel.Dock="Top" Margin="12,10,12,6">
                         <StackPanel Orientation="Horizontal">
@@ -171,11 +182,12 @@
                         <TextBox x:Name="LogBox" IsReadOnly="True" Style="{x:Null}"
                                  FontFamily="Cascadia Mono, Consolas" FontSize="12" TextWrapping="NoWrap"
                                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                                 VerticalContentAlignment="Top" HorizontalContentAlignment="Left"
                                  Background="#1E1E1E" Foreground="#DDDDDD" CaretBrush="#DDDDDD"
                                  BorderThickness="0" Padding="8"/>
                     </Border>
                 </DockPanel>
-            </ui:Card>
+            </Border>
         </Grid>
 
         <!-- Barra di stato -->
