@@ -16,6 +16,10 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private readonly AppHost _host;
     private readonly MainViewModel _vm;
 
+    // Tray: ultimo stato non minimizzato (per ripristinarlo) e flag di uscita in corso.
+    private WindowState _restoreState = WindowState.Normal;
+    private bool _exiting;
+
     // Stato per il drag &amp; drop di riordino dei job (solo dalla maniglia).
     private JobViewModel? _dragItem;
     private Point _dragStart;
@@ -50,15 +54,23 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }
     }
 
+    // Alla chiusura della finestra distrugge l'icona del tray: evita che resti un "fantasma"
+    // nell'area di notifica dopo la chiusura normale.
+    protected override void OnClosed(System.EventArgs e)
+    {
+        _exiting = true;
+        TrayIcon.Dispose();
+        base.OnClosed(e);
+    }
+
     // Minimizza nel tray invece di mostrare la barra delle applicazioni (se abilitato).
-    protected override void OnStateChanged(EventArgs e)
+    protected override void OnStateChanged(System.EventArgs e)
     {
         base.OnStateChanged(e);
-        if (WindowState == System.Windows.WindowState.Minimized
-            && _host.Config.Settings.MinimizeToTray)
-        {
-            Hide();
-        }
+        if (WindowState != System.Windows.WindowState.Minimized)
+            _restoreState = WindowState;                 // ricorda l'ultimo stato non minimizzato
+        else if (_host.Config.Settings.MinimizeToTray && IsVisible)
+            Hide();                                       // IsVisible evita il doppio Hide all'avvio
     }
 
     // ----- Gestori icona nel tray -----
@@ -66,22 +78,23 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private void OnTrayShow(object sender, System.EventArgs e)
     {
         Show();
-        WindowState = System.Windows.WindowState.Normal;
+        WindowState = _restoreState;                      // ripristina Normal o Maximized, non forza Normal
         Activate();
     }
 
     private void OnTrayRunAll(object sender, System.Windows.RoutedEventArgs e)
-        => (_vm as ViewModels.MainViewModel)?.RunAllCommand.Execute(null);
+        => _vm.RunAllCommand.Execute(null);
 
     private void OnTrayExit(object sender, System.Windows.RoutedEventArgs e)
     {
-        TrayIcon.Dispose();
-        System.Windows.Application.Current.Shutdown();
+        _exiting = true;
+        System.Windows.Application.Current.Shutdown();    // OnClosed distrugge l'icona (no doppio dispose)
     }
 
     /// <summary>Mostra una notifica toast tramite l'icona del tray.</summary>
-    public void ShowJobToast(string title, string message)
+    internal void ShowJobToast(string title, string message)
     {
+        if (_exiting) return;
         TrayIcon.ShowNotification(title, message, NotificationIcon.Info);
     }
 

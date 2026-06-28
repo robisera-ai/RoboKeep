@@ -500,7 +500,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tray_RunAll"] = "Run all",
         ["Tray_Exit"] = "Exit",
         ["Toast_Ok"] = "Backup completed",
-        ["Toast_Error"] = "Backup completed with errors",
+        ["Toast_Error"] = "Backup finished with errors",
     };
 
     // ---------------- ESPAÑOL ----------------
