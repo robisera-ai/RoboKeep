@@ -217,24 +217,32 @@ public sealed class MainViewModel : ObservableObject
         var map = _host.Results.Load();
         foreach (var jvm in Jobs)
             jvm.ApplyLastResult(map.TryGetValue(jvm.Name, out var r) ? r : null);
-        EvaluateHealth();
+        EvaluateHealth(map);
     }
 
     /// <summary>Calcola la salute di ogni job e aggiorna il banner di avviso.</summary>
-    private void EvaluateHealth()
+    private void EvaluateHealth(IReadOnlyDictionary<string, JobLastResult> results)
     {
-        var results = _host.Results.Load();
         var names = Jobs.Select(j => j.Name).ToList();
         var health = StaleBackupEvaluator.Evaluate(names, results, _host.Config.Settings.StaleAfterDays, DateTime.Now);
 
-        var byName = health.ToDictionary(h => h.JobName, h => h.Health);
-        foreach (var jvm in Jobs)
-            if (byName.TryGetValue(jvm.Name, out var h)) jvm.Health = h;
+        // health è nello stesso ordine di Jobs: assegno per indice, robusto anche a nomi duplicati.
+        int failed = 0, stale = 0;
+        for (int i = 0; i < Jobs.Count && i < health.Count; i++)
+        {
+            var h = health[i].Health;
+            Jobs[i].Health = h;
+            if (h == BackupHealth.Failed) failed++;
+            else if (h == BackupHealth.Stale) stale++;
+        }
 
-        var alerts = health.Where(h => h.Health is BackupHealth.Failed or BackupHealth.Stale).ToList();
-        if (alerts.Count == 0) { HealthBannerVisible = false; HealthBannerText = ""; return; }
-        var failed = alerts.Count(a => a.Health == BackupHealth.Failed);
-        var stale = alerts.Count(a => a.Health == BackupHealth.Stale);
+        // NeverRun e Ok non sono allarmanti: il banner mostra solo Failed/Stale.
+        if (failed == 0 && stale == 0)
+        {
+            HealthBannerText = "";
+            HealthBannerVisible = false;
+            return;
+        }
         HealthBannerText = string.Format(Loc.Instance["Health_BannerFormat"], failed, stale);
         HealthBannerVisible = true;
     }
