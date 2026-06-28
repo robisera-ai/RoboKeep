@@ -114,7 +114,7 @@
                                     </DataTrigger>
                                     <!-- Hover e selezione vincono sull'eventuale tinta di salute (trigger in coda). -->
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#22FFFFFF"/>
+                                        <Setter Property="Background" Value="#22000000"/>
                                     </Trigger>
                                     <Trigger Property="IsSelected" Value="True">
                                         <Setter Property="Background" Value="#660078D4"/>

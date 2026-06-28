@@ -289,6 +289,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tray_Exit"] = "Esci",
         ["Tray_StillRunningTitle"] = "RoboKeep è ancora attivo",
         ["Tray_StillRunningBody"] = "L'app resta in esecuzione nell'area di notifica. Doppio click sull'icona per riaprirla; tasto destro, Esci per chiudere.",
+        ["Tray_StartedTitle"] = "RoboKeep avviato nell'area di notifica",
+        ["Tray_StartedBody"] = "Doppio click sull'icona per aprirlo; tasto destro, Esci per chiudere.",
         ["Toast_Ok"] = "Backup completato",
         ["Toast_Error"] = "Backup con errori",
 
@@ -512,6 +514,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tray_Exit"] = "Exit",
         ["Tray_StillRunningTitle"] = "RoboKeep is still running",
         ["Tray_StillRunningBody"] = "The app keeps running in the notification area. Double-click the icon to reopen it; right-click, Exit to quit.",
+        ["Tray_StartedTitle"] = "RoboKeep started in the notification area",
+        ["Tray_StartedBody"] = "Double-click the icon to open it; right-click, Exit to quit.",
         ["Toast_Ok"] = "Backup completed",
         ["Toast_Error"] = "Backup finished with errors",
 
@@ -735,6 +739,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tray_Exit"] = "Salir",
         ["Tray_StillRunningTitle"] = "RoboKeep sigue activo",
         ["Tray_StillRunningBody"] = "La aplicación sigue ejecutándose en la bandeja. Doble clic en el icono para reabrirla; clic derecho, Salir para cerrar.",
+        ["Tray_StartedTitle"] = "RoboKeep iniciado en la bandeja",
+        ["Tray_StartedBody"] = "Doble clic en el icono para abrirlo; clic derecho, Salir para cerrar.",
         ["Toast_Ok"] = "Copia completada",
         ["Toast_Error"] = "Copia con errores",
 
@@ -958,6 +964,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tray_Exit"] = "Quitter",
         ["Tray_StillRunningTitle"] = "RoboKeep est toujours actif",
         ["Tray_StillRunningBody"] = "L'application continue dans la zone de notification. Double-cliquez sur l'icône pour la rouvrir ; clic droit, Quitter pour fermer.",
+        ["Tray_StartedTitle"] = "RoboKeep démarré dans la zone de notification",
+        ["Tray_StartedBody"] = "Double-cliquez sur l'icône pour l'ouvrir ; clic droit, Quitter pour fermer.",
         ["Toast_Ok"] = "Sauvegarde terminée",
         ["Toast_Error"] = "Sauvegarde avec des erreurs",
 
@@ -1181,6 +1189,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tray_Exit"] = "Beenden",
         ["Tray_StillRunningTitle"] = "RoboKeep läuft weiter",
         ["Tray_StillRunningBody"] = "Die App läuft im Infobereich weiter. Doppelklick auf das Symbol zum Öffnen; Rechtsklick, Beenden zum Schließen.",
+        ["Tray_StartedTitle"] = "RoboKeep im Infobereich gestartet",
+        ["Tray_StartedBody"] = "Doppelklick auf das Symbol zum Öffnen; Rechtsklick, Beenden zum Schließen.",
         ["Toast_Ok"] = "Backup abgeschlossen",
         ["Toast_Error"] = "Backup mit Fehlern",
 

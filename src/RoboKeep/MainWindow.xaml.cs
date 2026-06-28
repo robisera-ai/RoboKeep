@@ -50,9 +50,33 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         if (_host.Config.Settings.StartMinimized)
         {
             WindowState = System.Windows.WindowState.Minimized;
+            // Hide() qui non basta: l'app mostra la finestra dopo il costruttore, lasciando
+            // il pulsante nella barra delle applicazioni. Nascondiamo a finestra gia mostrata.
             if (_host.Config.Settings.MinimizeToTray)
-                Hide();
+                Loaded += OnLoadedHideToTray;
         }
+    }
+
+    // Avvio minimizzato: nasconde nel tray dopo che la finestra e stata mostrata,
+    // cosi non resta il pulsante nella barra delle applicazioni.
+    private void OnLoadedHideToTray(object sender, System.Windows.RoutedEventArgs e)
+    {
+        Loaded -= OnLoadedHideToTray;
+        Hide();
+        // Avviso "partito nel tray" con un piccolo ritardo: chiamare ShowNotification durante
+        // Loaded destabilizza l'avvio (H.NotifyIcon); a regime e' sicuro come il toast di fine job.
+        var timer = new System.Windows.Threading.DispatcherTimer { Interval = System.TimeSpan.FromSeconds(2) };
+        timer.Tick += (s, _) =>
+        {
+            timer.Stop();
+            if (_trayHintShown) return;
+            _trayHintShown = true;
+            TrayIcon.ShowNotification(
+                Loc.Instance["Tray_StartedTitle"],
+                Loc.Instance["Tray_StartedBody"],
+                NotificationIcon.Info);
+        };
+        timer.Start();
     }
 
     // Con "riduci nel tray" attivo, la X nasconde nel tray invece di chiudere.
