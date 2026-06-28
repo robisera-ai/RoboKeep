@@ -31,7 +31,10 @@ avvii a mano, da riga di comando o pianificati — senza scrivere né tenere agg
   speciali) e **imposta le opzioni ottimali**, evitando gli errori classici di robocopy.
 - **Locale, gratuito, senza cloud.** Nessuna telemetria, nessun account. Le credenziali delle share
   di rete sono cifrate con DPAPI di Windows.
-- **Portatile.** App, configurazione e log nella stessa cartella: copi la cartella e hai spostato tutto.
+- **Dati al sicuro, fuori dalla cartella dell'app.** Configurazione, esiti e log stanno in
+  `%APPDATA%\RoboKeep` (per-utente): non si perdono aggiornando o ripulendo la cartella del
+  programma. Per l'uso **portatile** (tutto accanto all'eseguibile) basta creare un file vuoto
+  `portable.flag` nella cartella dell'app.
 - **Multilingua:** italiano, inglese, spagnolo, francese, tedesco.
 
 ## Come funziona un backup
@@ -143,8 +146,10 @@ di Windows) e lancia l'app con `--run-all` all'orario scelto.
 
 ## Configurazione
 
-Modello **portatile**: per default `config.json`, `logs\` e `temp\` stanno **nella stessa cartella
-dell'eseguibile**. Esempio in **[config/config.example.json](config/config.example.json)**.
+Per default `config.json`, `lastresults.json`, `logs\` e `temp\` stanno in **`%APPDATA%\RoboKeep`**
+(per-utente): i dati sopravvivono ad aggiornamenti e reinstallazioni. In modalità **portatile** —
+creando un file vuoto `portable.flag` accanto all'eseguibile — tutto resta invece nella cartella
+dell'app. Esempio di configurazione: **[config/config.example.json](config/config.example.json)**.
 
 Le password (credenziali di rete ed email) non sono mai in chiaro: vengono cifrate con **DPAPI**.
 Il file `config.json` reale e `lastresults.json` restano locali (non versionati).

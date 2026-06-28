@@ -31,8 +31,10 @@ command line, or on a schedule — without writing or maintaining scripts by han
   optimal options**, avoiding common robocopy mistakes.
 - **Local, free, no cloud.** No telemetry, no account. Network-share credentials are encrypted with
   Windows DPAPI.
-- **Portable.** App, configuration, and logs all in the same folder — copy the folder and everything moves
-  with you.
+- **Your data stays safe, outside the app folder.** Configuration, results, and logs live in
+  `%APPDATA%\RoboKeep` (per user): they survive updates and cleanups of the program folder. For
+  **portable** use (everything next to the executable), just create an empty `portable.flag`
+  file in the app folder.
 - **Multilingual:** Italian, English, Spanish, French, German.
 
 ## How a backup works
@@ -141,8 +143,10 @@ with `--run-all` at the chosen time.
 
 ## Configuration
 
-Portable by design: by default `config.json`, `logs\`, and `temp\` live **in the same folder as the
-executable**. Example in **[config/config.example.json](config/config.example.json)**.
+By default `config.json`, `lastresults.json`, `logs\`, and `temp\` live in **`%APPDATA%\RoboKeep`**
+(per user): your data survives app updates and reinstalls. In **portable** mode — by placing an empty
+`portable.flag` file next to the executable — everything stays in the app folder instead.
+Example: **[config/config.example.json](config/config.example.json)**.
 
 Passwords (network and email) are never stored in plain text — they are encrypted with **DPAPI**. The real
 `config.json` and `lastresults.json` stay local (not versioned).
