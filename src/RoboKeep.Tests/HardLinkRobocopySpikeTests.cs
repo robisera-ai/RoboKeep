@@ -29,30 +29,50 @@ public class HardLinkRobocopySpikeTests : IDisposable
         return p.ExitCode;
     }
 
+    // DOCUMENTA il comportamento reale: robocopy modifica sul posto, trascinando l'hard-link.
     [Fact]
-    public void Robocopy_Update_BreaksHardLink_PreservingOldVersionInSnapshot()
+    public void Robocopy_ModifiesInPlace_DraggingHardLinkedSnapshotToNewVersion()
     {
         var source = Path.Combine(_root, "src");
         var dest = Path.Combine(_root, "dest");
         var snap = Path.Combine(_root, "snap");
         Directory.CreateDirectory(source);
 
-        // v1 nella sorgente, mirror in dest
         File.WriteAllText(Path.Combine(source, "f.txt"), "v1");
         Robocopy(source, dest);
-        Assert.Equal("v1", File.ReadAllText(Path.Combine(dest, "f.txt")));
 
-        // snapshot: hard-link di dest\f.txt
         Directory.CreateDirectory(snap);
         HardLink.Create(Path.Combine(snap, "f.txt"), Path.Combine(dest, "f.txt"));
-        Assert.Equal("v1", File.ReadAllText(Path.Combine(snap, "f.txt")));
 
-        // la sorgente cambia a v2, rimirror in dest
         File.WriteAllText(Path.Combine(source, "f.txt"), "v2");
         Robocopy(source, dest);
 
-        // ASSUNZIONE CRITICA: dest aggiornato a v2, lo snapshot conserva v1 (hard-link rotto da robocopy)
         Assert.Equal("v2", File.ReadAllText(Path.Combine(dest, "f.txt")));
-        Assert.Equal("v1", File.ReadAllText(Path.Combine(snap, "f.txt")));
+        Assert.Equal("v2", File.ReadAllText(Path.Combine(snap, "f.txt")));
+    }
+
+    // VALIDA il meccanismo: cancellare il file dal nuovo snapshot prima di robocopy => robocopy
+    // lo RICREA nuovo, e la vecchia versione resta nello snapshot precedente.
+    [Fact]
+    public void DeleteChangedThenRobocopy_RecreatesFile_PreservingOldVersionInPrevSnapshot()
+    {
+        var source = Path.Combine(_root, "src2");
+        var prev = Path.Combine(_root, "prev");
+        var curr = Path.Combine(_root, "curr");
+        Directory.CreateDirectory(source);
+
+        File.WriteAllText(Path.Combine(source, "f.txt"), "v1");
+        Robocopy(source, prev);
+
+        Directory.CreateDirectory(curr);
+        HardLink.Create(Path.Combine(curr, "f.txt"), Path.Combine(prev, "f.txt"));
+
+        File.WriteAllText(Path.Combine(source, "f.txt"), "v2");
+        File.Delete(Path.Combine(curr, "f.txt"));
+
+        Robocopy(source, curr);
+
+        Assert.Equal("v2", File.ReadAllText(Path.Combine(curr, "f.txt")));
+        Assert.Equal("v1", File.ReadAllText(Path.Combine(prev, "f.txt")));
     }
 }
