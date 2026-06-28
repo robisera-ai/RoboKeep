@@ -198,7 +198,40 @@ public sealed class MainViewModel : ObservableObject
             jobs = new List<JobViewModel> { sel };
         }
         if (jobs.Count == 0) return;
+
+        // Pre-check: nessuno stato di esecuzione è ancora impostato qui, quindi un return basta
+        // per tornare all'idle. Preview e --run-all (non-interattivo) saltano il controllo.
+        if (!ConfirmPreflight(jobs, dryRun)) return;
+
         await RunJobsAsync(jobs, dryRun, k);
+    }
+
+    private bool ConfirmPreflight(IReadOnlyList<JobViewModel> jobs, bool dryRun)
+    {
+        if (dryRun || !_host.Config.Settings.PreflightEnabled)
+            return true;
+
+        long minFree = (long)_host.Config.Settings.MinFreeSpaceMb * 1024 * 1024;
+        var budget = TimeSpan.FromSeconds(2);
+        var messages = new List<string>();
+
+        foreach (var jvm in jobs)
+        {
+            var job = _host.Config.Jobs.FirstOrDefault(j => j.Name == jvm.Name);
+            if (job is null) continue;
+            var inputs = PreflightCollector.Collect(job, minFree, budget);
+            foreach (var warn in PreflightChecker.Evaluate(inputs))
+                messages.Add($"- {jvm.Name}: {Loc.Instance[warn.MessageKey]} {warn.Detail}".TrimEnd());
+        }
+
+        if (messages.Count == 0)
+            return true;
+
+        var body = Loc.Instance["Preflight_ConfirmIntro"] + "\n\n" + string.Join("\n", messages);
+        var res = System.Windows.MessageBox.Show(
+            body, Loc.Instance["Preflight_ConfirmTitle"],
+            System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning);
+        return res == System.Windows.MessageBoxResult.Yes;
     }
 
     /// <summary>Ricostruisce la collezione dei job dalla configurazione corrente.</summary>

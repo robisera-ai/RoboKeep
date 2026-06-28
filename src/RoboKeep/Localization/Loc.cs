@@ -277,6 +277,12 @@ public sealed class Loc : INotifyPropertyChanged
 
         ["Health_BannerTitle"] = "Attenzione ai backup",
         ["Health_BannerFormat"] = "Job con problemi: {0} falliti, {1} fermi da troppo tempo.",
+
+        ["Preflight_ConfirmTitle"] = "Controlli pre-avvio",
+        ["Preflight_ConfirmIntro"] = "Alcuni controlli segnalano possibili problemi. Avviare comunque?",
+        ["Preflight_DestUnreachable"] = "destinazione non raggiungibile",
+        ["Preflight_LowSpace"] = "spazio libero basso:",
+        ["Preflight_SourceBigger"] = "la sorgente potrebbe non entrare; richiede:",
     };
 
     // ---------------- ENGLISH ----------------
@@ -477,6 +483,12 @@ public sealed class Loc : INotifyPropertyChanged
 
         ["Health_BannerTitle"] = "Backup warnings",
         ["Health_BannerFormat"] = "Jobs with issues: {0} failed, {1} stale for too long.",
+
+        ["Preflight_ConfirmTitle"] = "Pre-run checks",
+        ["Preflight_ConfirmIntro"] = "Some checks report possible problems. Run anyway?",
+        ["Preflight_DestUnreachable"] = "destination not reachable",
+        ["Preflight_LowSpace"] = "low free space:",
+        ["Preflight_SourceBigger"] = "the source may not fit; needs:",
     };
 
     // ---------------- ESPAÑOL ----------------
@@ -677,6 +689,12 @@ public sealed class Loc : INotifyPropertyChanged
 
         ["Health_BannerTitle"] = "Atención a las copias",
         ["Health_BannerFormat"] = "Trabajos con problemas: {0} fallidos, {1} sin ejecutarse hace demasiado.",
+
+        ["Preflight_ConfirmTitle"] = "Comprobaciones previas",
+        ["Preflight_ConfirmIntro"] = "Algunas comprobaciones detectan posibles problemas. ¿Ejecutar de todos modos?",
+        ["Preflight_DestUnreachable"] = "destino no accesible",
+        ["Preflight_LowSpace"] = "poco espacio libre:",
+        ["Preflight_SourceBigger"] = "el origen podría no caber; necesita:",
     };
 
     // ---------------- FRANÇAIS ----------------
@@ -877,6 +895,12 @@ public sealed class Loc : INotifyPropertyChanged
 
         ["Health_BannerTitle"] = "Attention aux sauvegardes",
         ["Health_BannerFormat"] = "Tâches en problème : {0} en échec, {1} inactives depuis trop longtemps.",
+
+        ["Preflight_ConfirmTitle"] = "Vérifications avant lancement",
+        ["Preflight_ConfirmIntro"] = "Certaines vérifications signalent des problèmes possibles. Lancer quand même ?",
+        ["Preflight_DestUnreachable"] = "destination injoignable",
+        ["Preflight_LowSpace"] = "espace libre faible :",
+        ["Preflight_SourceBigger"] = "la source pourrait ne pas tenir ; nécessite :",
     };
 
     // ---------------- DEUTSCH ----------------
@@ -1077,6 +1101,12 @@ public sealed class Loc : INotifyPropertyChanged
 
         ["Health_BannerTitle"] = "Achtung bei Backups",
         ["Health_BannerFormat"] = "Jobs mit Problemen: {0} fehlgeschlagen, {1} zu lange nicht ausgeführt.",
+
+        ["Preflight_ConfirmTitle"] = "Prüfungen vor dem Start",
+        ["Preflight_ConfirmIntro"] = "Einige Prüfungen melden mögliche Probleme. Trotzdem starten?",
+        ["Preflight_DestUnreachable"] = "Ziel nicht erreichbar",
+        ["Preflight_LowSpace"] = "wenig freier Speicher:",
+        ["Preflight_SourceBigger"] = "die Quelle passt evtl. nicht; benötigt:",
     };
 
     // Mappa lingua → dizionario. Dichiarata DOPO i dizionari, così sono già inizializzati
