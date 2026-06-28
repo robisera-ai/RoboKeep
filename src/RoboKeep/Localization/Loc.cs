@@ -289,6 +289,15 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tray_Exit"] = "Esci",
         ["Toast_Ok"] = "Backup completato",
         ["Toast_Error"] = "Backup con errori",
+
+        ["Tab_Reliability"] = "Affidabilità",
+        ["Set_ReliabilitySection"] = "Affidabilità e notifiche",
+        ["Set_StaleAfterDays"] = "Avvisa se un backup è fermo da (giorni, 0 = mai)",
+        ["Set_MinFreeSpace"] = "Spazio libero minimo in destinazione (MB)",
+        ["Set_PreflightEnabled"] = "Controlli pre-avvio (raggiungibilità e spazio)",
+        ["Set_NotificationsEnabled"] = "Notifiche toast a fine backup",
+        ["Set_MinimizeToTray"] = "Riduci nell'area di notifica invece di chiudere",
+        ["Set_StartMinimized"] = "Avvia minimizzato nel tray",
     };
 
     // ---------------- ENGLISH ----------------
@@ -501,6 +510,15 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tray_Exit"] = "Exit",
         ["Toast_Ok"] = "Backup completed",
         ["Toast_Error"] = "Backup finished with errors",
+
+        ["Tab_Reliability"] = "Reliability",
+        ["Set_ReliabilitySection"] = "Reliability and notifications",
+        ["Set_StaleAfterDays"] = "Warn if a backup is stale after (days, 0 = never)",
+        ["Set_MinFreeSpace"] = "Minimum free space at destination (MB)",
+        ["Set_PreflightEnabled"] = "Pre-run checks (reachability and space)",
+        ["Set_NotificationsEnabled"] = "Toast notifications when a backup ends",
+        ["Set_MinimizeToTray"] = "Minimize to the tray instead of closing",
+        ["Set_StartMinimized"] = "Start minimized in the tray",
     };
 
     // ---------------- ESPAÑOL ----------------
@@ -713,6 +731,15 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tray_Exit"] = "Salir",
         ["Toast_Ok"] = "Copia completada",
         ["Toast_Error"] = "Copia con errores",
+
+        ["Tab_Reliability"] = "Fiabilidad",
+        ["Set_ReliabilitySection"] = "Fiabilidad y notificaciones",
+        ["Set_StaleAfterDays"] = "Avisar si una copia lleva sin ejecutarse (días, 0 = nunca)",
+        ["Set_MinFreeSpace"] = "Espacio libre mínimo en destino (MB)",
+        ["Set_PreflightEnabled"] = "Comprobaciones previas (accesibilidad y espacio)",
+        ["Set_NotificationsEnabled"] = "Notificaciones al terminar una copia",
+        ["Set_MinimizeToTray"] = "Minimizar en la bandeja en vez de cerrar",
+        ["Set_StartMinimized"] = "Iniciar minimizado en la bandeja",
     };
 
     // ---------------- FRANÇAIS ----------------
@@ -925,6 +952,15 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tray_Exit"] = "Quitter",
         ["Toast_Ok"] = "Sauvegarde terminée",
         ["Toast_Error"] = "Sauvegarde avec des erreurs",
+
+        ["Tab_Reliability"] = "Fiabilité",
+        ["Set_ReliabilitySection"] = "Fiabilité et notifications",
+        ["Set_StaleAfterDays"] = "Alerter si une sauvegarde est inactive depuis (jours, 0 = jamais)",
+        ["Set_MinFreeSpace"] = "Espace libre minimum à destination (Mo)",
+        ["Set_PreflightEnabled"] = "Vérifications avant lancement (accessibilité et espace)",
+        ["Set_NotificationsEnabled"] = "Notifications toast à la fin d'une sauvegarde",
+        ["Set_MinimizeToTray"] = "Réduire dans la zone de notification au lieu de fermer",
+        ["Set_StartMinimized"] = "Démarrer réduit dans la zone de notification",
     };
 
     // ---------------- DEUTSCH ----------------
@@ -1137,6 +1173,15 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tray_Exit"] = "Beenden",
         ["Toast_Ok"] = "Backup abgeschlossen",
         ["Toast_Error"] = "Backup mit Fehlern",
+
+        ["Tab_Reliability"] = "Zuverlässigkeit",
+        ["Set_ReliabilitySection"] = "Zuverlässigkeit und Benachrichtigungen",
+        ["Set_StaleAfterDays"] = "Warnen, wenn ein Backup veraltet ist nach (Tagen, 0 = nie)",
+        ["Set_MinFreeSpace"] = "Mindestens freier Speicher am Ziel (MB)",
+        ["Set_PreflightEnabled"] = "Prüfungen vor dem Start (Erreichbarkeit und Speicher)",
+        ["Set_NotificationsEnabled"] = "Toast-Benachrichtigungen bei Backup-Ende",
+        ["Set_MinimizeToTray"] = "In den Infobereich minimieren statt schließen",
+        ["Set_StartMinimized"] = "Minimiert im Infobereich starten",
     };
 
     // Mappa lingua → dizionario. Dichiarata DOPO i dizionari, così sono già inizializzati

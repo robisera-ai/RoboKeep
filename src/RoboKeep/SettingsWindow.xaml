@@ -243,6 +243,24 @@
                 </StackPanel>
             </TabItem>
 
+            <!-- AFFIDABILITA E NOTIFICHE -->
+            <TabItem Header="{l:Tr Tab_Reliability}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,14,0">
+                    <StackPanel Margin="4,12">
+                        <TextBlock Text="{l:Tr Set_StaleAfterDays}" Style="{StaticResource Label}"/>
+                        <ui:TextBox Width="140" HorizontalAlignment="Left" Text="{Binding StaleAfterDays, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <TextBlock Text="{l:Tr Set_MinFreeSpace}" Style="{StaticResource Label}"/>
+                        <ui:TextBox Width="140" HorizontalAlignment="Left" Text="{Binding MinFreeSpaceMb, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <CheckBox Content="{l:Tr Set_PreflightEnabled}" IsChecked="{Binding PreflightEnabled}" Margin="0,16,0,0"/>
+                        <CheckBox Content="{l:Tr Set_NotificationsEnabled}" IsChecked="{Binding NotificationsEnabled}" Margin="0,8,0,0"/>
+                        <CheckBox Content="{l:Tr Set_MinimizeToTray}" IsChecked="{Binding MinimizeToTray}" Margin="0,8,0,0"/>
+                        <CheckBox Content="{l:Tr Set_StartMinimized}" IsChecked="{Binding StartMinimized}" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
             <!-- INFO / ABOUT -->
             <TabItem Header="{l:Tr Tab_About}">
                 <StackPanel Margin="4,16">
