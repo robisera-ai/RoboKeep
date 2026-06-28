@@ -54,8 +54,8 @@ public sealed class SettingsViewModel : ObservableObject
     public bool CompressLogs { get => _s.CompressLogs; set { _s.CompressLogs = value; OnPropertyChanged(); } }
     public int LogRetentionDays { get => _s.LogRetentionDays; set { _s.LogRetentionDays = value; OnPropertyChanged(); } }
 
-    public int StaleAfterDays { get => _s.StaleAfterDays; set { _s.StaleAfterDays = value; OnPropertyChanged(); } }
-    public int MinFreeSpaceMb { get => _s.MinFreeSpaceMb; set { _s.MinFreeSpaceMb = value; OnPropertyChanged(); } }
+    public int StaleAfterDays { get => _s.StaleAfterDays; set { _s.StaleAfterDays = System.Math.Max(0, value); OnPropertyChanged(); } }
+    public int MinFreeSpaceMb { get => _s.MinFreeSpaceMb; set { _s.MinFreeSpaceMb = System.Math.Max(0, value); OnPropertyChanged(); } }
     public bool PreflightEnabled { get => _s.PreflightEnabled; set { _s.PreflightEnabled = value; OnPropertyChanged(); } }
     public bool NotificationsEnabled { get => _s.NotificationsEnabled; set { _s.NotificationsEnabled = value; OnPropertyChanged(); } }
     public bool MinimizeToTray { get => _s.MinimizeToTray; set { _s.MinimizeToTray = value; OnPropertyChanged(); } }
