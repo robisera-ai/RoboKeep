@@ -76,4 +76,13 @@ public sealed class BackupJob
 
     /// <summary>Id facoltativo della credenziale di rete da usare per le share UNC.</summary>
     public string? CredentialId { get; set; }
+
+    /// <summary>true → mantiene snapshot datati con hard-link (versioning). Richiede destinazione NTFS locale.</summary>
+    public bool Versioned { get; set; }
+
+    /// <summary>Numero massimo di snapshot da conservare. 0 = nessun limite di numero.</summary>
+    public int SnapshotKeepCount { get; set; }
+
+    /// <summary>Elimina gli snapshot più vecchi di questi giorni. 0 = nessun limite di età.</summary>
+    public int SnapshotMaxAgeDays { get; set; }
 }
