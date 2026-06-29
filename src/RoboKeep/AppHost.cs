@@ -46,7 +46,8 @@ public sealed class AppHost
         var runner = new RobocopyRunner(forceCopyPlanner: planner);
         var log = new LogService(Config.Settings);
         var email = new EmailService(Credentials);
-        return new BackupRunner(Config, runner, log, email, Credentials, Results);
+        var snapshots = new SnapshotService(runner);
+        return new BackupRunner(Config, runner, log, email, Credentials, Results, snapshots);
     }
 
     /// <summary>

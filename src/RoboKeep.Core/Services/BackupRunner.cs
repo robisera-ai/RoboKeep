@@ -15,6 +15,7 @@ public sealed class BackupRunner
     private readonly EmailService _email;
     private readonly CredentialService _credentials;
     private readonly LastResultStore? _results;
+    private readonly SnapshotService? _snapshots;
 
     public BackupRunner(
         AppConfig config,
@@ -22,7 +23,8 @@ public sealed class BackupRunner
         LogService log,
         EmailService email,
         CredentialService credentials,
-        LastResultStore? results = null)
+        LastResultStore? results = null,
+        SnapshotService? snapshots = null)
     {
         _config = config;
         _runner = runner;
@@ -30,6 +32,7 @@ public sealed class BackupRunner
         _email = email;
         _credentials = credentials;
         _results = results;
+        _snapshots = snapshots;
     }
 
     /// <summary>Trova un job per nome (case-insensitive).</summary>
@@ -53,7 +56,24 @@ public sealed class BackupRunner
                 connected = true;
             }
 
-            var run = await _runner.RunAsync(job, dryRun, progress, ct).ConfigureAwait(false);
+            RobocopyRunResult run;
+            if (job.Versioned && !dryRun && _snapshots is not null)
+            {
+                if (HardLinkSupport.IsSupported(job.Destination))
+                {
+                    run = await _snapshots.RunVersionedAsync(job, progress, ct).ConfigureAwait(false);
+                }
+                else
+                {
+                    progress?.Report("[versioning] ATTENZIONE: la destinazione non supporta gli hard-link. "
+                        + "Eseguo un mirror semplice (nessuno snapshot). Usa una destinazione NTFS locale per le versioni.");
+                    run = await _runner.RunAsync(job, dryRun, progress, ct).ConfigureAwait(false);
+                }
+            }
+            else
+            {
+                run = await _runner.RunAsync(job, dryRun, progress, ct).ConfigureAwait(false);
+            }
 
             // Riepilogo nostro, leggibile e in italiano (l'output nativo di robocopy ha le
             // intestazioni localizzate che sbordano dalle colonne).
