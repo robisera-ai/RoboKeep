@@ -14,8 +14,12 @@ public class HardLinkSupportTests : IDisposable
         => Assert.True(HardLinkSupport.IsSupported(_dir));
 
     [Fact]
-    public void MissingDir_IsNotSupported()
-        => Assert.False(HardLinkSupport.IsSupported(Path.Combine(_dir, "nope")));
+    public void MissingSubdir_WithExistingNtfsParent_IsSupported()
+        => Assert.True(HardLinkSupport.IsSupported(Path.Combine(_dir, "not-created-yet")));
+
+    [Fact]
+    public void Whitespace_IsNotSupported()
+        => Assert.False(HardLinkSupport.IsSupported("   "));
 
     [Fact]
     public void LeavesNoProbeFiles()

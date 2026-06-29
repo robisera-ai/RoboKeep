@@ -10,26 +10,30 @@ public static class HardLinkSupport
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
-                return false;
+            if (string.IsNullOrWhiteSpace(directory)) return false;
+
+            // Se la cartella non esiste ancora, risali al primo antenato esistente:
+            // il supporto hard-link e' una proprieta' del volume.
+            var dir = directory;
+            while (!Directory.Exists(dir))
+            {
+                var parent = Path.GetDirectoryName(dir);
+                if (string.IsNullOrEmpty(parent) || string.Equals(parent, dir, StringComparison.OrdinalIgnoreCase))
+                    return false; // nessun antenato esistente
+                dir = parent;
+            }
 
             var id = Guid.NewGuid().ToString("N");
-            var probe = Path.Combine(directory, $".robokeep-probe-{id}");
-            var link = Path.Combine(directory, $".robokeep-link-{id}");
+            var probe = Path.Combine(dir, $".robokeep-probe-{id}");
+            var link = Path.Combine(dir, $".robokeep-link-{id}");
             File.WriteAllText(probe, "x");
-            try
-            {
-                return HardLink.TryCreate(link, probe);
-            }
+            try { return HardLink.TryCreate(link, probe); }
             finally
             {
-                try { File.Delete(link); } catch { /* best-effort */ }
-                try { File.Delete(probe); } catch { /* best-effort */ }
+                try { File.Delete(link); } catch { }
+                try { File.Delete(probe); } catch { }
             }
         }
-        catch
-        {
-            return false;
-        }
+        catch { return false; }
     }
 }

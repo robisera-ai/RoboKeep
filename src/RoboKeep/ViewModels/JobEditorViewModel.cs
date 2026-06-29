@@ -213,8 +213,6 @@ public sealed class JobEditorViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(Name)) return Loc.Instance["Editor_Val_Name"];
         if (string.IsNullOrWhiteSpace(Source)) return Loc.Instance["Editor_Val_Source"];
         if (string.IsNullOrWhiteSpace(Destination)) return Loc.Instance["Editor_Val_Dest"];
-        if (Versioned && !RoboKeep.Core.Services.HardLinkSupport.IsSupported(Destination))
-            return Loc.Instance["Ver_DestNotSupported"];
         return null;
     }
 

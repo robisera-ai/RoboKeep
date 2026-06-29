@@ -173,12 +173,12 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0" Margin="0,0,8,0">
                                 <TextBlock Text="{l:Tr Ver_KeepCount}" Style="{StaticResource Label}"/>
-                                <ui:TextBox Text="{Binding SnapshotKeepCount, UpdateSourceTrigger=PropertyChanged}"
+                                <ui:TextBox Text="{Binding SnapshotKeepCount, UpdateSourceTrigger=PropertyChanged, FallbackValue=0}"
                                             IsEnabled="{Binding Versioned}"/>
                             </StackPanel>
                             <StackPanel Grid.Column="1">
                                 <TextBlock Text="{l:Tr Ver_MaxAgeDays}" Style="{StaticResource Label}"/>
-                                <ui:TextBox Text="{Binding SnapshotMaxAgeDays, UpdateSourceTrigger=PropertyChanged}"
+                                <ui:TextBox Text="{Binding SnapshotMaxAgeDays, UpdateSourceTrigger=PropertyChanged, FallbackValue=0}"
                                             IsEnabled="{Binding Versioned}"/>
                             </StackPanel>
                         </Grid>

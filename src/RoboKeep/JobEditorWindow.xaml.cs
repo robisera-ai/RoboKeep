@@ -38,7 +38,7 @@ public partial class JobEditorWindow : Wpf.Ui.Controls.FluentWindow
         return dlg.ShowDialog() == true ? dlg.FolderName : null;
     }
 
-    private void OnSave(object sender, RoutedEventArgs e)
+    private async void OnSave(object sender, RoutedEventArgs e)
     {
         var error = _vm.Validate();
         if (error is not null)
@@ -46,6 +46,28 @@ public partial class JobEditorWindow : Wpf.Ui.Controls.FluentWindow
             MessageBox.Show(error, Loc.Instance["Common_MissingData"], MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
+
+        // Controllo idoneita' destinazione fuori dal thread UI (su UNC irraggiungibile
+        // Directory.Exists puo' bloccare 20-30s): Task.Run con timeout, niente freeze.
+        if (_vm.Versioned)
+        {
+            var dest = _vm.Destination;
+            bool supported;
+            try
+            {
+                supported = await System.Threading.Tasks.Task.Run(
+                    () => RoboKeep.Core.Services.HardLinkSupport.IsSupported(dest))
+                    .WaitAsync(System.TimeSpan.FromSeconds(5));
+            }
+            catch (System.TimeoutException) { supported = false; }
+            if (!supported)
+            {
+                MessageBox.Show(Loc.Instance["Ver_DestNotSupported"],
+                    Loc.Instance["Common_MissingData"], MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+        }
+
         DialogResult = true;
     }
 
