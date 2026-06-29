@@ -20,11 +20,18 @@ public static class SnapshotChangedUnlinker
     /// <summary>
     /// Per ogni file della sorgente presente anche nel clone, se differisce lo cancella dal clone.
     /// I file del clone assenti in sorgente vengono lasciati (robocopy /MIR li rimuoverà).
+    /// NB: non applica le esclusioni del job (ExcludeFiles/ExcludeDirs): cancella un sovrainsieme
+    /// sicuro (mai meno del necessario, quindi nessuna corruzione). Conseguenza: un file ESCLUSO che
+    /// cambia non viene riportato nel nuovo snapshot (robocopy lo salta e qui e' stato scollegato);
+    /// la sua versione precedente resta comunque negli snapshot piu' vecchi. Scelta deliberata:
+    /// replicare la semantica glob di robocopy qui rischierebbe, se imperfetta, di reintrodurre corruzione.
     /// </summary>
     public static void UnlinkChanged(string sourceDir, string snapshotDir)
     {
         ArgumentNullException.ThrowIfNull(sourceDir);
         ArgumentNullException.ThrowIfNull(snapshotDir);
+
+        if (!Directory.Exists(sourceDir)) return;
 
         foreach (var srcFile in Directory.EnumerateFiles(sourceDir, "*", SearchOption.AllDirectories))
         {

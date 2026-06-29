@@ -17,6 +17,8 @@ public sealed class SnapshotService
     public async Task<RobocopyRunResult> RunVersionedAsync(
         BackupJob job, IProgress<string>? progress = null, CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(job);
+
         var dest = (job.Destination ?? "").Trim();
         Directory.CreateDirectory(dest);
 
@@ -51,22 +53,29 @@ public sealed class SnapshotService
         {
             var final = Path.Combine(dest, newName);
             if (Directory.Exists(final))
-                final = Path.Combine(dest, newName + "_" + Guid.NewGuid().ToString("N")[..4]);
-            Directory.Move(curr, final);
-            progress?.Report($"[versioning] snapshot creato: {Path.GetFileName(final)}");
-
-            var after = Directory.GetDirectories(dest).Select(Path.GetFileName).Cast<string>();
-            foreach (var name in SnapshotPlanner.SnapshotsToDelete(after, job.SnapshotKeepCount, job.SnapshotMaxAgeDays, now))
+                final = Path.Combine(dest, newName + "_" + Guid.NewGuid().ToString("N")[..8]);
+            try
             {
-                try
+                Directory.Move(curr, final);
+                progress?.Report($"[versioning] snapshot creato: {Path.GetFileName(final)}");
+
+                var after = Directory.GetDirectories(dest).Select(Path.GetFileName).Cast<string>();
+                foreach (var name in SnapshotPlanner.SnapshotsToDelete(after, job.SnapshotKeepCount, job.SnapshotMaxAgeDays, now))
                 {
-                    Directory.Delete(Path.Combine(dest, name), recursive: true);
-                    progress?.Report($"[versioning] rimosso snapshot vecchio: {name}");
+                    try
+                    {
+                        Directory.Delete(Path.Combine(dest, name), recursive: true);
+                        progress?.Report($"[versioning] rimosso snapshot vecchio: {name}");
+                    }
+                    catch (Exception ex)
+                    {
+                        progress?.Report($"[versioning] impossibile rimuovere {name}: {ex.Message}");
+                    }
                 }
-                catch (Exception ex)
-                {
-                    progress?.Report($"[versioning] impossibile rimuovere {name}: {ex.Message}");
-                }
+            }
+            catch (Exception ex)
+            {
+                progress?.Report($"[versioning] backup riuscito ma rinomina snapshot fallita ({ex.Message}); resta {Path.GetFileName(curr)}.");
             }
         }
         else

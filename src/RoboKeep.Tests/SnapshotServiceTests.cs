@@ -57,4 +57,21 @@ public class SnapshotServiceTests : IDisposable
         Assert.Single(SnapshotDirs(dest));
         Assert.Equal("b", File.ReadAllText(Path.Combine(dest, SnapshotDirs(dest)[0], "f.txt")));
     }
+
+    [Fact]
+    public async Task FailedRun_LeavesInProgress_NoFinalSnapshot()
+    {
+        var source = Path.Combine(_root, "missing-src"); // sorgente inesistente: robocopy fallisce
+        var dest = Path.Combine(_root, "dest3");
+
+        var job = new BackupJob { Name = "V", Source = source, Destination = dest, Versioned = true };
+        var svc = new SnapshotService(new RobocopyRunner());
+
+        var r = await svc.RunVersionedAsync(job);
+
+        Assert.False(r.Result.Success);
+        Assert.Empty(SnapshotDirs(dest)); // nessuno snapshot finale
+        Assert.Contains(Directory.GetDirectories(dest).Select(Path.GetFileName),
+            n => n is not null && SnapshotName.IsInProgress(n!)); // resta una .inprogress
+    }
 }
