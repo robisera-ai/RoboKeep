@@ -369,6 +369,9 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         Wait = j.Wait,
         Enabled = j.Enabled,
         CredentialId = j.CredentialId,
+        Versioned = j.Versioned,
+        SnapshotKeepCount = j.SnapshotKeepCount,
+        SnapshotMaxAgeDays = j.SnapshotMaxAgeDays,
     };
 
     private static void CopyInto(BackupJob from, BackupJob to)
@@ -391,5 +394,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         to.Wait = from.Wait;
         to.Enabled = from.Enabled;
         to.CredentialId = from.CredentialId;
+        to.Versioned = from.Versioned;
+        to.SnapshotKeepCount = from.SnapshotKeepCount;
+        to.SnapshotMaxAgeDays = from.SnapshotMaxAgeDays;
     }
 }

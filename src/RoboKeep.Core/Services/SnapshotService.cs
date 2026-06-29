@@ -59,7 +59,7 @@ public sealed class SnapshotService
                 Directory.Move(curr, final);
                 progress?.Report($"[versioning] snapshot creato: {Path.GetFileName(final)}");
 
-                var after = Directory.GetDirectories(dest).Select(Path.GetFileName).Cast<string>();
+                var after = Directory.GetDirectories(dest).Select(Path.GetFileName).OfType<string>();
                 foreach (var name in SnapshotPlanner.SnapshotsToDelete(after, job.SnapshotKeepCount, job.SnapshotMaxAgeDays, now))
                 {
                     try
