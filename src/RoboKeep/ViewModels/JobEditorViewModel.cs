@@ -189,12 +189,32 @@ public sealed class JobEditorViewModel : ObservableObject
         }
     }
 
+    public bool Versioned
+    {
+        get => _job.Versioned;
+        set { _job.Versioned = value; OnPropertyChanged(); }
+    }
+
+    public int SnapshotKeepCount
+    {
+        get => _job.SnapshotKeepCount;
+        set { _job.SnapshotKeepCount = value; OnPropertyChanged(); }
+    }
+
+    public int SnapshotMaxAgeDays
+    {
+        get => _job.SnapshotMaxAgeDays;
+        set { _job.SnapshotMaxAgeDays = value; OnPropertyChanged(); }
+    }
+
     /// <summary>Validazione minima prima del salvataggio.</summary>
     public string? Validate()
     {
         if (string.IsNullOrWhiteSpace(Name)) return Loc.Instance["Editor_Val_Name"];
         if (string.IsNullOrWhiteSpace(Source)) return Loc.Instance["Editor_Val_Source"];
         if (string.IsNullOrWhiteSpace(Destination)) return Loc.Instance["Editor_Val_Dest"];
+        if (Versioned && !RoboKeep.Core.Services.HardLinkSupport.IsSupported(Destination))
+            return Loc.Instance["Ver_DestNotSupported"];
         return null;
     }
 

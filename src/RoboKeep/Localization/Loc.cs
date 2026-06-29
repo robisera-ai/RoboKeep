@@ -302,6 +302,11 @@ public sealed class Loc : INotifyPropertyChanged
         ["Set_NotificationsEnabled"] = "Notifiche toast a fine backup",
         ["Set_MinimizeToTray"] = "Riduci nell'area di notifica invece di chiudere",
         ["Set_StartMinimized"] = "Avvia minimizzato nel tray",
+
+        ["Ver_Enable"] = "Mantieni versioni datate (snapshot)",
+        ["Ver_KeepCount"] = "Numero massimo di versioni (0 = illimitate)",
+        ["Ver_MaxAgeDays"] = "Elimina versioni più vecchie di (giorni, 0 = mai)",
+        ["Ver_DestNotSupported"] = "La destinazione non supporta gli hard-link (serve NTFS locale): impossibile attivare le versioni qui. Scegli una destinazione NTFS o disattiva le versioni.",
     };
 
     // ---------------- ENGLISH ----------------
@@ -527,6 +532,11 @@ public sealed class Loc : INotifyPropertyChanged
         ["Set_NotificationsEnabled"] = "Toast notifications when a backup ends",
         ["Set_MinimizeToTray"] = "Minimize to the tray instead of closing",
         ["Set_StartMinimized"] = "Start minimized in the tray",
+
+        ["Ver_Enable"] = "Keep dated versions (snapshots)",
+        ["Ver_KeepCount"] = "Max number of versions (0 = unlimited)",
+        ["Ver_MaxAgeDays"] = "Delete versions older than (days, 0 = never)",
+        ["Ver_DestNotSupported"] = "The destination does not support hard links (local NTFS required): versions cannot be enabled here. Choose an NTFS destination or turn versions off.",
     };
 
     // ---------------- ESPAÑOL ----------------
@@ -752,6 +762,11 @@ public sealed class Loc : INotifyPropertyChanged
         ["Set_NotificationsEnabled"] = "Notificaciones al terminar una copia",
         ["Set_MinimizeToTray"] = "Minimizar en la bandeja en vez de cerrar",
         ["Set_StartMinimized"] = "Iniciar minimizado en la bandeja",
+
+        ["Ver_Enable"] = "Mantener versiones por fecha (instantáneas)",
+        ["Ver_KeepCount"] = "Número máximo de versiones (0 = ilimitadas)",
+        ["Ver_MaxAgeDays"] = "Eliminar versiones anteriores a (días, 0 = nunca)",
+        ["Ver_DestNotSupported"] = "El destino no admite enlaces duros (se requiere NTFS local): no se pueden activar las versiones aquí. Elige un destino NTFS o desactiva las versiones.",
     };
 
     // ---------------- FRANÇAIS ----------------
@@ -977,6 +992,11 @@ public sealed class Loc : INotifyPropertyChanged
         ["Set_NotificationsEnabled"] = "Notifications toast à la fin d'une sauvegarde",
         ["Set_MinimizeToTray"] = "Réduire dans la zone de notification au lieu de fermer",
         ["Set_StartMinimized"] = "Démarrer réduit dans la zone de notification",
+
+        ["Ver_Enable"] = "Conserver des versions datées (instantanés)",
+        ["Ver_KeepCount"] = "Nombre max de versions (0 = illimité)",
+        ["Ver_MaxAgeDays"] = "Supprimer les versions de plus de (jours, 0 = jamais)",
+        ["Ver_DestNotSupported"] = "La destination ne prend pas en charge les liens physiques (NTFS local requis) : impossible d'activer les versions ici. Choisissez une destination NTFS ou désactivez les versions.",
     };
 
     // ---------------- DEUTSCH ----------------
@@ -1202,6 +1222,11 @@ public sealed class Loc : INotifyPropertyChanged
         ["Set_NotificationsEnabled"] = "Toast-Benachrichtigungen bei Backup-Ende",
         ["Set_MinimizeToTray"] = "In den Infobereich minimieren statt schließen",
         ["Set_StartMinimized"] = "Minimiert im Infobereich starten",
+
+        ["Ver_Enable"] = "Datierte Versionen behalten (Snapshots)",
+        ["Ver_KeepCount"] = "Maximale Anzahl Versionen (0 = unbegrenzt)",
+        ["Ver_MaxAgeDays"] = "Versionen löschen älter als (Tage, 0 = nie)",
+        ["Ver_DestNotSupported"] = "Das Ziel unterstützt keine Hardlinks (lokales NTFS erforderlich): Versionen können hier nicht aktiviert werden. Wähle ein NTFS-Ziel oder deaktiviere Versionen.",
     };
 
     // Mappa lingua → dizionario. Dichiarata DOPO i dizionari, così sono già inizializzati

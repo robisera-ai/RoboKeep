@@ -163,6 +163,28 @@
                     </StackPanel>
                 </ui:Card>
 
+                <ui:Card Margin="0,12,0,0" Padding="14">
+                    <StackPanel>
+                        <CheckBox Content="{l:Tr Ver_Enable}" IsChecked="{Binding Versioned}" Margin="0,0,0,6"/>
+                        <Grid Margin="0,4,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                <TextBlock Text="{l:Tr Ver_KeepCount}" Style="{StaticResource Label}"/>
+                                <ui:TextBox Text="{Binding SnapshotKeepCount, UpdateSourceTrigger=PropertyChanged}"
+                                            IsEnabled="{Binding Versioned}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="{l:Tr Ver_MaxAgeDays}" Style="{StaticResource Label}"/>
+                                <ui:TextBox Text="{Binding SnapshotMaxAgeDays, UpdateSourceTrigger=PropertyChanged}"
+                                            IsEnabled="{Binding Versioned}"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </ui:Card>
+
                 <TextBlock Text="{l:Tr Editor_CommandPreview}" Style="{StaticResource Label}"/>
                 <Border CornerRadius="6" Background="#1E1E1E" Padding="10" Margin="0,0,0,12">
                     <TextBox Text="{Binding CommandPreview, Mode=OneWay}" IsReadOnly="True" Style="{x:Null}"
