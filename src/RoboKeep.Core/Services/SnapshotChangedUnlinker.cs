@@ -9,12 +9,13 @@ namespace RoboKeep.Core.Services;
 /// </summary>
 public static class SnapshotChangedUnlinker
 {
-    /// <summary>Due file differiscono se hanno dimensione diversa o data di modifica diversa (al secondo).</summary>
+    /// <summary>Due file differiscono se hanno dimensione diversa o data di modifica diversa.
+    /// Confronto esatto dell'mtime: su NTFS robocopy confronta i timestamp a piena precisione,
+    /// quindi troncare ai secondi mancherebbe i cambiamenti sub-secondo (rischio di corruzione
+    /// dello snapshot precedente). I file immutati hanno mtime identico (robocopy lo preserva),
+    /// quindi l'uguaglianza esatta non causa cancellazioni superflue.</summary>
     public static bool Differs(long sizeA, DateTime mtimeA, long sizeB, DateTime mtimeB)
-        => sizeA != sizeB || Trunc(mtimeA) != Trunc(mtimeB);
-
-    private static DateTime Trunc(DateTime t)
-        => new(t.Year, t.Month, t.Day, t.Hour, t.Minute, t.Second, t.Kind);
+        => sizeA != sizeB || mtimeA != mtimeB;
 
     /// <summary>
     /// Per ogni file della sorgente presente anche nel clone, se differisce lo cancella dal clone.
@@ -22,6 +23,9 @@ public static class SnapshotChangedUnlinker
     /// </summary>
     public static void UnlinkChanged(string sourceDir, string snapshotDir)
     {
+        ArgumentNullException.ThrowIfNull(sourceDir);
+        ArgumentNullException.ThrowIfNull(snapshotDir);
+
         foreach (var srcFile in Directory.EnumerateFiles(sourceDir, "*", SearchOption.AllDirectories))
         {
             var rel = Path.GetRelativePath(sourceDir, srcFile);

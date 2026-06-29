@@ -14,6 +14,7 @@ public class SnapshotChangedUnlinkerTests : IDisposable
         Assert.False(SnapshotChangedUnlinker.Differs(10, t, 10, t));
         Assert.True(SnapshotChangedUnlinker.Differs(10, t, 11, t));
         Assert.True(SnapshotChangedUnlinker.Differs(10, t, 10, t.AddSeconds(5)));
+        Assert.True(SnapshotChangedUnlinker.Differs(10, t, 10, t.AddMilliseconds(500))); // sub-secondo: ora rilevato
     }
 
     [Fact]
@@ -37,5 +38,20 @@ public class SnapshotChangedUnlinkerTests : IDisposable
 
         Assert.True(File.Exists(Path.Combine(snap, "same.txt")));
         Assert.False(File.Exists(Path.Combine(snap, "changed.txt")));
+    }
+
+    [Fact]
+    public void UnlinkChanged_HandlesNestedDirectories()
+    {
+        var source = Path.Combine(_root, "s");
+        var snap = Path.Combine(_root, "n");
+        Directory.CreateDirectory(Path.Combine(source, "sub"));
+        Directory.CreateDirectory(Path.Combine(snap, "sub"));
+        File.WriteAllText(Path.Combine(source, "sub", "f.txt"), "NEW");
+        File.WriteAllText(Path.Combine(snap, "sub", "f.txt"), "OLD");
+
+        SnapshotChangedUnlinker.UnlinkChanged(source, snap);
+
+        Assert.False(File.Exists(Path.Combine(snap, "sub", "f.txt"))); // cambiato in sottocartella: cancellato
     }
 }
