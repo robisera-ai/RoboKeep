@@ -18,12 +18,13 @@ public static class RobocopyArgsBuilder
     /// <param name="job">Definizione del job.</param>
     /// <param name="dryRun">Se true aggiunge <c>/L</c> (anteprima: nessuna modifica).</param>
     /// <param name="logFile">Se valorizzato aggiunge <c>/TEE</c> e <c>/LOG:&lt;file&gt;</c>.</param>
-    public static IReadOnlyList<string> Build(BackupJob job, bool dryRun = false, string? logFile = null)
+    public static IReadOnlyList<string> Build(
+        BackupJob job, bool dryRun = false, string? logFile = null, string? destinationOverride = null)
     {
         ArgumentNullException.ThrowIfNull(job);
 
         var source = (job.Source ?? "").Trim();
-        var dest = (job.Destination ?? "").Trim();
+        var dest = (destinationOverride ?? job.Destination ?? "").Trim();
         if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(dest))
             throw new InvalidOperationException(
                 $"Il job '{job.Name}' deve avere sorgente e destinazione valorizzate.");
@@ -99,13 +100,14 @@ public static class RobocopyArgsBuilder
     /// (niente <c>/MIR</c>) e senza saltare i più vecchi (niente <c>/XO</c>).
     /// </summary>
     public static IReadOnlyList<string> BuildForceCopyPass(
-        BackupJob job, IReadOnlyList<string> filters, bool dryRun = false, string? logFile = null)
+        BackupJob job, IReadOnlyList<string> filters, bool dryRun = false, string? logFile = null,
+        string? destinationOverride = null)
     {
         ArgumentNullException.ThrowIfNull(job);
         ArgumentNullException.ThrowIfNull(filters);
 
         var source = (job.Source ?? "").Trim();
-        var dest = (job.Destination ?? "").Trim();
+        var dest = (destinationOverride ?? job.Destination ?? "").Trim();
         if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(dest))
             throw new InvalidOperationException(
                 $"Il job '{job.Name}' deve avere sorgente e destinazione valorizzate.");

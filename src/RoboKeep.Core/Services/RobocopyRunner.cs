@@ -47,12 +47,14 @@ public sealed class RobocopyRunner
     }
 
     public async Task<RobocopyRunResult> RunAsync(
-        BackupJob job, bool dryRun = false, IProgress<string>? progress = null, CancellationToken ct = default)
+        BackupJob job, bool dryRun = false, IProgress<string>? progress = null, CancellationToken ct = default,
+        string? destinationOverride = null)
     {
         var started = DateTime.Now;
 
         // Passata principale (mirror/copia normale): comportamento invariato.
-        var (exit1, text1) = await RunPassAsync(RobocopyArgsBuilder.Build(job, dryRun), progress, ct)
+        var (exit1, text1) = await RunPassAsync(
+            RobocopyArgsBuilder.Build(job, dryRun, destinationOverride: destinationOverride), progress, ct)
             .ConfigureAwait(false);
         var fullText = new StringBuilder(text1);
         var counts = RobocopyOutputParser.ParseCounts(text1.Split('\n'));
@@ -64,7 +66,8 @@ public sealed class RobocopyRunner
             var plan = await _forceCopyPlanner.PlanAsync(job, progress, ct).ConfigureAwait(false);
             if (plan.Filters.Count > 0)
             {
-                var pass2Args = RobocopyArgsBuilder.BuildForceCopyPass(job, plan.Filters, dryRun);
+                var pass2Args = RobocopyArgsBuilder.BuildForceCopyPass(
+                    job, plan.Filters, dryRun, destinationOverride: destinationOverride);
                 var (exit2, text2) = await RunPassAsync(pass2Args, progress, ct).ConfigureAwait(false);
                 fullText.AppendLine().Append(text2);
                 exitCombined |= exit2; // gli exit code robocopy sono bitfield: l'OR preserva l'esito peggiore
