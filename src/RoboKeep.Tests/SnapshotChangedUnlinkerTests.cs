@@ -47,8 +47,8 @@ public class SnapshotChangedUnlinkerTests : IDisposable
         var snap = Path.Combine(_root, "n");
         Directory.CreateDirectory(Path.Combine(source, "sub"));
         Directory.CreateDirectory(Path.Combine(snap, "sub"));
-        File.WriteAllText(Path.Combine(source, "sub", "f.txt"), "NEW");
-        File.WriteAllText(Path.Combine(snap, "sub", "f.txt"), "OLD");
+        File.WriteAllText(Path.Combine(source, "sub", "f.txt"), "NEWDATA"); // 7 byte, dimensione diversa da snap
+        File.WriteAllText(Path.Combine(snap, "sub", "f.txt"), "OLD");       // 3 byte
 
         SnapshotChangedUnlinker.UnlinkChanged(source, snap);
 
