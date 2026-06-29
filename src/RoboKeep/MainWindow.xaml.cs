@@ -325,6 +325,17 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }
     }
 
+    private void OnBrowseVersions(object sender, RoutedEventArgs e)
+    {
+        var selected = _vm.SelectedJob;
+        if (selected is null) return;
+        var job = _host.Config.Jobs.FirstOrDefault(j => j.Name == selected.Name);
+        if (job is null || !job.Versioned) return;
+
+        var win = new SnapshotsWindow(job.Name, job.Destination) { Owner = this };
+        win.ShowDialog();
+    }
+
     private void OnSettings(object sender, RoutedEventArgs e)
     {
         var win = new SettingsWindow(_host) { Owner = this };

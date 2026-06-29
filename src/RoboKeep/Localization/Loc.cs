@@ -307,6 +307,9 @@ public sealed class Loc : INotifyPropertyChanged
         ["Ver_KeepCount"] = "Numero massimo di versioni (0 = illimitate)",
         ["Ver_MaxAgeDays"] = "Elimina versioni più vecchie di (giorni, 0 = mai)",
         ["Ver_DestNotSupported"] = "La destinazione non supporta gli hard-link (serve NTFS locale): impossibile attivare le versioni qui. Scegli una destinazione NTFS o disattiva le versioni.",
+        ["Ver_Browse"] = "Versioni...",
+        ["Ver_OpenInExplorer"] = "Apri in Esplora risorse",
+        ["Ver_NoSnapshots"] = "Ancora nessuna versione per questo job.",
     };
 
     // ---------------- ENGLISH ----------------
@@ -537,6 +540,9 @@ public sealed class Loc : INotifyPropertyChanged
         ["Ver_KeepCount"] = "Max number of versions (0 = unlimited)",
         ["Ver_MaxAgeDays"] = "Delete versions older than (days, 0 = never)",
         ["Ver_DestNotSupported"] = "The destination does not support hard links (local NTFS required): versions cannot be enabled here. Choose an NTFS destination or turn versions off.",
+        ["Ver_Browse"] = "Versions...",
+        ["Ver_OpenInExplorer"] = "Open in File Explorer",
+        ["Ver_NoSnapshots"] = "No versions yet for this job.",
     };
 
     // ---------------- ESPAÑOL ----------------
@@ -767,6 +773,9 @@ public sealed class Loc : INotifyPropertyChanged
         ["Ver_KeepCount"] = "Número máximo de versiones (0 = ilimitadas)",
         ["Ver_MaxAgeDays"] = "Eliminar versiones anteriores a (días, 0 = nunca)",
         ["Ver_DestNotSupported"] = "El destino no admite enlaces duros (se requiere NTFS local): no se pueden activar las versiones aquí. Elige un destino NTFS o desactiva las versiones.",
+        ["Ver_Browse"] = "Versiones...",
+        ["Ver_OpenInExplorer"] = "Abrir en el Explorador",
+        ["Ver_NoSnapshots"] = "Aún no hay versiones para este trabajo.",
     };
 
     // ---------------- FRANÇAIS ----------------
@@ -997,6 +1006,9 @@ public sealed class Loc : INotifyPropertyChanged
         ["Ver_KeepCount"] = "Nombre max de versions (0 = illimité)",
         ["Ver_MaxAgeDays"] = "Supprimer les versions de plus de (jours, 0 = jamais)",
         ["Ver_DestNotSupported"] = "La destination ne prend pas en charge les liens physiques (NTFS local requis) : impossible d'activer les versions ici. Choisissez une destination NTFS ou désactivez les versions.",
+        ["Ver_Browse"] = "Versions...",
+        ["Ver_OpenInExplorer"] = "Ouvrir dans l'Explorateur",
+        ["Ver_NoSnapshots"] = "Aucune version pour cette tâche pour l'instant.",
     };
 
     // ---------------- DEUTSCH ----------------
@@ -1227,6 +1239,9 @@ public sealed class Loc : INotifyPropertyChanged
         ["Ver_KeepCount"] = "Maximale Anzahl Versionen (0 = unbegrenzt)",
         ["Ver_MaxAgeDays"] = "Versionen löschen älter als (Tage, 0 = nie)",
         ["Ver_DestNotSupported"] = "Das Ziel unterstützt keine Hardlinks (lokales NTFS erforderlich): Versionen können hier nicht aktiviert werden. Wähle ein NTFS-Ziel oder deaktiviere Versionen.",
+        ["Ver_Browse"] = "Versionen...",
+        ["Ver_OpenInExplorer"] = "Im Explorer öffnen",
+        ["Ver_NoSnapshots"] = "Noch keine Versionen für diesen Job.",
     };
 
     // Mappa lingua → dizionario. Dichiarata DOPO i dizionari, così sono già inizializzati

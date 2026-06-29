@@ -55,6 +55,8 @@
                 <ui:Button Icon="{ui:SymbolIcon Add24}" Content="{l:Tr Main_New}" Click="OnNewJob" Margin="0,0,8,0"/>
                 <ui:Button Icon="{ui:SymbolIcon Edit24}" Content="{l:Tr Main_Edit}" Click="OnEditJob" Margin="0,0,8,0"/>
                 <ui:Button Icon="{ui:SymbolIcon Delete24}" Content="{l:Tr Main_Delete}" Click="OnDeleteJob" Margin="0,0,8,0"/>
+                <ui:Button Icon="{ui:SymbolIcon History24}" Content="{l:Tr Ver_Browse}" Click="OnBrowseVersions" Margin="0,0,8,0"
+                           IsEnabled="{Binding IsVersionedJobSelected}"/>
                 <Separator Margin="6,4" Background="#33888888"/>
                 <ui:Button Icon="{ui:SymbolIcon Eye24}" Content="{Binding PreviewLabel}" Command="{Binding PreviewSelectedCommand}"
                            Appearance="{Binding PreviewCancel, Converter={StaticResource CancelAppearance}, ConverterParameter=Secondary}" Margin="0,0,8,0"/>

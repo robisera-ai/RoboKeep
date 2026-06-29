@@ -114,7 +114,22 @@ public sealed class MainViewModel : ObservableObject
     public JobViewModel? SelectedJob
     {
         get => _selectedJob;
-        set => SetField(ref _selectedJob, value);
+        set
+        {
+            if (SetField(ref _selectedJob, value))
+                OnPropertyChanged(nameof(IsVersionedJobSelected));
+        }
+    }
+
+    /// <summary>true quando il job selezionato ha il versioning attivo (abilita il pulsante Versioni).</summary>
+    public bool IsVersionedJobSelected
+    {
+        get
+        {
+            if (_selectedJob is null) return false;
+            var job = _host.Config.Jobs.FirstOrDefault(j => j.Name == _selectedJob.Name);
+            return job?.Versioned == true;
+        }
     }
 
     private bool _isBusy;
