@@ -130,14 +130,22 @@ with `--run-all` at the chosen time.
 - **Credentials** for UNC network shares, encrypted with **DPAPI**, with a connection test.
 - Integrated **scheduling** via Windows Task Scheduler.
 - Job reordering by **drag &amp; drop**; latest result shown in the list (also after scheduled runs).
+- **Per-job versioning** (optional): each run saves a **dated snapshot** of the destination. Files
+  unchanged between snapshots are stored as **hard-links** shared across snapshots — disk space grows only
+  for files that actually change. **Retention** is configurable (last N snapshots and/or snapshots older
+  than X days; 0 = no limit). To **restore**, click **Versions...** on the job: select a snapshot date and
+  it opens in File Explorer — copy whatever you need from there.
+  _Requires a local NTFS destination (hard-links only work on NTFS); network shares and exFAT are not yet
+  supported._
 
 ## Limitations
 
 - **Windows only:** depends on `robocopy`. No macOS/Linux version.
 - **No block-level/delta copy:** when a file changes, robocopy recopies it **entirely**. For very large
   files that change often, the cost is a full transfer.
-- **Not a versioning/snapshot system:** it's mirror/copy, it does not keep historical file versions. For
-  versioning you need a dedicated tool.
+- **Versioning on local NTFS only:** per-job snapshot versioning is available, but it requires a local
+  NTFS destination for hard-links. Network shares and exFAT destinations are not yet supported for this
+  feature.
 - The **scheduling** and the user-scope credential option require the task to run under the appropriate
   user; some actions (e.g. `/COPYALL`) may require sufficient privileges.
 

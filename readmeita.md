@@ -133,14 +133,21 @@ di Windows) e lancia l'app con `--run-all` all'orario scelto.
   test di connessione.
 - **Pianificazione** integrata via Utilità di pianificazione di Windows.
 - Riordino dei job con **drag &amp; drop**; ultimo esito visibile in lista (anche dopo i run pianificati).
+- **Versioning per job** (opzionale): ogni esecuzione salva uno **snapshot datato** della destinazione.
+  I file non cambiati tra uno snapshot e l'altro sono **hard-link** condivisi — lo spazio su disco
+  cresce solo per i file che cambiano davvero. La **ritenzione** è configurabile (ultimi N snapshot e/o
+  snapshot più vecchi di X giorni; 0 = nessun limite). Per **ripristinare**, clicca **Versioni...** sul
+  job interessato: si apre lo snapshot scelto in Esplora file, copia quello che ti serve.
+  _Richiede destinazione NTFS locale (necessario per gli hard-link); rete/exFAT non ancora supportati._
 
 ## Limitazioni
 
 - **Solo Windows:** dipende da `robocopy`. Niente versione macOS/Linux.
 - **Nessuna copia a blocchi/delta:** quando un file cambia, robocopy lo ricopia **per intero**. Per
   file molto grandi che cambiano spesso il costo è quello del trasferimento completo.
-- **Non è un sistema di versioni/snapshot:** è mirror/copia, non conserva versioni storiche dei file.
-  Per il versioning serve uno strumento dedicato.
+- **Versioning solo su NTFS locale:** il versioning per snapshot è disponibile (opzione per-job), ma
+  richiede una destinazione NTFS locale per gli hard-link. Destinazioni di rete o exFAT non sono ancora
+  supportate per questa funzione.
 - La **pianificazione** e l'opzione credenziali “ambito utente” richiedono che l'attività giri con
   l'utente adeguato; alcune azioni (es. `/COPYALL`) possono richiedere privilegi sufficienti.
 
