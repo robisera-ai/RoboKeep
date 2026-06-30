@@ -18,6 +18,11 @@ public partial class SnapshotsWindow : Wpf.Ui.Controls.FluentWindow
         InitializeComponent();
         DataContext = this;
         Title = jobName;
+
+        // Preseleziona il più recente (lista ordinata dal più nuovo): il pulsante apre sempre
+        // qualcosa di VISIBILMENTE selezionato, senza fallback nascosti.
+        if (Snapshots.Count > 0)
+            SnapshotList.SelectedIndex = 0;
     }
 
     public List<string> Snapshots { get; }
@@ -41,10 +46,8 @@ public partial class SnapshotsWindow : Wpf.Ui.Controls.FluentWindow
 
     private void OpenSelected()
     {
-        var snap = SnapshotList.SelectedItem as string;
-        if (snap is null && Snapshots.Count > 0)
-            snap = Snapshots[0];
-        if (snap is null) return;
+        // Apri solo ciò che è selezionato: niente fallback nascosto (il più recente è già preselezionato).
+        if (SnapshotList.SelectedItem is not string snap) return;
 
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
         {
