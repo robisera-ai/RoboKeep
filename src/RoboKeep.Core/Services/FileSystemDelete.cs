@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 
@@ -59,7 +60,24 @@ public static class FileSystemDelete
     {
         var di = new DirectoryInfo(path);
         if (!di.Exists) return;
-        DeleteDirectoryCore(di);
+
+        // Rinomina-prima-di-cancellare: se la cancellazione si interrompe a metà (file bloccato da
+        // antivirus/indicizzazione, crash), il residuo ha un nome ".deleting-…" che NON è uno snapshot
+        // valido (SnapshotName non lo riconosce), quindi non compare come versione ripristinabile.
+        var target = di;
+        var parent = di.Parent?.FullName;
+        if (parent is not null)
+        {
+            try
+            {
+                var staged = Path.Combine(parent, di.Name + ".deleting-" + Guid.NewGuid().ToString("N")[..8]);
+                Directory.Move(path, staged);
+                target = new DirectoryInfo(staged);
+            }
+            catch { /* rename non riuscito (lock/permessi sulla cartella stessa): cancella sul posto */ }
+        }
+
+        DeleteDirectoryCore(target);
     }
 
     private static void DeleteDirectoryCore(DirectoryInfo dir)
@@ -102,7 +120,12 @@ public static class FileSystemDelete
         const uint shareAll = 0x1 | 0x2 | 0x4; // FILE_SHARE_READ | WRITE | DELETE
         using var handle = CreateFileW(path, DELETE, shareAll, IntPtr.Zero, OPEN_EXISTING, flags, IntPtr.Zero);
         if (handle.IsInvalid)
-            throw new IOException($"Impossibile aprire per la cancellazione: {path}", Marshal.GetLastWin32Error());
+        {
+            // Win32Exception come inner: traduce il codice nel messaggio giusto (IOException(string,int)
+            // lo interpreterebbe invece come HRESULT, etichettando male l'errore).
+            var openErr = Marshal.GetLastWin32Error();
+            throw new IOException($"Impossibile aprire per la cancellazione: {path}", new Win32Exception(openErr));
+        }
 
         var data = new FileDispositionInfoExData
         {
@@ -119,6 +142,6 @@ public static class FileSystemDelete
         if (err is ERROR_INVALID_PARAMETER or ERROR_NOT_SUPPORTED)
             return false;
 
-        throw new IOException($"Cancellazione fallita: {path}", err);
+        throw new IOException($"Cancellazione fallita: {path}", new Win32Exception(err));
     }
 }

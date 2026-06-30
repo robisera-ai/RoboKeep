@@ -313,6 +313,8 @@ public sealed class MainViewModel : ObservableObject
         _host.Config.Jobs = Jobs.Select(j => j.Model).ToList();
         _host.SaveConfig();
         OnPropertyChanged(nameof(StatusText));
+        // Modificare il job selezionato (es. attivare il versioning) può cambiare lo stato del pulsante Versioni.
+        OnPropertyChanged(nameof(IsVersionedJobSelected));
     }
 
     // Accodamento thread-safe: chiamato dai thread di lettura del processo (NON dalla UI).

@@ -34,7 +34,13 @@ public sealed class SnapshotService
         var curr = Path.Combine(dest, newName + SnapshotName.InProgressSuffix);
 
         // La .inprogress deve essere fresca: HardLinkCloner assume destinazione vuota.
-        if (Directory.Exists(curr)) FileSystemDelete.DeleteDirectory(curr);
+        // La pulizia è best-effort: un residuo bloccato non deve far fallire l'intero job qui
+        // (al massimo il clone successivo troverà la cartella non vuota e lo segnaleremo).
+        if (Directory.Exists(curr))
+        {
+            try { FileSystemDelete.DeleteDirectory(curr); }
+            catch (Exception ex) { progress?.Report($"[versioning] pulizia residuo .inprogress non riuscita: {ex.Message}"); }
+        }
         Directory.CreateDirectory(curr);
 
         if (prevName is not null)
