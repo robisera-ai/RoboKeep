@@ -6,7 +6,16 @@ namespace RoboKeep.Tests;
 public class SnapshotServiceTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "RbcSnap_" + Guid.NewGuid().ToString("N"));
-    public void Dispose() { if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true); }
+
+    public void Dispose()
+    {
+        if (!Directory.Exists(_root)) return;
+        // Il teardown deve togliere il ReadOnly preservato negli snapshot, altrimenti Directory.Delete fallisce.
+        foreach (var info in new DirectoryInfo(_root).GetFileSystemInfos("*", SearchOption.AllDirectories))
+            if ((info.Attributes & FileAttributes.ReadOnly) != 0)
+                info.Attributes &= ~FileAttributes.ReadOnly;
+        Directory.Delete(_root, recursive: true);
+    }
 
     private static string[] SnapshotDirs(string dest) =>
         Directory.GetDirectories(dest).Select(Path.GetFileName)
@@ -93,5 +102,65 @@ public class SnapshotServiceTests : IDisposable
         var snap = SnapshotDirs(dest).Single();
         var attrs = new DirectoryInfo(Path.Combine(dest, snap)).Attributes;
         Assert.False(attrs.HasFlag(FileAttributes.ReadOnly)); // la cartella-data non e' sola-lettura -> Esplora mostra il timestamp
+    }
+
+    [Fact]
+    public async Task Retention_DeletesOldSnapshot_EvenWithReadOnlyFile()
+    {
+        var source = Path.Combine(_root, "src5");
+        var dest = Path.Combine(_root, "dest5");
+        Directory.CreateDirectory(source);
+        var ro = Path.Combine(source, "ro.txt");
+        File.WriteAllText(ro, "a");
+        File.SetAttributes(ro, FileAttributes.ReadOnly);            // file read-only nella sorgente -> copiato read-only
+        File.WriteAllText(Path.Combine(source, "other.txt"), "1");
+
+        var job = new BackupJob { Name = "V", Source = source, Destination = dest, Versioned = true, SnapshotKeepCount = 1 };
+        var svc = new SnapshotService(new RobocopyRunner());
+
+        await svc.RunVersionedAsync(job);
+        await Task.Delay(1100);
+        File.WriteAllText(Path.Combine(source, "other.txt"), "2"); // cambia un altro file -> secondo snapshot
+        await svc.RunVersionedAsync(job);
+
+        File.SetAttributes(ro, FileAttributes.Normal);              // ripristina per il cleanup
+
+        // keepCount=1: il vecchio snapshot (che contiene un file read-only) DEVE essere cancellato
+        Assert.Single(SnapshotDirs(dest));
+    }
+
+    [Fact]
+    public async Task Retention_PreservesReadOnlyAttribute_OnSurvivingSnapshot()
+    {
+        var source = Path.Combine(_root, "src6");
+        var dest = Path.Combine(_root, "dest6");
+        Directory.CreateDirectory(source);
+        var ro = Path.Combine(source, "ro.txt");
+        File.WriteAllText(ro, "immutabile");
+        File.SetAttributes(ro, FileAttributes.ReadOnly);            // file read-only che NON cambia mai
+        File.WriteAllText(Path.Combine(source, "other.txt"), "1");
+
+        var job = new BackupJob { Name = "V", Source = source, Destination = dest, Versioned = true, SnapshotKeepCount = 2 };
+        var svc = new SnapshotService(new RobocopyRunner());
+
+        await svc.RunVersionedAsync(job);                            // snapshot 1
+        await Task.Delay(1100);
+        File.WriteAllText(Path.Combine(source, "other.txt"), "2");
+        await svc.RunVersionedAsync(job);                            // snapshot 2 (ro.txt hard-linked allo snapshot 1)
+        await Task.Delay(1100);
+        File.WriteAllText(Path.Combine(source, "other.txt"), "3");
+        await svc.RunVersionedAsync(job);                            // snapshot 3 -> ritenzione cancella lo snapshot 1
+
+        File.SetAttributes(ro, FileAttributes.Normal);              // ripristina la sorgente per il cleanup
+
+        var snaps = SnapshotDirs(dest);
+        Assert.Equal(2, snaps.Length);                              // tenuti gli ultimi 2
+        // Cancellare lo snapshot 1 (con cui ro.txt era hard-linkato) NON deve aver spento il ReadOnly
+        // sul file superstite: la POSIX-delete cancella il nome senza toccare l'inode condiviso.
+        foreach (var snap in snaps)
+        {
+            var attrs = new FileInfo(Path.Combine(dest, snap, "ro.txt")).Attributes;
+            Assert.True(attrs.HasFlag(FileAttributes.ReadOnly), $"ro.txt in {snap} ha perso il ReadOnly");
+        }
     }
 }

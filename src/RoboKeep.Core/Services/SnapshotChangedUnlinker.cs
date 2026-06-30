@@ -42,7 +42,11 @@ public static class SnapshotChangedUnlinker
             var s = new FileInfo(srcFile);
             var d = new FileInfo(snapFile);
             if (Differs(s.Length, s.LastWriteTimeUtc, d.Length, d.LastWriteTimeUtc))
-                File.Delete(snapFile);
+            {
+                // Cancella il nome senza spegnere il ReadOnly: il file e' un hard-link ancora condiviso
+                // con gli snapshot precedenti, che devono conservare l'attributo intatto.
+                FileSystemDelete.DeleteFile(snapFile);
+            }
         }
     }
 }

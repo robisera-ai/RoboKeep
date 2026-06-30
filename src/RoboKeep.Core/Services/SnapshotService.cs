@@ -34,7 +34,7 @@ public sealed class SnapshotService
         var curr = Path.Combine(dest, newName + SnapshotName.InProgressSuffix);
 
         // La .inprogress deve essere fresca: HardLinkCloner assume destinazione vuota.
-        if (Directory.Exists(curr)) Directory.Delete(curr, recursive: true);
+        if (Directory.Exists(curr)) FileSystemDelete.DeleteDirectory(curr);
         Directory.CreateDirectory(curr);
 
         if (prevName is not null)
@@ -65,7 +65,7 @@ public sealed class SnapshotService
                 {
                     try
                     {
-                        Directory.Delete(Path.Combine(dest, name), recursive: true);
+                        FileSystemDelete.DeleteDirectory(Path.Combine(dest, name));
                         progress?.Report($"[versioning] rimosso snapshot vecchio: {name}");
                     }
                     catch (Exception ex)
