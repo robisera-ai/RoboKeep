@@ -79,7 +79,8 @@ public sealed class RobocopyRunner
                     counts.FilesSkipped + c2.FilesSkipped,
                     counts.FilesFailed + c2.FilesFailed,
                     counts.FilesExtra + c2.FilesExtra,
-                    counts.DirsFailed + c2.DirsFailed);
+                    counts.DirsFailed + c2.DirsFailed,
+                    counts.DirsExtra + c2.DirsExtra);
 
                 // Aggiorna gli hash salvati solo a passata forzata riuscita (così un errore = ricopia al prossimo run).
                 if (!dryRun && plan.Smart && ExitCodeInterpreter.Interpret(exit2).Success)
@@ -105,6 +106,7 @@ public sealed class RobocopyRunner
             FilesExtra = counts.FilesExtra,
             FilesFailed = counts.FilesFailed,
             DirsFailed = counts.DirsFailed,
+            DirsExtra = counts.DirsExtra,
         };
 
         return new RobocopyRunResult { Result = result, Output = text };

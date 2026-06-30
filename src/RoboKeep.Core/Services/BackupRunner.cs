@@ -125,23 +125,25 @@ public sealed class BackupRunner
     {
         var title = dryRun ? CoreLoc.S("Recap_TitlePreview") : CoreLoc.S("Recap_Title");
         var ok = r.Success ? "OK" : CoreLoc.S("Lbl_Error");
-        var extraNote = r.FilesExtra > 0
-            ? (dryRun ? CoreLoc.S("Recap_ExtraDry") : CoreLoc.S("Recap_ExtraReal"))
-            : "";
+        var extraNote = dryRun ? CoreLoc.S("Recap_ExtraDry") : CoreLoc.S("Recap_ExtraReal");
 
         static string Line(string label, string value) => $"{label,-18}: {value}";
+        // I conteggi "extra" portano la nota esplicativa solo quando ce ne sono.
+        string Extra(long n) => n > 0 ? $"{n}{extraNote}" : n.ToString();
 
         return new[]
         {
             "",
             "====== " + title + " ======",
             Line(CoreLoc.S("Lbl_Result"), $"{ok} - {r.Status}"),
+            // Prima le cartelle (copiate, fallite, extra), poi i file (copiati, invariati, extra, falliti).
             Line(CoreLoc.S("Lbl_FoldersCopied"), r.DirsCopied.ToString()),
+            Line(CoreLoc.S("Lbl_DirsFailed"), r.DirsFailed.ToString()),
+            Line(CoreLoc.S("Lbl_FoldersExtra"), Extra(r.DirsExtra)),
             Line(CoreLoc.S("Lbl_FilesCopied"), r.FilesCopied.ToString()),
             Line(CoreLoc.S("Lbl_FilesUnchanged"), r.FilesSkipped.ToString()),
-            Line(CoreLoc.S("Lbl_FilesExtra"), $"{r.FilesExtra}{extraNote}"),
+            Line(CoreLoc.S("Lbl_FilesExtra"), Extra(r.FilesExtra)),
             Line(CoreLoc.S("Lbl_FilesFailed"), r.FilesFailed.ToString()),
-            Line(CoreLoc.S("Lbl_DirsFailed"), r.DirsFailed.ToString()),
             Line(CoreLoc.S("Lbl_Duration"), r.Duration.ToString(@"hh\:mm\:ss")),
             "==========================================",
         };

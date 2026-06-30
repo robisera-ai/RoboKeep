@@ -114,6 +114,7 @@ public static class CoreLoc
         ["Lbl_FilesExtra"] = L("File extra", "Extra files", "Archivos extra", "Fichiers en trop", "Zusätzliche Dateien"),
         ["Lbl_FilesFailed"] = L("File falliti", "Files failed", "Archivos fallidos", "Fichiers en échec", "Fehlgeschlagene Dateien"),
         ["Lbl_DirsFailed"] = L("Cartelle fallite", "Folders failed", "Carpetas fallidas", "Dossiers en échec", "Fehlgeschlagene Ordner"),
+        ["Lbl_FoldersExtra"] = L("Cartelle extra", "Extra folders", "Carpetas extra", "Dossiers en trop", "Zusätzliche Ordner"),
         ["Lbl_Duration"] = L("Durata", "Duration", "Duración", "Durée", "Dauer"),
 
         ["Email_Preview"] = L("Anteprima", "Preview", "Vista previa", "Aperçu", "Vorschau"),

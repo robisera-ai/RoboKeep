@@ -2,7 +2,8 @@ namespace RoboKeep.Core.Services;
 
 /// <summary>Conteggi estratti dal riepilogo finale di robocopy.</summary>
 public readonly record struct RobocopyCounts(
-    long DirsCopied, long FilesCopied, long FilesSkipped, long FilesFailed, long FilesExtra, long DirsFailed = 0);
+    long DirsCopied, long FilesCopied, long FilesSkipped, long FilesFailed, long FilesExtra,
+    long DirsFailed = 0, long DirsExtra = 0);
 
 /// <summary>
 /// Estrae i conteggi dal riepilogo testuale di robocopy in modo
@@ -59,6 +60,7 @@ public static class RobocopyOutputParser
             FilesSkipped: filesRow?[2] ?? 0,
             FilesFailed: filesRow?[4] ?? 0,
             FilesExtra: filesRow?[5] ?? 0,
-            DirsFailed: dirsRow?[4] ?? 0);
+            DirsFailed: dirsRow?[4] ?? 0,
+            DirsExtra: dirsRow?[5] ?? 0);
     }
 }

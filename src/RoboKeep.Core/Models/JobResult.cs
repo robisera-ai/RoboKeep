@@ -35,4 +35,7 @@ public sealed class JobResult
 
     /// <summary>Cartelle non copiate (es. accesso negato): contribuiscono a un esito di errore.</summary>
     public long DirsFailed { get; set; }
+
+    /// <summary>Cartelle "extra": in mirror sono quelle rimosse/da rimuovere dalla destinazione.</summary>
+    public long DirsExtra { get; set; }
 }

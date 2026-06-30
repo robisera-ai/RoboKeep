@@ -33,6 +33,7 @@ public class RobocopyOutputParserTests
     {
         var c = RobocopyOutputParser.ParseCounts(EnglishSummary.Split('\n'));
         Assert.Equal(2, c.DirsCopied);
+        Assert.Equal(1, c.DirsExtra); // colonna Extras della riga Dirs
         Assert.Equal(5, c.FilesCopied);
         Assert.Equal(44, c.FilesSkipped);
         Assert.Equal(1, c.FilesFailed);
