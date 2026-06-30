@@ -87,6 +87,18 @@ public sealed class MainViewModel : ObservableObject
         PersistJobs();
     }
 
+    /// <summary>Ordina FISICAMENTE i job per la proprietà mostrata nella colonna e salva l'ordine.
+    /// Riordinare la collezione reale (anziché applicare un ordinamento di vista) mantiene coerente
+    /// il riordino manuale via drag &amp; drop: l'ordine visibile è sempre quello salvato.</summary>
+    public void SortJobs(string propertyPath, bool ascending)
+    {
+        var prop = typeof(JobViewModel).GetProperty(propertyPath);
+        if (prop is null) return; // colonna senza proprietà corrispondente: niente da ordinare
+
+        CollectionReorder.SortByKey(Jobs, j => prop.GetValue(j)?.ToString() ?? "", ascending);
+        PersistJobs();
+    }
+
     public AppHost Host => _host;
     public ObservableCollection<JobViewModel> Jobs { get; }
 

@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -148,6 +149,27 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         TrayIcon.ShowNotification(title, message, NotificationIcon.Info);
     }
 
+    // Ordinamento per intestazione: riordina FISICAMENTE la collezione (vedi MainViewModel.SortJobs)
+    // invece di applicare un ordinamento di vista. Così l'ordine visibile coincide sempre con quello
+    // reale e il riordino manuale via drag & drop resta visibile (un ordinamento di vista lo nasconderebbe).
+    private void OnGridSorting(object sender, DataGridSortingEventArgs e)
+    {
+        var path = e.Column.SortMemberPath;
+        if (string.IsNullOrEmpty(path)) return;
+
+        // Toggle: se la colonna era già crescente passa a decrescente, altrimenti crescente.
+        var direction = e.Column.SortDirection == ListSortDirection.Ascending
+            ? ListSortDirection.Descending
+            : ListSortDirection.Ascending;
+
+        _vm.SortJobs(path, direction == ListSortDirection.Ascending);
+
+        // Gestiamo a mano la freccetta: solo la colonna attiva la mostra.
+        foreach (var c in JobsGrid.Columns) c.SortDirection = null;
+        e.Column.SortDirection = direction;
+        e.Handled = true; // niente ordinamento di vista: l'ordine fisico è già stato applicato
+    }
+
     // ----- Riordino dei job via drag & drop -----
 
     // Il drag parte SOLO dalla maniglia (≡), non dall'intera riga.
@@ -242,7 +264,11 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     {
         // _dragItem è ancora valido qui (DoDragDrop è modale); viene azzerato nel finally.
         if (_dragItem is not null && _insertRow?.Item is JobViewModel target)
+        {
             _vm.MoveJobToGap(_dragItem, target, _insertBelow);
+            // Un riordino manuale rompe l'ordine per colonna: la freccetta non sarebbe più veritiera.
+            foreach (var c in JobsGrid.Columns) c.SortDirection = null;
+        }
     }
 
     // Aggiorna la linea di inserimento in base alla riga e alla metà (sopra/sotto) sotto il cursore.
