@@ -9,9 +9,12 @@ public sealed record PreflightWarning(PreflightSeverity Severity, string Message
 /// <summary>
 /// Dati raccolti (IO) per la valutazione pre-avvio. <see cref="SourceSizeBytes"/> è null
 /// quando la scansione della sorgente non è stata fatta o ha superato il budget di tempo.
+/// <see cref="VersionedDestSupportsHardLinks"/> è null quando il controllo non è pertinente
+/// (job non versionato o destinazione non raggiungibile).
 /// </summary>
 public sealed record PreflightInputs(
     bool DestinationReachable,
     long FreeBytes,
     long MinFreeBytes,
-    long? SourceSizeBytes);
+    long? SourceSizeBytes,
+    bool? VersionedDestSupportsHardLinks = null);

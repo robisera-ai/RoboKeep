@@ -281,6 +281,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Preflight_ConfirmTitle"] = "Controlli pre-avvio",
         ["Preflight_ConfirmIntro"] = "Alcuni controlli segnalano possibili problemi. Avviare comunque?",
         ["Preflight_DestUnreachable"] = "destinazione non raggiungibile",
+        ["Preflight_NoHardLink"] = "non è possibile tenere traccia delle versioni: la destinazione non supporta gli hard-link (verrà eseguito un mirror semplice, senza snapshot)",
         ["Preflight_LowSpace"] = "spazio libero basso:",
         ["Preflight_SourceBigger"] = "la sorgente potrebbe non entrare; richiede:",
 
@@ -514,6 +515,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Preflight_ConfirmTitle"] = "Pre-run checks",
         ["Preflight_ConfirmIntro"] = "Some checks report possible problems. Run anyway?",
         ["Preflight_DestUnreachable"] = "destination not reachable",
+        ["Preflight_NoHardLink"] = "version history is not possible: the destination does not support hard-links (a simple mirror will run, without snapshots)",
         ["Preflight_LowSpace"] = "low free space:",
         ["Preflight_SourceBigger"] = "the source may not fit; needs:",
 
@@ -747,6 +749,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Preflight_ConfirmTitle"] = "Comprobaciones previas",
         ["Preflight_ConfirmIntro"] = "Algunas comprobaciones detectan posibles problemas. ¿Ejecutar de todos modos?",
         ["Preflight_DestUnreachable"] = "destino no accesible",
+        ["Preflight_NoHardLink"] = "no es posible mantener el historial de versiones: el destino no admite enlaces físicos (se ejecutará un espejo simple, sin instantáneas)",
         ["Preflight_LowSpace"] = "poco espacio libre:",
         ["Preflight_SourceBigger"] = "el origen podría no caber; necesita:",
 
@@ -980,6 +983,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Preflight_ConfirmTitle"] = "Vérifications avant lancement",
         ["Preflight_ConfirmIntro"] = "Certaines vérifications signalent des problèmes possibles. Lancer quand même ?",
         ["Preflight_DestUnreachable"] = "destination injoignable",
+        ["Preflight_NoHardLink"] = "impossible de conserver l'historique des versions : la destination ne prend pas en charge les liens physiques (un miroir simple sera exécuté, sans instantanés)",
         ["Preflight_LowSpace"] = "espace libre faible :",
         ["Preflight_SourceBigger"] = "la source pourrait ne pas tenir ; nécessite :",
 
@@ -1213,6 +1217,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Preflight_ConfirmTitle"] = "Prüfungen vor dem Start",
         ["Preflight_ConfirmIntro"] = "Einige Prüfungen melden mögliche Probleme. Trotzdem starten?",
         ["Preflight_DestUnreachable"] = "Ziel nicht erreichbar",
+        ["Preflight_NoHardLink"] = "Kein Versionsverlauf möglich: Das Ziel unterstützt keine Hardlinks (es wird eine einfache Spiegelung ohne Snapshots ausgeführt)",
         ["Preflight_LowSpace"] = "wenig freier Speicher:",
         ["Preflight_SourceBigger"] = "die Quelle passt evtl. nicht; benötigt:",
 

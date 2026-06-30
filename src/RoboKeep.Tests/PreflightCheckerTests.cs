@@ -47,4 +47,32 @@ public class PreflightCheckerTests
             DestinationReachable: true, FreeBytes: 2000 * Mb, MinFreeBytes: 1024 * Mb, SourceSizeBytes: null));
         Assert.DoesNotContain(w, x => x.MessageKey == "Preflight_SourceBigger");
     }
+
+    [Fact]
+    public void VersionedDestWithoutHardLinks_Warns()
+    {
+        var w = PreflightChecker.Evaluate(new PreflightInputs(
+            DestinationReachable: true, FreeBytes: 10_000 * Mb, MinFreeBytes: 1024 * Mb, SourceSizeBytes: 100 * Mb,
+            VersionedDestSupportsHardLinks: false));
+        Assert.Contains(w, x => x.MessageKey == "Preflight_NoHardLink");
+    }
+
+    [Fact]
+    public void VersionedDestWithHardLinks_NoWarning()
+    {
+        var w = PreflightChecker.Evaluate(new PreflightInputs(
+            DestinationReachable: true, FreeBytes: 10_000 * Mb, MinFreeBytes: 1024 * Mb, SourceSizeBytes: 100 * Mb,
+            VersionedDestSupportsHardLinks: true));
+        Assert.Empty(w);
+    }
+
+    [Fact]
+    public void NonVersionedJob_NoHardLinkWarning()
+    {
+        // null = controllo non pertinente (job non versionato): nessun avviso hard-link.
+        var w = PreflightChecker.Evaluate(new PreflightInputs(
+            DestinationReachable: true, FreeBytes: 10_000 * Mb, MinFreeBytes: 1024 * Mb, SourceSizeBytes: 100 * Mb,
+            VersionedDestSupportsHardLinks: null));
+        Assert.DoesNotContain(w, x => x.MessageKey == "Preflight_NoHardLink");
+    }
 }

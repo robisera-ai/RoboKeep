@@ -15,7 +15,10 @@ public static class PreflightCollector
         var reachable = IsReachable(job.Destination);
         var free = reachable ? GetFreeBytes(job.Destination) : 0L;
         var size = reachable ? TryGetSize(job.Source, sizeBudget) : null;
-        return new PreflightInputs(reachable, free, minFreeBytes, size);
+        // Solo per i job versionati: la destinazione deve supportare gli hard-link, altrimenti
+        // il versioning degrada a mirror semplice (stesso controllo del runtime in BackupRunner).
+        bool? hardLinks = reachable && job.Versioned ? HardLinkSupport.IsSupported(job.Destination) : null;
+        return new PreflightInputs(reachable, free, minFreeBytes, size, hardLinks);
     }
 
     private static bool IsReachable(string dest)
