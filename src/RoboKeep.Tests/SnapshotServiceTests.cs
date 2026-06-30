@@ -74,4 +74,24 @@ public class SnapshotServiceTests : IDisposable
         Assert.Contains(Directory.GetDirectories(dest).Select(Path.GetFileName),
             n => n is not null && SnapshotName.IsInProgress(n!)); // resta una .inprogress
     }
+
+    [Fact]
+    public async Task SnapshotFolder_NotReadOnly_EvenIfSourceRootIsReadOnly()
+    {
+        var source = Path.Combine(_root, "src4");
+        var dest = Path.Combine(_root, "dest4");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "f.txt"), "x");
+        new DirectoryInfo(source).Attributes |= FileAttributes.ReadOnly; // sorgente "speciale" read-only (es. Desktop)
+
+        var job = new BackupJob { Name = "V", Source = source, Destination = dest, Versioned = true };
+        var svc = new SnapshotService(new RobocopyRunner());
+        await svc.RunVersionedAsync(job);
+
+        new DirectoryInfo(source).Attributes &= ~FileAttributes.ReadOnly; // ripristina per non ostacolare il cleanup
+
+        var snap = SnapshotDirs(dest).Single();
+        var attrs = new DirectoryInfo(Path.Combine(dest, snap)).Attributes;
+        Assert.False(attrs.HasFlag(FileAttributes.ReadOnly)); // la cartella-data non e' sola-lettura -> Esplora mostra il timestamp
+    }
 }

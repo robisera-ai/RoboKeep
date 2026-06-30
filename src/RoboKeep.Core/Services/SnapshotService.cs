@@ -57,6 +57,7 @@ public sealed class SnapshotService
             try
             {
                 Directory.Move(curr, final);
+                ClearReadOnly(final); // evita che Esplora mostri la cartella-data col nome di un desktop.ini interno
                 progress?.Report($"[versioning] snapshot creato: {Path.GetFileName(final)}");
 
                 var after = Directory.GetDirectories(dest).Select(Path.GetFileName).OfType<string>();
@@ -84,5 +85,21 @@ public sealed class SnapshotService
         }
 
         return run;
+    }
+
+    // Toglie l'attributo sola-lettura dalla cartella-snapshot. robocopy copia gli attributi della
+    // cartella sorgente: se la sorgente e' una cartella "speciale" (es. Desktop) read-only con un
+    // desktop.ini, Esplora risorse mostrerebbe la cartella-data col nome/icona del desktop.ini invece
+    // del timestamp. Togliendo il read-only sulla cartella-data Esplora ne mostra il nome reale.
+    // Il desktop.ini resta tra i file dello snapshot, intatto. Best-effort.
+    private static void ClearReadOnly(string dir)
+    {
+        try
+        {
+            var di = new DirectoryInfo(dir);
+            if ((di.Attributes & FileAttributes.ReadOnly) != 0)
+                di.Attributes &= ~FileAttributes.ReadOnly;
+        }
+        catch { /* best-effort: un attributo non deve far fallire il backup */ }
     }
 }
