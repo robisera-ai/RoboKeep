@@ -118,7 +118,8 @@ public static class FileSystemDelete
         if (isDirectory) flags |= FILE_FLAG_BACKUP_SEMANTICS;
 
         const uint shareAll = 0x1 | 0x2 | 0x4; // FILE_SHARE_READ | WRITE | DELETE
-        using var handle = CreateFileW(path, DELETE, shareAll, IntPtr.Zero, OPEN_EXISTING, flags, IntPtr.Zero);
+        // Prefisso \\?\: senza, i file con percorso > 260 caratteri non si aprono (MAX_PATH).
+        using var handle = CreateFileW(LongPath.Extended(path), DELETE, shareAll, IntPtr.Zero, OPEN_EXISTING, flags, IntPtr.Zero);
         if (handle.IsInvalid)
         {
             // Win32Exception come inner: traduce il codice nel messaggio giusto (IOException(string,int)

@@ -33,24 +33,40 @@ public sealed class SnapshotService
         var newName = SnapshotName.For(now);
         var curr = Path.Combine(dest, newName + SnapshotName.InProgressSuffix);
 
-        // La .inprogress deve essere fresca: HardLinkCloner assume destinazione vuota.
-        // La pulizia è best-effort: un residuo bloccato non deve far fallire l'intero job qui
-        // (al massimo il clone successivo troverà la cartella non vuota e lo segnaleremo).
-        if (Directory.Exists(curr))
+        // Ripulisci OGNI .inprogress residua, non solo quella con lo stesso nome: un run precedente
+        // interrotto (crash, chiusura dell'app, caduta di corrente) lascia una .inprogress con un
+        // timestamp diverso che i run successivi non toccherebbero mai (la ritenzione ignora le
+        // .inprogress), accumulandole all'infinito. Best-effort: un residuo bloccato non deve far
+        // fallire il job. Uso la cancellazione POSIX-safe per non intaccare il read-only degli inode
+        // ancora condivisi con lo snapshot precedente.
+        foreach (var stale in Directory.GetDirectories(dest)
+                     .Where(d => SnapshotName.IsInProgress(Path.GetFileName(d) ?? "")))
         {
-            try { FileSystemDelete.DeleteDirectory(curr); }
-            catch (Exception ex) { progress?.Report($"[versioning] pulizia residuo .inprogress non riuscita: {ex.Message}"); }
+            try
+            {
+                // Su thread di background: cancellare migliaia di hard-link non deve congelare la UI.
+                await Task.Run(() => FileSystemDelete.DeleteDirectory(stale), ct).ConfigureAwait(false);
+                progress?.Report($"[versioning] rimosso snapshot incompleto di un run interrotto: {Path.GetFileName(stale)}");
+            }
+            catch (Exception ex)
+            {
+                progress?.Report($"[versioning] residuo {Path.GetFileName(stale)} non rimosso: {ex.Message}");
+            }
         }
         Directory.CreateDirectory(curr);
 
         if (prevName is not null)
         {
+            // Clonazione e rottura-hard-link sono lavoro IO pesante e sincrono: su thread di background,
+            // altrimenti su cartelle grandi (migliaia di file) la finestra si congela.
+            var prevPath = Path.Combine(dest, prevName);
+            var source = job.Source;
             progress?.Report($"[versioning] clono lo snapshot precedente ({prevName}) via hard-link...");
-            HardLinkCloner.Clone(Path.Combine(dest, prevName), curr);
+            await Task.Run(() => HardLinkCloner.Clone(prevPath, curr), ct).ConfigureAwait(false);
             // Pre-passata: rompe l'hard-link dei file cambiati, cosi robocopy li ricrea nuovi
             // senza modificare sul posto i file ancora condivisi col precedente.
             progress?.Report("[versioning] preparo lo snapshot (rompo gli hard-link dei file cambiati)...");
-            SnapshotChangedUnlinker.UnlinkChanged(job.Source, curr);
+            await Task.Run(() => SnapshotChangedUnlinker.UnlinkChanged(source, curr), ct).ConfigureAwait(false);
         }
 
         var run = await _runner.RunAsync(job, dryRun: false, progress, ct, destinationOverride: curr).ConfigureAwait(false);

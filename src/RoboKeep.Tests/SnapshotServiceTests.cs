@@ -130,6 +130,29 @@ public class SnapshotServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task StaleInProgress_FromInterruptedRun_IsRemovedOnNextRun()
+    {
+        var source = Path.Combine(_root, "src7");
+        var dest = Path.Combine(_root, "dest7");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "f.txt"), "v1");
+
+        // Simula un run interrotto: una .inprogress residua con un timestamp vecchio e del contenuto.
+        var stale = Path.Combine(dest, "2026-01-01_000000" + SnapshotName.InProgressSuffix);
+        Directory.CreateDirectory(stale);
+        File.WriteAllText(Path.Combine(stale, "partial.bin"), "garbage");
+
+        var job = new BackupJob { Name = "V", Source = source, Destination = dest, Versioned = true };
+        var svc = new SnapshotService(new RobocopyRunner());
+        await svc.RunVersionedAsync(job);
+
+        Assert.False(Directory.Exists(stale));  // il residuo interrotto è stato rimosso
+        Assert.Single(SnapshotDirs(dest));       // esiste un nuovo snapshot completo
+        Assert.DoesNotContain(Directory.GetDirectories(dest).Select(Path.GetFileName),
+            n => n is not null && SnapshotName.IsInProgress(n!)); // nessuna .inprogress residua
+    }
+
+    [Fact]
     public async Task Retention_PreservesReadOnlyAttribute_OnSurvivingSnapshot()
     {
         var source = Path.Combine(_root, "src6");
