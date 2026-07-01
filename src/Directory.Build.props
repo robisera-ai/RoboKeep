@@ -3,7 +3,7 @@
   <!-- Versione e metadati condivisi da tutti i progetti sotto src/.
        Aggiornare qui il numero di versione (SemVer: MAGGIORE.MINORE.PATCH). -->
   <PropertyGroup>
-    <Version>1.2.0</Version>
+    <Version>1.2.1</Version>
     <Product>RoboKeep</Product>
     <Authors>Roberto Serafini</Authors>
     <Company>Roberto Serafini</Company>

@@ -4,6 +4,21 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.2.1] - 2026-07-01
+
+### Fixed
+- **Long paths in versioned backups.** Files whose full path exceeds the historical 260-character limit
+  (`MAX_PATH`) made the hard-link clone fail with `CreateHardLink (Win32 3)`. Our direct Win32 calls
+  (hard-link creation and read-only-safe delete) now use the `\\?\` extended-length prefix, so long
+  paths work.
+- **UI no longer freezes during a versioned run.** The hard-link clone and cleanup ran on the UI thread,
+  freezing the window on large folders; they now run on a background thread.
+- **Interrupted versioned runs no longer leave orphaned `.inprogress` folders.** If a run is cut short
+  (app closed, crash, power loss) after copying but before finalizing, its incomplete `.inprogress`
+  snapshot used to linger forever — later runs never cleaned it up (they use a different timestamp, and
+  retention ignores `.inprogress`). Now each versioned run first removes any leftover `.inprogress` from
+  a previous interrupted run (using the read-only-safe delete, so surviving snapshots keep their attributes).
+
 ## [1.2.0] - 2026-06-30 — Versioning
 
 ### Added
@@ -52,6 +67,7 @@ All notable changes to RoboKeep are documented here. The format is based on
 - Job management (source/destination, mirror, multithread, exclusions, retries), real-time log,
   dry-run preview, log archiving, scheduling and email notifications.
 
+[1.2.1]: https://github.com/robisera-ai/RoboKeep/releases/tag/v1.2.1
 [1.2.0]: https://github.com/robisera-ai/RoboKeep/releases/tag/v1.2.0
 [1.1.0]: https://github.com/robisera-ai/RoboKeep/releases/tag/v1.1.0
 [1.0.0]: https://github.com/robisera-ai/RoboKeep/releases/tag/v1.0.0
