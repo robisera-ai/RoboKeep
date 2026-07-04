@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using RoboKeep.Core.Models;
 
 namespace RoboKeep.Core.Services;
 
@@ -92,6 +93,61 @@ public sealed class SchedulerService
         if (fields.Length <= 2) return null;
         var value = fields[2].Trim();
         return string.IsNullOrWhiteSpace(value) ? null : value;
+    }
+
+    /// <summary>
+    /// Allinea l'attività di Windows del job: la crea/aggiorna se il job ha una pianificazione,
+    /// la rimuove se non ce l'ha più. Il file XML temporaneo viene scritto in UTF-16 (come
+    /// dichiara l'intestazione) e cancellato subito dopo.
+    /// </summary>
+    public void SyncJobTask(BackupJob job, string exePath)
+    {
+        var taskName = SchtasksArgs.TaskName(job.Name);
+        if (job.Schedule == ScheduleKind.None)
+        {
+            Run(new List<string> { "/Delete", "/F", "/TN", taskName }, throwOnError: false);
+            return;
+        }
+
+        var xml = SchtasksArgs.BuildTaskXml(job, exePath);
+        var tempFile = Path.Combine(Path.GetTempPath(), $"robokeep-task-{Guid.NewGuid():N}.xml");
+        File.WriteAllText(tempFile, xml, Encoding.Unicode);
+        try
+        {
+            Run(new List<string> { "/Create", "/F", "/TN", taskName, "/XML", tempFile });
+        }
+        finally
+        {
+            try { File.Delete(tempFile); } catch { }
+        }
+    }
+
+    /// <summary>Rimuove l'attività del job (per cancellazione o rinomina). Mai un errore se assente.</summary>
+    public void RemoveJobTask(string jobName) =>
+        Run(new List<string> { "/Delete", "/F", "/TN", SchtasksArgs.TaskName(jobName) }, throwOnError: false);
+
+    /// <summary>Prossima esecuzione dell'attività del job, o null se non pianificata.</summary>
+    public string? GetJobNextRunTime(string jobName)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = "schtasks.exe",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+        };
+        foreach (var a in new[] { "/Query", "/TN", SchtasksArgs.TaskName(jobName), "/FO", "CSV", "/V" })
+            psi.ArgumentList.Add(a);
+        using var p = Process.Start(psi);
+        if (p is null) return null;
+        var output = p.StandardOutput.ReadToEnd();
+        p.WaitForExit();
+        if (p.ExitCode != 0) return null;
+        var lines = output.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        if (lines.Length < 2) return null;
+        var fields = lines[1].Trim().Trim('"').Split("\",\"");
+        return fields.Length > 2 && !string.IsNullOrWhiteSpace(fields[2]) ? fields[2].Trim() : null;
     }
 
     private static int Run(List<string> args, bool throwOnError = true)
