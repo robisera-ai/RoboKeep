@@ -18,6 +18,8 @@ public static class RobocopyArgsBuilder
     /// <param name="job">Definizione del job.</param>
     /// <param name="dryRun">Se true aggiunge <c>/L</c> (anteprima: nessuna modifica).</param>
     /// <param name="logFile">Se valorizzato aggiunge <c>/TEE</c> e <c>/LOG:&lt;file&gt;</c>.</param>
+    /// <param name="destinationOverride">Destinazione alternativa (usata dal versioning per scrivere nello snapshot corrente).</param>
+    /// <param name="sourceOverride">Sorgente alternativa (usata da VSS per leggere dallo snapshot congelato).</param>
     public static IReadOnlyList<string> Build(
         BackupJob job, bool dryRun = false, string? logFile = null, string? destinationOverride = null,
         string? sourceOverride = null)

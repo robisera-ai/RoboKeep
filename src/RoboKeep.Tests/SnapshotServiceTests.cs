@@ -153,6 +153,28 @@ public class SnapshotServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task RunVersioned_SourceOverride_CopiesFromOverridePath()
+    {
+        var source = Path.Combine(_root, "srcLive");
+        var overrideDir = Path.Combine(_root, "srcFrozen");
+        var dest = Path.Combine(_root, "dest8");
+        Directory.CreateDirectory(source);
+        Directory.CreateDirectory(overrideDir);
+        File.WriteAllText(Path.Combine(source, "a.txt"), "live");
+        File.WriteAllText(Path.Combine(overrideDir, "a.txt"), "frozen");
+        File.WriteAllText(Path.Combine(overrideDir, "b.txt"), "solo-nello-snapshot");
+
+        var job = new BackupJob { Name = "V", Source = source, Destination = dest, Versioned = true };
+        var svc = new SnapshotService(new RobocopyRunner());
+
+        await svc.RunVersionedAsync(job, sourceOverride: overrideDir);
+
+        var snap = SnapshotDirs(dest).Single();
+        Assert.Equal("frozen", File.ReadAllText(Path.Combine(dest, snap, "a.txt")));
+        Assert.True(File.Exists(Path.Combine(dest, snap, "b.txt")));
+    }
+
+    [Fact]
     public async Task Retention_PreservesReadOnlyAttribute_OnSurvivingSnapshot()
     {
         var source = Path.Combine(_root, "src6");

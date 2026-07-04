@@ -61,6 +61,9 @@ public sealed class SnapshotService
             // Clonazione e rottura-hard-link sono lavoro IO pesante e sincrono: su thread di background,
             // altrimenti su cartelle grandi (migliaia di file) la finestra si congela.
             var prevPath = Path.Combine(dest, prevName);
+            // Il confronto per l'unlink va fatto contro l'origine effettivamente copiata
+            // (lo snapshot VSS quando presente), non contro job.Source: origini diverse
+            // tra unlink e robocopy romperebbero la garanzia di sovrainsieme sicuro.
             var source = sourceOverride ?? job.Source;
             progress?.Report($"[versioning] clono lo snapshot precedente ({prevName}) via hard-link...");
             await Task.Run(() => HardLinkCloner.Clone(prevPath, curr), ct).ConfigureAwait(false);
