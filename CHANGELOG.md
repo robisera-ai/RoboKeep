@@ -4,6 +4,36 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.3.0] - 2026-07-04 — Open files (VSS)
+
+### Added
+- **Copy open/locked files (VSS)** — opt-in per job: RoboKeep creates a Volume Shadow Copy
+  snapshot of the source volume before copying, so files in use (Outlook PST, databases,
+  encrypted containers) are copied intact. One UAC confirmation per run; requires the source
+  on a local NTFS volume. Works together with versioning.
+- **Never blocks the backup** — if the snapshot cannot be created (UAC denied, unsupported
+  volume, any unexpected error), the job continues as a normal copy with a clear `[vss]`
+  warning in the log; files in use are simply skipped, as before.
+- **Wizard question** — the new-job wizard asks whether files stay open during the backup
+  and enables VSS accordingly.
+- **Eligibility warnings** — at save time and in the pre-run checks when the source cannot
+  use VSS (network path or non-NTFS volume).
+- **Per-job health icon** — problematic jobs now show a warning icon on their row (red =
+  failed, amber = not run for too long, orange = was running at last shutdown) with a
+  tooltip explaining the issue; the alert banner is now a compact one-line summary.
+- **Interrupted-run detection** — a per-job lock file detects runs cut short by a crash or
+  forced shutdown and flags the job as "check before starting".
+
+### Fixed
+- Orphaned VSS snapshots from crashed runs are tracked in a PID-stamped ledger and removed
+  at the next VSS run; concurrent RoboKeep processes (window + scheduled task) can no longer
+  delete each other's live snapshots; the elevated helper cleans up on its own if the app dies.
+
+### Downloads
+- **`RoboKeep-1.3.0-win-x64-selfcontained.zip`** — bundles **.NET 10.0.9**: extract and run, nothing to install.
+- **`RoboKeep-1.3.0-win-x64-framework-dependent.zip`** — smaller; requires the
+  [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
+
 ## [1.2.1] - 2026-07-01
 
 ### Fixed
@@ -67,6 +97,7 @@ All notable changes to RoboKeep are documented here. The format is based on
 - Job management (source/destination, mirror, multithread, exclusions, retries), real-time log,
   dry-run preview, log archiving, scheduling and email notifications.
 
+[1.3.0]: https://github.com/robisera-ai/RoboKeep/releases/tag/v1.3.0
 [1.2.1]: https://github.com/robisera-ai/RoboKeep/releases/tag/v1.2.1
 [1.2.0]: https://github.com/robisera-ai/RoboKeep/releases/tag/v1.2.0
 [1.1.0]: https://github.com/robisera-ai/RoboKeep/releases/tag/v1.1.0
