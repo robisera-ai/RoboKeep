@@ -22,7 +22,7 @@ public static class VssPathMapper
     public static string MapToSnapshot(string sourcePath, string snapshotRoot)
     {
         var volume = GetVolumeRoot(sourcePath)
-            ?? throw new ArgumentException($"Percorso non idoneo a VSS: {sourcePath}");
+            ?? throw new ArgumentException($"Percorso non idoneo a VSS: {sourcePath}", nameof(sourcePath));
         var relative = sourcePath[volume.Length..].TrimEnd('\\', '/');
         return relative.Length == 0 ? snapshotRoot : Path.Combine(snapshotRoot, relative);
     }

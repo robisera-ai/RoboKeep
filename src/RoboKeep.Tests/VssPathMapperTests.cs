@@ -31,4 +31,14 @@ public class VssPathMapperTests
     public void MapToSnapshot_TrailingSlashOnSource_Normalized()
         => Assert.Equal(@"D:\sess\source\Users",
             VssPathMapper.MapToSnapshot(@"C:\Users\", @"D:\sess\source"));
+
+    [Fact]
+    public void MapToSnapshot_ForwardSlashes_Work()
+        => Assert.Equal(@"D:\sess\source\Users/x",
+            VssPathMapper.MapToSnapshot(@"C:/Users/x", @"D:\sess\source"));
+
+    [Fact]
+    public void MapToSnapshot_LowercaseDrive_Works()
+        => Assert.Equal(@"D:\sess\source\Users\x",
+            VssPathMapper.MapToSnapshot(@"c:\Users\x", @"D:\sess\source"));
 }
