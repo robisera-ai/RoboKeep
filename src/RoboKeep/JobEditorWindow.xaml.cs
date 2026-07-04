@@ -68,6 +68,17 @@ public partial class JobEditorWindow : Wpf.Ui.Controls.FluentWindow
             }
         }
 
+        // VSS richiede sorgente su volume NTFS locale: avvisa subito, non solo al run.
+        // Solo informativo: il salvataggio prosegue (al run scatterà il fallback con avviso).
+        if (_vm.Job.UseVss && !RoboKeep.Core.Services.VssEligibility.IsEligible(_vm.Job.Source))
+        {
+            MessageBox.Show(
+                Loc.Instance["Preflight_VssNotEligible"],
+                _vm.Job.Name,
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
+        }
+
         DialogResult = true;
     }
 

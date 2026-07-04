@@ -82,6 +82,10 @@
                             <CheckBox Content="{l:Tr Editor_LogAll}" IsChecked="{Binding LogAllFiles}"/>
                             <ctl:InfoHint Margin="6,0,0,0" Text="{l:Tr Editor_LogAllTip}"/>
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <CheckBox Content="{l:Tr Editor_UseVss}" IsChecked="{Binding UseVss}"/>
+                            <ctl:InfoHint Margin="6,0,0,0" Text="{l:Tr Editor_UseVssTip}"/>
+                        </StackPanel>
                     </StackPanel>
                 </ui:Card>
 

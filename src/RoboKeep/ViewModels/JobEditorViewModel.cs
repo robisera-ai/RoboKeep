@@ -207,6 +207,13 @@ public sealed class JobEditorViewModel : ObservableObject
         set { _job.SnapshotMaxAgeDays = value; OnPropertyChanged(); }
     }
 
+    /// <summary>Copia anche i file aperti creando uno snapshot VSS della sorgente.</summary>
+    public bool UseVss
+    {
+        get => _job.UseVss;
+        set { _job.UseVss = value; OnPropertyChanged(); }
+    }
+
     /// <summary>Validazione minima prima del salvataggio.</summary>
     public string? Validate()
     {
