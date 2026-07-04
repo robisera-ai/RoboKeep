@@ -276,7 +276,13 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Error"] = "Errore: {0}",
 
         ["Health_BannerTitle"] = "Attenzione ai backup",
-        ["Health_BannerFormat"] = "Job con problemi: {0} falliti, {1} fermi da troppo tempo.",
+        ["Health_Interrupted"] = "Era in corso all'ultima chiusura — verificare prima di avviare",
+        ["Health_Failed"] = "Ultimo backup fallito",
+        ["Health_StaleN"] = "Non eseguito da {0} giorni",
+        ["Health_Stale"] = "Non eseguito da troppo tempo",
+        ["Health_CountInterrupted"] = "{0} da verificare (in corso all'ultima chiusura)",
+        ["Health_CountFailed"] = "{0} falliti",
+        ["Health_CountStale"] = "{0} non eseguiti da troppo tempo",
 
         ["Preflight_ConfirmTitle"] = "Controlli pre-avvio",
         ["Preflight_ConfirmIntro"] = "Alcuni controlli segnalano possibili problemi. Avviare comunque?",
@@ -510,7 +516,13 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Error"] = "Error: {0}",
 
         ["Health_BannerTitle"] = "Backup warnings",
-        ["Health_BannerFormat"] = "Jobs with issues: {0} failed, {1} stale for too long.",
+        ["Health_Interrupted"] = "Was running at last shutdown — check before starting",
+        ["Health_Failed"] = "Last backup failed",
+        ["Health_StaleN"] = "Not run in {0} days",
+        ["Health_Stale"] = "Not run for too long",
+        ["Health_CountInterrupted"] = "{0} to check (running at last shutdown)",
+        ["Health_CountFailed"] = "{0} failed",
+        ["Health_CountStale"] = "{0} not run for too long",
 
         ["Preflight_ConfirmTitle"] = "Pre-run checks",
         ["Preflight_ConfirmIntro"] = "Some checks report possible problems. Run anyway?",
@@ -744,7 +756,13 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Error"] = "Error: {0}",
 
         ["Health_BannerTitle"] = "Atención a las copias",
-        ["Health_BannerFormat"] = "Trabajos con problemas: {0} fallidos, {1} sin ejecutarse hace demasiado.",
+        ["Health_Interrupted"] = "Estaba en curso al último cierre — verificar antes de iniciar",
+        ["Health_Failed"] = "Último backup fallido",
+        ["Health_StaleN"] = "Sin ejecutar desde hace {0} días",
+        ["Health_Stale"] = "Sin ejecutar por demasiado tiempo",
+        ["Health_CountInterrupted"] = "{0} por verificar (en curso al último cierre)",
+        ["Health_CountFailed"] = "{0} fallidos",
+        ["Health_CountStale"] = "{0} sin ejecutar por demasiado tiempo",
 
         ["Preflight_ConfirmTitle"] = "Comprobaciones previas",
         ["Preflight_ConfirmIntro"] = "Algunas comprobaciones detectan posibles problemas. ¿Ejecutar de todos modos?",
@@ -978,7 +996,13 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Error"] = "Erreur : {0}",
 
         ["Health_BannerTitle"] = "Attention aux sauvegardes",
-        ["Health_BannerFormat"] = "Tâches en problème : {0} en échec, {1} inactives depuis trop longtemps.",
+        ["Health_Interrupted"] = "Était en cours au dernier arrêt — vérifier avant de démarrer",
+        ["Health_Failed"] = "Dernière sauvegarde échouée",
+        ["Health_StaleN"] = "Non exécuté depuis {0} jours",
+        ["Health_Stale"] = "Non exécuté depuis trop longtemps",
+        ["Health_CountInterrupted"] = "{0} à vérifier (en cours au dernier arrêt)",
+        ["Health_CountFailed"] = "{0} en échec",
+        ["Health_CountStale"] = "{0} non exécutés depuis trop longtemps",
 
         ["Preflight_ConfirmTitle"] = "Vérifications avant lancement",
         ["Preflight_ConfirmIntro"] = "Certaines vérifications signalent des problèmes possibles. Lancer quand même ?",
@@ -1212,7 +1236,13 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Error"] = "Fehler: {0}",
 
         ["Health_BannerTitle"] = "Achtung bei Backups",
-        ["Health_BannerFormat"] = "Jobs mit Problemen: {0} fehlgeschlagen, {1} zu lange nicht ausgeführt.",
+        ["Health_Interrupted"] = "War beim letzten Beenden aktiv — vor dem Start prüfen",
+        ["Health_Failed"] = "Letztes Backup fehlgeschlagen",
+        ["Health_StaleN"] = "Seit {0} Tagen nicht ausgeführt",
+        ["Health_Stale"] = "Zu lange nicht ausgeführt",
+        ["Health_CountInterrupted"] = "{0} zu prüfen (beim letzten Beenden aktiv)",
+        ["Health_CountFailed"] = "{0} fehlgeschlagen",
+        ["Health_CountStale"] = "{0} zu lange nicht ausgeführt",
 
         ["Preflight_ConfirmTitle"] = "Prüfungen vor dem Start",
         ["Preflight_ConfirmIntro"] = "Einige Prüfungen melden mögliche Probleme. Trotzdem starten?",

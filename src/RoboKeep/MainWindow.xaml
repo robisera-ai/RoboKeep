@@ -115,6 +115,9 @@
                                     <DataTrigger Binding="{Binding Health}" Value="Stale">
                                         <Setter Property="Background" Value="#33FFB300"/>
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding Health}" Value="Interrupted">
+                                        <Setter Property="Background" Value="#33FF8C00"/>
+                                    </DataTrigger>
                                     <!-- Hover e selezione vincono sull'eventuale tinta di salute (trigger in coda). -->
                                     <Trigger Property="IsMouseOver" Value="True">
                                         <Setter Property="Background" Value="#22000000"/>
@@ -135,6 +138,36 @@
                                             <ui:SymbolIcon Symbol="ReOrderDotsVertical24" FontSize="18" Opacity="0.5"
                                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Width="34" CanUserResize="False" CanUserReorder="False" CanUserSort="False">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <!-- Avviso di salute per riga: il tooltip spiega il problema specifico. -->
+                                        <TextBlock Text="&#x26A0;" FontFamily="Segoe UI Symbol" FontSize="15" FontWeight="Bold"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   ToolTip="{Binding HealthTooltip}" ToolTipService.InitialShowDelay="200">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Health}" Value="Failed">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Setter Property="Foreground" Value="#E81123"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Health}" Value="Stale">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Setter Property="Foreground" Value="#C8860D"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Health}" Value="Interrupted">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Setter Property="Foreground" Value="#E8710A"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>

@@ -285,25 +285,57 @@ public sealed class MainViewModel : ObservableObject
     {
         var names = Jobs.Select(j => j.Name).ToList();
         var health = StaleBackupEvaluator.Evaluate(names, results, _host.Config.Settings.StaleAfterDays, DateTime.Now);
+        var interrupted = JobLockFile.GetInterrupted(_host.LockFolder, names);
 
-        // health è nello stesso ordine di Jobs: assegno per indice, robusto anche a nomi duplicati.
-        int failed = 0, stale = 0;
+        // Il dettaglio per job sta nel tooltip dell'icona sulla riga; il banner riporta solo i conteggi.
+        int nInterrupted = 0, nFailed = 0, nStale = 0;
         for (int i = 0; i < Jobs.Count && i < health.Count; i++)
         {
+            var jvm = Jobs[i];
+
+            if (interrupted.Contains(jvm.Name))
+            {
+                jvm.Health = BackupHealth.Interrupted;
+                jvm.HealthTooltip = Loc.Instance["Health_Interrupted"];
+                nInterrupted++;
+                continue;
+            }
+
             var h = health[i].Health;
-            Jobs[i].Health = h;
-            if (h == BackupHealth.Failed) failed++;
-            else if (h == BackupHealth.Stale) stale++;
+            jvm.Health = h;
+            if (h == BackupHealth.Failed)
+            {
+                jvm.HealthTooltip = Loc.Instance["Health_Failed"];
+                nFailed++;
+            }
+            else if (h == BackupHealth.Stale)
+            {
+                var days = results.TryGetValue(jvm.Name, out var r)
+                    ? (int)(DateTime.Now - r.FinishedAt).TotalDays
+                    : 0;
+                jvm.HealthTooltip = days > 0
+                    ? string.Format(Loc.Instance["Health_StaleN"], days)
+                    : Loc.Instance["Health_Stale"];
+                nStale++;
+            }
+            else
+            {
+                jvm.HealthTooltip = null;
+            }
         }
 
-        // NeverRun e Ok non sono allarmanti: il banner mostra solo Failed/Stale.
-        if (failed == 0 && stale == 0)
+        var parts = new List<string>();
+        if (nInterrupted > 0) parts.Add(string.Format(Loc.Instance["Health_CountInterrupted"], nInterrupted));
+        if (nFailed > 0) parts.Add(string.Format(Loc.Instance["Health_CountFailed"], nFailed));
+        if (nStale > 0) parts.Add(string.Format(Loc.Instance["Health_CountStale"], nStale));
+
+        if (parts.Count == 0)
         {
             HealthBannerText = "";
             HealthBannerVisible = false;
             return;
         }
-        HealthBannerText = string.Format(Loc.Instance["Health_BannerFormat"], failed, stale);
+        HealthBannerText = string.Join(" · ", parts);
         HealthBannerVisible = true;
     }
 

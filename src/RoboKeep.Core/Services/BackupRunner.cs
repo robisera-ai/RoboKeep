@@ -16,6 +16,7 @@ public sealed class BackupRunner
     private readonly CredentialService _credentials;
     private readonly LastResultStore? _results;
     private readonly SnapshotService? _snapshots;
+    private readonly string? _lockFolder;
 
     public BackupRunner(
         AppConfig config,
@@ -24,7 +25,8 @@ public sealed class BackupRunner
         EmailService email,
         CredentialService credentials,
         LastResultStore? results = null,
-        SnapshotService? snapshots = null)
+        SnapshotService? snapshots = null,
+        string? lockFolder = null)
     {
         _config = config;
         _runner = runner;
@@ -33,6 +35,7 @@ public sealed class BackupRunner
         _credentials = credentials;
         _results = results;
         _snapshots = snapshots;
+        _lockFolder = lockFolder;
     }
 
     /// <summary>Trova un job per nome (case-insensitive).</summary>
@@ -43,6 +46,10 @@ public sealed class BackupRunner
     public async Task<JobResult> RunJobAsync(
         BackupJob job, bool dryRun = false, IProgress<string>? progress = null, CancellationToken ct = default)
     {
+        // Il lock file persiste se il processo viene terminato brutalmente; viene rimosso nel
+        // finally (via using) quando il run termina normalmente (successo, errore o cancel).
+        using var lockHandle = dryRun || _lockFolder is null ? null : JobLockFile.Acquire(_lockFolder, job.Name);
+
         var cred = string.IsNullOrEmpty(job.CredentialId)
             ? null
             : _config.Credentials.FirstOrDefault(c => c.Id == job.CredentialId);

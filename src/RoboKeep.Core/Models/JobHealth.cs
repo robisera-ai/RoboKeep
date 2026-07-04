@@ -11,6 +11,8 @@ public enum BackupHealth
     Stale,
     /// <summary>Nessun esito registrato: job mai eseguito.</summary>
     NeverRun,
+    /// <summary>Esiste un file di lock residuo: il job era in corso all'ultima chiusura anomala.</summary>
+    Interrupted,
 }
 
 /// <summary>Salute di un job (nome + stato).</summary>

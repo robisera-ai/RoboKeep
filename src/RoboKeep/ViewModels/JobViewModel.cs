@@ -49,6 +49,14 @@ public sealed class JobViewModel : ObservableObject
         set => SetField(ref _health, value);
     }
 
+    // Tooltip dell'icona di avviso sulla riga; null = nessun problema (icona nascosta).
+    private string? _healthTooltip;
+    public string? HealthTooltip
+    {
+        get => _healthTooltip;
+        set => SetField(ref _healthTooltip, value);
+    }
+
     /// <summary>Imposta l'esito a partire dall'ultimo risultato persistito (o "—" se assente).</summary>
     public void ApplyLastResult(JobLastResult? r)
     {

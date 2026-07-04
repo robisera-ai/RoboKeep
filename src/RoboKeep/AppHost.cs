@@ -14,6 +14,7 @@ public sealed class AppHost
     public CredentialService Credentials { get; }
     public LastResultStore Results { get; }
     public ForceCopyHashStore ForceCopyHashes { get; }
+    public string LockFolder => Path.Combine(Store.DirectoryPath, "locks");
 
     private AppHost(ConfigStore store, AppConfig config)
     {
@@ -47,7 +48,7 @@ public sealed class AppHost
         var log = new LogService(Config.Settings);
         var email = new EmailService(Credentials);
         var snapshots = new SnapshotService(runner);
-        return new BackupRunner(Config, runner, log, email, Credentials, Results, snapshots);
+        return new BackupRunner(Config, runner, log, email, Credentials, Results, snapshots, LockFolder);
     }
 
     /// <summary>
