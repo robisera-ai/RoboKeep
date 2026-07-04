@@ -75,4 +75,27 @@ public class PreflightCheckerTests
             VersionedDestSupportsHardLinks: null));
         Assert.DoesNotContain(w, x => x.MessageKey == "Preflight_NoHardLink");
     }
+
+    [Fact]
+    public void Evaluate_VssSourceNotEligible_Warns()
+    {
+        var w = PreflightChecker.Evaluate(new PreflightInputs(true, long.MaxValue, 0, null,
+            VssSourceEligible: false));
+        Assert.Contains(w, x => x.MessageKey == "Preflight_VssNotEligible");
+    }
+
+    [Fact]
+    public void Evaluate_VssSourceEligible_NoWarning()
+    {
+        var w = PreflightChecker.Evaluate(new PreflightInputs(true, long.MaxValue, 0, null,
+            VssSourceEligible: true));
+        Assert.DoesNotContain(w, x => x.MessageKey == "Preflight_VssNotEligible");
+    }
+
+    [Fact]
+    public void Evaluate_VssNotRelevant_NoWarning()
+    {
+        var w = PreflightChecker.Evaluate(new PreflightInputs(true, long.MaxValue, 0, null));
+        Assert.DoesNotContain(w, x => x.MessageKey == "Preflight_VssNotEligible");
+    }
 }

@@ -21,6 +21,9 @@ public static class PreflightChecker
         if (i.VersionedDestSupportsHardLinks == false)
             w.Add(new PreflightWarning(PreflightSeverity.Warning, "Preflight_NoHardLink", ""));
 
+        if (i.VssSourceEligible == false)
+            w.Add(new PreflightWarning(PreflightSeverity.Warning, "Preflight_VssNotEligible", ""));
+
         if (i.FreeBytes < i.MinFreeBytes)
             w.Add(new PreflightWarning(PreflightSeverity.Warning, "Preflight_LowSpace",
                 $"{i.FreeBytes / (1024 * 1024)} MB"));

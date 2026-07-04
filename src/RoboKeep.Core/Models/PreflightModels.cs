@@ -11,10 +11,12 @@ public sealed record PreflightWarning(PreflightSeverity Severity, string Message
 /// quando la scansione della sorgente non è stata fatta o ha superato il budget di tempo.
 /// <see cref="VersionedDestSupportsHardLinks"/> è null quando il controllo non è pertinente
 /// (job non versionato o destinazione non raggiungibile).
+/// <see cref="VssSourceEligible"/> è null quando il controllo non è pertinente (job senza VSS).
 /// </summary>
 public sealed record PreflightInputs(
     bool DestinationReachable,
     long FreeBytes,
     long MinFreeBytes,
     long? SourceSizeBytes,
-    bool? VersionedDestSupportsHardLinks = null);
+    bool? VersionedDestSupportsHardLinks = null,
+    bool? VssSourceEligible = null);

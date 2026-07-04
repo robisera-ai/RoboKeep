@@ -18,7 +18,9 @@ public static class PreflightCollector
         // Solo per i job versionati: la destinazione deve supportare gli hard-link, altrimenti
         // il versioning degrada a mirror semplice (stesso controllo del runtime in BackupRunner).
         bool? hardLinks = reachable && job.Versioned ? HardLinkSupport.IsSupported(job.Destination) : null;
-        return new PreflightInputs(reachable, free, minFreeBytes, size, hardLinks);
+        // Solo per i job VSS: la sorgente deve stare su un volume NTFS locale.
+        bool? vssEligible = job.UseVss ? VssEligibility.IsEligible(job.Source) : null;
+        return new PreflightInputs(reachable, free, minFreeBytes, size, hardLinks, vssEligible);
     }
 
     private static bool IsReachable(string dest)
