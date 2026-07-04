@@ -2,7 +2,7 @@
 
 *Read in: English · [Italiano](readmeita.md)*
 
-**A modern GUI for `robocopy`: simple, transparent, and reliable backup and mirroring on Windows.**
+**Set it up once — every file, every version, safe on your own disk.**
 
 ![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
 ![Windows 10/11](https://img.shields.io/badge/Windows-10%20%2F%2011-0078D6)
@@ -10,160 +10,114 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow)](LICENSE)
 [![Downloads](https://img.shields.io/github/downloads/robisera-ai/RoboKeep/total)](../../releases)
 
-RoboKeep puts a modern graphical interface and centralized configuration on top of `robocopy`, Windows'
-built-in copy tool: define your backup jobs (source → destination) once, and run them manually, from the
-command line, or on a schedule — without writing or maintaining scripts by hand.
+RoboKeep is a friendly Windows app that turns `robocopy` — the rock-solid copy engine already
+built into every Windows PC — into a **real backup tool**: point-and-click setup, **dated
+versions** of your files, copying of **files you're still working on**, and clear alerts when a
+backup falls behind. **No cloud, no account, no subscription** — your files never leave your disks.
 
-![Main window of RoboKeep](docs/images/main-window.jpg)
+![RoboKeep main window: jobs with results at a glance and a live execution log](docs/images/main-window.png)
 
-*Job list with the latest result at a glance and a real-time execution log.*
+## Why you'll like it
 
-## Why RoboKeep
+- 🧙 **Answer a few questions, get the right backup.** No robocopy knowledge needed: the guided
+  setup asks about your disks and your data in plain language, and picks the optimal settings
+  for you. Experts can still tweak everything by hand.
+- 🕰️ **A time machine for your files.** Every run can save a **dated version** of your backup.
+  Deleted a paragraph last Tuesday? Open Tuesday's version and get it back. Smart trick under the
+  hood: unchanged files are *shared* between versions, so ten versions don't cost ten times the
+  space — only what actually changed.
+- 🔓 **Copies files even while you're using them** *(new in 1.3)*. Outlook archives, databases,
+  files locked by other programs: with one checkbox, RoboKeep photographs the disk for an instant
+  (a Windows "shadow copy") and copies from that frozen picture. And if the snapshot isn't
+  possible, the backup simply continues the normal way — it never blocks.
+- 🚨 **It tells you when something's wrong.** A backup that fails silently is worse than no
+  backup. RoboKeep marks each problematic job with a colored warning icon — red for failed,
+  amber for "not run in too long", orange for "was interrupted" — with a plain explanation on hover.
+- 🔍 **Nothing hidden.** The editor always shows the **exact command** that will run. You can
+  preview any backup (a "dry run") to see what would be copied or deleted, before touching anything.
+- 🏠 **Truly yours.** Free and open source (MIT), fully local, no telemetry. Runs in Italian,
+  English, Spanish, French, and German. Portable if you want it to be.
 
-- **Proven engine, not reinvented.** Copying is handled by Windows `robocopy`: fast, multi-threaded,
-  reliable, and always up to date with the system. RoboKeep adds convenience and clarity on top — no new
-  copy algorithm to blindly trust.
-- **Fully transparent.** The editor shows, in real time, the **exact robocopy command** that will be
-  executed. No black box — you always know what's happening.
-- **Single configuration.** All jobs in one JSON file, editable from the GUI, instead of hand-written and
-  duplicated scripts.
-- **Guided creation.** A wizard asks a few questions (disk types, behavior, special files) and **sets the
-  optimal options**, avoiding common robocopy mistakes.
-- **Local, free, no cloud.** No telemetry, no account. Network-share credentials are encrypted with
-  Windows DPAPI.
-- **Your data stays safe, outside the app folder.** Configuration, results, and logs live in
-  `%APPDATA%\RoboKeep` (per user): they survive updates and cleanups of the program folder. For
-  **portable** use (everything next to the executable), just create an empty `portable.flag`
-  file in the app folder.
-- **Multilingual:** Italian, English, Spanish, French, German.
+## See it in action
 
-## How a backup works
+| | |
+|---|---|
+| ![Guided setup](docs/images/wizard.png) | **Guided setup.** A few questions in plain language — including whether files stay open while you work — and the wizard configures the job for you. |
+| ![Job editor](docs/images/editor.png) | **Everything under control.** Mirror or accumulate, open-file copying, large-file options: every choice explained in one line, with a hint where it matters. |
+| ![Command preview and versioning](docs/images/editor-preview.png) | **Total transparency.** Dated versions with automatic cleanup, per-job exclusions, and the exact robocopy command always in view. |
+| ![Browse versions](docs/images/versions.png) | **Go back in time.** Pick a date, click, and that day's backup opens in File Explorer. Copy back whatever you need. |
 
-For each job (source → destination pair, recursive over subfolders):
+## Get started in two minutes
 
-- **skips** identical files (same last-modified date/time and size);
-- **overwrites** destination files when the source is newer;
-- in **mirror** mode (`/MIR`, default) it **removes** from the destination files/folders that no longer exist in the source;
-- with mirror disabled (`/E`) it only copies and updates, **never deletes**.
+1. Grab the latest version from the **[Releases](../../releases)** page:
+   - **`…-selfcontained.zip`** — extract and run, **nothing to install** (bundles .NET, larger download);
+   - **`…-framework-dependent.zip`** — much smaller, needs the free
+     [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) installed once.
+2. Extract the zip into any **writable folder** (e.g. `D:\Programs\RoboKeep` — avoid
+   `C:\Program Files`).
+3. Run **`RoboKeep.exe`**, click **New**, answer the wizard's questions, then **Run all**. Done.
 
-## Requirements
+Want it to run by itself? **Settings → Scheduling** creates a Windows scheduled task that runs
+all your jobs at the time you choose — even with the app closed.
 
-- **Windows 10 or 11** (uses the system `robocopy`).
-- **.NET 10 Desktop Runtime** — needed **only** for the *framework-dependent* download; the
-  *self-contained* download bundles .NET (10.0.9) and requires nothing extra. The **.NET 10 SDK** is only
-  needed to build from source.
+## How a backup behaves
 
-## Installation
+For each job (a source folder → destination folder pair, subfolders included), RoboKeep:
 
-### Option A — Ready-to-use release (recommended)
+- **skips** files that haven't changed (that's why the second run takes seconds);
+- **updates** files that are newer in the source;
+- in **mirror** mode (default) also **removes** from the destination what you deleted from the
+  source — the destination stays an exact copy;
+- with mirror off, it only adds and updates, **never deletes**.
 
-1. Download the latest version from the project's **[Releases](../../releases)** page. Two builds are available:
-   - **`…-selfcontained.zip`** — bundles **.NET 10.0.9**: just extract and run, **nothing to install** (larger download).
-   - **`…-framework-dependent.zip`** — small download, but requires the
-     **[.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)**.
-2. Extract the `.zip` into a **writable folder** (e.g. `D:\Programs\RoboKeep`).
-   > Avoid `C:\Program Files` (read-only for standard users): if you put it there, set writable log/temp
-   > paths in Settings.
-3. Run **`RoboKeep.exe`**. No installation required — the app is portable.
+And if you enabled versions, each run first saves the previous state as a dated snapshot.
 
-If you used the framework-dependent build and Windows reports a missing runtime, install the
-[.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) and try again.
+## All the features
 
-### Option B — Build from source
+**Backing up**
+mirror or accumulate mode · dated versions with hard-links and configurable retention ·
+open/locked file copying via VSS · multi-threaded copying · per-job file and folder exclusions ·
+"force copy" for files whose date/size never change (encrypted containers, some databases), with
+an optional content-hash mode · restartable mode for huge files · preview/dry-run
 
-```powershell
-git clone https://github.com/robisera-ai/RoboKeep.git
-cd RoboKeep
-dotnet build src/RoboKeep.sln -c Release
-dotnet test  src/RoboKeep.Tests/RoboKeep.Tests.csproj   # optional
-# executable at: src/RoboKeep/bin/Release/net10.0-windows/RoboKeep.exe
-```
+**Keeping you informed**
+per-job health icons with plain-language tooltips · pre-run checks (destination reachable, disk
+space, VSS and versioning eligibility) · real-time log · per-job zipped log archive with
+automatic cleanup · toast notifications and system tray · email reports (SMTP), optionally only
+on errors
 
-## Usage
+**Fitting your setup**
+guided wizard or full manual editor · exact command preview · network shares with encrypted
+credentials (Windows DPAPI) · scheduling via Windows Task Scheduler · command line for automation ·
+drag & drop job ordering · 5 languages · portable mode
 
-### Graphical interface
+## Good to know
 
-Run `RoboKeep.exe` with no arguments. In short:
+- **Windows 10/11 only** — RoboKeep builds on robocopy and other Windows-native features.
+- **Changed files are recopied whole** (no delta/block copy): fine for documents and photos,
+  costly for single huge files that change daily.
+- **Versions need a local NTFS destination** (hard-links don't exist on exFAT or network shares).
+- **Open-file copying needs a local NTFS source** and asks for one administrator confirmation
+  (UAC) per run.
+- Your settings, results, and logs live in `%APPDATA%\RoboKeep`, so they survive app updates.
+  Passwords are encrypted with Windows DPAPI, never stored in plain text.
 
-1. **New** → the **guided wizard** walks you through 5 steps (basics, disk types, behavior, special cases,
-   summary) and pre-fills the editor with recommended options. Or **Skip and configure manually**.
-2. Review the **robocopy command preview** in the editor, then **Save**.
-3. **Preview** (dry-run) to see what would be copied/deleted **without touching anything**; when ready,
-   **Run selected** or **Run all**. The log scrolls in real time.
-
-![Job creation wizard](docs/images/wizard.jpg)
-
-*The wizard: a few questions and the optimal robocopy options are set for you.*
-
-![Editor with the robocopy command preview](docs/images/editor-preview.jpg)
-
-*The editor shows, in real time, the exact robocopy command that will be executed.*
-
-### Command line (for scheduling)
+## For power users
 
 ```text
-RoboKeep.exe --run-all              Runs all enabled jobs
-RoboKeep.exe --job "Documents"      Runs a single job
-RoboKeep.exe --run-all --dry-run    Preview (no changes)
+RoboKeep.exe --run-all              run all enabled jobs (exit code 0 = all good)
+RoboKeep.exe --job "Documents"      run a single job
+RoboKeep.exe --run-all --dry-run    preview only, nothing changes
 RoboKeep.exe --job "Photos" --config "D:\path\config.json"
 ```
 
-Exit codes: `0` all jobs succeeded · `1` at least one error · `2` job not found.
-
-Scheduling is created from **Settings → Scheduling** (uses Windows Task Scheduler) and launches the app
-with `--run-all` at the chosen time.
-
-## Features
-
-- **Guided job creation**, with explanations and recommended options per disk/data type.
-- Full **editor** with **command preview** and **live log**.
-- **Preview / dry-run** (`/L`): shows the actions without changing anything.
-- **Mirror** (`/MIR`) or **copy/accumulate** (`/E`); **don't overwrite newer** files (`/XO`);
-  **copy ACL/owner** (`/COPYALL`).
-- **Multi-thread** (`/MT`), per-job file and folder **exclusions**.
-- **Large files:** **restartable** mode (`/Z`, resumes interrupted copies) or **unbuffered I/O** (`/J`).
-- **Force copy:** recopy files with frozen date/size (encrypted containers, DBs) even when robocopy would
-  skip them; **smart** mode that recopies only if the content hash changed.
-- Optional **detailed logging** (`/V`, also lists skipped files).
-- **Per-job logs** compressed to `.zip`, archived by date, with **automatic cleanup**.
-- **Email notifications** (SMTP) with outcome and **counts** (copied / skipped / extra / failed).
-- **Credentials** for UNC network shares, encrypted with **DPAPI**, with a connection test.
-- Integrated **scheduling** via Windows Task Scheduler.
-- Job reordering by **drag &amp; drop**; latest result shown in the list (also after scheduled runs).
-- **Per-job versioning** (optional): each run saves a **dated snapshot** of the destination. Files
-  unchanged between snapshots are stored as **hard-links** shared across snapshots — disk space grows only
-  for files that actually change. **Retention** is configurable (last N snapshots and/or snapshots older
-  than X days; 0 = no limit). To **restore**, click **Versions...** on the job: select a snapshot date and
-  it opens in File Explorer — copy whatever you need from there.
-  _Requires a local NTFS destination (hard-links only work on NTFS); network shares and exFAT are not yet
-  supported._
-
-## Limitations
-
-- **Windows only:** depends on `robocopy`. No macOS/Linux version.
-- **No block-level/delta copy:** when a file changes, robocopy recopies it **entirely**. For very large
-  files that change often, the cost is a full transfer.
-- **Versioning on local NTFS only:** per-job snapshot versioning is available, but it requires a local
-  NTFS destination for hard-links. Network shares and exFAT destinations are not yet supported for this
-  feature.
-- The **scheduling** and the user-scope credential option require the task to run under the appropriate
-  user; some actions (e.g. `/COPYALL`) may require sufficient privileges.
-
-## Configuration
-
-By default `config.json`, `lastresults.json`, `logs\`, and `temp\` live in **`%APPDATA%\RoboKeep`**
-(per user): your data survives app updates and reinstalls. In **portable** mode — by placing an empty
-`portable.flag` file next to the executable — everything stays in the app folder instead.
-Example: **[config/config.example.json](config/config.example.json)**.
-
-Passwords (network and email) are never stored in plain text — they are encrypted with **DPAPI**. The real
-`config.json` and `lastresults.json` stay local (not versioned).
-
-## Further reading
-
-See **[ANALISI.md](ANALISI.md)** for the project goals and technical decisions (why robocopy and native
-.NET). *(The analysis document is written in Italian.)*
+Build from source: `dotnet build src/RoboKeep.sln -c Release` (requires the .NET 10 SDK) —
+the test suite runs with `dotnet test src/RoboKeep.Tests/RoboKeep.Tests.csproj`.
+Portable mode: create an empty `portable.flag` file next to the exe and everything (config,
+logs, results) stays in the app folder. Sample config:
+[config/config.example.json](config/config.example.json). Project background and technical
+decisions: [ANALISI.md](ANALISI.md) *(in Italian)*.
 
 ## License
 
-Distributed under the **MIT License** — see the [LICENSE](LICENSE) file. © 2026 Roberto Serafini.
+Distributed under the **MIT License** — see [LICENSE](LICENSE). © 2026 Roberto Serafini.
