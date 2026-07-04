@@ -90,4 +90,24 @@ public sealed class BackupJob
     /// così anche i file aperti/bloccati vengono letti integri. Richiede sorgente su volume NTFS
     /// locale e conferma amministratore (UAC) all'avvio del run.</summary>
     public bool UseVss { get; set; }
+
+    /// <summary>Frequenza della pianificazione per-job (attività di Windows dedicata). None = nessuna.</summary>
+    public ScheduleKind Schedule { get; set; } = ScheduleKind.None;
+
+    /// <summary>Orario della pianificazione, formato "HH:mm".</summary>
+    public string ScheduleTime { get; set; } = "21:00";
+
+    /// <summary>Giorno della settimana (solo per Schedule = Weekly).</summary>
+    public DayOfWeek ScheduleWeekDay { get; set; } = DayOfWeek.Monday;
+
+    /// <summary>Giorno del mese 1-31 (solo per Schedule = Monthly). 29-31 scattano solo nei mesi che li hanno.</summary>
+    public int ScheduleMonthDay { get; set; } = 1;
+
+    /// <summary>true → dopo ogni backup riuscito esegue la verifica integrità (hash) e la registra in cronologia.</summary>
+    public bool VerifyAfterRun { get; set; }
+
+    /// <summary>Millisecondi di pausa tra i pacchetti robocopy (/IPG). 0 = piena velocità.
+    /// Con un valore > 0 il job gira senza /MT: il ritardo è per thread e con più thread
+    /// il limite diventerebbe imprevedibile.</summary>
+    public int InterPacketGapMs { get; set; }
 }

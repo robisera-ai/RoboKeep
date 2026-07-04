@@ -399,6 +399,12 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         SnapshotKeepCount = j.SnapshotKeepCount,
         SnapshotMaxAgeDays = j.SnapshotMaxAgeDays,
         UseVss = j.UseVss,
+        Schedule = j.Schedule,
+        ScheduleTime = j.ScheduleTime,
+        ScheduleWeekDay = j.ScheduleWeekDay,
+        ScheduleMonthDay = j.ScheduleMonthDay,
+        VerifyAfterRun = j.VerifyAfterRun,
+        InterPacketGapMs = j.InterPacketGapMs,
     };
 
     private static void CopyInto(BackupJob from, BackupJob to)
@@ -425,5 +431,11 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         to.SnapshotKeepCount = from.SnapshotKeepCount;
         to.SnapshotMaxAgeDays = from.SnapshotMaxAgeDays;
         to.UseVss = from.UseVss;
+        to.Schedule = from.Schedule;
+        to.ScheduleTime = from.ScheduleTime;
+        to.ScheduleWeekDay = from.ScheduleWeekDay;
+        to.ScheduleMonthDay = from.ScheduleMonthDay;
+        to.VerifyAfterRun = from.VerifyAfterRun;
+        to.InterPacketGapMs = from.InterPacketGapMs;
     }
 }
