@@ -244,4 +244,30 @@ public class RobocopyArgsBuilderTests
         job.LogAllFiles = true;
         Assert.Contains("/V", RobocopyArgsBuilder.Build(job));
     }
+
+    [Fact]
+    public void Build_SourceOverride_ReplacesSource()
+    {
+        var job = new BackupJob { Name = "j", Source = @"C:\dati", Destination = @"E:\bk" };
+        var args = RobocopyArgsBuilder.Build(job, sourceOverride: @"D:\sess\source\dati");
+        Assert.Equal(@"D:\sess\source\dati", args[0]);
+        Assert.Equal(@"E:\bk", args[1]);
+    }
+
+    [Fact]
+    public void Build_NoSourceOverride_UsesJobSource()
+    {
+        var job = new BackupJob { Name = "j", Source = @"C:\dati", Destination = @"E:\bk" };
+        var args = RobocopyArgsBuilder.Build(job);
+        Assert.Equal(@"C:\dati", args[0]);
+    }
+
+    [Fact]
+    public void BuildForceCopyPass_SourceOverride_ReplacesSource()
+    {
+        var job = new BackupJob { Name = "j", Source = @"C:\dati", Destination = @"E:\bk" };
+        var args = RobocopyArgsBuilder.BuildForceCopyPass(job, new[] { "*.pst" },
+            sourceOverride: @"D:\sess\source\dati");
+        Assert.Equal(@"D:\sess\source\dati", args[0]);
+    }
 }

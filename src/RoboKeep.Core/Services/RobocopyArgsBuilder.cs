@@ -19,11 +19,12 @@ public static class RobocopyArgsBuilder
     /// <param name="dryRun">Se true aggiunge <c>/L</c> (anteprima: nessuna modifica).</param>
     /// <param name="logFile">Se valorizzato aggiunge <c>/TEE</c> e <c>/LOG:&lt;file&gt;</c>.</param>
     public static IReadOnlyList<string> Build(
-        BackupJob job, bool dryRun = false, string? logFile = null, string? destinationOverride = null)
+        BackupJob job, bool dryRun = false, string? logFile = null, string? destinationOverride = null,
+        string? sourceOverride = null)
     {
         ArgumentNullException.ThrowIfNull(job);
 
-        var source = (job.Source ?? "").Trim();
+        var source = (sourceOverride ?? job.Source ?? "").Trim();
         var dest = (destinationOverride ?? job.Destination ?? "").Trim();
         if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(dest))
             throw new InvalidOperationException(
@@ -101,12 +102,12 @@ public static class RobocopyArgsBuilder
     /// </summary>
     public static IReadOnlyList<string> BuildForceCopyPass(
         BackupJob job, IReadOnlyList<string> filters, bool dryRun = false, string? logFile = null,
-        string? destinationOverride = null)
+        string? destinationOverride = null, string? sourceOverride = null)
     {
         ArgumentNullException.ThrowIfNull(job);
         ArgumentNullException.ThrowIfNull(filters);
 
-        var source = (job.Source ?? "").Trim();
+        var source = (sourceOverride ?? job.Source ?? "").Trim();
         var dest = (destinationOverride ?? job.Destination ?? "").Trim();
         if (string.IsNullOrWhiteSpace(source) || string.IsNullOrWhiteSpace(dest))
             throw new InvalidOperationException(

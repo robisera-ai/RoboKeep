@@ -15,7 +15,8 @@ public sealed class SnapshotService
     public SnapshotService(RobocopyRunner runner) => _runner = runner;
 
     public async Task<RobocopyRunResult> RunVersionedAsync(
-        BackupJob job, IProgress<string>? progress = null, CancellationToken ct = default)
+        BackupJob job, IProgress<string>? progress = null, CancellationToken ct = default,
+        string? sourceOverride = null)
     {
         ArgumentNullException.ThrowIfNull(job);
 
@@ -60,7 +61,7 @@ public sealed class SnapshotService
             // Clonazione e rottura-hard-link sono lavoro IO pesante e sincrono: su thread di background,
             // altrimenti su cartelle grandi (migliaia di file) la finestra si congela.
             var prevPath = Path.Combine(dest, prevName);
-            var source = job.Source;
+            var source = sourceOverride ?? job.Source;
             progress?.Report($"[versioning] clono lo snapshot precedente ({prevName}) via hard-link...");
             await Task.Run(() => HardLinkCloner.Clone(prevPath, curr), ct).ConfigureAwait(false);
             // Pre-passata: rompe l'hard-link dei file cambiati, cosi robocopy li ricrea nuovi
@@ -69,7 +70,8 @@ public sealed class SnapshotService
             await Task.Run(() => SnapshotChangedUnlinker.UnlinkChanged(source, curr), ct).ConfigureAwait(false);
         }
 
-        var run = await _runner.RunAsync(job, dryRun: false, progress, ct, destinationOverride: curr).ConfigureAwait(false);
+        var run = await _runner.RunAsync(job, dryRun: false, progress, ct, destinationOverride: curr,
+            sourceOverride: sourceOverride).ConfigureAwait(false);
 
         if (run.Result.Success)
         {
