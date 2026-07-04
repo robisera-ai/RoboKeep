@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using RoboKeep.Core.Services;
 
 namespace RoboKeep.Tests;
@@ -18,7 +19,7 @@ public class VssLedgerTests : IDisposable
     {
         var ledger = new VssLedger(LedgerPath);
         ledger.Add("{ID-1}");
-        Assert.Equal(new[] { "{ID-1}" }, ledger.List());
+        Assert.Equal(new[] { "{ID-1}" }, ledger.List().Select(e => e.ShadowId));
     }
 
     [Fact]
@@ -28,7 +29,7 @@ public class VssLedgerTests : IDisposable
         ledger.Add("{ID-1}");
         ledger.Add("{ID-2}");
         ledger.Remove("{ID-1}");
-        Assert.Equal(new[] { "{ID-2}" }, ledger.List());
+        Assert.Equal(new[] { "{ID-2}" }, ledger.List().Select(e => e.ShadowId));
     }
 
     [Fact]
@@ -38,5 +39,36 @@ public class VssLedgerTests : IDisposable
         ledger.Add("{ID-1}");
         ledger.Add("{ID-1}");
         Assert.Single(ledger.List());
+    }
+
+    [Fact]
+    public void ListStale_OwnerAlive_NotReturned()
+    {
+        var ledger = new VssLedger(LedgerPath);
+        ledger.Add("{ID-1}"); // stampato con Environment.ProcessId (il processo di test, vivo)
+        Assert.Single(ledger.List());
+        Assert.Empty(ledger.ListStale());
+    }
+
+    [Fact]
+    public void ListStale_OwnerDead_Returned()
+    {
+        var deadPid = FindDeadPid();
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(LedgerPath, $"[{{\"ShadowId\":\"{{ID-DEAD}}\",\"OwnerPid\":{deadPid}}}]");
+
+        var ledger = new VssLedger(LedgerPath);
+        Assert.Equal(new[] { "{ID-DEAD}" }, ledger.ListStale());
+    }
+
+    /// <summary>Trova un PID che non corrisponde a nessun processo vivo.</summary>
+    private static int FindDeadPid()
+    {
+        for (var pid = 999_999; pid > 100_000; pid--)
+        {
+            try { Process.GetProcessById(pid); }
+            catch { return pid; }
+        }
+        throw new InvalidOperationException("Nessun PID libero trovato per il test.");
     }
 }

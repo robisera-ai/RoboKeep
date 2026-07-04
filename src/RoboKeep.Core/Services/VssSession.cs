@@ -50,18 +50,20 @@ public sealed class VssSession : IAsyncDisposable
         Directory.CreateDirectory(sessionDir);
 
         VssSessionProtocol.WriteRequest(sessionDir, new VssRequest(
-            volume, Environment.ProcessId, ledger.List().ToList()));
+            volume, Environment.ProcessId, ledger.ListStale().ToList()));
 
         Process helper;
         try
         {
-            helper = Process.Start(new ProcessStartInfo
+            // Process.Start con Verb=runas blocca finché l'utente non risponde al prompt UAC:
+            // via Task.Run per non bloccare il thread UI (dispatcher WPF) nell'attesa.
+            helper = await Task.Run(() => Process.Start(new ProcessStartInfo
             {
                 FileName = exePath,
                 Arguments = $"--vss-helper \"{sessionDir}\"",
                 UseShellExecute = true, // necessario per il verbo runas
                 Verb = "runas",
-            }) ?? throw new VssUnavailableException("Avvio del processo elevato fallito.");
+            }), ct).ConfigureAwait(false) ?? throw new VssUnavailableException("Avvio del processo elevato fallito.");
         }
         catch (Win32Exception ex) when (ex.NativeErrorCode == ErrorCancelled)
         {

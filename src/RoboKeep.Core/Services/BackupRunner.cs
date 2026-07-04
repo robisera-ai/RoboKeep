@@ -67,8 +67,14 @@ public sealed class BackupRunner
                 progress?.Report(string.Format(CoreLoc.S("Vss_Created"),
                     VssPathMapper.GetVolumeRoot(job.Source)));
             }
-            catch (VssUnavailableException ex)
+            catch (OperationCanceledException)
             {
+                throw; // annullamento dell'utente: ferma il job, non degradare
+            }
+            catch (Exception ex)
+            {
+                // Qualsiasi altro errore (VssUnavailableException, IO su disco pieno, ...):
+                // il backup non si ferma mai per colpa di VSS, degrada a copia normale.
                 progress?.Report(string.Format(CoreLoc.S("Vss_Unavailable"), ex.Message));
             }
         }
