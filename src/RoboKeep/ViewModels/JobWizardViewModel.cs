@@ -91,6 +91,12 @@ public sealed class JobWizardViewModel : ObservableObject
         set { _a.ExcludeCommonTemp = value; OnPropertyChanged(); RaisePreview(); }
     }
 
+    public bool HasOpenFiles
+    {
+        get => _a.HasOpenFiles;
+        set { _a.HasOpenFiles = value; OnPropertyChanged(); RaisePreview(); }
+    }
+
     public bool ShowNetCredNote =>
         _a.SourceStorage == StorageKind.Network || _a.DestStorage == StorageKind.Network;
 
@@ -150,6 +156,7 @@ public sealed class JobWizardViewModel : ObservableObject
             FrozenMetadataPatterns = _hasFrozen ? new List<string>(_a.FrozenMetadataPatterns) : new List<string>(),
             PreservePermissions = _a.PreservePermissions,
             ExcludeCommonTemp = _a.ExcludeCommonTemp,
+            HasOpenFiles = _a.HasOpenFiles,
         };
         return JobWizardPlanner.BuildJob(answers);
     }

@@ -43,6 +43,7 @@ public static class JobWizardPlanner
                 .ToList(),
             ForceCopySmart = false,
             Enabled = true,
+            UseVss = a.HasOpenFiles,
         };
 
         if (a.ExcludeCommonTemp)

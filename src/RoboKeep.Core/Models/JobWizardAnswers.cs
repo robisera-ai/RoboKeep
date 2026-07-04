@@ -13,4 +13,5 @@ public sealed class JobWizardAnswers
     public List<string> FrozenMetadataPatterns { get; set; } = new();
     public bool PreservePermissions { get; set; }
     public bool ExcludeCommonTemp { get; set; }
+    public bool HasOpenFiles { get; set; }
 }

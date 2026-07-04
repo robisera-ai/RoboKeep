@@ -131,6 +131,8 @@
                         <CheckBox Content="{l:Tr Wiz_Perms}" IsChecked="{Binding PreservePermissions}" Margin="0,14,0,0"/>
                         <TextBlock Style="{StaticResource Hint}" Text="{l:Tr Wiz_PermsHint}"/>
                         <CheckBox Content="{l:Tr Wiz_Excl}" IsChecked="{Binding ExcludeCommonTemp}" Margin="0,14,0,0"/>
+                        <CheckBox Content="{l:Tr Wiz_OpenFiles}" IsChecked="{Binding HasOpenFiles}" Margin="0,14,0,0"/>
+                        <TextBlock Style="{StaticResource Hint}" Text="{l:Tr Wiz_OpenFilesHint}"/>
                     </StackPanel>
                 </TabItem>
 

@@ -108,4 +108,24 @@ public class JobWizardPlannerTests
         Assert.Empty(none.ExcludeDirs);
         Assert.Empty(none.ExcludeFiles);
     }
+
+    [Fact]
+    public void BuildJob_HasOpenFiles_SetsUseVss()
+    {
+        var job = JobWizardPlanner.BuildJob(new JobWizardAnswers
+        {
+            Name = "n", Source = @"C:\s", Destination = @"E:\d", HasOpenFiles = true,
+        });
+        Assert.True(job.UseVss);
+    }
+
+    [Fact]
+    public void BuildJob_NoOpenFiles_UseVssFalse()
+    {
+        var job = JobWizardPlanner.BuildJob(new JobWizardAnswers
+        {
+            Name = "n", Source = @"C:\s", Destination = @"E:\d",
+        });
+        Assert.False(job.UseVss);
+    }
 }
