@@ -20,6 +20,15 @@ public partial class App : Application
         base.OnStartup(e);
 
         var options = CliOptions.Parse(e.Args);
+        if (options.VssHelperDir is not null)
+        {
+            // Modalità helper elevato: crea lo snapshot, attende il rilascio, pulisce, esce.
+            // Niente GUI, niente localizzazione: il processo comunica solo via file di sessione.
+            var helperExit = RoboKeep.Core.Services.VssHelper.Run(options.VssHelperDir);
+            Shutdown(helperExit);
+            return;
+        }
+
         if (options.HasCommand)
         {
             // Modalità headless: aggancia la console del processo padre (se presente) per l'output.

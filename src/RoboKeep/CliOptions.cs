@@ -10,6 +10,10 @@ public sealed class CliOptions
     /// <summary>Percorso alternativo del file di configurazione (facoltativo).</summary>
     public string? ConfigPath { get; private set; }
 
+    /// <summary>Cartella di sessione VSS: se presente, il processo esegue il helper elevato
+    /// (creazione snapshot) e termina. Uso interno, non documentato all'utente.</summary>
+    public string? VssHelperDir { get; private set; }
+
     /// <summary>true se è stata richiesta un'esecuzione headless (niente GUI).</summary>
     public bool HasCommand => RunAll || !string.IsNullOrEmpty(JobName);
 
@@ -38,6 +42,10 @@ public sealed class CliOptions
                 case "/config":
                     if (i + 1 < args.Length)
                         o.ConfigPath = args[++i];
+                    break;
+                case "--vss-helper":
+                    if (i + 1 < args.Length)
+                        o.VssHelperDir = args[++i];
                     break;
             }
         }
