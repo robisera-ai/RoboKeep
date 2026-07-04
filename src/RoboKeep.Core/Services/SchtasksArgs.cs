@@ -18,7 +18,8 @@ public static class SchtasksArgs
     public static string TaskName(string jobName)
     {
         var invalid = new[] { '\\', '/', ':', '*', '?', '"', '<', '>', '|' };
-        var safe = new string((jobName ?? "").Select(c => invalid.Contains(c) ? '_' : c).ToArray()).Trim();
+        var safe = new string((jobName ?? "").Select(c => invalid.Contains(c) ? '_' : c).ToArray())
+            .Trim().TrimEnd('.'); // niente punto finale: i nomi attività sono segmenti di percorso
         return Prefix + (string.IsNullOrEmpty(safe) ? "job" : safe);
     }
 
