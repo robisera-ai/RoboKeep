@@ -68,6 +68,14 @@ public sealed class VssSession : IAsyncDisposable
             TryDeleteDir(sessionDir);
             throw new VssUnavailableException(CoreLoc.S("Vss_UacDenied"), ex);
         }
+        catch (Win32Exception ex)
+        {
+            // Qualsiasi altro errore Win32 (file non trovato, accesso negato, SE_ERR_*...)
+            // deve comunque degradare a copia normale: mai lasciare risalire un'eccezione
+            // diversa da VssUnavailableException oltre questo punto.
+            TryDeleteDir(sessionDir);
+            throw new VssUnavailableException($"Avvio del processo elevato fallito: {ex.Message}", ex);
+        }
 
         // Il timeout parte da qui: Process.Start con runas ritorna solo dopo la risposta
         // al prompt UAC, quindi il tempo di decisione dell'utente non è conteggiato.
@@ -89,11 +97,33 @@ public sealed class VssSession : IAsyncDisposable
             // residuo verrà eliminato al prossimo run VSS. Chiude anche la finestra
             // "helper morto dopo la creazione ma prima della lettura di ready".
             TrySalvageShadowId(sessionDir, ledger);
-            try { VssSessionProtocol.SignalRelease(sessionDir); } catch { }
+
+            // Segnala il rilascio e attende che il helper esca PRIMA di cancellare la
+            // cartella di sessione: se la cancelliamo subito, il flag di release sparisce
+            // con lei e il helper (che poll­a release.flag ogni 1s) non lo vede più,
+            // restando montato con lo snapshot per 12h (timeout di sicurezza).
+            var exited = await ReleaseAndAwaitHelperAsync(sessionDir, helper).ConfigureAwait(false);
             helper.Dispose();
-            TryDeleteDir(sessionDir);
+            if (exited)
+                TryDeleteDir(sessionDir);
             throw;
         }
+    }
+
+    /// <summary>
+    /// Segnala il rilascio al helper e attende (bounded, <see cref="ExitTimeout"/>) che esca.
+    /// Ritorna true se il helper è uscito entro il timeout. Non cancella nulla: la decisione
+    /// se ripulire la cartella di sessione spetta al chiamante.
+    /// </summary>
+    private static async Task<bool> ReleaseAndAwaitHelperAsync(string sessionDir, Process helper)
+    {
+        try { VssSessionProtocol.SignalRelease(sessionDir); } catch { }
+
+        var deadline = DateTime.UtcNow + ExitTimeout;
+        while (!helper.HasExited && DateTime.UtcNow < deadline)
+            await Task.Delay(PollInterval).ConfigureAwait(false);
+
+        return helper.HasExited;
     }
 
     /// <summary>
@@ -133,14 +163,15 @@ public sealed class VssSession : IAsyncDisposable
     {
         try
         {
-            VssSessionProtocol.SignalRelease(_sessionDir);
-            var deadline = DateTime.UtcNow + ExitTimeout;
-            while (!_helper.HasExited && DateTime.UtcNow < deadline)
-                await Task.Delay(PollInterval).ConfigureAwait(false);
+            var exited = await ReleaseAndAwaitHelperAsync(_sessionDir, _helper).ConfigureAwait(false);
 
-            // Se il helper è uscito pulito ha cancellato lo snapshot: togli l'ID dal registro.
-            // Se non è uscito, lascia l'ID: verrà ripulito al prossimo run VSS.
-            if (_helper.HasExited)
+            // HasExited è vero anche per un helper TERMINATO A FORZA (kill): in quel caso il
+            // suo finally non ha girato e lo snapshot resta montato senza che nessuno lo sappia.
+            // Solo un exit pulito (codice 0, ritornato dal helper solo dopo che la sua pulizia
+            // finally ha completato con successo) garantisce che lo snapshot sia stato rimosso:
+            // togli l'ID dal registro in quel caso soltanto. In ogni altro caso (non uscito,
+            // ucciso, uscito con errore) l'ID resta nel registro e verrà ripulito al prossimo run VSS.
+            if (exited && TryGetExitCodeZero(_helper))
                 _ledger.Remove(ShadowId);
         }
         finally
@@ -148,6 +179,12 @@ public sealed class VssSession : IAsyncDisposable
             _helper.Dispose();
             TryDeleteDir(_sessionDir);
         }
+    }
+
+    private static bool TryGetExitCodeZero(Process helper)
+    {
+        try { return helper.ExitCode == 0; }
+        catch { return false; }
     }
 
     private static void TrySalvageShadowId(string sessionDir, VssLedger ledger)
