@@ -17,6 +17,7 @@ public sealed class BackupRunner
     private readonly LastResultStore? _results;
     private readonly SnapshotService? _snapshots;
     private readonly string? _lockFolder;
+    private readonly string? _vssSessionRoot;
 
     public BackupRunner(
         AppConfig config,
@@ -26,7 +27,8 @@ public sealed class BackupRunner
         CredentialService credentials,
         LastResultStore? results = null,
         SnapshotService? snapshots = null,
-        string? lockFolder = null)
+        string? lockFolder = null,
+        string? vssSessionRoot = null)
     {
         _config = config;
         _runner = runner;
@@ -36,6 +38,7 @@ public sealed class BackupRunner
         _results = results;
         _snapshots = snapshots;
         _lockFolder = lockFolder;
+        _vssSessionRoot = vssSessionRoot;
     }
 
     /// <summary>Trova un job per nome (case-insensitive).</summary>
@@ -49,6 +52,26 @@ public sealed class BackupRunner
         // Il lock file persiste se il processo viene terminato brutalmente; viene rimosso nel
         // finally (via using) quando il run termina normalmente (successo, errore o cancel).
         using var lockHandle = dryRun || _lockFolder is null ? null : JobLockFile.Acquire(_lockFolder, job.Name);
+
+        // Snapshot VSS: se richiesto e disponibile, la copia legge dallo snapshot invece
+        // che dalla sorgente viva. Se non disponibile → copia normale con avviso (mai bloccare).
+        VssSession? vss = null;
+        string? sourceOverride = null;
+        if (job.UseVss && !dryRun && _vssSessionRoot is not null)
+        {
+            try
+            {
+                var ledger = new VssLedger(Path.Combine(_vssSessionRoot, "vss-ledger.json"));
+                vss = await VssSession.OpenAsync(job.Source, _vssSessionRoot, ledger, ct).ConfigureAwait(false);
+                sourceOverride = vss.SnapshotSourcePath;
+                progress?.Report(string.Format(CoreLoc.S("Vss_Created"),
+                    VssPathMapper.GetVolumeRoot(job.Source)));
+            }
+            catch (VssUnavailableException ex)
+            {
+                progress?.Report(string.Format(CoreLoc.S("Vss_Unavailable"), ex.Message));
+            }
+        }
 
         var cred = string.IsNullOrEmpty(job.CredentialId)
             ? null
@@ -68,18 +91,18 @@ public sealed class BackupRunner
             {
                 if (HardLinkSupport.IsSupported(job.Destination))
                 {
-                    run = await _snapshots.RunVersionedAsync(job, progress, ct).ConfigureAwait(false);
+                    run = await _snapshots.RunVersionedAsync(job, progress, ct, sourceOverride).ConfigureAwait(false);
                 }
                 else
                 {
                     progress?.Report("[versioning] ATTENZIONE: la destinazione non supporta gli hard-link. "
                         + "Eseguo un mirror semplice (nessuno snapshot). Usa una destinazione NTFS locale per le versioni.");
-                    run = await _runner.RunAsync(job, dryRun, progress, ct).ConfigureAwait(false);
+                    run = await _runner.RunAsync(job, dryRun, progress, ct, sourceOverride: sourceOverride).ConfigureAwait(false);
                 }
             }
             else
             {
-                run = await _runner.RunAsync(job, dryRun, progress, ct).ConfigureAwait(false);
+                run = await _runner.RunAsync(job, dryRun, progress, ct, sourceOverride: sourceOverride).ConfigureAwait(false);
             }
 
             // Riepilogo nostro, leggibile e in italiano (l'output nativo di robocopy ha le
@@ -123,6 +146,12 @@ public sealed class BackupRunner
         }
         finally
         {
+            if (vss is not null)
+            {
+                await vss.DisposeAsync().ConfigureAwait(false);
+                progress?.Report(CoreLoc.S("Vss_Released"));
+            }
+
             if (connected && cred is not null)
                 _credentials.Disconnect(cred.Host);
         }

@@ -48,7 +48,8 @@ public sealed class AppHost
         var log = new LogService(Config.Settings);
         var email = new EmailService(Credentials);
         var snapshots = new SnapshotService(runner);
-        return new BackupRunner(Config, runner, log, email, Credentials, Results, snapshots, LockFolder);
+        return new BackupRunner(Config, runner, log, email, Credentials, Results, snapshots, LockFolder,
+            Path.Combine(Store.DirectoryPath, "vss"));
     }
 
     /// <summary>

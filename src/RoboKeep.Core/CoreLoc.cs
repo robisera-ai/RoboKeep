@@ -106,6 +106,37 @@ public static class CoreLoc
             "  (en destino, no en origen)", "  (dans la destination, pas dans la source)",
             "  (im Ziel, nicht in der Quelle)"),
 
+        ["Vss_Created"] = L(
+            "[vss] snapshot creato ({0}): copio dai file congelati, inclusi quelli aperti.",
+            "[vss] snapshot created ({0}): copying from frozen files, including open ones.",
+            "[vss] instantánea creada ({0}): copio desde los archivos congelados, incluidos los abiertos.",
+            "[vss] instantané créé ({0}) : copie depuis les fichiers figés, y compris ceux ouverts.",
+            "[vss] Snapshot erstellt ({0}): Kopie aus eingefrorenen Dateien, auch geöffnete."),
+        ["Vss_Released"] = L(
+            "[vss] snapshot rilasciato.",
+            "[vss] snapshot released.",
+            "[vss] instantánea liberada.",
+            "[vss] instantané libéré.",
+            "[vss] Snapshot freigegeben."),
+        ["Vss_Unavailable"] = L(
+            "[vss] ATTENZIONE: snapshot non disponibile ({0}): i file aperti verranno saltati.",
+            "[vss] WARNING: snapshot unavailable ({0}): open files will be skipped.",
+            "[vss] ATENCIÓN: instantánea no disponible ({0}): los archivos abiertos se omitirán.",
+            "[vss] ATTENTION : instantané indisponible ({0}) : les fichiers ouverts seront ignorés.",
+            "[vss] ACHTUNG: Snapshot nicht verfügbar ({0}): geöffnete Dateien werden übersprungen."),
+        ["Vss_UacDenied"] = L(
+            "conferma amministratore negata",
+            "administrator approval denied",
+            "aprobación de administrador denegada",
+            "approbation administrateur refusée",
+            "Administratorbestätigung verweigert"),
+        ["Vss_NotEligible"] = L(
+            "la sorgente non è su un volume locale NTFS",
+            "the source is not on a local NTFS volume",
+            "el origen no está en un volumen NTFS local",
+            "la source n'est pas sur un volume NTFS local",
+            "die Quelle liegt nicht auf einem lokalen NTFS-Volume"),
+
         ["Lbl_Result"] = L("Esito", "Result", "Resultado", "Résultat", "Ergebnis"),
         ["Lbl_Error"] = L("ERRORE", "ERROR", "ERROR", "ERREUR", "FEHLER"),
         ["Lbl_FoldersCopied"] = L("Cartelle copiate", "Folders copied", "Carpetas copiadas", "Dossiers copiés", "Ordner kopiert"),
