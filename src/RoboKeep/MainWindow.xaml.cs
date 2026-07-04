@@ -398,6 +398,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         Versioned = j.Versioned,
         SnapshotKeepCount = j.SnapshotKeepCount,
         SnapshotMaxAgeDays = j.SnapshotMaxAgeDays,
+        UseVss = j.UseVss,
     };
 
     private static void CopyInto(BackupJob from, BackupJob to)
@@ -423,5 +424,6 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         to.Versioned = from.Versioned;
         to.SnapshotKeepCount = from.SnapshotKeepCount;
         to.SnapshotMaxAgeDays = from.SnapshotMaxAgeDays;
+        to.UseVss = from.UseVss;
     }
 }

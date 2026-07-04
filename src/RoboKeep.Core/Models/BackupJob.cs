@@ -85,4 +85,9 @@ public sealed class BackupJob
 
     /// <summary>Elimina gli snapshot più vecchi di questi giorni. 0 = nessun limite di età.</summary>
     public int SnapshotMaxAgeDays { get; set; }
+
+    /// <summary>true → prima della copia crea uno snapshot VSS del volume sorgente e copia da lì,
+    /// così anche i file aperti/bloccati vengono letti integri. Richiede sorgente su volume NTFS
+    /// locale e conferma amministratore (UAC) all'avvio del run.</summary>
+    public bool UseVss { get; set; }
 }
