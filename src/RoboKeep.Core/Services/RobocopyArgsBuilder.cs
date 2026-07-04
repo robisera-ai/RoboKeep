@@ -47,8 +47,13 @@ public static class RobocopyArgsBuilder
         // Esclude le junction per evitare loop/ricorsioni indesiderate.
         args.Add("/XJ");
 
-        // Copia multi-thread.
-        if (job.MultiThread > 0)
+        // Copia multi-thread — MA non insieme a /IPG: robocopy applica il ritardo per thread,
+        // quindi con piu' thread il limite di banda diventerebbe imprevedibile.
+        if (job.InterPacketGapMs > 0)
+        {
+            args.Add($"/IPG:{job.InterPacketGapMs}");
+        }
+        else if (job.MultiThread > 0)
         {
             var threads = Math.Min(job.MultiThread, MaxThreads);
             args.Add($"/MT:{threads}");
@@ -124,7 +129,9 @@ public static class RobocopyArgsBuilder
         args.Add(job.CopyAll ? "/COPYALL" : "/COPY:DAT");
         args.Add("/XJ");
 
-        if (job.MultiThread > 0)
+        if (job.InterPacketGapMs > 0)
+            args.Add($"/IPG:{job.InterPacketGapMs}");
+        else if (job.MultiThread > 0)
             args.Add($"/MT:{Math.Min(job.MultiThread, MaxThreads)}");
 
         if (job.UnbufferedIO)

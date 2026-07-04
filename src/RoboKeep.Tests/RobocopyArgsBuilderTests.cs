@@ -270,4 +270,33 @@ public class RobocopyArgsBuilderTests
             sourceOverride: @"D:\sess\source\dati");
         Assert.Equal(@"D:\sess\source\dati", args[0]);
     }
+
+    [Fact]
+    public void Build_InterPacketGap_AddsIpgAndDropsMt()
+    {
+        var job = new BackupJob { Name = "j", Source = @"C:\s", Destination = @"E:\d",
+            MultiThread = 8, InterPacketGapMs = 25 };
+        var args = RobocopyArgsBuilder.Build(job);
+        Assert.Contains("/IPG:25", args);
+        Assert.DoesNotContain(args, a => a.StartsWith("/MT"));
+    }
+
+    [Fact]
+    public void Build_NoInterPacketGap_KeepsMt()
+    {
+        var job = new BackupJob { Name = "j", Source = @"C:\s", Destination = @"E:\d", MultiThread = 8 };
+        var args = RobocopyArgsBuilder.Build(job);
+        Assert.Contains("/MT:8", args);
+        Assert.DoesNotContain(args, a => a.StartsWith("/IPG"));
+    }
+
+    [Fact]
+    public void BuildForceCopyPass_InterPacketGap_AddsIpgAndDropsMt()
+    {
+        var job = new BackupJob { Name = "j", Source = @"C:\s", Destination = @"E:\d",
+            MultiThread = 8, InterPacketGapMs = 25 };
+        var args = RobocopyArgsBuilder.BuildForceCopyPass(job, new[] { "*.pst" });
+        Assert.Contains("/IPG:25", args);
+        Assert.DoesNotContain(args, a => a.StartsWith("/MT"));
+    }
 }
