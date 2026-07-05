@@ -12,6 +12,8 @@ public static class VerifyTargetResolver
     public static string? Resolve(BackupJob job)
     {
         var dest = (job.Destination ?? "").Trim();
+        if (dest.Length == 0)
+            return null; // coerenza col contratto: null = niente da verificare
         if (!job.Versioned)
             return dest;
 
