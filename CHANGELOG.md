@@ -4,6 +4,39 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] - 2026-07-05 — Operations & integrity
+
+### Added
+- **Per-job scheduling** — each job can have its own Windows scheduled task (daily, weekly,
+  or monthly at a chosen time), managed from the job editor and kept in sync on save, rename,
+  delete, and config import. Tasks are registered via language-neutral XML, so weekday names
+  work on any Windows language.
+- **Run history with in-app log viewer** — every backup and every integrity check is recorded
+  (up to 500 entries); the new **History** window lists them with per-job filtering, and a
+  double-click opens the archived log right inside the app (read straight from the zip).
+- **Integrity verification** — a **Verify** button compares source and copy file-by-file with
+  SHA-256 hashes: mathematical certainty the backup is intact. Smart about false alarms: files
+  edited *after* the backup are reported separately, not as corruption; job exclusions are
+  honored; versioned jobs verify their latest snapshot. An optional per-job setting runs the
+  check automatically after every backup.
+- **Copy throttling** — an optional per-job slow-down (`/IPG`) for network backups; when
+  active the job runs single-stream so the limit stays predictable.
+- **Configuration export/import** — back up or move your whole configuration from Settings;
+  import validates first, saves an automatic backup of the current config, and re-syncs all
+  scheduled tasks (removing those of jobs that no longer exist).
+
+### Fixed
+- Health icons now update as each job finishes during "Run all", not only at the end of the
+  whole batch; a job that is currently running is never flagged as "interrupted".
+- The toolbar wraps to a second row on narrow windows instead of hiding buttons.
+- Run history is safe against concurrent RoboKeep processes (window + scheduled tasks) via a
+  cross-process lock.
+
+### Downloads
+- **`RoboKeep-1.4.0-win-x64-selfcontained.zip`** — bundles **.NET 10.0.9**: extract and run, nothing to install.
+- **`RoboKeep-1.4.0-win-x64-framework-dependent.zip`** — smaller; requires the
+  [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
+
 ## [1.3.0] - 2026-07-04 — Open files (VSS)
 
 ### Added
@@ -97,6 +130,7 @@ All notable changes to RoboKeep are documented here. The format is based on
 - Job management (source/destination, mirror, multithread, exclusions, retries), real-time log,
   dry-run preview, log archiving, scheduling and email notifications.
 
+[1.4.0]: https://github.com/robisera-ai/RoboKeep/releases/tag/v1.4.0
 [1.3.0]: https://github.com/robisera-ai/RoboKeep/releases/tag/v1.3.0
 [1.2.1]: https://github.com/robisera-ai/RoboKeep/releases/tag/v1.2.1
 [1.2.0]: https://github.com/robisera-ai/RoboKeep/releases/tag/v1.2.0
