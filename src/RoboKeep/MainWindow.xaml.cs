@@ -351,6 +351,12 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }
     }
 
+    private void OnShowHistory(object sender, RoutedEventArgs e)
+    {
+        var win = new HistoryWindow(_host, _vm.SelectedJob?.Name) { Owner = this };
+        win.ShowDialog();
+    }
+
     private void OnBrowseVersions(object sender, RoutedEventArgs e)
     {
         var selected = _vm.SelectedJob;

@@ -49,6 +49,7 @@ public sealed class MainViewModel : ObservableObject
         PreviewSelectedCommand = new RelayCommand(() => Toggle(RunKind.Preview), () => CanToggle(RunKind.Preview));
         RunSelectedCommand = new RelayCommand(() => Toggle(RunKind.Selected), () => CanToggle(RunKind.Selected));
         RunAllCommand = new RelayCommand(() => Toggle(RunKind.All), () => CanToggle(RunKind.All));
+        VerifySelectedCommand = new RelayCommand(() => Toggle(RunKind.Verify), () => CanToggle(RunKind.Verify));
         ClearLogCommand = new RelayCommand(() =>
         {
             lock (_bufLock) _buffer.Clear();
@@ -165,19 +166,22 @@ public sealed class MainViewModel : ObservableObject
     public RelayCommand PreviewSelectedCommand { get; }
     public RelayCommand RunSelectedCommand { get; }
     public RelayCommand RunAllCommand { get; }
+    public RelayCommand VerifySelectedCommand { get; }
     public RelayCommand ClearLogCommand { get; }
     public RelayCommand RefreshCommand { get; }
 
     // --- Esecuzione: il pulsante premuto si trasforma in "Annulla" ---
-    private enum RunKind { None, Preview, Selected, All }
+    private enum RunKind { None, Preview, Selected, All, Verify }
     private RunKind _running = RunKind.None;
 
     public string PreviewLabel => _running == RunKind.Preview ? Loc.Instance["Common_Cancel"] : Loc.Instance["Main_Preview"];
     public string RunSelectedLabel => _running == RunKind.Selected ? Loc.Instance["Common_Cancel"] : Loc.Instance["Main_RunSelected"];
     public string RunAllLabel => _running == RunKind.All ? Loc.Instance["Common_Cancel"] : Loc.Instance["Main_RunAll"];
+    public string VerifyLabel => _running == RunKind.Verify ? Loc.Instance["Common_Cancel"] : Loc.Instance["Main_Verify"];
     public bool PreviewCancel => _running == RunKind.Preview;
     public bool RunSelectedCancel => _running == RunKind.Selected;
     public bool RunAllCancel => _running == RunKind.All;
+    public bool VerifyCancel => _running == RunKind.Verify;
 
     private void SetRunning(RunKind k)
     {
@@ -191,9 +195,11 @@ public sealed class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(PreviewLabel));
         OnPropertyChanged(nameof(RunSelectedLabel));
         OnPropertyChanged(nameof(RunAllLabel));
+        OnPropertyChanged(nameof(VerifyLabel));
         OnPropertyChanged(nameof(PreviewCancel));
         OnPropertyChanged(nameof(RunSelectedCancel));
         OnPropertyChanged(nameof(RunAllCancel));
+        OnPropertyChanged(nameof(VerifyCancel));
     }
 
     private bool CanToggle(RunKind k)
@@ -212,6 +218,7 @@ public sealed class MainViewModel : ObservableObject
 
     private async Task StartAsync(RunKind k)
     {
+        if (k == RunKind.Verify) { await RunVerifyAsync(); return; }
         var dryRun = k == RunKind.Preview;
         List<JobViewModel> jobs;
         if (k == RunKind.All)
@@ -432,6 +439,55 @@ public sealed class MainViewModel : ObservableObject
             SetRunning(RunKind.None);
             // Ricarica gli esiti e rivaluta la salute: il banner/le righe riflettono l'esito appena ottenuto.
             ReloadLastResults();
+        }
+    }
+
+    /// <summary>Verifica integrità manuale del job selezionato: hash sorgente vs destinazione.</summary>
+    private async Task RunVerifyAsync()
+    {
+        var sel = SelectedJob;
+        if (sel is null) return;
+        var job = _host.Config.Jobs.FirstOrDefault(j => j.Name == sel.Name);
+        if (job is null) return;
+
+        IsBusy = true;
+        SetRunning(RunKind.Verify);
+        _cts = new CancellationTokenSource();
+        IProgress<string> progress = new DirectProgress(Enqueue);
+        _logTimer.Start();
+        var started = DateTime.Now;
+        try
+        {
+            Enqueue($"===== {Loc.Instance["Verify_Header"]} {DateTime.Now:HH:mm:ss} — {sel.Name} =====");
+            var target = VerifyTargetResolver.Resolve(job);
+            if (target is null)
+            {
+                Enqueue(RoboKeep.Core.CoreLoc.S("Verify_NothingToVerify"));
+                return;
+            }
+            var vr = await IntegrityVerifier.VerifyAsync(job.Source, target, progress, _cts.Token);
+            BackupRunner.ReportVerify(vr, progress);
+            _host.History.Append(new RunHistoryEntry(
+                job.Name, "verify", started, DateTime.Now,
+                vr.Mismatched == 0, 0,
+                vr.Checked, vr.Skipped, 0, vr.Mismatched + vr.Missing, 0, null));
+        }
+        catch (OperationCanceledException)
+        {
+            Enqueue($"!! {sel.Name}: {Loc.Instance["Run_CancelledUser"]}");
+        }
+        catch (Exception ex)
+        {
+            Enqueue($"!! {sel.Name}: {ex.Message}");
+        }
+        finally
+        {
+            _logTimer.Stop();
+            FlushLog();
+            _cts.Dispose();
+            _cts = null;
+            IsBusy = false;
+            SetRunning(RunKind.None);
         }
     }
 }

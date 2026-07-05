@@ -97,6 +97,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Main_Preview"] = "Anteprima",
         ["Main_RunSelected"] = "Avvia selezionato",
         ["Main_RunAll"] = "Avvia tutti",
+        ["Main_Verify"] = "Verifica",
+        ["Main_History"] = "Cronologia",
         ["Main_Settings"] = "Impostazioni",
         ["Main_LogTitle"] = "Log esecuzione",
         ["Main_Clear"] = "Pulisci",
@@ -322,6 +324,25 @@ public sealed class Loc : INotifyPropertyChanged
         ["Ver_Browse"] = "Versioni...",
         ["Ver_OpenInExplorer"] = "Apri in Esplora risorse",
         ["Ver_NoSnapshots"] = "Ancora nessuna versione per questo job.",
+
+        ["Verify_Header"] = "VERIFICA INTEGRITÀ",
+
+        ["Hist_Title"] = "Cronologia esecuzioni",
+        ["Hist_JobFilter"] = "Job:",
+        ["Hist_AllJobs"] = "Tutti i job",
+        ["Hist_ColWhen"] = "Data e ora",
+        ["Hist_ColJob"] = "Job",
+        ["Hist_ColKind"] = "Tipo",
+        ["Hist_ColOutcome"] = "Esito",
+        ["Hist_ColCounts"] = "Dettagli",
+        ["Hist_ColDuration"] = "Durata",
+        ["Hist_KindBackup"] = "Backup",
+        ["Hist_KindVerify"] = "Verifica",
+        ["Hist_CountsBackup"] = "{0} copiati · {1} invariati · {2} falliti",
+        ["Hist_CountsVerify"] = "{0} verificati · {1} differenti/mancanti · {2} saltati",
+        ["Hist_OpenLog"] = "Apri log",
+        ["Hist_LogGone"] = "Il log non è più disponibile (rimosso dalla pulizia automatica).",
+        ["LogView_Title"] = "Log",
     };
 
     // ---------------- ENGLISH ----------------
@@ -342,6 +363,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Main_Preview"] = "Preview",
         ["Main_RunSelected"] = "Run selected",
         ["Main_RunAll"] = "Run all",
+        ["Main_Verify"] = "Verify",
+        ["Main_History"] = "History",
         ["Main_Settings"] = "Settings",
         ["Main_LogTitle"] = "Execution log",
         ["Main_Clear"] = "Clear",
@@ -567,6 +590,25 @@ public sealed class Loc : INotifyPropertyChanged
         ["Ver_Browse"] = "Versions...",
         ["Ver_OpenInExplorer"] = "Open in File Explorer",
         ["Ver_NoSnapshots"] = "No versions yet for this job.",
+
+        ["Verify_Header"] = "INTEGRITY CHECK",
+
+        ["Hist_Title"] = "Run history",
+        ["Hist_JobFilter"] = "Job:",
+        ["Hist_AllJobs"] = "All jobs",
+        ["Hist_ColWhen"] = "Date and time",
+        ["Hist_ColJob"] = "Job",
+        ["Hist_ColKind"] = "Type",
+        ["Hist_ColOutcome"] = "Outcome",
+        ["Hist_ColCounts"] = "Details",
+        ["Hist_ColDuration"] = "Duration",
+        ["Hist_KindBackup"] = "Backup",
+        ["Hist_KindVerify"] = "Verify",
+        ["Hist_CountsBackup"] = "{0} copied · {1} unchanged · {2} failed",
+        ["Hist_CountsVerify"] = "{0} checked · {1} different/missing · {2} skipped",
+        ["Hist_OpenLog"] = "Open log",
+        ["Hist_LogGone"] = "The log is no longer available (removed by automatic cleanup).",
+        ["LogView_Title"] = "Log",
     };
 
     // ---------------- ESPAÑOL ----------------
@@ -587,6 +629,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Main_Preview"] = "Vista previa",
         ["Main_RunSelected"] = "Ejecutar seleccionado",
         ["Main_RunAll"] = "Ejecutar todos",
+        ["Main_Verify"] = "Verificar",
+        ["Main_History"] = "Historial",
         ["Main_Settings"] = "Configuración",
         ["Main_LogTitle"] = "Registro de ejecución",
         ["Main_Clear"] = "Limpiar",
@@ -812,6 +856,25 @@ public sealed class Loc : INotifyPropertyChanged
         ["Ver_Browse"] = "Versiones...",
         ["Ver_OpenInExplorer"] = "Abrir en el Explorador",
         ["Ver_NoSnapshots"] = "Aún no hay versiones para este trabajo.",
+
+        ["Verify_Header"] = "VERIFICACIÓN DE INTEGRIDAD",
+
+        ["Hist_Title"] = "Historial de ejecuciones",
+        ["Hist_JobFilter"] = "Trabajo:",
+        ["Hist_AllJobs"] = "Todos los trabajos",
+        ["Hist_ColWhen"] = "Fecha y hora",
+        ["Hist_ColJob"] = "Trabajo",
+        ["Hist_ColKind"] = "Tipo",
+        ["Hist_ColOutcome"] = "Resultado",
+        ["Hist_ColCounts"] = "Detalles",
+        ["Hist_ColDuration"] = "Duración",
+        ["Hist_KindBackup"] = "Copia",
+        ["Hist_KindVerify"] = "Verificación",
+        ["Hist_CountsBackup"] = "{0} copiados · {1} sin cambios · {2} fallidos",
+        ["Hist_CountsVerify"] = "{0} verificados · {1} diferentes/ausentes · {2} omitidos",
+        ["Hist_OpenLog"] = "Abrir registro",
+        ["Hist_LogGone"] = "El registro ya no está disponible (eliminado por la limpieza automática).",
+        ["LogView_Title"] = "Registro",
     };
 
     // ---------------- FRANÇAIS ----------------
@@ -832,6 +895,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Main_Preview"] = "Aperçu",
         ["Main_RunSelected"] = "Lancer la sélection",
         ["Main_RunAll"] = "Tout lancer",
+        ["Main_Verify"] = "Vérifier",
+        ["Main_History"] = "Historique",
         ["Main_Settings"] = "Paramètres",
         ["Main_LogTitle"] = "Journal d'exécution",
         ["Main_Clear"] = "Effacer",
@@ -1057,6 +1122,25 @@ public sealed class Loc : INotifyPropertyChanged
         ["Ver_Browse"] = "Versions...",
         ["Ver_OpenInExplorer"] = "Ouvrir dans l'Explorateur",
         ["Ver_NoSnapshots"] = "Aucune version pour cette tâche pour l'instant.",
+
+        ["Verify_Header"] = "VÉRIFICATION D'INTÉGRITÉ",
+
+        ["Hist_Title"] = "Historique des exécutions",
+        ["Hist_JobFilter"] = "Tâche :",
+        ["Hist_AllJobs"] = "Toutes les tâches",
+        ["Hist_ColWhen"] = "Date et heure",
+        ["Hist_ColJob"] = "Tâche",
+        ["Hist_ColKind"] = "Type",
+        ["Hist_ColOutcome"] = "Résultat",
+        ["Hist_ColCounts"] = "Détails",
+        ["Hist_ColDuration"] = "Durée",
+        ["Hist_KindBackup"] = "Sauvegarde",
+        ["Hist_KindVerify"] = "Vérification",
+        ["Hist_CountsBackup"] = "{0} copiés · {1} inchangés · {2} échoués",
+        ["Hist_CountsVerify"] = "{0} vérifiés · {1} différents/manquants · {2} ignorés",
+        ["Hist_OpenLog"] = "Ouvrir le journal",
+        ["Hist_LogGone"] = "Le journal n'est plus disponible (supprimé par le nettoyage automatique).",
+        ["LogView_Title"] = "Journal",
     };
 
     // ---------------- DEUTSCH ----------------
@@ -1077,6 +1161,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Main_Preview"] = "Vorschau",
         ["Main_RunSelected"] = "Ausgewählten starten",
         ["Main_RunAll"] = "Alle starten",
+        ["Main_Verify"] = "Prüfen",
+        ["Main_History"] = "Verlauf",
         ["Main_Settings"] = "Einstellungen",
         ["Main_LogTitle"] = "Ausführungsprotokoll",
         ["Main_Clear"] = "Leeren",
@@ -1302,6 +1388,25 @@ public sealed class Loc : INotifyPropertyChanged
         ["Ver_Browse"] = "Versionen...",
         ["Ver_OpenInExplorer"] = "Im Explorer öffnen",
         ["Ver_NoSnapshots"] = "Noch keine Versionen für diesen Job.",
+
+        ["Verify_Header"] = "INTEGRITÄTSPRÜFUNG",
+
+        ["Hist_Title"] = "Ausführungsverlauf",
+        ["Hist_JobFilter"] = "Job:",
+        ["Hist_AllJobs"] = "Alle Jobs",
+        ["Hist_ColWhen"] = "Datum und Uhrzeit",
+        ["Hist_ColJob"] = "Job",
+        ["Hist_ColKind"] = "Typ",
+        ["Hist_ColOutcome"] = "Ergebnis",
+        ["Hist_ColCounts"] = "Details",
+        ["Hist_ColDuration"] = "Dauer",
+        ["Hist_KindBackup"] = "Backup",
+        ["Hist_KindVerify"] = "Prüfung",
+        ["Hist_CountsBackup"] = "{0} kopiert · {1} unverändert · {2} fehlgeschlagen",
+        ["Hist_CountsVerify"] = "{0} geprüft · {1} abweichend/fehlend · {2} übersprungen",
+        ["Hist_OpenLog"] = "Protokoll öffnen",
+        ["Hist_LogGone"] = "Das Protokoll ist nicht mehr verfügbar (durch automatische Bereinigung entfernt).",
+        ["LogView_Title"] = "Protokoll",
     };
 
     // Mappa lingua → dizionario. Dichiarata DOPO i dizionari, così sono già inizializzati

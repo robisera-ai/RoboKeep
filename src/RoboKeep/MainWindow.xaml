@@ -64,6 +64,9 @@
                            Appearance="{Binding RunSelectedCancel, Converter={StaticResource CancelAppearance}, ConverterParameter=Primary}" Margin="0,0,8,0"/>
                 <ui:Button Icon="{ui:SymbolIcon FastForward24}" Content="{Binding RunAllLabel}" Command="{Binding RunAllCommand}"
                            Appearance="{Binding RunAllCancel, Converter={StaticResource CancelAppearance}, ConverterParameter=Secondary}" Margin="0,0,8,0"/>
+                <ui:Button Icon="{ui:SymbolIcon Eye24}" Content="{Binding VerifyLabel}" Command="{Binding VerifySelectedCommand}"
+                           Appearance="{Binding VerifyCancel, Converter={StaticResource CancelAppearance}, ConverterParameter=Secondary}" Margin="0,0,8,0"/>
+                <ui:Button Icon="{ui:SymbolIcon History24}" Content="{l:Tr Main_History}" Click="OnShowHistory" Margin="0,0,8,0"/>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <ui:Button Icon="{ui:SymbolIcon ArrowSync24}" ToolTip="{l:Tr Main_Refresh}"
