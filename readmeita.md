@@ -12,9 +12,10 @@
 
 RoboKeep è un'app Windows amichevole che trasforma `robocopy` — il motore di copia solido come
 una roccia già incluso in ogni PC Windows — in un **vero strumento di backup**: configurazione
-punta-e-clicca, **versioni datate** dei tuoi file, copia dei **file che stai ancora usando** e
-avvisi chiari quando un backup resta indietro. **Niente cloud, niente account, niente
-abbonamenti** — i tuoi file non lasciano mai i tuoi dischi.
+punta-e-clicca, **versioni datate** dei tuoi file, copia dei **file che stai ancora usando**,
+ogni job col **suo orario**, una **cronologia** completa e la **prova matematica** che le copie
+sono integre. **Niente cloud, niente account, niente abbonamenti** — i tuoi file non lasciano
+mai i tuoi dischi.
 
 ![Finestra principale di RoboKeep: job con esiti a colpo d'occhio e log in tempo reale](docs/images/main-window.png)
 
@@ -31,6 +32,17 @@ abbonamenti** — i tuoi file non lasciano mai i tuoi dischi.
   database, file bloccati da altri programmi: con una casella, RoboKeep fotografa il disco per un
   istante (una "copia shadow" di Windows) e copia da quell'immagine congelata. E se lo snapshot
   non è possibile, il backup prosegue semplicemente nel modo normale — non si blocca mai.
+- ✅ **La prova matematica che il backup è integro** *(novità della 1.4)*. Il pulsante
+  **Verifica** rilegge ogni file da entrambi i lati e confronta le impronte digitali (SHA-256):
+  la corruzione silenziosa del disco — invisibile a qualunque controllo su data e dimensione —
+  viene scovata. E con intelligenza: un file che hai modificato *dopo* il backup viene segnalato
+  come tale, mai come falso allarme. A richiesta, o automatica dopo ogni backup per i job critici.
+- ⏰ **Ogni job col suo orario** *(novità della 1.4)*. Documenti ogni sera, foto la domenica,
+  archivi una volta al mese: ogni job ha la sua attività pianificata di Windows e parte anche ad
+  app chiusa.
+- 📜 **La memoria di ogni esecuzione** *(novità della 1.4)*. La finestra **Cronologia** elenca
+  ogni backup e ogni verifica con esito, conteggi e durata — e col doppio clic il log completo si
+  apre direttamente nell'app, senza frugare tra gli zip.
 - 🚨 **Ti avvisa quando qualcosa non va.** Un backup che fallisce in silenzio è peggio di nessun
   backup. RoboKeep segna ogni job con problemi con un'icona colorata — rossa per fallito, ambra
   per "non eseguito da troppo tempo", arancio per "era stato interrotto" — con la spiegazione in
@@ -48,6 +60,8 @@ abbonamenti** — i tuoi file non lasciano mai i tuoi dischi.
 | ![Creazione guidata](docs/images/wizard.png) | **Creazione guidata.** Poche domande in linguaggio semplice — inclusa quella sui file che restano aperti mentre lavori — e il wizard configura il job per te. |
 | ![Editor del job](docs/images/editor.png) | **Tutto sotto controllo.** Mirror o accumulo, copia dei file aperti, opzioni per i file grandi: ogni scelta spiegata in una riga, con un suggerimento dove serve. |
 | ![Anteprima comando e versioning](docs/images/editor-preview.png) | **Trasparenza totale.** Versioni datate con pulizia automatica, esclusioni per job, e il comando robocopy esatto sempre in vista. |
+| ![Cronologia esecuzioni](docs/images/history.png) | **Ogni esecuzione a registro.** Backup e verifiche fianco a fianco, filtrabili per job; doppio clic su una voce e leggi il log completo senza toccare uno zip. |
+| ![Pianificazione per job](docs/images/editor-schedule.png) | **Imposta e dimentica.** Ogni job può avere il suo orario — giornaliero, settimanale o mensile — più la verifica d'integrità automatica dopo ogni esecuzione. |
 | ![Sfoglia le versioni](docs/images/versions.png) | **Torna indietro nel tempo.** Scegli una data, un clic, e il backup di quel giorno si apre in Esplora file. Ricopia quello che ti serve. |
 
 ## Parti in due minuti
@@ -61,8 +75,9 @@ abbonamenti** — i tuoi file non lasciano mai i tuoi dischi.
 3. Avvia **`RoboKeep.exe`**, clicca **Nuovo**, rispondi alle domande della creazione guidata,
    poi **Avvia tutti**. Fatto.
 
-Vuoi che giri da solo? **Impostazioni → Pianificazione** crea un'attività pianificata di Windows
-che esegue i tuoi job all'ora che scegli — anche ad app chiusa.
+Vuoi che giri da solo? Dai a ogni job il suo orario direttamente nell'editor (giornaliero,
+settimanale o mensile), oppure usa **Impostazioni → Pianificazione** per un'unica attività
+"avvia tutto". In entrambi i casi parte anche ad app chiusa.
 
 ## Come si comporta un backup
 
@@ -80,22 +95,23 @@ E se hai attivato le versioni, ogni esecuzione salva prima lo stato precedente c
 
 **Backup**
 modalità mirror o accumulo · versioni datate con hard-link e ritenzione configurabile · copia dei
-file aperti/bloccati via VSS · copia multi-thread · esclusioni di file e cartelle per job ·
-"forza copia" per i file con data/dimensione che non cambiano mai (container cifrati, alcuni
-database), con modalità opzionale a confronto di contenuto · modalità riavviabile per i file
-enormi · anteprima/dry-run
+file aperti/bloccati via VSS · **verifica integrità (SHA-256), a richiesta o dopo ogni
+esecuzione** · copia multi-thread · esclusioni di file e cartelle per job · "forza copia" per i
+file con data/dimensione che non cambiano mai (container cifrati, alcuni database), con modalità
+opzionale a confronto di contenuto · modalità riavviabile per i file enormi · anteprima/dry-run
 
 **Ti tiene informato**
-icone di salute per job con spiegazioni in linguaggio semplice · controlli pre-avvio
-(destinazione raggiungibile, spazio disco, idoneità VSS e versioning) · log in tempo reale ·
-archivio log zippati per job con pulizia automatica · notifiche toast e area di notifica ·
-report email (SMTP), anche solo in caso di errori
+**cronologia esecuzioni con visualizzatore log in-app** · icone di salute per job con spiegazioni
+in linguaggio semplice · controlli pre-avvio (destinazione raggiungibile, spazio disco, idoneità
+VSS e versioning) · log in tempo reale · archivio log zippati per job con pulizia automatica ·
+notifiche toast e area di notifica · report email (SMTP), anche solo in caso di errori
 
 **Si adatta a te**
-creazione guidata o editor manuale completo · anteprima esatta del comando · share di rete con
-credenziali cifrate (DPAPI di Windows) · pianificazione con l'Utilità di pianificazione di
-Windows · riga di comando per l'automazione · ordinamento dei job con trascinamento · 5 lingue ·
-modalità portatile
+creazione guidata o editor manuale completo · anteprima esatta del comando · **pianificazione per
+job (giornaliera / settimanale / mensile)** · share di rete con credenziali cifrate (DPAPI di
+Windows) · **rallentamento della copia per i backup su rete** · **esporta/importa
+configurazione** · riga di comando per l'automazione · ordinamento dei job con trascinamento ·
+5 lingue · modalità portatile
 
 ## Da sapere
 
@@ -106,6 +122,9 @@ modalità portatile
   share di rete).
 - **La copia dei file aperti richiede una sorgente NTFS locale** e una conferma amministratore
   (UAC) per esecuzione.
+- **La verifica integrità rilegge ogni file da entrambi i lati**: è accurata per costruzione,
+  quindi dura all'incirca quanto un primo backup. Attiva "verifica dopo ogni backup" solo dove
+  conta davvero.
 - Impostazioni, esiti e log vivono in `%APPDATA%\RoboKeep`: sopravvivono agli aggiornamenti
   dell'app. Le password sono cifrate con DPAPI di Windows, mai salvate in chiaro.
 

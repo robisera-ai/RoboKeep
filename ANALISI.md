@@ -1,97 +1,125 @@
-# RoboKeep — Obiettivo e scelte di progetto
+# RoboKeep — Obiettivo, scelte di progetto ed evoluzione
 
-Cosa si voleva ottenere e come è stato realizzato, sfruttando gli strumenti già presenti in Windows.
+Com'è nato, perché è fatto così, e le decisioni ingegneristiche che lo tengono in piedi.
 
 ## Obiettivo
 
-Partendo da alcuni semplici script batch personali costruiti attorno a **robocopy**, si voleva
-un'**applicazione desktop con interfaccia grafica** per gestire i backup/mirroring: la stessa copia
-affidabile di sempre, ma con la configurazione centralizzata in un unico file e modificabile da GUI,
-senza più editare script a mano.
+Tutto è partito da alcuni script batch personali costruiti attorno a **robocopy**: funzionavano,
+ma la configurazione era sparsa in decine di `.cmd` con percorsi duplicati, e ogni modifica
+significava editare script a mano. Il primo obiettivo era una **app desktop con interfaccia
+grafica**: stessa copia affidabile di sempre, configurazione centralizzata in un unico file,
+tutto modificabile da GUI.
 
-Comportamento di copia (per ogni job sorgente → destinazione, ricorsivo sulle sottocartelle):
-- **salta** i file identici (stessa data/ora di ultima modifica e dimensione);
-- **sovrascrive** in destinazione i file la cui sorgente è più recente;
-- in **mirror** (`/MIR`, default) **rimuove** dalla destinazione i file/cartelle non più presenti in sorgente;
-- con mirror disattivato (`/E`) copia e aggiorna soltanto, **senza mai cancellare**.
+Da lì la visione si è allargata: **un backup vero per Windows, di cui fidarsi** — che conserva
+uno **storico**, **avverte** quando qualcosa non va, copre anche i **file aperti** e permette di
+**verificare matematicamente** che le copie siano integre. Senza abbandonare ciò che lo rende
+solido: robocopy, locale, trasparente, portatile.
 
 ## Scelta di fondo: usare gli strumenti nativi di Windows
 
-L'idea guida è **non reinventare nulla e non aggiungere dipendenze esterne**:
+L'idea guida è **non reinventare nulla e non aggiungere dipendenze esterne**. Ogni funzione
+importante poggia su un pezzo di Windows collaudato da decenni:
 
-- **Motore di copia → il `robocopy` di sistema.** È già incluso in Windows, collaudato da anni,
-  multi-thread e **sempre aggiornato con Windows Update**. L'app si limita a costruire il comando
-  giusto, eseguirlo e leggerne l'esito — e ne mostra in **anteprima l'esatta riga di comando**, così
-  non è una scatola nera. Si usa `%WINDIR%\System32\Robocopy.exe`, non un eseguibile incluso a mano.
-- **Contorno → .NET nativo.** Compressione dei log (`System.IO.Compression`) e invio email
-  (`System.Net.Mail`) fatti direttamente in .NET, **senza tool esterni** di archiviazione o di posta.
-- **Piattaforma → .NET 10 (LTS) con WPF/MVVM.** Supporto a lungo termine e interfaccia desktop nativa Windows.
+| Funzione | Strumento nativo |
+|---|---|
+| Motore di copia | `robocopy` di sistema (multi-thread, sempre aggiornato con Windows Update) |
+| File aperti/bloccati | **Volume Shadow Copy** (snapshot del volume via WMI) |
+| Versioni senza sprecare spazio | **hard-link NTFS** (modello Time Machine/rsnapshot) |
+| Pianificazione | **Utilità di pianificazione** di Windows |
+| Password mai in chiaro | **DPAPI** (cifratura legata a macchina o utente) |
+| Compressione log, email, hash | .NET puro (`System.IO.Compression`, `System.Net.Mail`, SHA-256) |
 
-Perché non un programma di sincronizzazione già pronto (FreeFileSync, rsync e simili)? Perché si
-voleva **restare sul robocopy già in uso** e avere un'app cucita su questi job, senza imparare né
-dipendere da software di terzi: il valore aggiunto mancante non era il motore di copia, ma lo strato
-di **GUI + configurazione** sopra robocopy.
+L'app costruisce il comando giusto, lo esegue e ne legge l'esito — e mostra sempre in
+**anteprima l'esatta riga di comando**: non è una scatola nera. Perché non un sincronizzatore
+già pronto (FreeFileSync, rsync)? Perché il valore mancante non era il motore di copia, ma lo
+strato di **fiducia e usabilità** sopra robocopy: GUI, configurazione, storico, avvisi, verifica.
 
-## Design
+## Architettura
 
-App **WPF .NET 10 (MVVM)**, configurazione centralizzata in **un unico `config.json`** editabile da
-GUI. Due modalità d'uso:
-- **Interattiva (GUI):** gestione job, creazione guidata, avvio manuale, **anteprima/dry-run**, log e report.
-- **Silenziosa (CLI):** `RoboKeep.exe --run-all` / `--job "Nome"` → per le attività pianificate di Task Scheduler.
+App **WPF .NET 10 (MVVM)**, configurazione in **un unico `config.json`**. Due modalità:
+- **Interattiva (GUI):** gestione job, creazione guidata, anteprima/dry-run, log live, cronologia.
+- **Silenziosa (CLI):** `RoboKeep.exe --run-all` / `--job "Nome"` → usata dalle attività pianificate.
 
-### Architettura (3 progetti)
 ```
 src/
-  RoboKeep.Core/    libreria pura e testabile: Models + Services (engine, config, log, email, scheduler, credenziali, planner)
-  RoboKeep/         app WPF (Views + ViewModels + entry/CLI) → eseguibile RoboKeep.exe
-  RoboKeep.Tests/   xUnit (args builder, exit-code interpreter, config round-trip, planner forza copia/wizard, integrazione runner)
+  RoboKeep.Core/    libreria pura e testabile: Models + Services (engine, versioning, VSS,
+                    verifica, cronologia, scheduler, config, log, email, credenziali)
+  RoboKeep/         app WPF (Views + ViewModels + entry/CLI) → RoboKeep.exe
+  RoboKeep.Tests/   xUnit — 225 test sul cuore della logica
 ```
 
-Il cuore della logica è **puro e testabile** (nessun I/O): `RobocopyArgsBuilder` (opzioni →
-argomenti), `ExitCodeInterpreter` (exit code → esito), `ForceCopyPlanner` e `JobWizardPlanner`. L'I/O
-(processo robocopy, file, rete, email, scheduler) è isolato nei servizi.
+La regola architetturale: **la logica che decide è pura e testata; l'I/O è isolato nei servizi.**
+`RobocopyArgsBuilder` (opzioni → argomenti), `ExitCodeInterpreter`, `SnapshotPlanner` (ritenzione),
+`VssPathMapper`, `SchtasksArgs` (XML delle attività), `JobWizardPlanner` sono funzioni pure:
+ognuna ha i suoi test, nessuna tocca il disco. Ogni funzione nata da un errore visto sul campo
+ha un test che lo blocca per sempre.
 
-### Mappatura opzioni → switch robocopy (`RobocopyArgsBuilder`)
-| Opzione (GUI) | Switch |
-|---|---|
-| Mirror = on (default) | `/MIR` (cancella in dest ciò che non c'è in sorgente) |
-| Mirror = off | `/E` (copia/aggiorna ricorsivo, **non** cancella) |
-| Non sovrascrivere file più recenti in dest | `/XO` |
-| Copia ACL/owner (utile su share) | `/COPYALL` o `/COPY:DAT` (default) |
-| Esclude junction (anti-loop) | `/XJ` (sempre) |
-| Multi-thread | `/MT:<n>` |
-| File grandi — riavviabile / I/O non bufferizzato | `/Z` / `/J` (mutuamente esclusivi) |
-| Esclusioni file / cartelle | `/XF …` / `/XD …` |
-| **Forza copia** (file a data/dimensione congelate) | seconda passata `/IS /IT` sui soli pattern indicati |
-| Registra tutti i file nel log | `/V` |
-| Retry / attesa | `/R:<n>` / `/W:<n>` |
-| **Anteprima** | `/L` (elenca soltanto, non modifica) |
+## L'evoluzione, tappa per tappa
 
-**Forza copia — modalità smart:** per i file il cui contenuto cambia senza variare data/dimensione
-(container cifrati, DB), una seconda passata li ricopia comunque. In modalità *smart* l'app calcola
-un **hash SHA256** del file e lo ricopia solo se è davvero cambiato dall'ultimo backup (stato
-persistito), evitando ricopie inutili.
+### v1.0 — La GUI su robocopy
+Editor completo con **anteprima del comando**, **creazione guidata** che deriva le opzioni
+ottimali da domande in linguaggio semplice (tipo di dischi → `/MT`, file grandi → `/Z`,
+permessi → `/COPYALL`), anteprima/dry-run, log zippati per data, email, credenziali DPAPI,
+pianificazione, **forza copia** per i file a data/dimensione congelate (container cifrati) con
+modalità *smart* a confronto di hash. In **5 lingue**.
 
-**Creazione guidata (wizard):** poche domande (tipo di dischi sorgente/destinazione, comportamento,
-file speciali) → `JobWizardPlanner` deriva le opzioni ottimali (es. `/MT` in base al disco più lento,
-`/Z` per i file grandi, `/COPYALL` solo se servono i permessi) e **precompila l'editor**.
+### v1.1 — Stop ai fallimenti silenziosi
+La lezione: un backup che smette di girare senza dirlo è il peggior nemico. Quindi: **dati
+dell'app fuori da `bin/`** (`%APPDATA%\RoboKeep`, sopravvive ad aggiornamenti e pulizie),
+**allerta** per job falliti o fermi da troppo tempo, **pre-check** prima di ogni avvio
+(destinazione raggiungibile, spazio sufficiente), notifiche toast e area di notifica.
 
-### Funzionalità (opzionali, scelta utente)
-Log `.zip` per data + pulizia automatica oltre N giorni · notifiche email (sempre / solo errori) ·
-report riepilogo (copiati / saltati / extra / falliti da exit code) · credenziali per share UNC
-cifrate con **DPAPI** (ambito utente o macchina) con test di connessione · pianificazione via Task
-Scheduler · riordino job in **drag &amp; drop** · ultimo esito persistito e visibile in lista (anche
-dopo i run pianificati) · interfaccia in **5 lingue** (it/en/es/fr/de).
+### v1.2 — Versioning: lo storico che non costa spazio
+Ogni esecuzione può salvare uno **snapshot datato**: appare come un albero completo, ma i file
+invariati sono **hard-link condivisi** tra le versioni — dieci versioni non costano dieci volte
+lo spazio. Le decisioni delicate: la pre-passata che **rompe gli hard-link dei file cambiati**
+prima di robocopy (mai modificare sul posto un file condiviso con le versioni precedenti); la
+cancellazione **POSIX-safe** che rimuove una versione senza toccare il bit read-only degli inode
+ancora condivisi; il pattern **`.inprogress` + rinomina finale**, così un run interrotto non
+lascia mai una versione a metà spacciata per buona; il prefisso `\\?\` per i percorsi oltre i
+260 caratteri.
 
-## Prodotto realizzato
+### v1.3 — File aperti: lo snapshot VSS
+Outlook aperto, database in uso: robocopy li salta. Con un'opzione per job, RoboKeep fotografa
+il volume per un istante (**Volume Shadow Copy**) e copia dall'immagine congelata. Le decisioni:
+il processo elevato è **lo stesso RoboKeep.exe** rilanciato con un flag (un solo prompt UAC per
+esecuzione, nessun secondo eseguibile); i due processi comunicano con un **protocollo a file**
+(request/ready/release); un **registro con PID** degli snapshot creati permette di ripulire i
+residui dei run morti senza mai toccare gli snapshot vivi di processi concorrenti; e la regola
+d'oro: **qualunque problema VSS degrada a copia normale con avviso** — un backup parziale batte
+sempre un backup bloccato.
 
-- **Engine puro in TDD:** `RobocopyArgsBuilder`, `ExitCodeInterpreter`, `ConfigStore`,
-  `ForceCopyPlanner`, `JobWizardPlanner`, con suite di unit/integration test xUnit verde.
-- **Servizi IO:** runner robocopy (output live + cancellazione), log + archiviazione zip + pulizia,
-  credenziali DPAPI + connessione UNC, email SMTP, scheduler.
-- **GUI WPF (WPF-UI / Fluent):** lista job con drag &amp; drop ed esito, editor con anteprima del
-  comando, creazione guidata, impostazioni (generale, email, credenziali, pianificazione).
-- **CLI headless** per la schedulazione (`--run-all`, `--job`, `--dry-run`, `--config`).
-- **Verifica end-to-end** su cartelle di prova e su backup reali.
+### v1.4 — Operatività e integrità
+- **Pianificazione per-job**: un'attività di Windows per ogni job. Registrata via **XML** e non
+  coi parametri `/SC /D` di schtasks: le abbreviazioni dei giorni sono localizzate (`MON` in
+  inglese, `LUN` in italiano) e l'XML è l'unico formato identico su ogni lingua di Windows.
+- **Cronologia + visualizzatore log**: ogni backup e ogni verifica a registro (JSON, tetto 500
+  voci, lock cross-processo), log rileggibili in-app direttamente dagli zip.
+- **Verifica integrità**: confronto **SHA-256** file per file. Il dettaglio che fa la differenza:
+  se un file risulta diverso ma la sorgente è stata modificata *dopo* il backup, viene contato
+  come "modificato dopo", **non come corruzione** — una funzione che esiste per dare fiducia non
+  può gridare falsi allarmi. Le esclusioni del job vengono rispettate; i job versionati
+  verificano l'ultimo snapshot.
+- **Rallentamento** (`/IPG`) per i backup su rete — e quando è attivo il multi-thread si spegne,
+  perché robocopy applica il ritardo per thread e il limite diventerebbe imprevedibile.
+- **Esporta/importa configurazione**, con validazione, copia di sicurezza automatica e
+  riallineamento delle attività pianificate.
 
-Gli script batch iniziali non fanno parte del repository.
+## Qualità del processo
+
+Ogni tappa segue lo stesso ciclo: **brainstorming → spec scritta → piano di implementazione →
+sviluppo TDD → doppia revisione del codice → prova manuale sul campo → release**. I difetti
+trovati dalle revisioni (una corsa sul rilascio degli snapshot VSS, i falsi allarmi della
+verifica sulle esclusioni, i giorni localizzati di schtasks) sono stati corretti **prima** di
+arrivare a un utente. La suite conta **225 test**; le release pubblicano due pacchetti
+(self-contained e framework-dependent) con changelog completo.
+
+## Confini di scopo
+
+**Dentro:** tutto ciò che si appoggia a strumenti nativi Windows e resta locale/LAN.
+**Fuori (per scelta):** cloud/`rclone`, versioni macOS/Linux, copia delta/a blocchi (robocopy
+ricopia il file intero: limite accettato e documentato). Mantenere RoboKeep semplice, locale e
+trasparente vale più di ogni casella in più su una matrice di confronto.
+
+Gli script batch da cui tutto è partito non fanno parte del repository — ma è giusto ricordare
+che senza di loro RoboKeep non esisterebbe.

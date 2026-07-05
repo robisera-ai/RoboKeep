@@ -12,8 +12,9 @@
 
 RoboKeep is a friendly Windows app that turns `robocopy` — the rock-solid copy engine already
 built into every Windows PC — into a **real backup tool**: point-and-click setup, **dated
-versions** of your files, copying of **files you're still working on**, and clear alerts when a
-backup falls behind. **No cloud, no account, no subscription** — your files never leave your disks.
+versions** of your files, copying of **files you're still working on**, each job on **its own
+schedule**, a full **run history**, and **mathematical proof** your copies are intact.
+**No cloud, no account, no subscription** — your files never leave your disks.
 
 ![RoboKeep main window: jobs with results at a glance and a live execution log](docs/images/main-window.png)
 
@@ -30,6 +31,17 @@ backup falls behind. **No cloud, no account, no subscription** — your files ne
   files locked by other programs: with one checkbox, RoboKeep photographs the disk for an instant
   (a Windows "shadow copy") and copies from that frozen picture. And if the snapshot isn't
   possible, the backup simply continues the normal way — it never blocks.
+- ✅ **Mathematical proof your backup is intact** *(new in 1.4)*. The **Verify** button re-reads
+  every file on both sides and compares digital fingerprints (SHA-256): silent disk corruption —
+  invisible to any date/size check — gets caught. Smart, too: a file you edited *after* the
+  backup is reported as such, never as a false alarm. Run it on demand, or automatically after
+  every backup for your critical jobs.
+- ⏰ **Every job on its own schedule** *(new in 1.4)*. Documents every evening, photos on Sunday,
+  archives once a month: each job gets its own Windows scheduled task and runs even with the app
+  closed.
+- 📜 **A memory of every run** *(new in 1.4)*. The **History** window lists every backup and
+  every integrity check with outcome, counts, and duration — and a double-click opens the full
+  log right inside the app, no digging through zip files.
 - 🚨 **It tells you when something's wrong.** A backup that fails silently is worse than no
   backup. RoboKeep marks each problematic job with a colored warning icon — red for failed,
   amber for "not run in too long", orange for "was interrupted" — with a plain explanation on hover.
@@ -45,6 +57,8 @@ backup falls behind. **No cloud, no account, no subscription** — your files ne
 | ![Guided setup](docs/images/wizard.png) | **Guided setup.** A few questions in plain language — including whether files stay open while you work — and the wizard configures the job for you. |
 | ![Job editor](docs/images/editor.png) | **Everything under control.** Mirror or accumulate, open-file copying, large-file options: every choice explained in one line, with a hint where it matters. |
 | ![Command preview and versioning](docs/images/editor-preview.png) | **Total transparency.** Dated versions with automatic cleanup, per-job exclusions, and the exact robocopy command always in view. |
+| ![Run history](docs/images/history.png) | **Every run on record.** Backups and integrity checks side by side, filtered per job; double-click any entry to read its full log without touching a zip file. |
+| ![Per-job scheduling](docs/images/editor-schedule.png) | **Set it and forget it.** Each job can have its own schedule — daily, weekly, or monthly — plus automatic integrity verification after every run. |
 | ![Browse versions](docs/images/versions.png) | **Go back in time.** Pick a date, click, and that day's backup opens in File Explorer. Copy back whatever you need. |
 
 ## Get started in two minutes
@@ -57,8 +71,9 @@ backup falls behind. **No cloud, no account, no subscription** — your files ne
    `C:\Program Files`).
 3. Run **`RoboKeep.exe`**, click **New**, answer the wizard's questions, then **Run all**. Done.
 
-Want it to run by itself? **Settings → Scheduling** creates a Windows scheduled task that runs
-all your jobs at the time you choose — even with the app closed.
+Want it to run by itself? Give each job its own schedule right in the editor (daily, weekly, or
+monthly), or use **Settings → Scheduling** for a single "run everything" task. Either way, it
+runs even with the app closed.
 
 ## How a backup behaves
 
@@ -76,20 +91,22 @@ And if you enabled versions, each run first saves the previous state as a dated 
 
 **Backing up**
 mirror or accumulate mode · dated versions with hard-links and configurable retention ·
-open/locked file copying via VSS · multi-threaded copying · per-job file and folder exclusions ·
-"force copy" for files whose date/size never change (encrypted containers, some databases), with
-an optional content-hash mode · restartable mode for huge files · preview/dry-run
+open/locked file copying via VSS · **integrity verification (SHA-256), on demand or after every
+run** · multi-threaded copying · per-job file and folder exclusions · "force copy" for files
+whose date/size never change (encrypted containers, some databases), with an optional
+content-hash mode · restartable mode for huge files · preview/dry-run
 
 **Keeping you informed**
-per-job health icons with plain-language tooltips · pre-run checks (destination reachable, disk
-space, VSS and versioning eligibility) · real-time log · per-job zipped log archive with
-automatic cleanup · toast notifications and system tray · email reports (SMTP), optionally only
-on errors
+**run history with in-app log viewer** · per-job health icons with plain-language tooltips ·
+pre-run checks (destination reachable, disk space, VSS and versioning eligibility) · real-time
+log · per-job zipped log archive with automatic cleanup · toast notifications and system tray ·
+email reports (SMTP), optionally only on errors
 
 **Fitting your setup**
-guided wizard or full manual editor · exact command preview · network shares with encrypted
-credentials (Windows DPAPI) · scheduling via Windows Task Scheduler · command line for automation ·
-drag & drop job ordering · 5 languages · portable mode
+guided wizard or full manual editor · exact command preview · **per-job scheduling (daily /
+weekly / monthly)** · network shares with encrypted credentials (Windows DPAPI) · **copy
+throttling for network backups** · **configuration export/import** · command line for
+automation · drag & drop job ordering · 5 languages · portable mode
 
 ## Good to know
 
@@ -99,6 +116,9 @@ drag & drop job ordering · 5 languages · portable mode
 - **Versions need a local NTFS destination** (hard-links don't exist on exFAT or network shares).
 - **Open-file copying needs a local NTFS source** and asks for one administrator confirmation
   (UAC) per run.
+- **Integrity checks re-read every file on both sides**: thorough by design, so expect a check
+  to take roughly as long as a first backup. Enable "verify after each backup" only where it
+  matters.
 - Your settings, results, and logs live in `%APPDATA%\RoboKeep`, so they survive app updates.
   Passwords are encrypted with Windows DPAPI, never stored in plain text.
 
