@@ -4,6 +4,33 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.4.1] - 2026-07-05
+
+A hygiene and security patch driven by a full code and privacy audit.
+
+### Security
+- Shadow copy IDs are now validated as GUIDs before being used in any WMI query run by the
+  elevated VSS helper (closes a WQL-injection path from user-writable files).
+- New configurations default to **TLS on** and port 587 for email reports.
+- Job names can no longer contain double quotes (they would break the scheduled task command line).
+
+### Fixed
+- The **Versions...** window now orders snapshots by date (it ordered by string).
+- Three log messages that always appeared in Italian are now localized in all 5 languages.
+
+### Changed
+- Job cloning in the editor is now serialization-based with a reflection safety-net test: a
+  future job property can no longer be silently lost on edit.
+- Removed ~90 lines of dead code; test suite extended from 225 to 243 tests (5-language key
+  parity, editor combo/enum couplings, clone completeness).
+- New **Privacy** section in the README and a THIRD-PARTY-NOTICES file with dependency
+  attributions.
+
+### Downloads
+- **`RoboKeep-1.4.1-win-x64-selfcontained.zip`** — bundles **.NET 10.0.9**: extract and run, nothing to install.
+- **`RoboKeep-1.4.1-win-x64-framework-dependent.zip`** — smaller; requires the
+  [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
+
 ## [1.4.0] - 2026-07-05 — Operations & integrity
 
 ### Added
@@ -130,6 +157,7 @@ All notable changes to RoboKeep are documented here. The format is based on
 - Job management (source/destination, mirror, multithread, exclusions, retries), real-time log,
   dry-run preview, log archiving, scheduling and email notifications.
 
+[1.4.1]: https://github.com/robisera-ai/RoboKeep/releases/tag/v1.4.1
 [1.4.0]: https://github.com/robisera-ai/RoboKeep/releases/tag/v1.4.0
 [1.3.0]: https://github.com/robisera-ai/RoboKeep/releases/tag/v1.3.0
 [1.2.1]: https://github.com/robisera-ai/RoboKeep/releases/tag/v1.2.1
