@@ -126,7 +126,19 @@ configurazione** · riga di comando per l'automazione · ordinamento dei job con
   quindi dura all'incirca quanto un primo backup. Attiva "verifica dopo ogni backup" solo dove
   conta davvero.
 - Impostazioni, esiti e log vivono in `%APPDATA%\RoboKeep`: sopravvivono agli aggiornamenti
-  dell'app. Le password sono cifrate con DPAPI di Windows, mai salvate in chiaro.
+  dell'app. Le password sono cifrate con DPAPI di Windows, mai salvate in chiaro. Nota:
+  l'ambito di cifratura predefinito è **a livello macchina** (così anche le attività
+  pianificate possono decifrarle) — su un PC condiviso, passa all'ambito per-utente se gli
+  altri account non devono poterle leggere.
+
+## Privacy
+
+RoboKeep non raccoglie **niente**. Zero telemetria, zero statistiche, zero controlli
+aggiornamenti, zero account, zero traffico di rete — a meno che non configuri *tu* i report
+email (verso il server SMTP che scegli, con TLS attivo di default). Tutto ciò che l'app sa —
+impostazioni dei job, esiti, cronologia, log — vive in file locali sul tuo PC, JSON leggibili
+che puoi ispezionare quando vuoi. I log contengono i percorsi dei file copiati e vengono
+ripuliti automaticamente dopo 30 giorni (configurabile).
 
 ## Per utenti esperti
 
@@ -146,4 +158,5 @@ progetto: [ANALISI.md](ANALISI.md).
 
 ## Licenza
 
-Distribuito con **licenza MIT** — vedi [LICENSE](LICENSE). © 2026 Roberto Serafini.
+Distribuito con **licenza MIT** — vedi [LICENSE](LICENSE). I componenti di terze parti sono
+elencati in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). © 2026 Roberto Serafini.

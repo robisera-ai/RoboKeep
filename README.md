@@ -120,7 +120,17 @@ automation · drag & drop job ordering · 5 languages · portable mode
   to take roughly as long as a first backup. Enable "verify after each backup" only where it
   matters.
 - Your settings, results, and logs live in `%APPDATA%\RoboKeep`, so they survive app updates.
-  Passwords are encrypted with Windows DPAPI, never stored in plain text.
+  Passwords are encrypted with Windows DPAPI, never stored in plain text. Note: the default
+  encryption scope is **machine-wide** (so scheduled tasks can decrypt them too) — on a shared
+  PC, switch the setting to per-user scope if other accounts shouldn't be able to read them.
+
+## Privacy
+
+RoboKeep collects **nothing**. No telemetry, no analytics, no update checks, no account, no
+network traffic at all unless *you* configure email reports (SMTP server of your choice — TLS
+on by default). Everything the app knows — job settings, results, history, logs — lives in
+local files on your PC, readable JSON you can inspect at any time. Logs contain the paths of
+the files that were copied and are cleaned up automatically after 30 days (configurable).
 
 ## For power users
 
@@ -140,4 +150,5 @@ decisions: [ANALISI.md](ANALISI.md) *(in Italian)*.
 
 ## License
 
-Distributed under the **MIT License** — see [LICENSE](LICENSE). © 2026 Roberto Serafini.
+Distributed under the **MIT License** — see [LICENSE](LICENSE). Third-party components are
+listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). © 2026 Roberto Serafini.
