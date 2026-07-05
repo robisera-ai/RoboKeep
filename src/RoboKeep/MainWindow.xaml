@@ -8,7 +8,7 @@
         xmlns:l="clr-namespace:RoboKeep.Localization"
         xmlns:local="clr-namespace:RoboKeep"
         mc:Ignorable="d"
-        Title="{l:Tr Main_Title}" Height="680" Width="1040"
+        Title="{l:Tr Main_Title}" Height="680" Width="1220"
         Icon="pack://application:,,,/Assets/app.ico"
         ExtendsContentIntoTitleBar="True"
         WindowBackdropType="Mica"
@@ -51,7 +51,9 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <StackPanel Grid.Column="0" Orientation="Horizontal">
+            <!-- WrapPanel: con la finestra stretta i pulsanti vanno a capo invece di sparire.
+                 ItemHeight leggermente maggiore dei pulsanti = piccolo spazio tra le righe. -->
+            <WrapPanel Grid.Column="0" Orientation="Horizontal" ItemHeight="40">
                 <ui:Button Icon="{ui:SymbolIcon Add24}" Content="{l:Tr Main_New}" Click="OnNewJob" Margin="0,0,8,0"/>
                 <ui:Button Icon="{ui:SymbolIcon Edit24}" Content="{l:Tr Main_Edit}" Click="OnEditJob" Margin="0,0,8,0"/>
                 <ui:Button Icon="{ui:SymbolIcon Delete24}" Content="{l:Tr Main_Delete}" Click="OnDeleteJob" Margin="0,0,8,0"/>
@@ -67,7 +69,7 @@
                 <ui:Button Icon="{ui:SymbolIcon Eye24}" Content="{Binding VerifyLabel}" Command="{Binding VerifySelectedCommand}"
                            Appearance="{Binding VerifyCancel, Converter={StaticResource CancelAppearance}, ConverterParameter=Secondary}" Margin="0,0,8,0"/>
                 <ui:Button Icon="{ui:SymbolIcon History24}" Content="{l:Tr Main_History}" Click="OnShowHistory" Margin="0,0,8,0"/>
-            </StackPanel>
+            </WrapPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <ui:Button Icon="{ui:SymbolIcon ArrowSync24}" ToolTip="{l:Tr Main_Refresh}"
                            Command="{Binding RefreshCommand}" Margin="0,0,8,0"/>
