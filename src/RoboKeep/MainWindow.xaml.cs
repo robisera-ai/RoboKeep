@@ -6,6 +6,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using H.NotifyIcon.Core;
 using RoboKeep.Core.Models;
+using RoboKeep.Core.Services;
 using RoboKeep.Infra;
 using RoboKeep.Localization;
 using RoboKeep.ViewModels;
@@ -317,6 +318,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         {
             _vm.Jobs.Add(new JobViewModel(job));
             _vm.PersistJobs();
+            TrySyncJobTask(job);
         }
     }
 
@@ -325,6 +327,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         var selected = _vm.SelectedJob;
         if (selected is null) return;
 
+        var oldName = selected.Model.Name;
+
         // Modifica su una copia: se l'utente annulla, l'originale resta intatto.
         var clone = Clone(selected.Model);
         if (ShowEditor(clone))
@@ -332,6 +336,9 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             CopyInto(clone, selected.Model);
             selected.RefreshAll();
             _vm.PersistJobs();
+            if (oldName != selected.Model.Name)
+                TryRemoveJobTask(oldName); // rinomina: via l'attività col vecchio nome
+            TrySyncJobTask(selected.Model);
         }
     }
 
@@ -348,6 +355,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         {
             _vm.Jobs.Remove(selected);
             _vm.PersistJobs();
+            TryRemoveJobTask(selected.Name);
         }
     }
 
@@ -379,6 +387,26 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     {
         var win = new JobEditorWindow(job, _host.Config.Credentials) { Owner = this };
         return win.ShowDialog() == true;
+    }
+
+    private void TrySyncJobTask(BackupJob job)
+    {
+        try
+        {
+            var exe = Environment.ProcessPath;
+            if (exe is null) return;
+            new SchedulerService().SyncJobTask(job, exe);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(string.Format(Loc.Instance["Sched_Error"], ex.Message),
+                job.Name, MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void TryRemoveJobTask(string jobName)
+    {
+        try { new SchedulerService().RemoveJobTask(jobName); } catch { }
     }
 
     private static BackupJob Clone(BackupJob j) => new()

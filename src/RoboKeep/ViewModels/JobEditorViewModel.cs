@@ -214,12 +214,63 @@ public sealed class JobEditorViewModel : ObservableObject
         set { _job.UseVss = value; OnPropertyChanged(); }
     }
 
+    /// <summary>Indice combo pianificazione: 0=None, 1=Daily, 2=Weekly, 3=Monthly.</summary>
+    public int ScheduleIndex
+    {
+        get => (int)_job.Schedule;
+        set
+        {
+            _job.Schedule = (ScheduleKind)value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ShowWeekDay));
+            OnPropertyChanged(nameof(ShowMonthDay));
+            OnPropertyChanged(nameof(ScheduleEnabled));
+        }
+    }
+
+    public bool ScheduleEnabled => _job.Schedule != ScheduleKind.None;
+    public bool ShowWeekDay => _job.Schedule == ScheduleKind.Weekly;
+    public bool ShowMonthDay => _job.Schedule == ScheduleKind.Monthly;
+
+    public string ScheduleTime
+    {
+        get => _job.ScheduleTime;
+        set { _job.ScheduleTime = value; OnPropertyChanged(); }
+    }
+
+    /// <summary>Indice combo giorno: 0=lunedì ... 6=domenica (ordine europeo).</summary>
+    public int ScheduleWeekDayIndex
+    {
+        get => ((int)_job.ScheduleWeekDay + 6) % 7; // DayOfWeek: Sunday=0 → indice 6
+        set { _job.ScheduleWeekDay = (DayOfWeek)((value + 1) % 7); OnPropertyChanged(); }
+    }
+
+    public int ScheduleMonthDay
+    {
+        get => _job.ScheduleMonthDay;
+        set { _job.ScheduleMonthDay = Math.Clamp(value, 1, 31); OnPropertyChanged(); }
+    }
+
+    public bool VerifyAfterRun
+    {
+        get => _job.VerifyAfterRun;
+        set { _job.VerifyAfterRun = value; OnPropertyChanged(); }
+    }
+
+    public int InterPacketGapMs
+    {
+        get => _job.InterPacketGapMs;
+        set { _job.InterPacketGapMs = Math.Max(0, value); OnPropertyChanged(); RaisePreview(); }
+    }
+
     /// <summary>Validazione minima prima del salvataggio.</summary>
     public string? Validate()
     {
         if (string.IsNullOrWhiteSpace(Name)) return Loc.Instance["Editor_Val_Name"];
         if (string.IsNullOrWhiteSpace(Source)) return Loc.Instance["Editor_Val_Source"];
         if (string.IsNullOrWhiteSpace(Destination)) return Loc.Instance["Editor_Val_Dest"];
+        if (_job.Schedule != ScheduleKind.None && !TimeOnly.TryParse(_job.ScheduleTime, out _))
+            return Loc.Instance["Editor_Val_ScheduleTime"];
         return null;
     }
 
