@@ -53,7 +53,7 @@ public static class VssSessionProtocol
     /// eseguite dal processo amministratore: MAI interpolare un ID non validato.</summary>
     public static bool IsValidShadowId(string? shadowId) =>
         !string.IsNullOrWhiteSpace(shadowId)
-        && shadowId.Length is >= 38 and <= 38
+        && shadowId.Length == 38
         && shadowId[0] == '{' && shadowId[^1] == '}'
         && Guid.TryParseExact(shadowId[1..^1], "D", out _);
 }

@@ -52,8 +52,6 @@ public sealed class Loc : INotifyPropertyChanged
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Language)));
     }
 
-    private static string Normalize(string lang) => Supported.Contains(lang) ? lang : "en";
-
     private static string DetectSystemLanguage()
     {
         var code = CultureInfo.InstalledUICulture.TwoLetterISOLanguageName;
