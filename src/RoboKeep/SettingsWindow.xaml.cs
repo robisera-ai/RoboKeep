@@ -255,6 +255,10 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
         {
             var imported = ConfigTransfer.Import(dlg.FileName); // valida PRIMA di toccare qualsiasi cosa
 
+            // Nomi dei job PRIMA della sostituzione: le attività pianificate dei job che
+            // spariscono con l'import vanno rimosse, altrimenti restano orfane in Windows.
+            var oldNames = _host.Config.Jobs.Select(j => j.Name).ToHashSet();
+
             // Backup della config attuale, poi sostituzione e salvataggio.
             var backupPath = Path.Combine(_host.Store.DirectoryPath,
                 $"config.backup-{DateTime.Now:yyyyMMdd-HHmmss}.json");
@@ -265,7 +269,8 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
             _host.Config.Jobs = imported.Jobs;
             _host.SaveConfig();
 
-            // Risincronizza le attività per-job con la nuova configurazione.
+            // Risincronizza le attività per-job con la nuova configurazione e rimuovi
+            // quelle dei job non più presenti.
             var exe = Environment.ProcessPath;
             if (exe is not null)
             {
@@ -273,6 +278,10 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
                 foreach (var job in _host.Config.Jobs)
                 {
                     try { scheduler.SyncJobTask(job, exe); } catch { }
+                }
+                foreach (var gone in oldNames.Except(_host.Config.Jobs.Select(j => j.Name)))
+                {
+                    try { scheduler.RemoveJobTask(gone); } catch { }
                 }
             }
 
