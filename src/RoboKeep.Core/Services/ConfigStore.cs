@@ -6,8 +6,9 @@ namespace RoboKeep.Core.Services;
 
 /// <summary>
 /// Carica e salva la configurazione applicativa (<see cref="AppConfig"/>) su file JSON.
-/// Posizione di default: <c>%ProgramData%\RoboKeep\config.json</c>, così che anche
-/// l'attività pianificata (eventualmente altro utente) possa leggerla.
+/// Il percorso effettivo è determinato da AppDataLocator: <c>%APPDATA%\RoboKeep\config.json</c>
+/// in modalità installata, oppure <c>config.json</c> accanto all'eseguibile in modalità
+/// portabile (quando la cartella dell'app risulta scrivibile).
 /// </summary>
 public sealed class ConfigStore
 {
@@ -35,6 +36,13 @@ public sealed class ConfigStore
         Path.Combine(AppContext.BaseDirectory, "config.json");
 
     /// <summary>Carica la configurazione; se il file non esiste restituisce una config vuota di default.</summary>
+    /// <remarks>
+    /// A differenza degli altri store (best-effort, es. esiti/ledger) qui un JSON corrotto
+    /// DEVE propagare l'eccezione invece di essere silenziosamente sostituito da una config
+    /// vuota: se degradassimo a <c>new AppConfig()</c>, il primo Save successivo scriverebbe
+    /// una configurazione senza job, cancellando di fatto tutti i job dell'utente senza
+    /// alcun avviso. Meglio un crash visibile che una perdita silenziosa di dati.
+    /// </remarks>
     public AppConfig Load()
     {
         if (!File.Exists(_path))

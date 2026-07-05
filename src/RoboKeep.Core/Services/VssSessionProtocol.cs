@@ -47,4 +47,13 @@ public static class VssSessionProtocol
 
     public static void SignalRelease(string sessionDir) =>
         File.WriteAllText(ReleaseFile(sessionDir), "");
+
+    /// <summary>true se l'ID ha la forma GUID-tra-graffe emessa da WMI (es. {1FC64F91-...}).
+    /// Gli ID arrivano da file scrivibili dall'utente non elevato e finiscono in query WQL
+    /// eseguite dal processo amministratore: MAI interpolare un ID non validato.</summary>
+    public static bool IsValidShadowId(string? shadowId) =>
+        !string.IsNullOrWhiteSpace(shadowId)
+        && shadowId.Length is >= 38 and <= 38
+        && shadowId[0] == '{' && shadowId[^1] == '}'
+        && Guid.TryParseExact(shadowId[1..^1], "D", out _);
 }

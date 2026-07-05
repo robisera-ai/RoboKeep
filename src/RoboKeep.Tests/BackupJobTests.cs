@@ -51,3 +51,14 @@ public class BackupJobV14DefaultsTests
         Assert.Equal(20, back.InterPacketGapMs);
     }
 }
+
+public class EmailSettingsDefaultsTests
+{
+    [Fact]
+    public void Defaults_AreSecure()
+    {
+        var e = new EmailSettings();
+        Assert.True(e.UseSsl);
+        Assert.Equal(587, e.SmtpPort);
+    }
+}

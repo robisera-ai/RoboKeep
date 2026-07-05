@@ -24,8 +24,10 @@ public static class VssHelper
             var request = VssSessionProtocol.ReadRequest(sessionDir);
 
             // Pulizia residui di run precedenti (best-effort: siamo già elevati, è il
-            // momento giusto). Un ID inesistente non è un errore.
-            foreach (var stale in request.StaleShadowIds)
+            // momento giusto). Un ID inesistente non è un errore. Gli ID arrivano da
+            // vss-ledger.json (scrivibile dall'utente non elevato): filtriamo quelli non
+            // conformi al formato GUID-tra-graffe di WMI prima di usarli in una query WQL.
+            foreach (var stale in request.StaleShadowIds.Where(VssSessionProtocol.IsValidShadowId))
                 TryDeleteShadow(stale);
 
             shadowId = CreateShadow(request.Volume);
@@ -71,6 +73,12 @@ public static class VssHelper
 
     private static string GetDeviceObject(string shadowId)
     {
+        // Difesa in profondità: l'ID può provenire da CreateShadow (WMI, fidato) ma anche
+        // indirettamente da percorsi che rileggono l'ID da file; mai interpolarlo non validato
+        // in una query WQL eseguita da questo processo elevato.
+        if (!VssSessionProtocol.IsValidShadowId(shadowId))
+            throw new VssUnavailableException($"Shadow ID non valido: {shadowId}");
+
         using var searcher = new ManagementObjectSearcher(
             $"SELECT DeviceObject FROM Win32_ShadowCopy WHERE ID = '{shadowId}'");
         foreach (ManagementObject shadow in searcher.Get())
@@ -80,6 +88,12 @@ public static class VssHelper
 
     private static void TryDeleteShadow(string shadowId)
     {
+        // Gli ID arrivano da file scrivibili dall'utente non elevato (request.json,
+        // vss-ledger.json): un ID non conforme al formato GUID-tra-graffe di WMI viene
+        // scartato invece di finire interpolato in una query WQL eseguita da amministratore.
+        if (!VssSessionProtocol.IsValidShadowId(shadowId))
+            return;
+
         try
         {
             using var searcher = new ManagementObjectSearcher(

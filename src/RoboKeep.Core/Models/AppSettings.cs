@@ -57,8 +57,13 @@ public sealed class EmailSettings
 {
     public bool Enabled { get; set; }
     public string SmtpHost { get; set; } = "";
-    public int SmtpPort { get; set; } = 25;
-    public bool UseSsl { get; set; }
+
+    /// <summary>Porta SMTP: default 587, porta submission standard con STARTTLS.</summary>
+    public int SmtpPort { get; set; } = 587;
+
+    /// <summary>Se true usa una connessione cifrata (STARTTLS/SSL): attivo di default per non
+    /// spedire credenziali ed esiti backup in chiaro sulla rete.</summary>
+    public bool UseSsl { get; set; } = true;
     public string From { get; set; } = "";
     public string To { get; set; } = "";
     public string? Username { get; set; }
