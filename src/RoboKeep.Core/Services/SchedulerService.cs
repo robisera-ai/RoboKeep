@@ -126,30 +126,6 @@ public sealed class SchedulerService
     public void RemoveJobTask(string jobName) =>
         Run(new List<string> { "/Delete", "/F", "/TN", SchtasksArgs.TaskName(jobName) }, throwOnError: false);
 
-    /// <summary>Prossima esecuzione dell'attività del job, o null se non pianificata.</summary>
-    public string? GetJobNextRunTime(string jobName)
-    {
-        var psi = new ProcessStartInfo
-        {
-            FileName = "schtasks.exe",
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-        };
-        foreach (var a in new[] { "/Query", "/TN", SchtasksArgs.TaskName(jobName), "/FO", "CSV", "/V" })
-            psi.ArgumentList.Add(a);
-        using var p = Process.Start(psi);
-        if (p is null) return null;
-        var output = p.StandardOutput.ReadToEnd();
-        p.WaitForExit();
-        if (p.ExitCode != 0) return null;
-        var lines = output.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-        if (lines.Length < 2) return null;
-        var fields = lines[1].Trim().Trim('"').Split("\",\"");
-        return fields.Length > 2 && !string.IsNullOrWhiteSpace(fields[2]) ? fields[2].Trim() : null;
-    }
-
     private static int Run(List<string> args, bool throwOnError = true)
     {
         var psi = new ProcessStartInfo

@@ -35,7 +35,7 @@ public class IntegrityVerifierTests : IDisposable
     {
         Pair("a.txt", "same");
         Pair(@"sub\b.txt", "same2");
-        var r = await IntegrityVerifier.VerifyAsync(Src, Dst, null, CancellationToken.None);
+        var r = await IntegrityVerifier.VerifyAsync(Src, Dst, null, null, null, CancellationToken.None);
         Assert.Equal(2, r.Checked);
         Assert.Equal(0, r.Mismatched);
         Assert.Equal(0, r.ChangedSinceBackup);
@@ -46,7 +46,7 @@ public class IntegrityVerifierTests : IDisposable
     public async Task DifferentContent_SameDate_IsMismatch()
     {
         Pair("a.txt", "good", "CORRUPT");
-        var r = await IntegrityVerifier.VerifyAsync(Src, Dst, null, CancellationToken.None);
+        var r = await IntegrityVerifier.VerifyAsync(Src, Dst, null, null, null, CancellationToken.None);
         Assert.Equal(1, r.Mismatched);
         Assert.Contains(@"a.txt", r.MismatchedPaths[0]);
     }
@@ -56,7 +56,7 @@ public class IntegrityVerifierTests : IDisposable
     {
         Pair("a.txt", "nuovo contenuto", "vecchio contenuto");
         File.SetLastWriteTime(Path.Combine(Src, "a.txt"), new DateTime(2026, 7, 2, 12, 0, 0));
-        var r = await IntegrityVerifier.VerifyAsync(Src, Dst, null, CancellationToken.None);
+        var r = await IntegrityVerifier.VerifyAsync(Src, Dst, null, null, null, CancellationToken.None);
         Assert.Equal(0, r.Mismatched);
         Assert.Equal(1, r.ChangedSinceBackup);
     }
@@ -66,7 +66,7 @@ public class IntegrityVerifierTests : IDisposable
     {
         Pair("a.txt", "x");
         File.WriteAllText(Path.Combine(Src, "only-src.txt"), "y");
-        var r = await IntegrityVerifier.VerifyAsync(Src, Dst, null, CancellationToken.None);
+        var r = await IntegrityVerifier.VerifyAsync(Src, Dst, null, null, null, CancellationToken.None);
         Assert.Equal(1, r.Missing);
     }
 
@@ -76,7 +76,7 @@ public class IntegrityVerifierTests : IDisposable
         Pair("a.txt", "x");
         using var lockStream = new FileStream(Path.Combine(Src, "a.txt"),
             FileMode.Open, FileAccess.Read, FileShare.None);
-        var r = await IntegrityVerifier.VerifyAsync(Src, Dst, null, CancellationToken.None);
+        var r = await IntegrityVerifier.VerifyAsync(Src, Dst, null, null, null, CancellationToken.None);
         Assert.Equal(1, r.Skipped);
         Assert.Equal(0, r.Mismatched);
     }
@@ -88,6 +88,35 @@ public class IntegrityVerifierTests : IDisposable
         using var cts = new CancellationTokenSource();
         cts.Cancel();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => IntegrityVerifier.VerifyAsync(Src, Dst, null, cts.Token));
+            () => IntegrityVerifier.VerifyAsync(Src, Dst, null, null, null, cts.Token));
+    }
+
+    [Fact]
+    public async Task ExcludedDir_NotCounted()
+    {
+        Pair("a.txt", "x");
+        Directory.CreateDirectory(Path.Combine(Src, "node_modules"));
+        File.WriteAllText(Path.Combine(Src, "node_modules", "lib.js"), "js"); // solo in sorgente
+        var r = await IntegrityVerifier.VerifyAsync(Src, Dst, null, new[] { "node_modules" }, null, CancellationToken.None);
+        Assert.Equal(0, r.Missing);
+        Assert.Equal(1, r.Checked);
+    }
+
+    [Fact]
+    public async Task ExcludedFilePattern_NotCounted()
+    {
+        Pair("a.txt", "x");
+        File.WriteAllText(Path.Combine(Src, "scratch.tmp"), "t"); // solo in sorgente
+        var r = await IntegrityVerifier.VerifyAsync(Src, Dst, new[] { "*.tmp" }, null, null, CancellationToken.None);
+        Assert.Equal(0, r.Missing);
+        Assert.Equal(1, r.Checked);
+    }
+
+    [Fact]
+    public async Task NonExcluded_StillVerified()
+    {
+        Pair("a.txt", "x");
+        var r = await IntegrityVerifier.VerifyAsync(Src, Dst, new[] { "*.tmp" }, new[] { "cache" }, null, CancellationToken.None);
+        Assert.Equal(1, r.Checked);
     }
 }

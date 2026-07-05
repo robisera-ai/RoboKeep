@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 
 namespace RoboKeep.Core.Services;
 
@@ -24,13 +25,18 @@ public static class IntegrityVerifier
     private const int ProgressEvery = 50;
 
     public static async Task<VerifyResult> VerifyAsync(
-        string sourceDir, string destDir, IProgress<string>? progress, CancellationToken ct)
+        string sourceDir, string destDir,
+        IReadOnlyList<string>? excludeFiles, IReadOnlyList<string>? excludeDirs,
+        IProgress<string>? progress, CancellationToken ct)
     {
-        return await Task.Run(() => Verify(sourceDir, destDir, progress, ct), ct).ConfigureAwait(false);
+        return await Task.Run(() => Verify(sourceDir, destDir, excludeFiles, excludeDirs, progress, ct), ct)
+            .ConfigureAwait(false);
     }
 
     private static VerifyResult Verify(
-        string sourceDir, string destDir, IProgress<string>? progress, CancellationToken ct)
+        string sourceDir, string destDir,
+        IReadOnlyList<string>? excludeFiles, IReadOnlyList<string>? excludeDirs,
+        IProgress<string>? progress, CancellationToken ct)
     {
         // Salta i reparse point (junction/symlink) come fa robocopy con /XJ: una junction
         // circolare nella sorgente manderebbe in loop l'enumerazione.
@@ -39,6 +45,26 @@ public static class IntegrityVerifier
             RecurseSubdirectories = true,
             AttributesToSkip = FileAttributes.ReparsePoint,
         }).ToList();
+
+        // Applica le stesse esclusioni del job (mirror di /XF e /XD di robocopy): altrimenti
+        // i file mai copiati per esclusione risultano falsi "Missing".
+        if (excludeDirs is { Count: > 0 })
+        {
+            files = files.Where(f =>
+            {
+                var relative = Path.GetRelativePath(sourceDir, f);
+                var segments = relative.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                return !segments.Any(seg => excludeDirs.Any(d => string.Equals(seg, d, StringComparison.OrdinalIgnoreCase)));
+            }).ToList();
+        }
+        if (excludeFiles is { Count: > 0 })
+        {
+            var patterns = excludeFiles.Select(WildcardToRegex).ToList();
+            files = files.Where(f => !patterns.Any(p => p.IsMatch(Path.GetFileName(f)))).ToList();
+        }
+
+        progress?.Report(string.Format(CoreLoc.S("Verify_Start"), files.Count));
+
         long checkedCount = 0, mismatched = 0, changed = 0, missing = 0, skipped = 0;
         var mismatchedPaths = new List<string>();
         var done = 0;
@@ -89,6 +115,13 @@ public static class IntegrityVerifier
         }
 
         return new VerifyResult(checkedCount, mismatched, changed, missing, skipped, mismatchedPaths);
+    }
+
+    /// <summary>Converte un pattern con wildcard (* e ?) in una regex case-insensitive, come /XF di robocopy.</summary>
+    private static Regex WildcardToRegex(string pattern)
+    {
+        var escaped = Regex.Escape(pattern).Replace(@"\*", ".*").Replace(@"\?", ".");
+        return new Regex($"^{escaped}$", RegexOptions.IgnoreCase);
     }
 
     private static byte[] HashFile(string path, CancellationToken ct)

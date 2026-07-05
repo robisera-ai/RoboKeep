@@ -465,7 +465,7 @@ public sealed class MainViewModel : ObservableObject
                 Enqueue(RoboKeep.Core.CoreLoc.S("Verify_NothingToVerify"));
                 return;
             }
-            var vr = await IntegrityVerifier.VerifyAsync(job.Source, target, progress, _cts.Token);
+            var vr = await IntegrityVerifier.VerifyAsync(job.Source, target, job.ExcludeFiles, job.ExcludeDirs, progress, _cts.Token);
             BackupRunner.ReportVerify(vr, progress);
             _host.History.Append(new RunHistoryEntry(
                 job.Name, "verify", started, DateTime.Now,

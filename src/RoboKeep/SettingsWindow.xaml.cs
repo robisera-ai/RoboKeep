@@ -285,8 +285,9 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
                 }
             }
 
-            ConfigTransferStatus.Foreground = System.Windows.Media.Brushes.Green;
-            ConfigTransferStatus.Text = string.Format(Loc.Instance["Cfg_Imported"], backupPath);
+            Loc.Instance.ApplyFromSetting(_host.Config.Settings.Language); // lingua della config importata subito attiva
+            MessageBox.Show(string.Format(Loc.Instance["Cfg_Imported"], backupPath),
+                Loc.Instance["Cfg_Import"], MessageBoxButton.OK, MessageBoxImage.Information);
             DialogResult = true; // chiude: la MainWindow ricarica i job
         }
         catch (Exception ex)

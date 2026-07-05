@@ -82,7 +82,7 @@ public static class SchtasksArgs
         sb.AppendLine("    <StartWhenAvailable>true</StartWhenAvailable>");
         sb.AppendLine("    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>");
         sb.AppendLine("    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>");
-        sb.AppendLine("    <ExecutionTimeLimit>PT12H</ExecutionTimeLimit>");
+        sb.AppendLine("    <ExecutionTimeLimit>PT72H</ExecutionTimeLimit>");
         sb.AppendLine("  </Settings>");
         sb.AppendLine("""  <Actions Context="Author">""");
         sb.AppendLine("    <Exec>");

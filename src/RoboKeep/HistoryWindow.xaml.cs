@@ -54,6 +54,14 @@ public partial class HistoryWindow : Wpf.Ui.Controls.FluentWindow
     private void OnOpenLog(object sender, RoutedEventArgs e)
     {
         if (HistoryGrid.SelectedItem is not HistoryRow row) return;
+        if (row.LogPath is null)
+        {
+            // Le verifiche integrità non hanno un log dedicato: l'esito è nel riepilogo
+            // della console, non serve (e sarebbe fuorviante) parlare di pulizia automatica.
+            MessageBox.Show(Loc.Instance["Hist_NoLog"], row.Job,
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
         var text = LogArchiveReader.ReadLogText(row.LogPath);
         if (text is null)
         {

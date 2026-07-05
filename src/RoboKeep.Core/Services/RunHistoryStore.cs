@@ -16,6 +16,12 @@ public sealed class RunHistoryStore
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
 
+    // Attività pianificate PER JOB (v1.4) rendono normale avere più processi RoboKeep
+    // concorrenti (es. due job schedulati alla stessa ora): senza mutua esclusione tra
+    // processi, l'Append di uno può sovrascrivere quello scritto un istante prima dall'altro
+    // (read-modify-write non atomico su file).
+    private static readonly Mutex CrossProcess = new(false, @"Global\RoboKeep.RunHistory");
+
     private readonly string _path;
 
     public RunHistoryStore(string path) => _path = path;
@@ -23,9 +29,22 @@ public sealed class RunHistoryStore
     /// <summary>Voci in ordine cronologico inverso (più recente prima), eventualmente filtrate per job.</summary>
     public IReadOnlyList<RunHistoryEntry> List(string? jobName = null)
     {
-        var all = LoadRaw();
-        var filtered = jobName is null ? all : all.Where(e => e.JobName == jobName);
-        return filtered.OrderByDescending(e => e.StartedAt).ToList();
+        var acquired = false;
+        try
+        {
+            try { acquired = CrossProcess.WaitOne(TimeSpan.FromSeconds(3)); }
+            catch (AbandonedMutexException) { acquired = true; }
+            // Sola lettura: se il mutex non si libera in tempo procediamo comunque senza
+            // (nel peggiore dei casi una lettura "a metà", già gestita da LoadRaw).
+
+            var all = LoadRaw();
+            var filtered = jobName is null ? all : all.Where(e => e.JobName == jobName);
+            return filtered.OrderByDescending(e => e.StartedAt).ToList();
+        }
+        finally
+        {
+            if (acquired) CrossProcess.ReleaseMutex();
+        }
     }
 
     /// <summary>Aggiunge una voce (best-effort); oltre il tetto le più vecchie escono.</summary>
@@ -33,14 +52,25 @@ public sealed class RunHistoryStore
     {
         try
         {
-            var all = LoadRaw();
-            all.Add(entry);
-            var trimmed = all.OrderByDescending(e => e.StartedAt).Take(MaxEntries).ToList();
+            var acquired = false;
+            try
+            {
+                try { acquired = CrossProcess.WaitOne(TimeSpan.FromSeconds(3)); }
+                catch (AbandonedMutexException) { acquired = true; }
 
-            var dir = Path.GetDirectoryName(_path);
-            if (!string.IsNullOrEmpty(dir))
-                Directory.CreateDirectory(dir);
-            File.WriteAllText(_path, JsonSerializer.Serialize(trimmed, Options));
+                var all = LoadRaw();
+                all.Add(entry);
+                var trimmed = all.OrderByDescending(e => e.StartedAt).Take(MaxEntries).ToList();
+
+                var dir = Path.GetDirectoryName(_path);
+                if (!string.IsNullOrEmpty(dir))
+                    Directory.CreateDirectory(dir);
+                File.WriteAllText(_path, JsonSerializer.Serialize(trimmed, Options));
+            }
+            finally
+            {
+                if (acquired) CrossProcess.ReleaseMutex();
+            }
         }
         catch
         {

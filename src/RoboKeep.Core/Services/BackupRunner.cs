@@ -171,7 +171,8 @@ public sealed class BackupRunner
                     else
                     {
                         var vr = await IntegrityVerifier.VerifyAsync(
-                            sourceOverride ?? job.Source, target, progress, ct).ConfigureAwait(false);
+                            sourceOverride ?? job.Source, target, job.ExcludeFiles, job.ExcludeDirs, progress, ct)
+                            .ConfigureAwait(false);
                         ReportVerify(vr, progress);
                         _history?.Append(new RunHistoryEntry(
                             job.Name, "verify", verifyStart, DateTime.Now,
