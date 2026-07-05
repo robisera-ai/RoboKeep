@@ -369,8 +369,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     {
         var selected = _vm.SelectedJob;
         if (selected is null) return;
-        var job = _host.Config.Jobs.FirstOrDefault(j => j.Name == selected.Name);
-        if (job is null || !job.Versioned) return;
+        var job = selected.Model;
+        if (!job.Versioned) return;
 
         var win = new SnapshotsWindow(job.Name, job.Destination) { Owner = this };
         win.ShowDialog();

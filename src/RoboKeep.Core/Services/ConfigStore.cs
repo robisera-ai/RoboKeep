@@ -27,14 +27,6 @@ public sealed class ConfigStore
     /// <summary>Cartella che contiene il file di configurazione (per file affini, es. esiti).</summary>
     public string DirectoryPath => Path.GetDirectoryName(_path) ?? AppContext.BaseDirectory;
 
-    /// <summary>
-    /// Percorso di default del file di configurazione: <c>config.json</c> accanto
-    /// all'eseguibile (modello "portabile": app, config, log e temp nella stessa cartella).
-    /// NB: tenere l'app fuori da <c>C:\Program Files</c>, che è in sola lettura per gli utenti.
-    /// </summary>
-    public static string DefaultConfigPath =>
-        Path.Combine(AppContext.BaseDirectory, "config.json");
-
     /// <summary>Carica la configurazione; se il file non esiste restituisce una config vuota di default.</summary>
     /// <remarks>
     /// A differenza degli altri store (best-effort, es. esiti/ledger) qui un JSON corrotto

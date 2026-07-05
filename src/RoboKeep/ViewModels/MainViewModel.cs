@@ -100,7 +100,6 @@ public sealed class MainViewModel : ObservableObject
         PersistJobs();
     }
 
-    public AppHost Host => _host;
     public ObservableCollection<JobViewModel> Jobs { get; }
 
     /// <summary>true quando non ci sono job: la UI mostra lo stato vuoto.</summary>
@@ -140,8 +139,7 @@ public sealed class MainViewModel : ObservableObject
         get
         {
             if (_selectedJob is null) return false;
-            var job = _host.Config.Jobs.FirstOrDefault(j => j.Name == _selectedJob.Name);
-            return job?.Versioned == true;
+            return _selectedJob.Model.Versioned;
         }
     }
 
@@ -251,8 +249,7 @@ public sealed class MainViewModel : ObservableObject
 
         foreach (var jvm in jobs)
         {
-            var job = _host.Config.Jobs.FirstOrDefault(j => j.Name == jvm.Name);
-            if (job is null) continue;
+            var job = jvm.Model;
             var inputs = PreflightCollector.Collect(job, minFree, budget);
             foreach (var warn in PreflightChecker.Evaluate(inputs))
                 messages.Add($"- {jvm.Name}: {Loc.Instance[warn.MessageKey]} {warn.Detail}".TrimEnd());
@@ -455,8 +452,7 @@ public sealed class MainViewModel : ObservableObject
     {
         var sel = SelectedJob;
         if (sel is null) return;
-        var job = _host.Config.Jobs.FirstOrDefault(j => j.Name == sel.Name);
-        if (job is null) return;
+        var job = sel.Model;
 
         IsBusy = true;
         SetRunning(RunKind.Verify);

@@ -114,12 +114,6 @@ public sealed class JobEditorViewModel : ObservableObject
         set { _job.Wait = value; OnPropertyChanged(); RaisePreview(); }
     }
 
-    public bool Enabled
-    {
-        get => _job.Enabled;
-        set { _job.Enabled = value; OnPropertyChanged(); }
-    }
-
     /// <summary>Esclusioni file, una per riga (es. <c>*.tmp</c>).</summary>
     public string ExcludeFilesText
     {
@@ -267,6 +261,8 @@ public sealed class JobEditorViewModel : ObservableObject
     public string? Validate()
     {
         if (string.IsNullOrWhiteSpace(Name)) return Loc.Instance["Editor_Val_Name"];
+        if (Name.Contains('"'))
+            return Loc.Instance["Editor_Val_NameQuotes"];
         if (string.IsNullOrWhiteSpace(Source)) return Loc.Instance["Editor_Val_Source"];
         if (string.IsNullOrWhiteSpace(Destination)) return Loc.Instance["Editor_Val_Dest"];
         if (_job.Schedule != ScheduleKind.None && !TimeOnly.TryParse(_job.ScheduleTime, out _))

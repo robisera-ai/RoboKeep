@@ -59,10 +59,6 @@ public sealed class SchedulerService
     public void Delete(string taskName) =>
         Run(new List<string> { "/Delete", "/F", "/TN", TaskPrefix + taskName }, throwOnError: false);
 
-    /// <summary>Indica se l'attività pianificata esiste.</summary>
-    public bool Exists(string taskName) =>
-        Run(new List<string> { "/Query", "/TN", TaskPrefix + taskName }, throwOnError: false) == 0;
-
     /// <summary>
     /// Restituisce la "prossima esecuzione" dell'attività (stringa data/ora di sistema),
     /// oppure null se l'attività non esiste.

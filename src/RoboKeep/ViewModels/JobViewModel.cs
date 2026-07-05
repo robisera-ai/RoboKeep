@@ -19,7 +19,6 @@ public sealed class JobViewModel : ObservableObject
     public string Name => Model.Name;
     public string Source => Model.Source;
     public string Destination => Model.Destination;
-    public bool Mirror => Model.Mirror;
     public bool Enabled
     {
         get => Model.Enabled;
@@ -71,7 +70,6 @@ public sealed class JobViewModel : ObservableObject
         OnPropertyChanged(nameof(Name));
         OnPropertyChanged(nameof(Source));
         OnPropertyChanged(nameof(Destination));
-        OnPropertyChanged(nameof(Mirror));
         OnPropertyChanged(nameof(Enabled));
         OnPropertyChanged(nameof(ModeLabel));
     }

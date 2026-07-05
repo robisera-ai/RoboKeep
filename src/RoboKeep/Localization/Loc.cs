@@ -34,16 +34,7 @@ public sealed class Loc : INotifyPropertyChanged
         : En.TryGetValue(key, out var e) ? e
         : key;
 
-    public string T(string key) => this[key];
-
     public event PropertyChangedEventHandler? PropertyChanged;
-
-    public void SetLanguage(string lang)
-    {
-        lang = Normalize(lang);
-        if (lang == Language) return;
-        Apply(lang);
-    }
 
     /// <summary>Applica l'impostazione: codice lingua valido = forzata, altro = auto da Windows.</summary>
     public void ApplyFromSetting(string? setting)
@@ -92,8 +83,6 @@ public sealed class Loc : INotifyPropertyChanged
         ["Main_New"] = "Nuovo",
         ["Main_Edit"] = "Modifica",
         ["Main_Delete"] = "Elimina",
-        ["Main_MoveUpTip"] = "Sposta su (priorità più alta)",
-        ["Main_MoveDownTip"] = "Sposta giù (priorità più bassa)",
         ["Main_Preview"] = "Anteprima",
         ["Main_RunSelected"] = "Avvia selezionato",
         ["Main_RunAll"] = "Avvia tutti",
@@ -220,6 +209,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Wiz_NetCredNote"] = "Sorgente o destinazione in rete: ricordati di impostare la credenziale nell'editor.",
         ["Editor_CommandPreview"] = "Anteprima comando robocopy",
         ["Editor_Val_Name"] = "Il nome del job è obbligatorio.",
+        ["Editor_Val_NameQuotes"] = "Il nome del job non può contenere virgolette doppie.",
         ["Editor_Val_Source"] = "La cartella sorgente è obbligatoria.",
         ["Editor_Val_Dest"] = "La cartella destinazione è obbligatoria.",
         ["Editor_BrowseTitle"] = "Seleziona cartella",
@@ -380,8 +370,6 @@ public sealed class Loc : INotifyPropertyChanged
         ["Main_New"] = "New",
         ["Main_Edit"] = "Edit",
         ["Main_Delete"] = "Delete",
-        ["Main_MoveUpTip"] = "Move up (higher priority)",
-        ["Main_MoveDownTip"] = "Move down (lower priority)",
         ["Main_Preview"] = "Preview",
         ["Main_RunSelected"] = "Run selected",
         ["Main_RunAll"] = "Run all",
@@ -508,6 +496,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Wiz_NetCredNote"] = "Source or destination on the network: remember to set the credential in the editor.",
         ["Editor_CommandPreview"] = "Robocopy command preview",
         ["Editor_Val_Name"] = "The job name is required.",
+        ["Editor_Val_NameQuotes"] = "The job name cannot contain double quotes.",
         ["Editor_Val_Source"] = "The source folder is required.",
         ["Editor_Val_Dest"] = "The destination folder is required.",
         ["Editor_BrowseTitle"] = "Select folder",
@@ -668,8 +657,6 @@ public sealed class Loc : INotifyPropertyChanged
         ["Main_New"] = "Nuevo",
         ["Main_Edit"] = "Editar",
         ["Main_Delete"] = "Eliminar",
-        ["Main_MoveUpTip"] = "Subir (mayor prioridad)",
-        ["Main_MoveDownTip"] = "Bajar (menor prioridad)",
         ["Main_Preview"] = "Vista previa",
         ["Main_RunSelected"] = "Ejecutar seleccionado",
         ["Main_RunAll"] = "Ejecutar todos",
@@ -796,6 +783,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Wiz_NetCredNote"] = "Origen o destino en la red: recuerda establecer la credencial en el editor.",
         ["Editor_CommandPreview"] = "Vista previa del comando robocopy",
         ["Editor_Val_Name"] = "El nombre del trabajo es obligatorio.",
+        ["Editor_Val_NameQuotes"] = "El nombre del trabajo no puede contener comillas dobles.",
         ["Editor_Val_Source"] = "La carpeta de origen es obligatoria.",
         ["Editor_Val_Dest"] = "La carpeta de destino es obligatoria.",
         ["Editor_BrowseTitle"] = "Seleccionar carpeta",
@@ -956,8 +944,6 @@ public sealed class Loc : INotifyPropertyChanged
         ["Main_New"] = "Nouveau",
         ["Main_Edit"] = "Modifier",
         ["Main_Delete"] = "Supprimer",
-        ["Main_MoveUpTip"] = "Monter (priorité plus élevée)",
-        ["Main_MoveDownTip"] = "Descendre (priorité plus basse)",
         ["Main_Preview"] = "Aperçu",
         ["Main_RunSelected"] = "Lancer la sélection",
         ["Main_RunAll"] = "Tout lancer",
@@ -1084,6 +1070,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Wiz_NetCredNote"] = "Source ou destination sur le réseau : pensez à définir les identifiants dans l'éditeur.",
         ["Editor_CommandPreview"] = "Aperçu de la commande robocopy",
         ["Editor_Val_Name"] = "Le nom de la tâche est obligatoire.",
+        ["Editor_Val_NameQuotes"] = "Le nom de la tâche ne peut pas contenir de guillemets doubles.",
         ["Editor_Val_Source"] = "Le dossier source est obligatoire.",
         ["Editor_Val_Dest"] = "Le dossier de destination est obligatoire.",
         ["Editor_BrowseTitle"] = "Sélectionner un dossier",
@@ -1244,8 +1231,6 @@ public sealed class Loc : INotifyPropertyChanged
         ["Main_New"] = "Neu",
         ["Main_Edit"] = "Bearbeiten",
         ["Main_Delete"] = "Löschen",
-        ["Main_MoveUpTip"] = "Nach oben (höhere Priorität)",
-        ["Main_MoveDownTip"] = "Nach unten (niedrigere Priorität)",
         ["Main_Preview"] = "Vorschau",
         ["Main_RunSelected"] = "Ausgewählten starten",
         ["Main_RunAll"] = "Alle starten",
@@ -1372,6 +1357,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Wiz_NetCredNote"] = "Quelle oder Ziel im Netzwerk: Vergessen Sie nicht, die Anmeldedaten im Editor einzustellen.",
         ["Editor_CommandPreview"] = "Vorschau des robocopy-Befehls",
         ["Editor_Val_Name"] = "Der Auftragsname ist erforderlich.",
+        ["Editor_Val_NameQuotes"] = "Der Jobname darf keine doppelten Anführungszeichen enthalten.",
         ["Editor_Val_Source"] = "Der Quellordner ist erforderlich.",
         ["Editor_Val_Dest"] = "Der Zielordner ist erforderlich.",
         ["Editor_BrowseTitle"] = "Ordner auswählen",
