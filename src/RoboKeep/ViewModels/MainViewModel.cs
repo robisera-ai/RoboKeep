@@ -300,7 +300,9 @@ public sealed class MainViewModel : ObservableObject
         {
             var jvm = Jobs[i];
 
-            if (interrupted.Contains(jvm.Name))
+            // Il lock file di un job IN ESECUZIONE in questo processo è legittimo:
+            // non è un residuo di crash, non va segnalato come "interrotto".
+            if (interrupted.Contains(jvm.Name) && !jvm.IsRunning)
             {
                 jvm.Health = BackupHealth.Interrupted;
                 jvm.HealthTooltip = Loc.Instance["Health_Interrupted"];
@@ -426,6 +428,12 @@ public sealed class MainViewModel : ObservableObject
                 finally
                 {
                     jvm.IsRunning = false;
+                    // Ricalcola icone di avviso e banner man mano che i job finiscono, non solo
+                    // a fine batch: un job appena riuscito non deve restare segnato in ritardo.
+                    // Solo nei run reali: in anteprima l'esito non viene persistito e il reload
+                    // sovrascriverebbe l'etichetta "Anteprima" appena impostata.
+                    if (!dryRun)
+                        ReloadLastResults();
                 }
             }
         }
