@@ -32,7 +32,13 @@ public static class IntegrityVerifier
     private static VerifyResult Verify(
         string sourceDir, string destDir, IProgress<string>? progress, CancellationToken ct)
     {
-        var files = Directory.EnumerateFiles(sourceDir, "*", SearchOption.AllDirectories).ToList();
+        // Salta i reparse point (junction/symlink) come fa robocopy con /XJ: una junction
+        // circolare nella sorgente manderebbe in loop l'enumerazione.
+        var files = Directory.EnumerateFiles(sourceDir, "*", new EnumerationOptions
+        {
+            RecurseSubdirectories = true,
+            AttributesToSkip = FileAttributes.ReparsePoint,
+        }).ToList();
         long checkedCount = 0, mismatched = 0, changed = 0, missing = 0, skipped = 0;
         var mismatchedPaths = new List<string>();
         var done = 0;
@@ -56,8 +62,8 @@ public static class IntegrityVerifier
             byte[] srcHash, dstHash;
             try
             {
-                srcHash = HashFile(srcFile);
-                dstHash = HashFile(dstFile);
+                srcHash = HashFile(srcFile, ct);
+                dstHash = HashFile(dstFile, ct);
             }
             catch (OperationCanceledException) { throw; }
             catch (IOException) { skipped++; continue; }
@@ -85,11 +91,21 @@ public static class IntegrityVerifier
         return new VerifyResult(checkedCount, mismatched, changed, missing, skipped, mismatchedPaths);
     }
 
-    private static byte[] HashFile(string path)
+    private static byte[] HashFile(string path, CancellationToken ct)
     {
+        // Hash a blocchi con controllo di annullamento: su un singolo file multi-GB
+        // l'annullamento risponde entro un blocco, non a fine file.
         using var sha = SHA256.Create();
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
             bufferSize: 1024 * 1024);
-        return sha.ComputeHash(stream);
+        var buffer = new byte[1024 * 1024];
+        int read;
+        while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            ct.ThrowIfCancellationRequested();
+            sha.TransformBlock(buffer, 0, read, null, 0);
+        }
+        sha.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
+        return sha.Hash!;
     }
 }
