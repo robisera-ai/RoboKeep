@@ -380,7 +380,10 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     {
         var win = new SettingsWindow(_host) { Owner = this };
         if (win.ShowDialog() == true)
+        {
             _host.SaveConfig();
+            _vm.ReloadJobs(); // dopo un import la lista puo' essere completamente diversa
+        }
     }
 
     private bool ShowEditor(BackupJob job)

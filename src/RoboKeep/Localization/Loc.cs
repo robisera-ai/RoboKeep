@@ -295,6 +295,13 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Removed"] = "Attività pianificata rimossa.",
         ["Sched_Error"] = "Errore: {0}",
 
+        ["Cfg_Title"] = "Backup della configurazione",
+        ["Cfg_Export"] = "Esporta configurazione...",
+        ["Cfg_Import"] = "Importa configurazione...",
+        ["Cfg_ImportConfirm"] = "L'importazione sostituirà tutti i job e le impostazioni attuali (ne viene salvata una copia di sicurezza). Le password importate da un altro PC andranno reinserite. Continuare?",
+        ["Cfg_Exported"] = "Configurazione esportata in {0}",
+        ["Cfg_Imported"] = "Configurazione importata. Copia di sicurezza della precedente: {0}",
+
         ["Health_BannerTitle"] = "Attenzione ai backup",
         ["Health_Interrupted"] = "Era in corso all'ultima chiusura — verificare prima di avviare",
         ["Health_Failed"] = "Ultimo backup fallito",
@@ -574,6 +581,13 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Created"] = "Scheduled task created/updated for {0}.",
         ["Sched_Removed"] = "Scheduled task removed.",
         ["Sched_Error"] = "Error: {0}",
+
+        ["Cfg_Title"] = "Configuration backup",
+        ["Cfg_Export"] = "Export configuration...",
+        ["Cfg_Import"] = "Import configuration...",
+        ["Cfg_ImportConfirm"] = "Importing will replace all current jobs and settings (a backup copy is saved). Passwords imported from another PC must be re-entered. Continue?",
+        ["Cfg_Exported"] = "Configuration exported to {0}",
+        ["Cfg_Imported"] = "Configuration imported. Backup of the previous one: {0}",
 
         ["Health_BannerTitle"] = "Backup warnings",
         ["Health_Interrupted"] = "Was running at last shutdown — check before starting",
@@ -855,6 +869,13 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Removed"] = "Tarea programada eliminada.",
         ["Sched_Error"] = "Error: {0}",
 
+        ["Cfg_Title"] = "Copia de la configuración",
+        ["Cfg_Export"] = "Exportar configuración...",
+        ["Cfg_Import"] = "Importar configuración...",
+        ["Cfg_ImportConfirm"] = "La importación sustituirá todos los trabajos y ajustes actuales (se guarda una copia de seguridad). Las contraseñas importadas de otro PC deberán reintroducirse. ¿Continuar?",
+        ["Cfg_Exported"] = "Configuración exportada a {0}",
+        ["Cfg_Imported"] = "Configuración importada. Copia de la anterior: {0}",
+
         ["Health_BannerTitle"] = "Atención a las copias",
         ["Health_Interrupted"] = "Estaba en curso al último cierre — verificar antes de iniciar",
         ["Health_Failed"] = "Último backup fallido",
@@ -1135,6 +1156,13 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Removed"] = "Tâche planifiée supprimée.",
         ["Sched_Error"] = "Erreur : {0}",
 
+        ["Cfg_Title"] = "Sauvegarde de la configuration",
+        ["Cfg_Export"] = "Exporter la configuration...",
+        ["Cfg_Import"] = "Importer la configuration...",
+        ["Cfg_ImportConfirm"] = "L'importation remplacera toutes les tâches et tous les réglages actuels (une copie de sécurité est enregistrée). Les mots de passe importés d'un autre PC devront être ressaisis. Continuer ?",
+        ["Cfg_Exported"] = "Configuration exportée vers {0}",
+        ["Cfg_Imported"] = "Configuration importée. Copie de la précédente : {0}",
+
         ["Health_BannerTitle"] = "Attention aux sauvegardes",
         ["Health_Interrupted"] = "Était en cours au dernier arrêt — vérifier avant de démarrer",
         ["Health_Failed"] = "Dernière sauvegarde échouée",
@@ -1414,6 +1442,13 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Created"] = "Geplante Aufgabe erstellt/aktualisiert für {0}.",
         ["Sched_Removed"] = "Geplante Aufgabe entfernt.",
         ["Sched_Error"] = "Fehler: {0}",
+
+        ["Cfg_Title"] = "Konfigurationssicherung",
+        ["Cfg_Export"] = "Konfiguration exportieren...",
+        ["Cfg_Import"] = "Konfiguration importieren...",
+        ["Cfg_ImportConfirm"] = "Der Import ersetzt alle aktuellen Jobs und Einstellungen (eine Sicherungskopie wird gespeichert). Von einem anderen PC importierte Passwörter müssen neu eingegeben werden. Fortfahren?",
+        ["Cfg_Exported"] = "Konfiguration exportiert nach {0}",
+        ["Cfg_Imported"] = "Konfiguration importiert. Sicherung der vorherigen: {0}",
 
         ["Health_BannerTitle"] = "Achtung bei Backups",
         ["Health_Interrupted"] = "War beim letzten Beenden aktiv — vor dem Start prüfen",

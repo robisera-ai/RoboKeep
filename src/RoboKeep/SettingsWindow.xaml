@@ -240,6 +240,13 @@
                         <ui:Button Content="{l:Tr Sched_Remove}" Icon="{ui:SymbolIcon Delete24}" Margin="8,0,0,0" Click="OnRemoveSchedule"/>
                     </StackPanel>
                     <TextBlock x:Name="ScheduleStatus" Margin="0,12,0,0" TextWrapping="Wrap"/>
+
+                    <TextBlock Text="{l:Tr Cfg_Title}" FontWeight="SemiBold" Margin="0,24,0,6"/>
+                    <StackPanel Orientation="Horizontal">
+                        <ui:Button Content="{l:Tr Cfg_Export}" Icon="{ui:SymbolIcon Save24}" Click="OnExportConfig"/>
+                        <ui:Button Content="{l:Tr Cfg_Import}" Icon="{ui:SymbolIcon FolderOpen24}" Margin="8,0,0,0" Click="OnImportConfig"/>
+                    </StackPanel>
+                    <TextBlock x:Name="ConfigTransferStatus" Margin="0,8,0,0" TextWrapping="Wrap"/>
                 </StackPanel>
             </TabItem>
 

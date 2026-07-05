@@ -14,6 +14,7 @@ namespace RoboKeep;
 public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
 {
     private const string ScheduledTaskName = "AvviaTutti";
+    private readonly AppHost _host;
     private readonly SettingsViewModel _vm;
     private readonly SchedulerService _scheduler = new();
     private readonly CredentialService _credentials;
@@ -21,6 +22,7 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
     public SettingsWindow(AppHost host)
     {
         InitializeComponent();
+        _host = host;
         _credentials = host.Credentials;
         _vm = new SettingsViewModel(host.Config.Settings, host.Config.Credentials, host.Credentials);
         DataContext = _vm;
@@ -215,6 +217,73 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
         finally
         {
             TestEmailButton.IsEnabled = true;
+        }
+    }
+
+    private void OnExportConfig(object sender, RoutedEventArgs e)
+    {
+        var dlg = new SaveFileDialog
+        {
+            Title = Loc.Instance["Cfg_Export"],
+            FileName = $"robokeep-config-{DateTime.Now:yyyyMMdd}.json",
+            Filter = "JSON|*.json",
+        };
+        if (dlg.ShowDialog() != true) return;
+        try
+        {
+            ConfigTransfer.Export(_host.Config, dlg.FileName);
+            ConfigTransferStatus.Foreground = System.Windows.Media.Brushes.Green;
+            ConfigTransferStatus.Text = string.Format(Loc.Instance["Cfg_Exported"], dlg.FileName);
+        }
+        catch (Exception ex)
+        {
+            ConfigTransferStatus.Foreground = System.Windows.Media.Brushes.Red;
+            ConfigTransferStatus.Text = string.Format(Loc.Instance["Common_Error"], ex.Message);
+        }
+    }
+
+    private void OnImportConfig(object sender, RoutedEventArgs e)
+    {
+        var dlg = new OpenFileDialog { Title = Loc.Instance["Cfg_Import"], Filter = "JSON|*.json" };
+        if (dlg.ShowDialog() != true) return;
+
+        var confirm = MessageBox.Show(Loc.Instance["Cfg_ImportConfirm"], Loc.Instance["Cfg_Import"],
+            MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (confirm != MessageBoxResult.Yes) return;
+
+        try
+        {
+            var imported = ConfigTransfer.Import(dlg.FileName); // valida PRIMA di toccare qualsiasi cosa
+
+            // Backup della config attuale, poi sostituzione e salvataggio.
+            var backupPath = Path.Combine(_host.Store.DirectoryPath,
+                $"config.backup-{DateTime.Now:yyyyMMdd-HHmmss}.json");
+            ConfigTransfer.Export(_host.Config, backupPath);
+
+            _host.Config.Settings = imported.Settings;
+            _host.Config.Credentials = imported.Credentials;
+            _host.Config.Jobs = imported.Jobs;
+            _host.SaveConfig();
+
+            // Risincronizza le attività per-job con la nuova configurazione.
+            var exe = Environment.ProcessPath;
+            if (exe is not null)
+            {
+                var scheduler = new SchedulerService();
+                foreach (var job in _host.Config.Jobs)
+                {
+                    try { scheduler.SyncJobTask(job, exe); } catch { }
+                }
+            }
+
+            ConfigTransferStatus.Foreground = System.Windows.Media.Brushes.Green;
+            ConfigTransferStatus.Text = string.Format(Loc.Instance["Cfg_Imported"], backupPath);
+            DialogResult = true; // chiude: la MainWindow ricarica i job
+        }
+        catch (Exception ex)
+        {
+            ConfigTransferStatus.Foreground = System.Windows.Media.Brushes.Red;
+            ConfigTransferStatus.Text = string.Format(Loc.Instance["Common_Error"], ex.Message);
         }
     }
 
