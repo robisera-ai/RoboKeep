@@ -167,6 +167,24 @@ public static class CoreLoc
             "[verificación] nada que verificar: el trabajo versionado aún no tiene instantáneas.",
             "[vérification] rien à vérifier : la tâche versionnée n'a pas encore d'instantanés.",
             "[Prüfung] nichts zu prüfen: der versionierte Job hat noch keine Snapshots."),
+        ["Versioning_NoHardLink"] = L(
+            "[versioning] ATTENZIONE: la destinazione non supporta gli hard-link. Eseguo un mirror semplice (nessuno snapshot). Usa una destinazione NTFS locale per le versioni.",
+            "[versioning] WARNING: the destination does not support hard-links. Running a plain mirror (no snapshot). Use a local NTFS destination for versions.",
+            "[versionado] ATENCIÓN: el destino no admite enlaces duros. Ejecuto un espejo simple (sin instantánea). Usa un destino NTFS local para las versiones.",
+            "[versioning] ATTENTION : la destination ne prend pas en charge les liens physiques. Miroir simple exécuté (pas d'instantané). Utilisez une destination NTFS locale pour les versions.",
+            "[Versionierung] ACHTUNG: das Ziel unterstützt keine Hardlinks. Einfache Spiegelung wird ausgeführt (kein Snapshot). Verwenden Sie ein lokales NTFS-Ziel für Versionen."),
+        ["Email_SendFailed"] = L(
+            "[email] invio non riuscito: {0}",
+            "[email] send failed: {0}",
+            "[email] envío fallido: {0}",
+            "[email] échec de l'envoi : {0}",
+            "[E-Mail] Senden fehlgeschlagen: {0}"),
+        ["Verify_Failed"] = L(
+            "[verifica] non riuscita: {0}",
+            "[verify] failed: {0}",
+            "[verificación] fallida: {0}",
+            "[vérification] échouée : {0}",
+            "[Prüfung] fehlgeschlagen: {0}"),
 
         ["Lbl_Result"] = L("Esito", "Result", "Resultado", "Résultat", "Ergebnis"),
         ["Lbl_Error"] = L("ERRORE", "ERROR", "ERROR", "ERREUR", "FEHLER"),

@@ -20,4 +20,14 @@ public sealed record RunHistoryEntry(
     long FilesExtra,
     long FilesFailed,
     long DirsFailed,
-    string? LogPath);
+    string? LogPath)
+{
+    /// <summary>Voce di cronologia per una verifica integrità: mappa i campi conteggio
+    /// secondo la convenzione documentata sopra (Copied=verificati, Failed=differenti+mancanti,
+    /// Skipped=saltati). Success = nessun file differente.</summary>
+    public static RunHistoryEntry ForVerify(
+        string jobName, DateTime startedAt, Services.VerifyResult result) =>
+        new(jobName, "verify", startedAt, DateTime.Now,
+            result.Mismatched == 0, 0,
+            result.Checked, result.Skipped, 0, result.Mismatched + result.Missing, 0, null);
+}

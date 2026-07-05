@@ -23,12 +23,7 @@ public sealed class SnapshotService
         var dest = (job.Destination ?? "").Trim();
         Directory.CreateDirectory(dest);
 
-        var existing = Directory.GetDirectories(dest).Select(Path.GetFileName).Where(n => n is not null).Cast<string>().ToList();
-
-        var prevName = existing
-            .Where(n => !SnapshotName.IsInProgress(n) && SnapshotName.TryParse(n, out _))
-            .OrderByDescending(n => { SnapshotName.TryParse(n, out var d); return d; })
-            .FirstOrDefault();
+        var prevName = SnapshotName.Latest(dest);
 
         var now = DateTime.Now;
         var newName = SnapshotName.For(now);

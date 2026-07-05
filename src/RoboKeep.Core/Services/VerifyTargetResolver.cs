@@ -17,15 +17,7 @@ public static class VerifyTargetResolver
         if (!job.Versioned)
             return dest;
 
-        if (!Directory.Exists(dest))
-            return null;
-
-        var latest = Directory.GetDirectories(dest)
-            .Select(Path.GetFileName)
-            .OfType<string>()
-            .Where(n => !SnapshotName.IsInProgress(n) && SnapshotName.TryParse(n, out _))
-            .OrderByDescending(n => { SnapshotName.TryParse(n, out var d); return d; })
-            .FirstOrDefault();
+        var latest = SnapshotName.Latest(dest);
 
         return latest is null ? null : Path.Combine(dest, latest);
     }

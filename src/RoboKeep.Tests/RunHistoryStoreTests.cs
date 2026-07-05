@@ -56,3 +56,19 @@ public class RunHistoryStoreTests : IDisposable
         Assert.Empty(new RunHistoryStore(StorePath).List());
     }
 }
+
+public class RunHistoryForVerifyTests
+{
+    [Fact]
+    public void ForVerify_MapsCountsByConvention()
+    {
+        var vr = new VerifyResult(100, 2, 3, 4, 5, new List<string>());
+        var e = RunHistoryEntry.ForVerify("J", new DateTime(2026, 7, 5, 10, 0, 0), vr);
+        Assert.Equal("verify", e.Kind);
+        Assert.False(e.Success);           // Mismatched > 0
+        Assert.Equal(100, e.FilesCopied);  // verificati
+        Assert.Equal(5, e.FilesSkipped);   // saltati
+        Assert.Equal(6, e.FilesFailed);    // differenti + mancanti
+        Assert.Null(e.LogPath);
+    }
+}

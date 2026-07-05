@@ -475,10 +475,7 @@ public sealed class MainViewModel : ObservableObject
             }
             var vr = await IntegrityVerifier.VerifyAsync(job.Source, target, job.ExcludeFiles, job.ExcludeDirs, progress, _cts.Token);
             BackupRunner.ReportVerify(vr, progress);
-            _host.History.Append(new RunHistoryEntry(
-                job.Name, "verify", started, DateTime.Now,
-                vr.Mismatched == 0, 0,
-                vr.Checked, vr.Skipped, 0, vr.Mismatched + vr.Missing, 0, null));
+            _host.History.Append(RunHistoryEntry.ForVerify(job.Name, started, vr));
         }
         catch (OperationCanceledException)
         {

@@ -30,19 +30,7 @@ public partial class SnapshotsWindow : Wpf.Ui.Controls.FluentWindow
     public bool IsEmpty => Snapshots.Count == 0;
 
     private static List<string> LoadSnapshots(string dest)
-    {
-        if (!Directory.Exists(dest))
-            return new List<string>();
-
-        return Directory.GetDirectories(dest)
-            .Select(Path.GetFileName)
-            .Where(n => n is not null
-                        && !SnapshotName.IsInProgress(n!)
-                        && SnapshotName.TryParse(n!, out _))
-            .Cast<string>()
-            .OrderByDescending(n => n)
-            .ToList();
-    }
+        => SnapshotName.ListValid(dest).ToList();
 
     private void OpenSelected()
     {

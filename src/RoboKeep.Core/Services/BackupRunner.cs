@@ -104,8 +104,7 @@ public sealed class BackupRunner
                 }
                 else
                 {
-                    progress?.Report("[versioning] ATTENZIONE: la destinazione non supporta gli hard-link. "
-                        + "Eseguo un mirror semplice (nessuno snapshot). Usa una destinazione NTFS locale per le versioni.");
+                    progress?.Report(CoreLoc.S("Versioning_NoHardLink"));
                     run = await _runner.RunAsync(job, dryRun, progress, ct, sourceOverride: sourceOverride).ConfigureAwait(false);
                 }
             }
@@ -154,7 +153,7 @@ public sealed class BackupRunner
             }
             catch (Exception ex)
             {
-                progress?.Report($"[email] invio non riuscito: {ex.Message}");
+                progress?.Report(string.Format(CoreLoc.S("Email_SendFailed"), ex.Message));
             }
 
             // Verifica integrità automatica: solo per run reali riusciti, mai bloccante.
@@ -174,16 +173,13 @@ public sealed class BackupRunner
                             sourceOverride ?? job.Source, target, job.ExcludeFiles, job.ExcludeDirs, progress, ct)
                             .ConfigureAwait(false);
                         ReportVerify(vr, progress);
-                        _history?.Append(new RunHistoryEntry(
-                            job.Name, "verify", verifyStart, DateTime.Now,
-                            vr.Mismatched == 0, 0,
-                            vr.Checked, vr.Skipped, 0, vr.Mismatched + vr.Missing, 0, null));
+                        _history?.Append(RunHistoryEntry.ForVerify(job.Name, verifyStart, vr));
                     }
                 }
                 catch (OperationCanceledException) { throw; }
                 catch (Exception ex)
                 {
-                    progress?.Report($"[verifica] non riuscita: {ex.Message}");
+                    progress?.Report(string.Format(CoreLoc.S("Verify_Failed"), ex.Message));
                 }
             }
 
