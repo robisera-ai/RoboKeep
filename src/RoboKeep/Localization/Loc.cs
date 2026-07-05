@@ -1507,7 +1507,7 @@ public sealed class Loc : INotifyPropertyChanged
 
     // Mappa lingua → dizionario. Dichiarata DOPO i dizionari, così sono già inizializzati
     // quando questo inizializzatore viene eseguito (ordine testuale degli static).
-    private static readonly Dictionary<string, Dictionary<string, string>> Langs = new()
+    internal static readonly Dictionary<string, Dictionary<string, string>> Langs = new()
     {
         ["it"] = It,
         ["en"] = En,

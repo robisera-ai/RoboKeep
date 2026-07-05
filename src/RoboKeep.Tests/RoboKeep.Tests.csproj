@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\RoboKeep.Core\RoboKeep.Core.csproj" />
+    <ProjectReference Include="..\RoboKeep\RoboKeep.csproj" />
   </ItemGroup>
 
 </Project>

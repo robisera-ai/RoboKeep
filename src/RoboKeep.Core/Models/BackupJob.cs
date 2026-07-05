@@ -110,4 +110,24 @@ public sealed class BackupJob
     /// Con un valore > 0 il job gira senza /MT: il ritardo è per thread e con più thread
     /// il limite diventerebbe imprevedibile.</summary>
     public int InterPacketGapMs { get; set; }
+
+    private static readonly System.Text.Json.JsonSerializerOptions CloneOptions = new();
+
+    /// <summary>Copia profonda via round-trip JSON: qualunque proprietà presente e futura
+    /// viene copiata senza liste da mantenere a mano (il rischio del "campo dimenticato"
+    /// in Clone/CopyInto manuali è coperto anche da un test reflection).</summary>
+    public BackupJob Clone() =>
+        System.Text.Json.JsonSerializer.Deserialize<BackupJob>(
+            System.Text.Json.JsonSerializer.Serialize(this, CloneOptions), CloneOptions)!;
+
+    /// <summary>Riversa tutti i valori di questo job dentro <paramref name="target"/>
+    /// (stessa garanzia di completezza di <see cref="Clone"/>).</summary>
+    public void CopyInto(BackupJob target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        var snapshot = Clone(); // liste nuove: nessuna condivisione di riferimenti col chiamante
+        foreach (var p in typeof(BackupJob).GetProperties()
+                     .Where(p => p.CanRead && p.CanWrite))
+            p.SetValue(target, p.GetValue(snapshot));
+    }
 }

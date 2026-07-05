@@ -330,10 +330,10 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         var oldName = selected.Model.Name;
 
         // Modifica su una copia: se l'utente annulla, l'originale resta intatto.
-        var clone = Clone(selected.Model);
+        var clone = selected.Model.Clone();
         if (ShowEditor(clone))
         {
-            CopyInto(clone, selected.Model);
+            clone.CopyInto(selected.Model);
             selected.RefreshAll();
             _vm.PersistJobs();
             if (oldName != selected.Model.Name)
@@ -412,67 +412,4 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         try { new SchedulerService().RemoveJobTask(jobName); } catch { }
     }
 
-    private static BackupJob Clone(BackupJob j) => new()
-    {
-        Name = j.Name,
-        Source = j.Source,
-        Destination = j.Destination,
-        Mirror = j.Mirror,
-        ExcludeOlder = j.ExcludeOlder,
-        CopyAll = j.CopyAll,
-        MultiThread = j.MultiThread,
-        UnbufferedIO = j.UnbufferedIO,
-        Restartable = j.Restartable,
-        LogAllFiles = j.LogAllFiles,
-        ExcludeFiles = new List<string>(j.ExcludeFiles),
-        ExcludeDirs = new List<string>(j.ExcludeDirs),
-        ForceCopyFiles = new List<string>(j.ForceCopyFiles),
-        ForceCopySmart = j.ForceCopySmart,
-        Retries = j.Retries,
-        Wait = j.Wait,
-        Enabled = j.Enabled,
-        CredentialId = j.CredentialId,
-        Versioned = j.Versioned,
-        SnapshotKeepCount = j.SnapshotKeepCount,
-        SnapshotMaxAgeDays = j.SnapshotMaxAgeDays,
-        UseVss = j.UseVss,
-        Schedule = j.Schedule,
-        ScheduleTime = j.ScheduleTime,
-        ScheduleWeekDay = j.ScheduleWeekDay,
-        ScheduleMonthDay = j.ScheduleMonthDay,
-        VerifyAfterRun = j.VerifyAfterRun,
-        InterPacketGapMs = j.InterPacketGapMs,
-    };
-
-    private static void CopyInto(BackupJob from, BackupJob to)
-    {
-        to.Name = from.Name;
-        to.Source = from.Source;
-        to.Destination = from.Destination;
-        to.Mirror = from.Mirror;
-        to.ExcludeOlder = from.ExcludeOlder;
-        to.CopyAll = from.CopyAll;
-        to.MultiThread = from.MultiThread;
-        to.UnbufferedIO = from.UnbufferedIO;
-        to.Restartable = from.Restartable;
-        to.LogAllFiles = from.LogAllFiles;
-        to.ExcludeFiles = new List<string>(from.ExcludeFiles);
-        to.ExcludeDirs = new List<string>(from.ExcludeDirs);
-        to.ForceCopyFiles = new List<string>(from.ForceCopyFiles);
-        to.ForceCopySmart = from.ForceCopySmart;
-        to.Retries = from.Retries;
-        to.Wait = from.Wait;
-        to.Enabled = from.Enabled;
-        to.CredentialId = from.CredentialId;
-        to.Versioned = from.Versioned;
-        to.SnapshotKeepCount = from.SnapshotKeepCount;
-        to.SnapshotMaxAgeDays = from.SnapshotMaxAgeDays;
-        to.UseVss = from.UseVss;
-        to.Schedule = from.Schedule;
-        to.ScheduleTime = from.ScheduleTime;
-        to.ScheduleWeekDay = from.ScheduleWeekDay;
-        to.ScheduleMonthDay = from.ScheduleMonthDay;
-        to.VerifyAfterRun = from.VerifyAfterRun;
-        to.InterPacketGapMs = from.InterPacketGapMs;
-    }
 }
