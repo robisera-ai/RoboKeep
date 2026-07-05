@@ -14,6 +14,7 @@ public sealed class AppHost
     public CredentialService Credentials { get; }
     public LastResultStore Results { get; }
     public ForceCopyHashStore ForceCopyHashes { get; }
+    public RunHistoryStore History { get; }
     public string LockFolder => Path.Combine(Store.DirectoryPath, "locks");
 
     private AppHost(ConfigStore store, AppConfig config)
@@ -27,6 +28,7 @@ public sealed class AppHost
         Credentials = new CredentialService(config.Settings.CredentialScope);
         Results = new LastResultStore(Path.Combine(store.DirectoryPath, "lastresults.json"));
         ForceCopyHashes = new ForceCopyHashStore(Path.Combine(store.DirectoryPath, "forcecopy-hashes.json"));
+        History = new RunHistoryStore(Path.Combine(store.DirectoryPath, "runhistory.json"));
     }
 
     public static AppHost Load(string? configPath = null)
@@ -49,7 +51,7 @@ public sealed class AppHost
         var email = new EmailService(Credentials);
         var snapshots = new SnapshotService(runner);
         return new BackupRunner(Config, runner, log, email, Credentials, Results, snapshots, LockFolder,
-            Path.Combine(Store.DirectoryPath, "vss"));
+            Path.Combine(Store.DirectoryPath, "vss"), History);
     }
 
     /// <summary>

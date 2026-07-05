@@ -137,6 +137,37 @@ public static class CoreLoc
             "la source n'est pas sur un volume NTFS local",
             "die Quelle liegt nicht auf einem lokalen NTFS-Volume"),
 
+        ["Verify_Start"] = L(
+            "[verifica] confronto hash sorgente-destinazione ({0} file)...",
+            "[verify] comparing source-destination hashes ({0} files)...",
+            "[verificación] comparando hashes origen-destino ({0} archivos)...",
+            "[vérification] comparaison des empreintes source-destination ({0} fichiers)...",
+            "[Prüfung] Vergleiche Quell-Ziel-Hashes ({0} Dateien)..."),
+        ["Verify_Progress"] = L(
+            "[verifica] verificati {0}/{1}...",
+            "[verify] checked {0}/{1}...",
+            "[verificación] verificados {0}/{1}...",
+            "[vérification] vérifiés {0}/{1}...",
+            "[Prüfung] geprüft {0}/{1}..."),
+        ["Verify_RecapOk"] = L(
+            "[verifica] OK: {0} file identici, {1} modificati dopo il backup, {2} saltati (in uso), {3} mancanti.",
+            "[verify] OK: {0} identical files, {1} changed after the backup, {2} skipped (in use), {3} missing.",
+            "[verificación] OK: {0} archivos idénticos, {1} modificados tras la copia, {2} omitidos (en uso), {3} ausentes.",
+            "[vérification] OK : {0} fichiers identiques, {1} modifiés après la sauvegarde, {2} ignorés (utilisés), {3} manquants.",
+            "[Prüfung] OK: {0} identische Dateien, {1} nach dem Backup geändert, {2} übersprungen (in Benutzung), {3} fehlend."),
+        ["Verify_RecapBad"] = L(
+            "[verifica] ATTENZIONE: {0} file DIFFERENTI dalla sorgente! Primi file: {1}",
+            "[verify] WARNING: {0} files DIFFERENT from the source! First files: {1}",
+            "[verificación] ATENCIÓN: ¡{0} archivos DIFERENTES del origen! Primeros: {1}",
+            "[vérification] ATTENTION : {0} fichiers DIFFÉRENTS de la source ! Premiers : {1}",
+            "[Prüfung] ACHTUNG: {0} Dateien WEICHEN von der Quelle AB! Erste Dateien: {1}"),
+        ["Verify_NothingToVerify"] = L(
+            "[verifica] niente da verificare: il job versionato non ha ancora snapshot.",
+            "[verify] nothing to verify: the versioned job has no snapshots yet.",
+            "[verificación] nada que verificar: el trabajo versionado aún no tiene instantáneas.",
+            "[vérification] rien à vérifier : la tâche versionnée n'a pas encore d'instantanés.",
+            "[Prüfung] nichts zu prüfen: der versionierte Job hat noch keine Snapshots."),
+
         ["Lbl_Result"] = L("Esito", "Result", "Resultado", "Résultat", "Ergebnis"),
         ["Lbl_Error"] = L("ERRORE", "ERROR", "ERROR", "ERREUR", "FEHLER"),
         ["Lbl_FoldersCopied"] = L("Cartelle copiate", "Folders copied", "Carpetas copiadas", "Dossiers copiés", "Ordner kopiert"),

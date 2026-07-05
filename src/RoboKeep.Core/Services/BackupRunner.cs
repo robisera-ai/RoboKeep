@@ -18,6 +18,7 @@ public sealed class BackupRunner
     private readonly SnapshotService? _snapshots;
     private readonly string? _lockFolder;
     private readonly string? _vssSessionRoot;
+    private readonly RunHistoryStore? _history;
 
     public BackupRunner(
         AppConfig config,
@@ -28,7 +29,8 @@ public sealed class BackupRunner
         LastResultStore? results = null,
         SnapshotService? snapshots = null,
         string? lockFolder = null,
-        string? vssSessionRoot = null)
+        string? vssSessionRoot = null,
+        RunHistoryStore? history = null)
     {
         _config = config;
         _runner = runner;
@@ -39,6 +41,7 @@ public sealed class BackupRunner
         _snapshots = snapshots;
         _lockFolder = lockFolder;
         _vssSessionRoot = vssSessionRoot;
+        _history = history;
     }
 
     /// <summary>Trova un job per nome (case-insensitive).</summary>
@@ -136,6 +139,12 @@ public sealed class BackupRunner
                     DirsFailed = run.Result.DirsFailed,
                     FinishedAt = DateTime.Now,
                 });
+
+                _history?.Append(new RunHistoryEntry(
+                    job.Name, "backup", run.Result.StartedAt, DateTime.Now,
+                    run.Result.Success, run.Result.ExitCode,
+                    run.Result.FilesCopied, run.Result.FilesSkipped, run.Result.FilesExtra,
+                    run.Result.FilesFailed, run.Result.DirsFailed, run.Result.LogPath));
             }
 
             try
@@ -146,6 +155,35 @@ public sealed class BackupRunner
             catch (Exception ex)
             {
                 progress?.Report($"[email] invio non riuscito: {ex.Message}");
+            }
+
+            // Verifica integrità automatica: solo per run reali riusciti, mai bloccante.
+            if (job.VerifyAfterRun && !dryRun && run.Result.Success)
+            {
+                var verifyStart = DateTime.Now;
+                try
+                {
+                    var target = VerifyTargetResolver.Resolve(job);
+                    if (target is null)
+                    {
+                        progress?.Report(CoreLoc.S("Verify_NothingToVerify"));
+                    }
+                    else
+                    {
+                        var vr = await IntegrityVerifier.VerifyAsync(
+                            sourceOverride ?? job.Source, target, progress, ct).ConfigureAwait(false);
+                        ReportVerify(vr, progress);
+                        _history?.Append(new RunHistoryEntry(
+                            job.Name, "verify", verifyStart, DateTime.Now,
+                            vr.Mismatched == 0, 0,
+                            vr.Checked, vr.Skipped, 0, vr.Mismatched + vr.Missing, 0, null));
+                    }
+                }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception ex)
+                {
+                    progress?.Report($"[verifica] non riuscita: {ex.Message}");
+                }
             }
 
             return run.Result;
@@ -189,6 +227,17 @@ public sealed class BackupRunner
             Line(CoreLoc.S("Lbl_Duration"), r.Duration.ToString(@"hh\:mm\:ss")),
             "==========================================",
         };
+    }
+
+    /// <summary>Righe di riepilogo della verifica nel log (riusato dalla verifica manuale).</summary>
+    public static void ReportVerify(VerifyResult vr, IProgress<string>? progress)
+    {
+        if (vr.Mismatched > 0)
+            progress?.Report(string.Format(CoreLoc.S("Verify_RecapBad"), vr.Mismatched,
+                string.Join(", ", vr.MismatchedPaths.Take(5))));
+        // Identici = hashati meno i differenti e meno quelli cambiati dopo il backup.
+        progress?.Report(string.Format(CoreLoc.S("Verify_RecapOk"),
+            vr.Checked - vr.Mismatched - vr.ChangedSinceBackup, vr.ChangedSinceBackup, vr.Skipped, vr.Missing));
     }
 
     /// <summary>Esegue tutti i job abilitati in sequenza, poi pulisce i log vecchi.</summary>
