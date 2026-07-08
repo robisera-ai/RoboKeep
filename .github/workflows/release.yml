@@ -1,0 +1,83 @@
+# Release automatica: al push di un tag "v*" builda i due pacchetti, li scansiona
+# con VirusTotal e crea la Release GitHub con gli zip + i link dei report.
+#
+# Prerequisiti (una tantum):
+#  - Secret VT_API_KEY = la tua API key gratuita di VirusTotal
+#    (Settings del repo -> Secrets and variables -> Actions -> New repository secret).
+#  - Il tag deve corrispondere alla <Version> in src/Directory.Build.props
+#    (es. Version 1.4.1 -> tag v1.4.1).
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write  # necessario per creare la Release e caricarne gli asset
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Test (blocca la release se qualcosa è rosso)
+        run: dotnet test src/RoboKeep.Tests/RoboKeep.Tests.csproj -c Release
+
+      - name: Ricava la versione dal tag
+        id: ver
+        shell: bash
+        run: echo "v=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish framework-dependent
+        run: dotnet publish src/RoboKeep/RoboKeep.csproj -c Release -r win-x64 --self-contained false -o out/fd
+
+      - name: Publish self-contained
+        run: dotnet publish src/RoboKeep/RoboKeep.csproj -c Release -r win-x64 --self-contained true -o out/sc
+
+      - name: Crea gli zip
+        shell: pwsh
+        run: |
+          $v = "${{ steps.ver.outputs.v }}"
+          Compress-Archive -Path out/fd/* -DestinationPath "RoboKeep-$v-win-x64-framework-dependent.zip" -Force
+          Compress-Archive -Path out/sc/* -DestinationPath "RoboKeep-$v-win-x64-selfcontained.zip" -Force
+
+      - name: Scansione VirusTotal
+        id: vt
+        uses: crazy-max/ghaction-virustotal@v4
+        with:
+          vt_api_key: ${{ secrets.VT_API_KEY }}
+          files: |
+            RoboKeep-*.zip
+
+      # L'output "analysis" è "file=url,file=url": lo trasformo in una lista markdown
+      # da mostrare nelle note di release, così chi scarica ha i report a portata di clic.
+      - name: Prepara i link VirusTotal
+        id: vtlinks
+        shell: bash
+        run: |
+          {
+            echo 'body<<EOF'
+            echo '## VirusTotal'
+            IFS=',' read -ra items <<< "${{ steps.vt.outputs.analysis }}"
+            for it in "${items[@]}"; do
+              file="${it%%=*}"; url="${it#*=}"
+              echo "- [\`$(basename "$file")\`]($url)"
+            done
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Crea la Release GitHub con gli zip
+        uses: softprops/action-gh-release@v2
+        with:
+          name: RoboKeep ${{ steps.ver.outputs.v }}
+          files: RoboKeep-*.zip
+          generate_release_notes: true
+          append_body: true
+          body: ${{ steps.vtlinks.outputs.body }}
+          fail_on_unmatched_files: true
