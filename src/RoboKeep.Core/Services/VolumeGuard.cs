@@ -3,10 +3,12 @@ namespace RoboKeep.Core.Services;
 /// <summary>Esito del controllo del disco di destinazione.</summary>
 public enum VolumeCheck
 {
+    /// <summary>Nessun controllo possibile o richiesto: si esegue come sempre.
+    /// È il valore 0 di proposito: se un domani qualcuno lasciasse un <c>VolumeCheck</c>
+    /// al default, deve ottenere "non ho verificato nulla", non un permesso a procedere.</summary>
+    NoExpectation,
     /// <summary>Il disco collegato è quello atteso: si può eseguire.</summary>
     Ok,
-    /// <summary>Nessun controllo possibile o richiesto: si esegue come sempre.</summary>
-    NoExpectation,
     /// <summary>Il disco collegato NON è quello per cui il job è stato configurato.</summary>
     WrongDisk,
 }
