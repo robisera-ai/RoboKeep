@@ -353,6 +353,11 @@ public sealed class Loc : INotifyPropertyChanged
         ["Hist_LogGone"] = "Il log non è più disponibile (rimosso dalla pulizia automatica).",
         ["Hist_NoLog"] = "Questa voce non ha un log associato (l'esito della verifica è nel riepilogo della console).",
         ["LogView_Title"] = "Log",
+
+        ["Run_SkippedDisk"] = "Saltato · disco non collegato",
+        ["Hist_KindSkipped"] = "Saltato",
+        ["Hist_OutcomeSkipped"] = "—",
+        ["Hist_CountsSkipped"] = "disco atteso non collegato",
     };
 
     // ---------------- ENGLISH ----------------
@@ -640,6 +645,11 @@ public sealed class Loc : INotifyPropertyChanged
         ["Hist_LogGone"] = "The log is no longer available (removed by automatic cleanup).",
         ["Hist_NoLog"] = "This entry has no log attached (the verify outcome is in the console recap).",
         ["LogView_Title"] = "Log",
+
+        ["Run_SkippedDisk"] = "Skipped · disk not connected",
+        ["Hist_KindSkipped"] = "Skipped",
+        ["Hist_OutcomeSkipped"] = "—",
+        ["Hist_CountsSkipped"] = "expected disk not connected",
     };
 
     // ---------------- ESPAÑOL ----------------
@@ -927,6 +937,11 @@ public sealed class Loc : INotifyPropertyChanged
         ["Hist_LogGone"] = "El registro ya no está disponible (eliminado por la limpieza automática).",
         ["Hist_NoLog"] = "Esta entrada no tiene registro asociado (el resultado de la verificación está en el resumen de la consola).",
         ["LogView_Title"] = "Registro",
+
+        ["Run_SkippedDisk"] = "Omitido · disco no conectado",
+        ["Hist_KindSkipped"] = "Omitido",
+        ["Hist_OutcomeSkipped"] = "—",
+        ["Hist_CountsSkipped"] = "disco esperado no conectado",
     };
 
     // ---------------- FRANÇAIS ----------------
@@ -1214,6 +1229,11 @@ public sealed class Loc : INotifyPropertyChanged
         ["Hist_LogGone"] = "Le journal n'est plus disponible (supprimé par le nettoyage automatique).",
         ["Hist_NoLog"] = "Cette entrée n'a pas de journal associé (le résultat de la vérification est dans le récapitulatif de la console).",
         ["LogView_Title"] = "Journal",
+
+        ["Run_SkippedDisk"] = "Ignoré · disque non connecté",
+        ["Hist_KindSkipped"] = "Ignoré",
+        ["Hist_OutcomeSkipped"] = "—",
+        ["Hist_CountsSkipped"] = "disque attendu non connecté",
     };
 
     // ---------------- DEUTSCH ----------------
@@ -1501,6 +1521,11 @@ public sealed class Loc : INotifyPropertyChanged
         ["Hist_LogGone"] = "Das Protokoll ist nicht mehr verfügbar (durch automatische Bereinigung entfernt).",
         ["Hist_NoLog"] = "Dieser Eintrag hat kein Protokoll (das Prüfergebnis steht in der Konsolen-Zusammenfassung).",
         ["LogView_Title"] = "Protokoll",
+
+        ["Run_SkippedDisk"] = "Übersprungen · Datenträger nicht angeschlossen",
+        ["Hist_KindSkipped"] = "Übersprungen",
+        ["Hist_OutcomeSkipped"] = "—",
+        ["Hist_CountsSkipped"] = "erwarteter Datenträger nicht angeschlossen",
     };
 
     // Mappa lingua → dizionario. Dichiarata DOPO i dizionari, così sono già inizializzati

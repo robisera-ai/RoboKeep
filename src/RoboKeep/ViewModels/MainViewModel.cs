@@ -395,14 +395,18 @@ public sealed class MainViewModel : ObservableObject
                 try
                 {
                     var result = await runner.RunJobAsync(jvm.Model, dryRun, progress, _cts.Token);
-                    if (dryRun)
+                    if (result.Skipped)
+                        jvm.LastStatus = Loc.Instance["Run_SkippedDisk"];
+                    else if (dryRun)
                         jvm.LastStatus = $"{Loc.Instance["Run_OK"]} · {Loc.Instance["Run_Preview"]}";
                     else
                         jvm.LastStatus = RunStatus.Format(result.Success, result.FilesCopied, result.FilesSkipped,
                             result.FilesExtra, result.FilesFailed + result.DirsFailed, DateTime.Now);
                     Enqueue($"=> {jvm.Name}: {result.Status}");
 
+                    // Nessun toast per un job saltato: non e' successo niente da notificare.
                     if (!dryRun
+                        && !result.Skipped
                         && _host.Config.Settings.NotificationsEnabled
                         && System.Windows.Application.Current?.MainWindow is MainWindow mw)
                     {

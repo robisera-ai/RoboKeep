@@ -81,8 +81,13 @@ public sealed class AppHost
         }
 
         foreach (var r in results)
-            Console.WriteLine($"{r.JobName}: {(r.Success ? "OK" : "ERRORE")} - {r.Status}");
+        {
+            var esito = r.Skipped ? "SALTATO" : r.Success ? "OK" : "ERRORE";
+            Console.WriteLine($"{r.JobName}: {esito} - {r.Status}");
+        }
 
-        return results.All(r => r.Success) ? 0 : 1;
+        // Saltare non e' fallire: un job il cui disco non e' collegato non deve far risultare
+        // fallita l'attivita' pianificata (era la causa degli allarmi rossi ogni notte).
+        return results.All(r => r.Success || r.Skipped) ? 0 : 1;
     }
 }

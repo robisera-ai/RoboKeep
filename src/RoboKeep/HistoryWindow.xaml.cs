@@ -42,11 +42,21 @@ public partial class HistoryWindow : Wpf.Ui.Controls.FluentWindow
 
     private static HistoryRow ToRow(RunHistoryEntry e)
     {
-        var kind = e.Kind == "verify" ? Loc.Instance["Hist_KindVerify"] : Loc.Instance["Hist_KindBackup"];
-        var outcome = e.Success ? "OK" : Loc.Instance["Run_Error"];
-        var counts = e.Kind == "verify"
-            ? string.Format(Loc.Instance["Hist_CountsVerify"], e.FilesCopied, e.FilesFailed, e.FilesSkipped)
-            : string.Format(Loc.Instance["Hist_CountsBackup"], e.FilesCopied, e.FilesSkipped, e.FilesFailed + e.DirsFailed);
+        var kind = e.Kind switch
+        {
+            "verify" => Loc.Instance["Hist_KindVerify"],
+            "skipped" => Loc.Instance["Hist_KindSkipped"],
+            _ => Loc.Instance["Hist_KindBackup"],
+        };
+        var outcome = e.Kind == "skipped"
+            ? Loc.Instance["Hist_OutcomeSkipped"]
+            : e.Success ? "OK" : Loc.Instance["Run_Error"];
+        var counts = e.Kind switch
+        {
+            "skipped" => Loc.Instance["Hist_CountsSkipped"],
+            "verify" => string.Format(Loc.Instance["Hist_CountsVerify"], e.FilesCopied, e.FilesFailed, e.FilesSkipped),
+            _ => string.Format(Loc.Instance["Hist_CountsBackup"], e.FilesCopied, e.FilesSkipped, e.FilesFailed + e.DirsFailed),
+        };
         var duration = (e.FinishedAt - e.StartedAt).ToString(@"hh\:mm\:ss");
         return new HistoryRow($"{e.StartedAt:dd/MM/yyyy HH:mm}", e.JobName, kind, outcome, counts, duration, e.LogPath);
     }
