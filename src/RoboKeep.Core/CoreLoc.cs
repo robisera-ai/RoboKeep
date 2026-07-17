@@ -197,6 +197,21 @@ public static class CoreLoc
         ["Lbl_FoldersExtra"] = L("Cartelle extra", "Extra folders", "Carpetas extra", "Dossiers en trop", "Zusätzliche Ordner"),
         ["Lbl_Duration"] = L("Durata", "Duration", "Duración", "Durée", "Dauer"),
 
+        ["Volume_Skipped"] = L(
+            "[disco] job saltato: scrive sul disco {0}, ma il disco collegato è {1}.",
+            "[disk] job skipped: it writes to disk {0}, but the connected disk is {1}.",
+            "[disco] trabajo omitido: escribe en el disco {0}, pero el disco conectado es {1}.",
+            "[disque] tâche ignorée : elle écrit sur le disque {0}, mais le disque connecté est {1}.",
+            "[Datenträger] Job übersprungen: schreibt auf {0}, angeschlossen ist aber {1}."),
+        ["Volume_SkippedStatus"] = L(
+            "Saltato: il disco atteso non è collegato.",
+            "Skipped: the expected disk is not connected.",
+            "Omitido: el disco esperado no está conectado.",
+            "Ignoré : le disque attendu n'est pas connecté.",
+            "Übersprungen: der erwartete Datenträger ist nicht angeschlossen."),
+        ["Volume_Unknown"] = L(
+            "sconosciuto", "unknown", "desconocido", "inconnu", "unbekannt"),
+
         ["Email_Preview"] = L("Anteprima", "Preview", "Vista previa", "Aperçu", "Vorschau"),
         ["Email_Yes"] = L("sì", "yes", "sí", "oui", "ja"),
         ["Email_No"] = L("no", "no", "no", "non", "nein"),

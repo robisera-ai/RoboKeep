@@ -52,6 +52,34 @@ public sealed class BackupRunner
     public async Task<JobResult> RunJobAsync(
         BackupJob job, bool dryRun = false, IProgress<string>? progress = null, CancellationToken ct = default)
     {
+        // Rotazione dei dischi: due dischi alternati hanno spesso la stessa lettera. Se il
+        // volume collegato non e' quello per cui il job e' stato configurato, si salta senza
+        // toccare NULLA (niente lock, niente UAC per VSS, niente robocopy): un mirror sul
+        // disco sbagliato cancellerebbe i dati che ci trova.
+        var currentVolume = VolumeIdentity.ForPath(job.Destination);
+        if (VolumeGuard.Check(job.DestinationVolumeId, currentVolume) == VolumeCheck.WrongDisk)
+        {
+            var unknown = CoreLoc.S("Volume_Unknown");
+            progress?.Report(string.Format(CoreLoc.S("Volume_Skipped"),
+                string.IsNullOrEmpty(job.DestinationVolumeLabel) ? unknown : job.DestinationVolumeLabel,
+                string.IsNullOrEmpty(currentVolume?.Label) ? unknown : currentVolume!.Label));
+
+            var now = DateTime.Now;
+            if (!dryRun)
+                _history?.Append(RunHistoryEntry.ForSkipped(job.Name, now));
+            // L'ultimo esito NON viene aggiornato: un salto non cancella la memoria di un
+            // successo precedente.
+            return new JobResult
+            {
+                JobName = job.Name,
+                Skipped = true,
+                Success = false,
+                Status = CoreLoc.S("Volume_SkippedStatus"),
+                StartedAt = now,
+                DryRun = dryRun,
+            };
+        }
+
         // Il lock file persiste se il processo viene terminato brutalmente; viene rimosso nel
         // finally (via using) quando il run termina normalmente (successo, errore o cancel).
         using var lockHandle = dryRun || _lockFolder is null ? null : JobLockFile.Acquire(_lockFolder, job.Name);
