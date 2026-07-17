@@ -24,7 +24,12 @@ public sealed class JobResult
     public bool DryRun { get; set; }
 
     /// <summary>true se il job non è stato eseguito perché il disco di destinazione non è
-    /// quello atteso. Non è né un successo né un fallimento: è un terzo esito.</summary>
+    /// quello atteso. Non è né un successo né un fallimento: è un terzo esito.
+    /// <para>Chi legge un risultato NON deve dedurre l'esito dal solo <see cref="Success"/>:
+    /// un job saltato ha <c>Success = false</c> (non ha copiato nulla) ma non va mai mostrato
+    /// come errore né conteggiato come fallimento — controllare sempre prima <c>Skipped</c>.
+    /// La voce di cronologia corrispondente usa invece <c>Success = true</c> proprio per non
+    /// comparire in rosso: sono due domande diverse ("ha copiato?" contro "c'è un problema?").</para></summary>
     public bool Skipped { get; set; }
 
     // Conteggi estratti dal riepilogo robocopy (best-effort, indipendenti dalla lingua).
