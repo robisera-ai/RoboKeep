@@ -62,3 +62,32 @@ public class EmailSettingsDefaultsTests
         Assert.Equal(587, e.SmtpPort);
     }
 }
+
+public class VolumeFieldsTests
+{
+    [Fact]
+    public void NewJob_HasNoVolumeExpectation()
+    {
+        var j = new BackupJob();
+        Assert.Null(j.DestinationVolumeId);
+        Assert.Null(j.DestinationVolumeLabel);
+    }
+
+    [Fact]
+    public void VolumeFields_RoundTripThroughJson()
+    {
+        var j = new BackupJob
+        {
+            Name = "x",
+            DestinationVolumeId = @"\\?\Volume{aaaaaaaa-1111-2222-3333-444444444444}\",
+            DestinationVolumeLabel = "BACKUP1",
+        };
+        var back = JsonSerializer.Deserialize<BackupJob>(JsonSerializer.Serialize(j))!;
+        Assert.Equal(j.DestinationVolumeId, back.DestinationVolumeId);
+        Assert.Equal("BACKUP1", back.DestinationVolumeLabel);
+    }
+
+    [Fact]
+    public void JobResult_SkippedDefaultsToFalse()
+        => Assert.False(new JobResult().Skipped);
+}

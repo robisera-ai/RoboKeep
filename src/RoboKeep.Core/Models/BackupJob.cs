@@ -111,6 +111,16 @@ public sealed class BackupJob
     /// il limite diventerebbe imprevedibile.</summary>
     public int InterPacketGapMs { get; set; }
 
+    /// <summary>Identificativo univoco del volume di destinazione (forma <c>\\?\Volume{GUID}\</c>),
+    /// memorizzato alla creazione del job o al cambio destinazione. null = nessun controllo.
+    /// Serve alla rotazione dei dischi: due dischi alternati hanno spesso la stessa lettera,
+    /// ma identificativi diversi. Confrontare le lettere non protegge da nulla.</summary>
+    public string? DestinationVolumeId { get; set; }
+
+    /// <summary>Etichetta leggibile del volume di destinazione (es. BACKUP1), usata SOLO nei
+    /// messaggi: le etichette sono modificabili e duplicabili, non decidono mai nulla.</summary>
+    public string? DestinationVolumeLabel { get; set; }
+
     private static readonly System.Text.Json.JsonSerializerOptions CloneOptions = new();
 
     /// <summary>Copia profonda via round-trip JSON: qualunque proprietà presente e futura

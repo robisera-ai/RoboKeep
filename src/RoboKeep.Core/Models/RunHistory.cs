@@ -10,7 +10,7 @@ public enum ScheduleKind { None, Daily, Weekly, Monthly }
 /// </summary>
 public sealed record RunHistoryEntry(
     string JobName,
-    string Kind, // "backup" | "verify"
+    string Kind, // "backup" | "verify" | "skipped"
     DateTime StartedAt,
     DateTime FinishedAt,
     bool Success,
@@ -30,4 +30,10 @@ public sealed record RunHistoryEntry(
         new(jobName, "verify", startedAt, DateTime.Now,
             result.Mismatched == 0, 0,
             result.Checked, result.Skipped, 0, result.Mismatched + result.Missing, 0, null);
+
+    /// <summary>Voce di cronologia per un job saltato perché il disco atteso non era collegato.
+    /// Success = true: saltare non è fallire, e la cronologia non deve mostrare un errore.
+    /// Nessun log associato: non è stato eseguito nulla.</summary>
+    public static RunHistoryEntry ForSkipped(string jobName, DateTime when) =>
+        new(jobName, "skipped", when, when, true, 0, 0, 0, 0, 0, 0, null);
 }

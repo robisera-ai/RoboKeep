@@ -72,3 +72,19 @@ public class RunHistoryForVerifyTests
         Assert.Null(e.LogPath);
     }
 }
+
+public class RunHistoryForSkippedTests
+{
+    [Fact]
+    public void ForSkipped_IsNeitherSuccessNorFailure()
+    {
+        var when = new DateTime(2026, 7, 9, 10, 0, 0);
+        var e = RunHistoryEntry.ForSkipped("J", when);
+        Assert.Equal("skipped", e.Kind);
+        Assert.Equal("J", e.JobName);
+        Assert.True(e.Success);      // saltare non e' fallire: nessuna icona rossa
+        Assert.Equal(when, e.StartedAt);
+        Assert.Equal(when, e.FinishedAt);
+        Assert.Null(e.LogPath);      // nessun log: non e' stato eseguito nulla
+    }
+}

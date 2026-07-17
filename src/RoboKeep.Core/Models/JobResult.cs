@@ -23,6 +23,10 @@ public sealed class JobResult
     /// <summary>true se eseguito in modalità anteprima (<c>/L</c>), senza modifiche reali.</summary>
     public bool DryRun { get; set; }
 
+    /// <summary>true se il job non è stato eseguito perché il disco di destinazione non è
+    /// quello atteso. Non è né un successo né un fallimento: è un terzo esito.</summary>
+    public bool Skipped { get; set; }
+
     // Conteggi estratti dal riepilogo robocopy (best-effort, indipendenti dalla lingua).
     public long DirsCopied { get; set; }
     public long FilesCopied { get; set; }
