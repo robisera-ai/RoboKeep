@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace RoboKeep.Core.Models;
 
 /// <summary>Frequenza della pianificazione per-job.</summary>
@@ -22,12 +24,25 @@ public sealed record RunHistoryEntry(
     long DirsFailed,
     string? LogPath)
 {
+    /// <summary>I valori ammessi per <see cref="Kind"/>. Sono costanti perché la stringa viaggia
+    /// dal Core fino alla griglia della cronologia: un refuso in un confronto non verrebbe
+    /// segnalato dal compilatore e la voce ricadrebbe in silenzio sul ramo "backup".</summary>
+    public const string KindBackup = "backup";
+    public const string KindVerify = "verify";
+    public const string KindSkipped = "skipped";
+
+    /// <summary>true se il job non è stato eseguito perché il disco atteso non era collegato.
+    /// Non guardare <see cref="Success"/> per capirlo: una voce saltata ha Success = true di
+    /// proposito, per non comparire come errore.</summary>
+    [JsonIgnore]
+    public bool IsSkipped => Kind == KindSkipped;
+
     /// <summary>Voce di cronologia per una verifica integrità: mappa i campi conteggio
     /// secondo la convenzione documentata sopra (Copied=verificati, Failed=differenti+mancanti,
     /// Skipped=saltati). Success = nessun file differente.</summary>
     public static RunHistoryEntry ForVerify(
         string jobName, DateTime startedAt, Services.VerifyResult result) =>
-        new(jobName, "verify", startedAt, DateTime.Now,
+        new(jobName, KindVerify, startedAt, DateTime.Now,
             result.Mismatched == 0, 0,
             result.Checked, result.Skipped, 0, result.Mismatched + result.Missing, 0, null);
 
@@ -35,5 +50,5 @@ public sealed record RunHistoryEntry(
     /// Success = true: saltare non è fallire, e la cronologia non deve mostrare un errore.
     /// Nessun log associato: non è stato eseguito nulla.</summary>
     public static RunHistoryEntry ForSkipped(string jobName, DateTime when) =>
-        new(jobName, "skipped", when, when, true, 0, 0, 0, 0, 0, 0, null);
+        new(jobName, KindSkipped, when, when, true, 0, 0, 0, 0, 0, 0, null);
 }

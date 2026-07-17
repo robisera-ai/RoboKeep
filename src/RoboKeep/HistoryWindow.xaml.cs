@@ -8,7 +8,7 @@ namespace RoboKeep;
 
 /// <summary>Riga della griglia cronologia (testi già formattati).</summary>
 public sealed record HistoryRow(string When, string Job, string Kind, string Outcome,
-    string Counts, string Duration, string? LogPath);
+    string Counts, string Duration, string? LogPath, bool IsSkipped = false);
 
 public partial class HistoryWindow : Wpf.Ui.Controls.FluentWindow
 {
@@ -44,21 +44,22 @@ public partial class HistoryWindow : Wpf.Ui.Controls.FluentWindow
     {
         var kind = e.Kind switch
         {
-            "verify" => Loc.Instance["Hist_KindVerify"],
-            "skipped" => Loc.Instance["Hist_KindSkipped"],
+            RunHistoryEntry.KindVerify => Loc.Instance["Hist_KindVerify"],
+            RunHistoryEntry.KindSkipped => Loc.Instance["Hist_KindSkipped"],
             _ => Loc.Instance["Hist_KindBackup"],
         };
-        var outcome = e.Kind == "skipped"
+        var outcome = e.IsSkipped
             ? Loc.Instance["Hist_OutcomeSkipped"]
             : e.Success ? "OK" : Loc.Instance["Run_Error"];
         var counts = e.Kind switch
         {
-            "skipped" => Loc.Instance["Hist_CountsSkipped"],
-            "verify" => string.Format(Loc.Instance["Hist_CountsVerify"], e.FilesCopied, e.FilesFailed, e.FilesSkipped),
+            RunHistoryEntry.KindSkipped => Loc.Instance["Hist_CountsSkipped"],
+            RunHistoryEntry.KindVerify => string.Format(Loc.Instance["Hist_CountsVerify"], e.FilesCopied, e.FilesFailed, e.FilesSkipped),
             _ => string.Format(Loc.Instance["Hist_CountsBackup"], e.FilesCopied, e.FilesSkipped, e.FilesFailed + e.DirsFailed),
         };
         var duration = (e.FinishedAt - e.StartedAt).ToString(@"hh\:mm\:ss");
-        return new HistoryRow($"{e.StartedAt:dd/MM/yyyy HH:mm}", e.JobName, kind, outcome, counts, duration, e.LogPath);
+        return new HistoryRow($"{e.StartedAt:dd/MM/yyyy HH:mm}", e.JobName, kind, outcome, counts, duration,
+            e.LogPath, e.IsSkipped);
     }
 
     private void OnOpenLog(object sender, RoutedEventArgs e)
@@ -66,9 +67,11 @@ public partial class HistoryWindow : Wpf.Ui.Controls.FluentWindow
         if (HistoryGrid.SelectedItem is not HistoryRow row) return;
         if (row.LogPath is null)
         {
-            // Le verifiche integrità non hanno un log dedicato: l'esito è nel riepilogo
-            // della console, non serve (e sarebbe fuorviante) parlare di pulizia automatica.
-            MessageBox.Show(Loc.Instance["Hist_NoLog"], row.Job,
+            // Due casi diversi, entrambi senza log ma per motivi opposti: la verifica ha girato
+            // e il suo esito è nel riepilogo della console; il job saltato non ha girato affatto.
+            // Chi apre un salto sta cercando proprio il perché: parlargli di verifiche o di
+            // pulizia automatica lo manderebbe fuori strada.
+            MessageBox.Show(Loc.Instance[row.IsSkipped ? "Hist_NoLogSkipped" : "Hist_NoLog"], row.Job,
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }

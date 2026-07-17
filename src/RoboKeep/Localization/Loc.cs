@@ -352,6 +352,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Hist_OpenLog"] = "Apri log",
         ["Hist_LogGone"] = "Il log non è più disponibile (rimosso dalla pulizia automatica).",
         ["Hist_NoLog"] = "Questa voce non ha un log associato (l'esito della verifica è nel riepilogo della console).",
+        ["Hist_NoLogSkipped"] = "Nessun log: il disco atteso non era collegato, quindi il job è stato saltato senza copiare nulla.",
         ["LogView_Title"] = "Log",
 
         ["Run_SkippedDisk"] = "Saltato · disco non collegato",
@@ -644,6 +645,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Hist_OpenLog"] = "Open log",
         ["Hist_LogGone"] = "The log is no longer available (removed by automatic cleanup).",
         ["Hist_NoLog"] = "This entry has no log attached (the verify outcome is in the console recap).",
+        ["Hist_NoLogSkipped"] = "No log: the expected disk was not connected, so the job was skipped without copying anything.",
         ["LogView_Title"] = "Log",
 
         ["Run_SkippedDisk"] = "Skipped · disk not connected",
@@ -936,6 +938,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Hist_OpenLog"] = "Abrir registro",
         ["Hist_LogGone"] = "El registro ya no está disponible (eliminado por la limpieza automática).",
         ["Hist_NoLog"] = "Esta entrada no tiene registro asociado (el resultado de la verificación está en el resumen de la consola).",
+        ["Hist_NoLogSkipped"] = "Sin registro: el disco esperado no estaba conectado, por lo que el trabajo se omitió sin copiar nada.",
         ["LogView_Title"] = "Registro",
 
         ["Run_SkippedDisk"] = "Omitido · disco no conectado",
@@ -1228,6 +1231,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Hist_OpenLog"] = "Ouvrir le journal",
         ["Hist_LogGone"] = "Le journal n'est plus disponible (supprimé par le nettoyage automatique).",
         ["Hist_NoLog"] = "Cette entrée n'a pas de journal associé (le résultat de la vérification est dans le récapitulatif de la console).",
+        ["Hist_NoLogSkipped"] = "Aucun journal : le disque attendu n'était pas connecté, la tâche a donc été ignorée sans rien copier.",
         ["LogView_Title"] = "Journal",
 
         ["Run_SkippedDisk"] = "Ignoré · disque non connecté",
@@ -1520,6 +1524,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Hist_OpenLog"] = "Protokoll öffnen",
         ["Hist_LogGone"] = "Das Protokoll ist nicht mehr verfügbar (durch automatische Bereinigung entfernt).",
         ["Hist_NoLog"] = "Dieser Eintrag hat kein Protokoll (das Prüfergebnis steht in der Konsolen-Zusammenfassung).",
+        ["Hist_NoLogSkipped"] = "Kein Protokoll: der erwartete Datenträger war nicht angeschlossen, der Auftrag wurde ohne Kopieren übersprungen.",
         ["LogView_Title"] = "Protokoll",
 
         ["Run_SkippedDisk"] = "Übersprungen · Datenträger nicht angeschlossen",
