@@ -54,15 +54,20 @@ public partial class JobEditorWindow : Wpf.Ui.Controls.FluentWindow
         if (_vm.Versioned)
         {
             var dest = _vm.Destination;
-            bool supported;
+            bool? supported = null; // null = non determinato entro il tempo
             try
             {
                 supported = await System.Threading.Tasks.Task.Run(
                     () => RoboKeep.Core.Services.HardLinkSupport.IsSupported(dest))
-                    .WaitAsync(System.TimeSpan.FromSeconds(5));
+                    .WaitAsync(System.TimeSpan.FromSeconds(8));
             }
-            catch (System.TimeoutException) { supported = false; }
-            if (!supported)
+            catch (System.TimeoutException) { /* non determinato: vedi sotto */ }
+
+            // Blocca SOLO con una risposta certa "non supportato". Un timeout (disco esterno
+            // lento a rispondere allo spin-up) non deve impedire di salvare un job legittimo su
+            // NTFS: al run, se davvero gli hard-link non ci sono, il versioning degrada a copia
+            // normale con avviso, mai perdita di dati. "Non lo so" non e' "no".
+            if (supported == false)
             {
                 MessageBox.Show(Loc.Instance["Ver_DestNotSupported"],
                     Loc.Instance["Common_MissingData"], MessageBoxButton.OK, MessageBoxImage.Warning);
