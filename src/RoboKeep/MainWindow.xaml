@@ -149,13 +149,17 @@
                             <DataGridTemplateColumn Width="34" CanUserResize="False" CanUserReorder="False" CanUserSort="False">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <!-- Avviso di salute per riga: il tooltip spiega il problema specifico. -->
-                                        <TextBlock Text="&#x26A0;" FontFamily="Segoe UI Symbol" FontSize="15" FontWeight="Bold"
+                                        <!-- Avviso di salute per riga: il tooltip spiega il problema specifico.
+                                             Il glifo base sta in un Setter di stile (non come Text locale): un
+                                             valore locale batterebbe i trigger e il trigger Waiting non potrebbe
+                                             cambiarlo in clessidra. -->
+                                        <TextBlock FontFamily="Segoe UI Symbol" FontSize="15" FontWeight="Bold"
                                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                                    ToolTip="{Binding HealthTooltip}" ToolTipService.InitialShowDelay="200">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
                                                     <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Setter Property="Text" Value="&#x26A0;"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding Health}" Value="Failed">
                                                             <Setter Property="Visibility" Value="Visible"/>
