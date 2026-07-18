@@ -4,6 +4,57 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] - 2026-07-18 — Disk rotation safety
+
+RoboKeep now identifies a backup disk by its volume, not its drive letter, so it can tell two
+external disks apart even when Windows gives them the same letter — and refuses to run a mirror
+job on the wrong disk.
+
+### Added
+- **Disk rotation protection** — a job can be tied to a specific disk by its volume identity (a
+  permanent id assigned at format, independent of the drive letter). Before running, RoboKeep
+  checks the connected disk: if it is the wrong one — or if the expected disk is not connected
+  at all — the job is **skipped without touching anything** (no lock, no UAC prompt, no
+  robocopy). This closes a real data-loss path: two external disks sharing the same letter
+  (`E:`) with the same destination paths, where a `/MIR` job on the wrong disk would delete the
+  other disk's contents.
+- **"Skipped" as a third outcome** — a skipped job is neither success nor failure: no error, no
+  error email, exit code `0` from the command line (so the nightly scheduled task stops
+  reporting a false failure), its own entry in the run history, and a log line naming the
+  expected and connected disks.
+- **Neutral "waiting" state** — a protected job whose disk is unplugged shows a grey hourglass
+  ("Disk resting for N days") instead of the amber "overdue" alarm, and drops out of the
+  warning banner: a disk you deliberately keep unplugged is not a problem. A safety net still
+  raises the real alarm past 90 days (a truly forgotten disk).
+- **Disk row in the job editor** — shows which disk a job is tied to, offers **Protect with
+  this disk** for unprotected jobs, and **Use this disk** (with a warning) when a different disk
+  is connected. Hidden for network destinations, which have no removable volume.
+- **Automatic refresh on disk connect/disconnect** — health icons update on their own the
+  moment you plug or unplug a disk, no manual refresh needed.
+- **Unsaved-changes prompt** — closing the job editor with the window's ✕ after making changes
+  asks for confirmation; only when something actually changed, and only for the ✕ (Save and
+  Cancel are explicit choices).
+
+### Fixed
+- The hard-link support check no longer blocks saving a versioned job when it merely times out:
+  a slow external disk taking more than a few seconds to answer is treated as "unknown", not
+  "unsupported". Only a definite "not supported" blocks; at run time versioning keeps its usual
+  graceful fallback to a normal copy.
+
+### Changed
+- The disk association can only be written when a job is new or when its destination changes,
+  never on a plain save — so opening the editor with the wrong disk inserted and saving an
+  unrelated change cannot silently re-tie the job to the wrong disk. An explicit **Use this
+  disk** button is the only way to reassociate without changing the destination.
+- Network destinations are always exempt from the disk check (they have no removable volume),
+  regardless of any stored id.
+- Test suite extended from 243 to 296 tests.
+
+### Downloads
+- **`RoboKeep-1.5.0-win-x64-selfcontained.zip`** — bundles .NET 10: extract and run, nothing to install.
+- **`RoboKeep-1.5.0-win-x64-framework-dependent.zip`** — smaller; requires the
+  [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
+
 ## [1.4.1] - 2026-07-05
 
 A hygiene and security patch driven by a full code and privacy audit.
