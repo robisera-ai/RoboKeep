@@ -10,12 +10,35 @@ namespace RoboKeep;
 public partial class JobEditorWindow : Wpf.Ui.Controls.FluentWindow
 {
     private readonly JobEditorViewModel _vm;
+    private readonly string _originalSnapshot;
 
     public JobEditorWindow(BackupJob job, IEnumerable<CredentialEntry> credentials)
     {
         InitializeComponent();
         _vm = new JobEditorViewModel(job, credentials);
         DataContext = _vm;
+        // Fotografia dello stato iniziale: alla chiusura la confrontiamo con lo stato finale
+        // per sapere se c'e' davvero qualcosa da perdere (vedi OnClosing).
+        _originalSnapshot = Snapshot();
+        Closing += OnClosing;
+    }
+
+    private string Snapshot()
+    {
+        try { return System.Text.Json.JsonSerializer.Serialize(_vm.Job); }
+        catch { return ""; } // in caso di guaio non intrappoliamo l'utente nella finestra
+    }
+
+    // Avvisa prima di perdere modifiche non salvate, ma SOLO chiudendo con la X: Salva e Annulla
+    // impostano DialogResult (true/false) e sono scelte esplicite, la X lo lascia null. E solo se
+    // qualcosa e' davvero cambiato: un avviso che compare sempre si impara a ignorarlo.
+    private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        if (DialogResult is not null) return;
+        if (Snapshot() == _originalSnapshot) return;
+        var r = MessageBox.Show(Loc.Instance["Editor_DiscardConfirm"], Loc.Instance["Editor_DiscardTitle"],
+            MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (r != MessageBoxResult.Yes) e.Cancel = true; // "No" -> resta nell'editor
     }
 
     private void OnBrowseSource(object sender, RoutedEventArgs e)

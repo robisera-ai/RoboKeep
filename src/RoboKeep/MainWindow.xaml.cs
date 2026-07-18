@@ -32,6 +32,14 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private DataGridRow? _insertRow;
     private bool _insertBelow;
 
+    // Ricalcolo della salute quando Windows segnala un disco collegato/scollegato: per un
+    // programma di rotazione dischi e' l'evento chiave. Debounce perche' un singolo disco
+    // genera piu' messaggi (volume + interfaccia) e da' anche al volume il tempo di montarsi.
+    private const int WM_DEVICECHANGE = 0x0219;
+    private const int DBT_DEVICEARRIVAL = 0x8000;
+    private const int DBT_DEVICEREMOVECOMPLETE = 0x8004;
+    private System.Windows.Threading.DispatcherTimer? _deviceRefresh;
+
     public MainWindow()
     {
         _host = AppHost.Load();
@@ -79,6 +87,38 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
                 NotificationIcon.Info);
         };
         timer.Start();
+    }
+
+    // Aggancia il message loop della finestra per intercettare i cambi di disco di Windows.
+    protected override void OnSourceInitialized(System.EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        _deviceRefresh = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = System.TimeSpan.FromMilliseconds(800),
+        };
+        _deviceRefresh.Tick += (_, _) =>
+        {
+            _deviceRefresh!.Stop();
+            _vm.ReloadLastResults(); // ricalcola icone di salute e "in attesa" col disco attuale
+        };
+        (System.Windows.Interop.HwndSource.FromVisual(this) as System.Windows.Interop.HwndSource)
+            ?.AddHook(WndProc);
+    }
+
+    private System.IntPtr WndProc(System.IntPtr hwnd, int msg, System.IntPtr wParam, System.IntPtr lParam, ref bool handled)
+    {
+        if (msg == WM_DEVICECHANGE)
+        {
+            var evt = wParam.ToInt32();
+            if (evt == DBT_DEVICEARRIVAL || evt == DBT_DEVICEREMOVECOMPLETE)
+            {
+                // Riavvia il debounce: l'ultimo messaggio della raffica vince.
+                _deviceRefresh?.Stop();
+                _deviceRefresh?.Start();
+            }
+        }
+        return System.IntPtr.Zero;
     }
 
     // Con "riduci nel tray" attivo, la X nasconde nel tray invece di chiudere.

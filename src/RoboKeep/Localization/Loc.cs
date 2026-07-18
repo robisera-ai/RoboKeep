@@ -218,6 +218,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Editor_Val_Source"] = "La cartella sorgente è obbligatoria.",
         ["Editor_Val_Dest"] = "La cartella destinazione è obbligatoria.",
         ["Editor_BrowseTitle"] = "Seleziona cartella",
+        ["Editor_DiscardTitle"] = "Modifiche non salvate",
+        ["Editor_DiscardConfirm"] = "Hai modifiche non salvate. Uscire senza salvarle?",
         ["Cred_NoneLocal"] = "(nessuna — percorso locale)",
 
         ["Settings_Title"] = "Impostazioni",
@@ -520,6 +522,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Editor_Val_Source"] = "The source folder is required.",
         ["Editor_Val_Dest"] = "The destination folder is required.",
         ["Editor_BrowseTitle"] = "Select folder",
+        ["Editor_DiscardTitle"] = "Unsaved changes",
+        ["Editor_DiscardConfirm"] = "You have unsaved changes. Exit without saving them?",
         ["Cred_NoneLocal"] = "(none — local path)",
 
         ["Settings_Title"] = "Settings",
@@ -822,6 +826,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Editor_Val_Source"] = "La carpeta de origen es obligatoria.",
         ["Editor_Val_Dest"] = "La carpeta de destino es obligatoria.",
         ["Editor_BrowseTitle"] = "Seleccionar carpeta",
+        ["Editor_DiscardTitle"] = "Cambios sin guardar",
+        ["Editor_DiscardConfirm"] = "Tienes cambios sin guardar. ¿Salir sin guardarlos?",
         ["Cred_NoneLocal"] = "(ninguna — ruta local)",
 
         ["Settings_Title"] = "Configuración",
@@ -1124,6 +1130,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Editor_Val_Source"] = "Le dossier source est obligatoire.",
         ["Editor_Val_Dest"] = "Le dossier de destination est obligatoire.",
         ["Editor_BrowseTitle"] = "Sélectionner un dossier",
+        ["Editor_DiscardTitle"] = "Modifications non enregistrées",
+        ["Editor_DiscardConfirm"] = "Vous avez des modifications non enregistrées. Quitter sans les enregistrer ?",
         ["Cred_NoneLocal"] = "(aucun — chemin local)",
 
         ["Settings_Title"] = "Paramètres",
@@ -1426,6 +1434,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Editor_Val_Source"] = "Der Quellordner ist erforderlich.",
         ["Editor_Val_Dest"] = "Der Zielordner ist erforderlich.",
         ["Editor_BrowseTitle"] = "Ordner auswählen",
+        ["Editor_DiscardTitle"] = "Nicht gespeicherte Änderungen",
+        ["Editor_DiscardConfirm"] = "Sie haben nicht gespeicherte Änderungen. Ohne Speichern schließen?",
         ["Cred_NoneLocal"] = "(keine — lokaler Pfad)",
 
         ["Settings_Title"] = "Einstellungen",
