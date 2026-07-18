@@ -30,6 +30,8 @@ public partial class JobEditorWindow : Wpf.Ui.Controls.FluentWindow
         if (path is not null) _vm.Destination = path;
     }
 
+    private void OnUseThisDisk(object sender, RoutedEventArgs e) => _vm.UseCurrentVolume();
+
     private static string? BrowseFolder(string? initial)
     {
         var dlg = new OpenFolderDialog { Title = Loc.Instance["Editor_BrowseTitle"] };

@@ -20,6 +20,7 @@ public sealed class JobEditorViewModel : ObservableObject
         foreach (var c in credentials)
             Credentials.Add(new CredentialOption(c.Id, $"{c.Id} ({c.Host})"));
         _selectedCredential = Credentials.FirstOrDefault(o => o.Id == job.CredentialId) ?? Credentials[0];
+        RefreshVolumeState();
     }
 
     public BackupJob Job => _job;
@@ -40,7 +41,18 @@ public sealed class JobEditorViewModel : ObservableObject
     public string Destination
     {
         get => _job.Destination;
-        set { _job.Destination = value; OnPropertyChanged(); RaisePreview(); }
+        set
+        {
+            if (_job.Destination == value) return;
+            _job.Destination = value;
+            // Destinazione cambiata → il disco memorizzato non c'entra piu' nulla: riassocia.
+            // NB: il salvataggio a destinazione INVARIATA non riassocia mai (vedi UseCurrentVolume):
+            // altrimenti basterebbe aprire l'editor col disco sbagliato inserito e salvare una
+            // modifica qualsiasi per annullare in silenzio la protezione.
+            UseCurrentVolume();
+            OnPropertyChanged();
+            RaisePreview();
+        }
     }
 
     public bool Mirror
@@ -255,6 +267,46 @@ public sealed class JobEditorViewModel : ObservableObject
     {
         get => _job.InterPacketGapMs;
         set { _job.InterPacketGapMs = Math.Max(0, value); OnPropertyChanged(); RaisePreview(); }
+    }
+
+    private bool _volumeMismatch;
+    private string _currentVolumeLabel = "";
+
+    /// <summary>Etichetta del disco a cui il job è associato (vuota = nessun controllo attivo).</summary>
+    public string VolumeLabel => _job.DestinationVolumeLabel ?? "";
+
+    /// <summary>true se il job ha un disco associato: la riga "Disco" è visibile solo allora.</summary>
+    public bool HasVolume => !string.IsNullOrEmpty(_job.DestinationVolumeId);
+
+    /// <summary>true se il disco attualmente collegato NON è quello associato al job.</summary>
+    public bool VolumeMismatch => _volumeMismatch;
+
+    /// <summary>Avviso da mostrare quando il disco collegato è un altro.</summary>
+    public string VolumeMismatchText =>
+        string.Format(Loc.Instance["Editor_VolumeMismatch"],
+            string.IsNullOrEmpty(_currentVolumeLabel) ? Loc.Instance["Editor_VolumeUnknown"] : _currentVolumeLabel);
+
+    /// <summary>Ricalcola lo stato del disco (chiamato all'apertura e a ogni riassociazione).</summary>
+    public void RefreshVolumeState()
+    {
+        var current = VolumeIdentity.ForPath(_job.Destination);
+        _currentVolumeLabel = current?.Label ?? "";
+        _volumeMismatch = VolumeGuard.Check(_job.DestinationVolumeId, current) == VolumeCheck.WrongDisk;
+        OnPropertyChanged(nameof(VolumeLabel));
+        OnPropertyChanged(nameof(HasVolume));
+        OnPropertyChanged(nameof(VolumeMismatch));
+        OnPropertyChanged(nameof(VolumeMismatchText));
+    }
+
+    /// <summary>Associa il job al disco attualmente collegato: usato dal pulsante
+    /// "Usa questo disco" e automaticamente quando cambia la destinazione. È l'UNICO modo
+    /// di riassociare un job a destinazione invariata, e deve restare esplicito.</summary>
+    public void UseCurrentVolume()
+    {
+        var current = VolumeIdentity.ForPath(_job.Destination);
+        _job.DestinationVolumeId = current?.VolumeId;
+        _job.DestinationVolumeLabel = current?.Label;
+        RefreshVolumeState();
     }
 
     /// <summary>Validazione minima prima del salvataggio.</summary>

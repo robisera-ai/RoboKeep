@@ -46,4 +46,58 @@ public class JobEditorViewModelTests
         vm.Name = "job \"cattivo\"";
         Assert.NotNull(vm.Validate());
     }
+
+    private const string FakeVolumeId = @"\\?\Volume{aaaaaaaa-1111-2222-3333-444444444444}\";
+
+    [Fact]
+    public void SavingWithoutTouchingDestination_NeverReassociatesVolume()
+    {
+        // La falla che questo test blocca: aprire l'editor col disco sbagliato inserito e
+        // salvare una modifica qualsiasi non deve riassociare il job al disco sbagliato.
+        var job = new BackupJob
+        {
+            Name = "j", Source = @"C:\s", Destination = @"C:\d",
+            DestinationVolumeId = FakeVolumeId, DestinationVolumeLabel = "ALTRO",
+        };
+        var vm = Vm(job);
+
+        vm.Name = "nome nuovo";
+        vm.Mirror = !vm.Mirror;
+
+        Assert.Equal(FakeVolumeId, job.DestinationVolumeId);
+        Assert.Equal("ALTRO", job.DestinationVolumeLabel);
+    }
+
+    [Fact]
+    public void ChangingDestination_ReassociatesToNewVolume()
+    {
+        var job = new BackupJob
+        {
+            Name = "j", Source = @"C:\s", Destination = @"C:\d",
+            DestinationVolumeId = FakeVolumeId, DestinationVolumeLabel = "ALTRO",
+        };
+        var vm = Vm(job);
+
+        vm.Destination = @"C:\Windows";
+
+        Assert.NotEqual(FakeVolumeId, job.DestinationVolumeId);
+        Assert.StartsWith(@"\\?\Volume{", job.DestinationVolumeId!);
+    }
+
+    [Fact]
+    public void UseCurrentVolume_AssociatesToTheConnectedDisk()
+    {
+        var job = new BackupJob
+        {
+            Name = "j", Source = @"C:\s", Destination = @"C:\",
+            DestinationVolumeId = FakeVolumeId, DestinationVolumeLabel = "ALTRO",
+        };
+        var vm = Vm(job);
+        Assert.True(vm.VolumeMismatch); // il disco memorizzato non e' quello presente
+
+        vm.UseCurrentVolume();
+
+        Assert.False(vm.VolumeMismatch);
+        Assert.StartsWith(@"\\?\Volume{", job.DestinationVolumeId!);
+    }
 }
