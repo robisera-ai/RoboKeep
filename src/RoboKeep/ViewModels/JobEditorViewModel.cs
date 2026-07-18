@@ -303,9 +303,7 @@ public sealed class JobEditorViewModel : ObservableObject
     /// di riassociare un job a destinazione invariata, e deve restare esplicito.</summary>
     public void UseCurrentVolume()
     {
-        var current = VolumeIdentity.ForPath(_job.Destination);
-        _job.DestinationVolumeId = current?.VolumeId;
-        _job.DestinationVolumeLabel = current?.Label;
+        JobVolumeAssociation.ToCurrentDisk(_job);
         RefreshVolumeState();
     }
 

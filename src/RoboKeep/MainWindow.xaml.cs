@@ -316,6 +316,14 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         var job = wizard.ResultJob ?? new BackupJob { Name = Loc.Instance["Editor_NewJobName"] };
         if (ShowEditor(job))
         {
+            // Job nuovo → lo leghiamo al disco attualmente collegato: è il lato "job nuovo"
+            // della regola di associazione. Se la destinazione arriva dal wizard, il setter
+            // dell'editor non è scattato e senza questo il job nascerebbe senza protezione.
+            // Solo se non già associato: cambiando la destinazione nell'editor l'ha già fatto.
+            // In modifica (OnEditJob) NON si associa mai: riassociare un job esistente è la
+            // falla che la regola impedisce.
+            if (string.IsNullOrEmpty(job.DestinationVolumeId))
+                JobVolumeAssociation.ToCurrentDisk(job);
             _vm.Jobs.Add(new JobViewModel(job));
             _vm.PersistJobs();
             TrySyncJobTask(job);
