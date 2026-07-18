@@ -289,11 +289,12 @@ public sealed class MainViewModel : ObservableObject
     {
         var names = Jobs.Select(j => j.Name).ToList();
         // Quali job hanno il disco atteso non collegato: lo stesso criterio con cui il runner
-        // li salta (IsAway copre disco sbagliato E disco assente). Serve a non far invecchiare
-        // in allarme un job che semplicemente attende il suo disco.
+        // li salta (CheckDestination esenta le destinazioni di rete e IsAway copre disco
+        // sbagliato E disco assente). Serve a non far invecchiare in allarme un job che
+        // semplicemente attende il suo disco.
         var away = Jobs
-            .Where(j => VolumeGuard.IsAway(VolumeGuard.Check(
-                j.Model.DestinationVolumeId, VolumeIdentity.ForPath(j.Model.Destination))))
+            .Where(j => VolumeGuard.IsAway(
+                VolumeIdentity.CheckDestination(j.Model.Destination, j.Model.DestinationVolumeId)))
             .Select(j => j.Name)
             .ToHashSet();
         var health = StaleBackupEvaluator.Evaluate(names, results, _host.Config.Settings.StaleAfterDays, DateTime.Now, away);

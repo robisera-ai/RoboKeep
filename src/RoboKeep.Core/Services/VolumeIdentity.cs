@@ -51,4 +51,35 @@ public static class VolumeIdentity
         }
         catch { return null; }
     }
+
+    /// <summary>true se <paramref name="path"/> è una destinazione di rete: UNC (<c>\\server\…</c>)
+    /// o unità mappata di rete. Serve a distinguere una share legittima da un disco locale
+    /// staccato: <see cref="ForPath"/> restituisce null per entrambi, ma solo il secondo è un
+    /// disco removibile da difendere. Best-effort come <see cref="ForPath"/>: mai un'eccezione.</summary>
+    public static bool IsNetworkPath(string? path)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(path)) return false;
+            var root = Path.GetPathRoot(Path.GetFullPath(path));
+            if (string.IsNullOrEmpty(root)) return false;
+            if (root.StartsWith(@"\\", StringComparison.Ordinal)) return true;
+            if (!root.EndsWith('\\')) root += '\\';
+            // Un'unità mappata di rete resta di rete anche da scollegata; una lettera locale
+            // inesistente dà NoRootDirectory, non Network: giustamente non è esente.
+            return new DriveInfo(root).DriveType == DriveType.Network;
+        }
+        catch { return false; }
+    }
+
+    /// <summary>Esito della guardia per una destinazione, unico punto che unisce identificazione
+    /// (impura, Windows) e decisione (<see cref="VolumeGuard"/>, pura). Le destinazioni di rete
+    /// sono esentate: non hanno un volume removibile e la loro raggiungibilità la copre il
+    /// pre-avvio, non la rotazione dei dischi. Averlo qui evita che <c>BackupRunner</c> e il
+    /// calcolo dell'attesa nella lista replichino l'esenzione e la lascino divergere.</summary>
+    public static VolumeCheck CheckDestination(string? destination, string? expectedId)
+    {
+        if (IsNetworkPath(destination)) return VolumeCheck.NoExpectation;
+        return VolumeGuard.Check(expectedId, ForPath(destination));
+    }
 }

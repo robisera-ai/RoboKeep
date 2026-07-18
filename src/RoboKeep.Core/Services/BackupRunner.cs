@@ -57,7 +57,7 @@ public sealed class BackupRunner
         // nessun disco - si salta senza toccare NULLA (niente lock, niente UAC per VSS, niente
         // robocopy): un mirror sul disco sbagliato cancellerebbe i dati che ci trova.
         var currentVolume = VolumeIdentity.ForPath(job.Destination);
-        var check = VolumeGuard.Check(job.DestinationVolumeId, currentVolume);
+        var check = VolumeIdentity.CheckDestination(job.Destination, job.DestinationVolumeId);
         if (VolumeGuard.IsAway(check))
         {
             var unknown = CoreLoc.S("Volume_Unknown");
