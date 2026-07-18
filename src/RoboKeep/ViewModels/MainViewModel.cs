@@ -288,7 +288,15 @@ public sealed class MainViewModel : ObservableObject
     private void EvaluateHealth(IReadOnlyDictionary<string, JobLastResult> results)
     {
         var names = Jobs.Select(j => j.Name).ToList();
-        var health = StaleBackupEvaluator.Evaluate(names, results, _host.Config.Settings.StaleAfterDays, DateTime.Now);
+        // Quali job hanno il disco atteso non collegato: lo stesso criterio con cui il runner
+        // li salta (IsAway copre disco sbagliato E disco assente). Serve a non far invecchiare
+        // in allarme un job che semplicemente attende il suo disco.
+        var away = Jobs
+            .Where(j => VolumeGuard.IsAway(VolumeGuard.Check(
+                j.Model.DestinationVolumeId, VolumeIdentity.ForPath(j.Model.Destination))))
+            .Select(j => j.Name)
+            .ToHashSet();
+        var health = StaleBackupEvaluator.Evaluate(names, results, _host.Config.Settings.StaleAfterDays, DateTime.Now, away);
         var interrupted = JobLockFile.GetInterrupted(_host.LockFolder, names);
 
         // Il dettaglio per job sta nel tooltip dell'icona sulla riga; il banner riporta solo i conteggi.
@@ -323,6 +331,15 @@ public sealed class MainViewModel : ObservableObject
                     ? string.Format(Loc.Instance["Health_StaleN"], days)
                     : Loc.Instance["Health_Stale"];
                 nStale++;
+            }
+            else if (h == BackupHealth.Waiting)
+            {
+                var days = results.TryGetValue(jvm.Name, out var r)
+                    ? (int)(DateTime.Now - r.FinishedAt).TotalDays
+                    : 0;
+                jvm.HealthTooltip = days > 0
+                    ? string.Format(Loc.Instance["Health_WaitingN"], days)
+                    : Loc.Instance["Health_Waiting"];
             }
             else
             {

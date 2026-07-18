@@ -11,6 +11,10 @@ public enum BackupHealth
     Stale,
     /// <summary>Nessun esito registrato: job mai eseguito.</summary>
     NeverRun,
+    /// <summary>Il disco del job non è collegato e l'ultimo backup sarebbe altrimenti "vecchio":
+    /// non è un allarme ma un'informazione neutra (un disco a riposo è normale). Oltre la rete
+    /// di sicurezza dei 90 giorni torna a essere <see cref="Stale"/>.</summary>
+    Waiting,
     /// <summary>Esiste un file di lock residuo: il job era in corso all'ultima chiusura anomala.</summary>
     Interrupted,
 }

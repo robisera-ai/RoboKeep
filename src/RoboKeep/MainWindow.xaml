@@ -169,6 +169,11 @@
                                                             <Setter Property="Visibility" Value="Visible"/>
                                                             <Setter Property="Foreground" Value="#E8710A"/>
                                                         </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Health}" Value="Waiting">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Setter Property="Foreground" Value="#8A8A8A"/>
+                                                            <Setter Property="Text" Value="&#x231B;"/>
+                                                        </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </TextBlock.Style>
