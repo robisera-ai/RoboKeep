@@ -18,8 +18,15 @@ public class VolumeGuardTests
         => Assert.Equal(VolumeCheck.NoExpectation, VolumeGuard.Check("   ", Info(IdA)));
 
     [Fact]
-    public void CurrentNotDeterminable_NoCheck()
-        => Assert.Equal(VolumeCheck.NoExpectation, VolumeGuard.Check(IdA, null));
+    public void CurrentNotDeterminable_DiskAbsent()
+        => Assert.Equal(VolumeCheck.DiskAbsent, VolumeGuard.Check(IdA, null));
+
+    [Fact]
+    public void NoExpectedId_AndNoCurrent_NoCheck()
+    {
+        // Nessuna associazione: non c'e' nessun disco atteso da dichiarare assente.
+        Assert.Equal(VolumeCheck.NoExpectation, VolumeGuard.Check(null, null));
+    }
 
     [Fact]
     public void SameId_Ok()
@@ -40,4 +47,12 @@ public class VolumeGuardTests
         var current = new VolumeInfo(IdB, "ETICHETTA");
         Assert.Equal(VolumeCheck.WrongDisk, VolumeGuard.Check(IdA, current));
     }
+
+    [Theory]
+    [InlineData(VolumeCheck.WrongDisk, true)]
+    [InlineData(VolumeCheck.DiskAbsent, true)]
+    [InlineData(VolumeCheck.Ok, false)]
+    [InlineData(VolumeCheck.NoExpectation, false)]
+    public void IsAway_CopreTuttiGliStati(VolumeCheck check, bool atteso)
+        => Assert.Equal(atteso, VolumeGuard.IsAway(check));
 }

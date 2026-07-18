@@ -53,16 +53,21 @@ public sealed class BackupRunner
         BackupJob job, bool dryRun = false, IProgress<string>? progress = null, CancellationToken ct = default)
     {
         // Rotazione dei dischi: due dischi alternati hanno spesso la stessa lettera. Se il
-        // volume collegato non e' quello per cui il job e' stato configurato, si salta senza
-        // toccare NULLA (niente lock, niente UAC per VSS, niente robocopy): un mirror sul
-        // disco sbagliato cancellerebbe i dati che ci trova.
+        // volume collegato non e' quello per cui il job e' stato configurato - o se non c'e'
+        // nessun disco - si salta senza toccare NULLA (niente lock, niente UAC per VSS, niente
+        // robocopy): un mirror sul disco sbagliato cancellerebbe i dati che ci trova.
         var currentVolume = VolumeIdentity.ForPath(job.Destination);
-        if (VolumeGuard.Check(job.DestinationVolumeId, currentVolume) == VolumeCheck.WrongDisk)
+        var check = VolumeGuard.Check(job.DestinationVolumeId, currentVolume);
+        if (VolumeGuard.IsAway(check))
         {
             var unknown = CoreLoc.S("Volume_Unknown");
-            progress?.Report(string.Format(CoreLoc.S("Volume_Skipped"),
-                string.IsNullOrEmpty(job.DestinationVolumeLabel) ? unknown : job.DestinationVolumeLabel,
-                string.IsNullOrEmpty(currentVolume?.Label) ? unknown : currentVolume!.Label));
+            var expectedLabel = string.IsNullOrEmpty(job.DestinationVolumeLabel) ? unknown : job.DestinationVolumeLabel;
+            // Disco assente e disco sbagliato si decidono allo stesso modo, ma si raccontano
+            // diversamente: senza disco non c'e' nessuna etichetta "trovata" da nominare.
+            progress?.Report(check == VolumeCheck.DiskAbsent
+                ? string.Format(CoreLoc.S("Volume_SkippedAbsent"), expectedLabel)
+                : string.Format(CoreLoc.S("Volume_Skipped"), expectedLabel,
+                    string.IsNullOrEmpty(currentVolume?.Label) ? unknown : currentVolume!.Label));
 
             var now = DateTime.Now;
             if (!dryRun)

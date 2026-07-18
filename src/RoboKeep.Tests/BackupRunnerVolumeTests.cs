@@ -69,6 +69,44 @@ public class BackupRunnerVolumeTests : IDisposable
         Assert.True(File.Exists(Path.Combine(Dst, "a.txt")));
     }
 
+    /// <summary>Prima lettera di unita' non montata sulla macchina, per simulare il disco
+    /// staccato senza dipendere da come e' partizionato il PC che esegue i test.</summary>
+    private static string? FreeDriveLetter()
+    {
+        var inUso = DriveInfo.GetDrives().Select(d => char.ToUpperInvariant(d.Name[0])).ToHashSet();
+        foreach (var c in "XYWVUT")
+            if (!inUso.Contains(c)) return $"{c}:\\";
+        return null;
+    }
+
+    [Fact]
+    public async Task DiskAbsent_SkipsWithoutRunningRobocopy()
+    {
+        var libera = FreeDriveLetter();
+        // Macchina con tutte le lettere occupate: non c'e' modo di simulare il disco staccato,
+        // il caso resta coperto dagli unit test puri di VolumeGuard.
+        if (libera is null) return;
+
+        var config = new AppConfig();
+        var destAssente = Path.Combine(libera!, "backup");
+        // La destinazione non e' identificabile: il disco non e' collegato affatto.
+        Assert.Null(VolumeIdentity.ForPath(destAssente));
+        var job = new BackupJob
+        {
+            Name = "T", Source = Src, Destination = destAssente,
+            DestinationVolumeId = @"\\?\Volume{deadbeef-0000-0000-0000-000000000000}\",
+            DestinationVolumeLabel = "DISCO-STACCATO",
+        };
+        config.Jobs.Add(job);
+
+        var result = await NewRunner(config).RunJobAsync(job);
+
+        Assert.True(result.Skipped);
+        Assert.False(result.Success);
+        // La prova che robocopy non e' mai partito: non ha creato la cartella di destinazione.
+        Assert.False(Directory.Exists(destAssente));
+    }
+
     [Fact]
     public async Task NoVolumeExpectation_RunsNormally()
     {

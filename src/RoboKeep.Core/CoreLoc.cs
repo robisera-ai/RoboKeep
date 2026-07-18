@@ -203,6 +203,12 @@ public static class CoreLoc
             "[disco] trabajo omitido: escribe en el disco {0}, pero el disco conectado es {1}.",
             "[disque] tâche ignorée : elle écrit sur le disque {0}, mais le disque connecté est {1}.",
             "[Datenträger] Job übersprungen: schreibt auf {0}, angeschlossen ist aber {1}."),
+        ["Volume_SkippedAbsent"] = L(
+            "[disco] job saltato: questo job scrive sul disco {0}, che non risulta collegato.",
+            "[disk] job skipped: this job writes to disk {0}, which is not connected.",
+            "[disco] trabajo omitido: este trabajo escribe en el disco {0}, que no está conectado.",
+            "[disque] tâche ignorée : cette tâche écrit sur le disque {0}, qui n'est pas connecté.",
+            "[Datenträger] Job übersprungen: dieser Job schreibt auf {0}, der nicht angeschlossen ist."),
         ["Volume_SkippedStatus"] = L(
             "Saltato: il disco atteso non è collegato.",
             "Skipped: the expected disk is not connected.",
