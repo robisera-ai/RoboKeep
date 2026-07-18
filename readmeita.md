@@ -175,6 +175,12 @@ esiti) resta nella cartella dell'app. Config di esempio:
 [config/config.example.json](config/config.example.json). Retroscena e decisioni tecniche del
 progetto: [ANALISI.md](ANALISI.md).
 
+## Contribuisci
+
+Le traduzioni nelle altre lingue sono mantenute dalla community. Noti una frase che suonerebbe
+più naturale, o un termine che un madrelingua direbbe diversamente? [Le pull request sono
+benvenute](../../pulls) — anche una correzione di una riga aiuta.
+
 ## Licenza
 
 Distribuito con **licenza MIT** — vedi [LICENSE](LICENSE). I componenti di terze parti sono

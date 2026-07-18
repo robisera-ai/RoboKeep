@@ -4,6 +4,26 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.5.1] - 2026-07-18
+
+A small follow-up to 1.5.0, driven by field feedback and housekeeping.
+
+### Fixed
+- The job editor no longer hides the disk row when a job's destination points at a local disk
+  that isn't currently connected. It now shows a clear "this destination's disk isn't connected"
+  note, so changing the destination toward an unplugged disk can no longer silently leave the job
+  unprotected.
+
+### Changed
+- CI and release GitHub Actions bumped to their Node.js 24 versions (`checkout` v5, `setup-dotnet`
+  v6, `ghaction-virustotal` v5, `action-gh-release` v3), clearing the Node.js 20 deprecation
+  warnings. Inputs and outputs used by the workflow were verified unchanged first.
+
+### Docs
+- Added **Spanish, French, and German** READMEs, all cross-linked with the English and Italian
+  ones. Every README now leads with the disk-rotation safety feature and carries a short note
+  inviting native-speaker translation fixes via pull request.
+
 ## [1.5.0] - 2026-07-18 — Disk rotation safety
 
 RoboKeep now identifies a backup disk by its volume, not its drive letter, so it can tell two

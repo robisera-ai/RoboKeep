@@ -184,6 +184,12 @@ journaux, résultats) reste dans le dossier de l'application. Configuration d'ex
 [config/config.example.json](config/config.example.json). Contexte du projet et décisions
 techniques : [ANALISI.md](ANALISI.md) *(en italien)*.
 
+## Contribuer
+
+Les traductions dans les autres langues sont maintenues par la communauté. Vous voyez une
+tournure qui sonnerait plus naturellement, ou un terme qu'un locuteur natif dirait autrement ?
+[Les pull requests sont les bienvenues](../../pulls) — même une correction d'une ligne aide.
+
 ## Licence
 
 Distribué sous **licence MIT** — voir [LICENSE](LICENSE). Les composants tiers sont listés dans

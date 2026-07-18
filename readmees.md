@@ -177,6 +177,12 @@ registros, resultados) se queda en la carpeta de la app. Configuración de ejemp
 [config/config.example.json](config/config.example.json). Contexto del proyecto y decisiones
 técnicas: [ANALISI.md](ANALISI.md) *(en italiano)*.
 
+## Contribuir
+
+Las traducciones a otros idiomas las mantiene la comunidad. ¿Ves una frase que sonaría más
+natural, o un término que un hablante nativo diría de otra forma? [Se agradecen las pull
+requests](../../pulls) — hasta una corrección de una línea ayuda.
+
 ## Licencia
 
 Distribuido bajo la **Licencia MIT** — consulta [LICENSE](LICENSE). Los componentes de terceros

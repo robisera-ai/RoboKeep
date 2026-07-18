@@ -165,6 +165,12 @@ logs, results) stays in the app folder. Sample config:
 [config/config.example.json](config/config.example.json). Project background and technical
 decisions: [ANALISI.md](ANALISI.md) *(in Italian)*.
 
+## Contributing
+
+Translations into other languages are community-maintained. Spotted a wording that could read
+more naturally, or a term a native speaker would phrase differently? [Pull requests are
+welcome](../../pulls) — even a one-line fix helps.
+
 ## License
 
 Distributed under the **MIT License** — see [LICENSE](LICENSE). Third-party components are

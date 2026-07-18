@@ -182,6 +182,12 @@ Portabler Modus: Legen Sie eine leere Datei `portable.flag` neben die exe, und a
 [config/config.example.json](config/config.example.json). Projekthintergrund und technische
 Entscheidungen: [ANALISI.md](ANALISI.md) *(auf Italienisch)*.
 
+## Mitwirken
+
+Die Übersetzungen in die anderen Sprachen werden von der Community gepflegt. Ihnen fällt eine
+Formulierung auf, die natürlicher klänge, oder ein Begriff, den ein Muttersprachler anders sagen
+würde? [Pull Requests sind willkommen](../../pulls) — schon eine einzeilige Korrektur hilft.
+
 ## Lizenz
 
 Vertrieben unter der **MIT-Lizenz** — siehe [LICENSE](LICENSE). Komponenten von Drittanbietern
