@@ -129,4 +129,20 @@ public class JobEditorViewModelTests
         var vm = Vm(job);
         Assert.False(vm.ShowVolumeRow);
     }
+
+    [Fact]
+    public void UnassociatedJobOnAbsentDrive_ShowsRowAndHint_NoButton()
+    {
+        // Cambiare destinazione verso un disco locale ora staccato non deve nascondere la riga:
+        // l'utente deve vedere che la protezione non è attiva, invece di un azzeramento silenzioso.
+        var used = DriveInfo.GetDrives().Select(d => char.ToUpperInvariant(d.Name[0])).ToHashSet();
+        var free = "ZYXWVU".FirstOrDefault(c => !used.Contains(c));
+        if (free == '\0') return;
+        var job = new BackupJob { Name = "j", Source = @"C:\s", Destination = $@"{free}:\backup" };
+        var vm = Vm(job);
+
+        Assert.True(vm.ShowVolumeRow);        // la riga resta visibile...
+        Assert.True(vm.ShowConnectDiskHint);  // ...con l'avviso "disco non collegato"
+        Assert.False(vm.VolumeActionVisible); // nessun disco presente: niente da associare ora
+    }
 }

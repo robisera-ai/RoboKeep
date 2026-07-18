@@ -270,6 +270,7 @@ public sealed class JobEditorViewModel : ObservableObject
     }
 
     private bool _volumeMismatch;
+    private bool _localDiskAbsent;
     private VolumeInfo? _current;
     private bool _isNetwork;
 
@@ -277,10 +278,17 @@ public sealed class JobEditorViewModel : ObservableObject
     public bool HasVolume => !string.IsNullOrEmpty(_job.DestinationVolumeId);
 
     /// <summary>La riga "Disco" è visibile quando la destinazione è un disco locale di cui
-    /// parlare: o il job è già protetto, o c'è un disco presente da cui associarlo. Nascosta
-    /// per le destinazioni di rete (nessun volume removibile) e quando non c'è né associazione
-    /// né disco collegato (niente da mostrare né da fare).</summary>
-    public bool ShowVolumeRow => !_isNetwork && (HasVolume || _current is not null);
+    /// parlare: il job è già protetto, c'è un disco presente da cui associarlo, oppure la
+    /// destinazione punta a un'unità locale che ora non è collegata (per dirlo apertamente
+    /// invece di nascondere che la protezione non è attiva). Nascosta solo per le destinazioni
+    /// di rete e per un percorso vuoto/non locale.</summary>
+    public bool ShowVolumeRow => !_isNetwork && (HasVolume || _current is not null || _localDiskAbsent);
+
+    /// <summary>true quando la destinazione è su un'unità locale non collegata e il job non è
+    /// protetto: mostra un avviso al posto del pulsante (non c'è un disco da associare adesso).
+    /// Rende visibile il caso in cui cambiare destinazione verso un disco staccato lascerebbe
+    /// il job senza protezione, che altrimenti passerebbe in silenzio.</summary>
+    public bool ShowConnectDiskHint => _localDiskAbsent && !HasVolume;
 
     /// <summary>Testo principale della riga: l'etichetta del disco associato, oppure "non
     /// protetto" quando il job non ha ancora un disco (i job creati prima della v1.5).</summary>
@@ -313,15 +321,32 @@ public sealed class JobEditorViewModel : ObservableObject
     {
         _isNetwork = VolumeIdentity.IsNetworkPath(_job.Destination);
         _current = _isNetwork ? null : VolumeIdentity.ForPath(_job.Destination);
+        // Percorso con radice di unità (es. "E:\...") ma volume non identificabile: il disco di
+        // quella lettera non è collegato ora. Diverso da un percorso vuoto o di rete.
+        _localDiskAbsent = !_isNetwork && _current is null && HasDriveRoot(_job.Destination);
         _volumeMismatch = VolumeGuard.Check(_job.DestinationVolumeId, _current) == VolumeCheck.WrongDisk;
         OnPropertyChanged(nameof(HasVolume));
         OnPropertyChanged(nameof(ShowVolumeRow));
+        OnPropertyChanged(nameof(ShowConnectDiskHint));
         OnPropertyChanged(nameof(VolumeStatusText));
         OnPropertyChanged(nameof(VolumeLabel));
         OnPropertyChanged(nameof(VolumeMismatch));
         OnPropertyChanged(nameof(VolumeMismatchText));
         OnPropertyChanged(nameof(VolumeActionVisible));
         OnPropertyChanged(nameof(VolumeActionText));
+    }
+
+    /// <summary>true se il percorso ha una radice di unità locale ("X:\"): serve a distinguere
+    /// un disco locale staccato da un percorso vuoto o di rete. Best-effort, mai un'eccezione.</summary>
+    private static bool HasDriveRoot(string? path)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(path)) return false;
+            var root = System.IO.Path.GetPathRoot(System.IO.Path.GetFullPath(path));
+            return root is not null && root.Length >= 2 && char.IsLetter(root[0]) && root[1] == ':';
+        }
+        catch { return false; }
     }
 
     /// <summary>Associa il job al disco attualmente collegato: usato dal pulsante

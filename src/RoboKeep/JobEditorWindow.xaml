@@ -75,6 +75,8 @@
                     </StackPanel>
                     <TextBlock Text="{Binding VolumeMismatchText}" Foreground="#C8860D" TextWrapping="Wrap" Margin="0,4,0,0"
                                Visibility="{Binding VolumeMismatch, Converter={StaticResource BoolToVis}}"/>
+                    <TextBlock Text="{l:Tr Editor_VolumeDiskAbsent}" Foreground="#C8860D" TextWrapping="Wrap" Margin="0,4,0,0"
+                               Visibility="{Binding ShowConnectDiskHint, Converter={StaticResource BoolToVis}}"/>
                     <ui:Button Content="{Binding VolumeActionText}" HorizontalAlignment="Left" Margin="0,6,0,0"
                                Visibility="{Binding VolumeActionVisible, Converter={StaticResource BoolToVis}}" Click="OnUseThisDisk"/>
                 </StackPanel>
