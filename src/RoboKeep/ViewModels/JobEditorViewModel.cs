@@ -270,13 +270,26 @@ public sealed class JobEditorViewModel : ObservableObject
     }
 
     private bool _volumeMismatch;
-    private string _currentVolumeLabel = "";
+    private VolumeInfo? _current;
+    private bool _isNetwork;
 
-    /// <summary>Etichetta del disco a cui il job è associato (vuota = nessun controllo attivo).</summary>
-    public string VolumeLabel => _job.DestinationVolumeLabel ?? "";
-
-    /// <summary>true se il job ha un disco associato: la riga "Disco" è visibile solo allora.</summary>
+    /// <summary>true se il job è associato a un disco (id memorizzato non vuoto).</summary>
     public bool HasVolume => !string.IsNullOrEmpty(_job.DestinationVolumeId);
+
+    /// <summary>La riga "Disco" è visibile quando la destinazione è un disco locale di cui
+    /// parlare: o il job è già protetto, o c'è un disco presente da cui associarlo. Nascosta
+    /// per le destinazioni di rete (nessun volume removibile) e quando non c'è né associazione
+    /// né disco collegato (niente da mostrare né da fare).</summary>
+    public bool ShowVolumeRow => !_isNetwork && (HasVolume || _current is not null);
+
+    /// <summary>Testo principale della riga: l'etichetta del disco associato, oppure "non
+    /// protetto" quando il job non ha ancora un disco (i job creati prima della v1.5).</summary>
+    public string VolumeStatusText => HasVolume
+        ? (string.IsNullOrEmpty(VolumeLabel) ? Loc.Instance["Editor_VolumeUnknown"] : VolumeLabel)
+        : Loc.Instance["Editor_VolumeUnprotected"];
+
+    /// <summary>Etichetta del disco a cui il job è associato (vuota = nessuna associazione).</summary>
+    public string VolumeLabel => _job.DestinationVolumeLabel ?? "";
 
     /// <summary>true se il disco attualmente collegato NON è quello associato al job.</summary>
     public bool VolumeMismatch => _volumeMismatch;
@@ -284,18 +297,31 @@ public sealed class JobEditorViewModel : ObservableObject
     /// <summary>Avviso da mostrare quando il disco collegato è un altro.</summary>
     public string VolumeMismatchText =>
         string.Format(Loc.Instance["Editor_VolumeMismatch"],
-            string.IsNullOrEmpty(_currentVolumeLabel) ? Loc.Instance["Editor_VolumeUnknown"] : _currentVolumeLabel);
+            string.IsNullOrEmpty(_current?.Label) ? Loc.Instance["Editor_VolumeUnknown"] : _current!.Label);
+
+    /// <summary>Il pulsante d'azione è visibile quando c'è un disco presente e o il job non è
+    /// ancora protetto (→ "Proteggi con questo disco") o è collegato il disco sbagliato
+    /// (→ "Usa questo disco"). Senza un disco presente non c'è nulla da associare.</summary>
+    public bool VolumeActionVisible => _current is not null && (!HasVolume || _volumeMismatch);
+
+    /// <summary>Etichetta del pulsante d'azione: prima associazione contro riassociazione.</summary>
+    public string VolumeActionText =>
+        Loc.Instance[HasVolume ? "Editor_UseThisDisk" : "Editor_ProtectDisk"];
 
     /// <summary>Ricalcola lo stato del disco (chiamato all'apertura e a ogni riassociazione).</summary>
     public void RefreshVolumeState()
     {
-        var current = VolumeIdentity.ForPath(_job.Destination);
-        _currentVolumeLabel = current?.Label ?? "";
-        _volumeMismatch = VolumeGuard.Check(_job.DestinationVolumeId, current) == VolumeCheck.WrongDisk;
-        OnPropertyChanged(nameof(VolumeLabel));
+        _isNetwork = VolumeIdentity.IsNetworkPath(_job.Destination);
+        _current = _isNetwork ? null : VolumeIdentity.ForPath(_job.Destination);
+        _volumeMismatch = VolumeGuard.Check(_job.DestinationVolumeId, _current) == VolumeCheck.WrongDisk;
         OnPropertyChanged(nameof(HasVolume));
+        OnPropertyChanged(nameof(ShowVolumeRow));
+        OnPropertyChanged(nameof(VolumeStatusText));
+        OnPropertyChanged(nameof(VolumeLabel));
         OnPropertyChanged(nameof(VolumeMismatch));
         OnPropertyChanged(nameof(VolumeMismatchText));
+        OnPropertyChanged(nameof(VolumeActionVisible));
+        OnPropertyChanged(nameof(VolumeActionText));
     }
 
     /// <summary>Associa il job al disco attualmente collegato: usato dal pulsante

@@ -65,19 +65,18 @@
                 </Grid>
 
                 <!-- Disco di destinazione: protegge dalla rotazione dei dischi (due dischi
-                     alternati prendono spesso la stessa lettera). -->
-                <StackPanel Margin="0,6,0,0" Visibility="{Binding HasVolume, Converter={StaticResource BoolToVis}}">
+                     alternati prendono spesso la stessa lettera). Visibile anche quando il job
+                     non e' ancora protetto, per offrire la prima associazione. -->
+                <StackPanel Margin="0,6,0,0" Visibility="{Binding ShowVolumeRow, Converter={StaticResource BoolToVis}}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="{l:Tr Editor_Volume}" Style="{StaticResource Hint}" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding VolumeLabel}" FontWeight="SemiBold" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding VolumeStatusText}" FontWeight="SemiBold" Margin="6,0,0,0" VerticalAlignment="Center"/>
                         <ctl:InfoHint Margin="6,0,0,0" Text="{l:Tr Editor_VolumeTip}"/>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0"
-                                Visibility="{Binding VolumeMismatch, Converter={StaticResource BoolToVis}}">
-                        <TextBlock Text="{Binding VolumeMismatchText}" Foreground="#C8860D"
-                                   TextWrapping="Wrap" VerticalAlignment="Center"/>
-                        <ui:Button Content="{l:Tr Editor_UseThisDisk}" Margin="8,0,0,0" Click="OnUseThisDisk"/>
-                    </StackPanel>
+                    <TextBlock Text="{Binding VolumeMismatchText}" Foreground="#C8860D" TextWrapping="Wrap" Margin="0,4,0,0"
+                               Visibility="{Binding VolumeMismatch, Converter={StaticResource BoolToVis}}"/>
+                    <ui:Button Content="{Binding VolumeActionText}" HorizontalAlignment="Left" Margin="0,6,0,0"
+                               Visibility="{Binding VolumeActionVisible, Converter={StaticResource BoolToVis}}" Click="OnUseThisDisk"/>
                 </StackPanel>
 
                 <ui:Card Margin="0,16,0,0" Padding="14">

@@ -100,4 +100,33 @@ public class JobEditorViewModelTests
         Assert.False(vm.VolumeMismatch);
         Assert.StartsWith(@"\\?\Volume{", job.DestinationVolumeId!);
     }
+
+    [Fact]
+    public void UnassociatedLocalJob_OffersProtection()
+    {
+        // I job creati prima della v1.5 non hanno associazione: l'editor deve mostrare la riga
+        // e offrire "Proteggi" (col disco presente), non nascondere tutto lasciando l'utente
+        // senza modo di proteggerli.
+        var job = new BackupJob { Name = "j", Source = @"C:\s", Destination = Path.GetTempPath() };
+        var vm = Vm(job);
+
+        Assert.False(vm.HasVolume);
+        Assert.True(vm.ShowVolumeRow);       // la temp e' un disco locale presente
+        Assert.True(vm.VolumeActionVisible);  // pulsante "Proteggi" disponibile
+        Assert.False(vm.VolumeMismatch);      // non associato: nessun avviso di disco sbagliato
+
+        vm.UseCurrentVolume();
+
+        Assert.True(vm.HasVolume);
+        Assert.False(vm.VolumeActionVisible); // ora protetto e disco giusto: niente pulsante
+    }
+
+    [Fact]
+    public void NetworkJob_HidesVolumeRow()
+    {
+        // Una share di rete non ha un volume removibile da proteggere: niente riga "Disco".
+        var job = new BackupJob { Name = "j", Source = @"C:\s", Destination = @"\\server\share\backup" };
+        var vm = Vm(job);
+        Assert.False(vm.ShowVolumeRow);
+    }
 }
