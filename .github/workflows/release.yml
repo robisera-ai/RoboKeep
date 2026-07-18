@@ -21,6 +21,19 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Il tag deve combaciare con la versione dell'app
+        shell: bash
+        run: |
+          # Evita che una release parta con un numero di versione interno sbagliato
+          # (es. tag v1.5.1 ma <Version> ancora 1.4.1, cosa che l'About mostrerebbe).
+          ver=$(grep -oP '(?<=<Version>)[^<]+' src/Directory.Build.props)
+          tag="${GITHUB_REF_NAME#v}"
+          if [ "$ver" != "$tag" ]; then
+            echo "::error::Il tag v$tag non combacia con <Version>$ver in src/Directory.Build.props. Aggiorna la versione prima di taggare."
+            exit 1
+          fi
+          echo "Versione $ver combacia con il tag $tag."
+
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v6
         with:
