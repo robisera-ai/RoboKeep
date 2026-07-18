@@ -1,6 +1,6 @@
 # RoboKeep
 
-*Leggi in: [English](README.md) · Italiano*
+*Leggi in: [English](README.md) · Italiano · [Español](readmees.md) · [Français](readmefr.md) · [Deutsch](readmede.md)*
 
 **Lo configuri una volta — ogni file, ogni versione, al sicuro sul tuo disco.**
 
@@ -14,8 +14,9 @@ RoboKeep è un'app Windows amichevole che trasforma `robocopy` — il motore di 
 una roccia già incluso in ogni PC Windows — in un **vero strumento di backup**: configurazione
 punta-e-clicca, **versioni datate** dei tuoi file, copia dei **file che stai ancora usando**,
 ogni job col **suo orario**, una **cronologia** completa e la **prova matematica** che le copie
-sono integre. **Niente cloud, niente account, niente abbonamenti** — i tuoi file non lasciano
-mai i tuoi dischi.
+sono integre. Alterni due dischi esterni che Windows chiama entrambi `E:`? RoboKeep tiene ogni
+job sul **suo disco** e non fa mai il mirror su quello sbagliato. **Niente cloud, niente
+account, niente abbonamenti** — i tuoi file non lasciano mai i tuoi dischi.
 
 ![Finestra principale di RoboKeep: job con esiti a colpo d'occhio e log in tempo reale](docs/images/main-window.png)
 
@@ -24,6 +25,13 @@ mai i tuoi dischi.
 - 🧙 **Rispondi a qualche domanda, ottieni il backup giusto.** Non serve conoscere robocopy: la
   creazione guidata chiede dei tuoi dischi e dei tuoi dati in linguaggio semplice, e sceglie per
   te le impostazioni ottimali. Chi è esperto può comunque regolare tutto a mano.
+- 🛡️ **Ruoti i dischi di backup? Non scrive mai su quello sbagliato** *(novità della 1.5)*. Se
+  alterni due dischi esterni, Windows spesso assegna loro la **stessa lettera** (`E:`) — e un job
+  in mirror puntato su quello sbagliato potrebbe cancellarlo. RoboKeep riconosce ogni disco dalla
+  sua vera **identità**, non dalla lettera, e semplicemente **salta** il job quando nell'alloggio
+  non c'è il disco a cui appartiene: nessun errore, niente di cancellato. Ricolleghi il disco
+  giusto e tutto riprende da dove si era fermato — le icone si aggiornano nell'istante in cui lo
+  colleghi.
 - 🕰️ **Una macchina del tempo per i tuoi file.** Ogni esecuzione può salvare una **versione
   datata** del backup. Hai cancellato un paragrafo martedì scorso? Apri la versione di martedì e
   lo recuperi. Il trucco intelligente: i file invariati sono *condivisi* tra le versioni, quindi
@@ -43,10 +51,12 @@ mai i tuoi dischi.
 - 📜 **La memoria di ogni esecuzione** *(novità della 1.4)*. La finestra **Cronologia** elenca
   ogni backup e ogni verifica con esito, conteggi e durata — e col doppio clic il log completo si
   apre direttamente nell'app, senza frugare tra gli zip.
-- 🚨 **Ti avvisa quando qualcosa non va.** Un backup che fallisce in silenzio è peggio di nessun
-  backup. RoboKeep segna ogni job con problemi con un'icona colorata — rossa per fallito, ambra
-  per "non eseguito da troppo tempo", arancio per "era stato interrotto" — con la spiegazione in
-  parole semplici passandoci sopra il mouse.
+- 🚨 **Ti avvisa quando qualcosa non va — e solo allora.** Un backup che fallisce in silenzio è
+  peggio di nessun backup. RoboKeep segna ogni job con problemi con un'icona colorata — rossa per
+  fallito, ambra per "non eseguito da troppo tempo", arancio per "era stato interrotto", grigia
+  per "in attesa del suo disco" — con la spiegazione in parole semplici passandoci sopra il
+  mouse. E non ti assilla per un job di cui hai semplicemente staccato il disco: quella è una
+  clessidra, non un allarme.
 - 🔍 **Niente di nascosto.** L'editor mostra sempre il **comando esatto** che verrà eseguito.
   Puoi provare qualsiasi backup in anteprima per vedere cosa verrebbe copiato o cancellato,
   prima di toccare qualunque cosa.
@@ -94,17 +104,21 @@ E se hai attivato le versioni, ogni esecuzione salva prima lo stato precedente c
 ## Tutte le funzioni
 
 **Backup**
-modalità mirror o accumulo · versioni datate con hard-link e ritenzione configurabile · copia dei
-file aperti/bloccati via VSS · **verifica integrità (SHA-256), a richiesta o dopo ogni
-esecuzione** · copia multi-thread · esclusioni di file e cartelle per job · "forza copia" per i
-file con data/dimensione che non cambiano mai (container cifrati, alcuni database), con modalità
-opzionale a confronto di contenuto · modalità riavviabile per i file enormi · anteprima/dry-run
+modalità mirror o accumulo · **protezione dalla rotazione dei dischi: un job gira solo sul suo
+disco, identificato per volume — mai il mirror su quello sbagliato o assente** · versioni datate
+con hard-link e ritenzione configurabile · copia dei file aperti/bloccati via VSS · **verifica
+integrità (SHA-256), a richiesta o dopo ogni esecuzione** · copia multi-thread · esclusioni di
+file e cartelle per job · "forza copia" per i file con data/dimensione che non cambiano mai
+(container cifrati, alcuni database), con modalità opzionale a confronto di contenuto · modalità
+riavviabile per i file enormi · anteprima/dry-run
 
 **Ti tiene informato**
 **cronologia esecuzioni con visualizzatore log in-app** · icone di salute per job con spiegazioni
-in linguaggio semplice · controlli pre-avvio (destinazione raggiungibile, spazio disco, idoneità
-VSS e versioning) · log in tempo reale · archivio log zippati per job con pulizia automatica ·
-notifiche toast e area di notifica · report email (SMTP), anche solo in caso di errori
+in linguaggio semplice, incluso uno stato neutro "in attesa del suo disco" · **icone che si
+aggiornano nell'istante in cui colleghi o stacchi un disco** · controlli pre-avvio (destinazione
+raggiungibile, spazio disco, idoneità VSS e versioning) · log in tempo reale · archivio log
+zippati per job con pulizia automatica · notifiche toast e area di notifica · report email
+(SMTP), anche solo in caso di errori
 
 **Si adatta a te**
 creazione guidata o editor manuale completo · anteprima esatta del comando · **pianificazione per
@@ -118,6 +132,11 @@ configurazione** · riga di comando per l'automazione · ordinamento dei job con
 - **Solo Windows 10/11** — RoboKeep si appoggia a robocopy e ad altre funzioni native di Windows.
 - **I file cambiati vengono ricopiati per intero** (niente copia a blocchi/delta): perfetto per
   documenti e foto, costoso per singoli file enormi che cambiano ogni giorno.
+- **I dischi a rotazione sono riconosciuti per identità, non per lettera.** Lega un job al suo
+  disco nell'editor (**Proteggi con questo disco**); da quel momento il job viene saltato ogni
+  volta che nell'alloggio c'è un disco diverso — o nessun disco — così non fa mai il mirror su
+  quello sbagliato. I job su destinazioni interne o di rete non ne hanno bisogno e non ne sono
+  toccati.
 - **Le versioni richiedono una destinazione NTFS locale** (gli hard-link non esistono su exFAT o
   share di rete).
 - **La copia dei file aperti richiede una sorgente NTFS locale** e una conferma amministratore

@@ -1,6 +1,6 @@
 # RoboKeep
 
-*Read in: English · [Italiano](readmeita.md)*
+*Read in: English · [Italiano](readmeita.md) · [Español](readmees.md) · [Français](readmefr.md) · [Deutsch](readmede.md)*
 
 **Set it up once — every file, every version, safe on your own disk.**
 
@@ -14,7 +14,9 @@ RoboKeep is a friendly Windows app that turns `robocopy` — the rock-solid copy
 built into every Windows PC — into a **real backup tool**: point-and-click setup, **dated
 versions** of your files, copying of **files you're still working on**, each job on **its own
 schedule**, a full **run history**, and **mathematical proof** your copies are intact.
-**No cloud, no account, no subscription** — your files never leave your disks.
+Rotate two external disks that Windows both calls `E:`? RoboKeep keeps each job on **its own
+disk** and never mirrors onto the wrong one. **No cloud, no account, no subscription** — your
+files never leave your disks.
 
 ![RoboKeep main window: jobs with results at a glance and a live execution log](docs/images/main-window.png)
 
@@ -23,6 +25,12 @@ schedule**, a full **run history**, and **mathematical proof** your copies are i
 - 🧙 **Answer a few questions, get the right backup.** No robocopy knowledge needed: the guided
   setup asks about your disks and your data in plain language, and picks the optimal settings
   for you. Experts can still tweak everything by hand.
+- 🛡️ **Rotating backup disks? It never writes to the wrong one** *(new in 1.5)*. If you alternate
+  two external drives, Windows often hands them the **same letter** (`E:`) — and a mirror job
+  aimed at the wrong one could wipe it clean. RoboKeep recognizes each disk by its true
+  **identity**, not its letter, and simply **skips** a job when the disk in the slot isn't the
+  one it belongs to: no error, nothing deleted. Reconnect the right disk and everything picks up
+  where it left off — the icons even update the moment you plug it in.
 - 🕰️ **A time machine for your files.** Every run can save a **dated version** of your backup.
   Deleted a paragraph last Tuesday? Open Tuesday's version and get it back. Smart trick under the
   hood: unchanged files are *shared* between versions, so ten versions don't cost ten times the
@@ -42,9 +50,11 @@ schedule**, a full **run history**, and **mathematical proof** your copies are i
 - 📜 **A memory of every run** *(new in 1.4)*. The **History** window lists every backup and
   every integrity check with outcome, counts, and duration — and a double-click opens the full
   log right inside the app, no digging through zip files.
-- 🚨 **It tells you when something's wrong.** A backup that fails silently is worse than no
-  backup. RoboKeep marks each problematic job with a colored warning icon — red for failed,
-  amber for "not run in too long", orange for "was interrupted" — with a plain explanation on hover.
+- 🚨 **It tells you when something's wrong — and only then.** A backup that fails silently is
+  worse than no backup. RoboKeep marks each problematic job with a colored icon — red for
+  failed, amber for "not run in too long", orange for "was interrupted", grey for "waiting for
+  its disk" — with a plain explanation on hover. It won't nag you about a job whose disk you've
+  simply unplugged: that's an hourglass, not an alarm.
 - 🔍 **Nothing hidden.** The editor always shows the **exact command** that will run. You can
   preview any backup (a "dry run") to see what would be copied or deleted, before touching anything.
 - 🏠 **Truly yours.** Free and open source (MIT), fully local, no telemetry. Runs in Italian,
@@ -90,17 +100,20 @@ And if you enabled versions, each run first saves the previous state as a dated 
 ## All the features
 
 **Backing up**
-mirror or accumulate mode · dated versions with hard-links and configurable retention ·
-open/locked file copying via VSS · **integrity verification (SHA-256), on demand or after every
-run** · multi-threaded copying · per-job file and folder exclusions · "force copy" for files
-whose date/size never change (encrypted containers, some databases), with an optional
-content-hash mode · restartable mode for huge files · preview/dry-run
+mirror or accumulate mode · **disk-rotation protection: a job runs only on its own disk,
+identified by volume — never mirrors onto the wrong or absent one** · dated versions with
+hard-links and configurable retention · open/locked file copying via VSS · **integrity
+verification (SHA-256), on demand or after every run** · multi-threaded copying · per-job file
+and folder exclusions · "force copy" for files whose date/size never change (encrypted
+containers, some databases), with an optional content-hash mode · restartable mode for huge
+files · preview/dry-run
 
 **Keeping you informed**
-**run history with in-app log viewer** · per-job health icons with plain-language tooltips ·
-pre-run checks (destination reachable, disk space, VSS and versioning eligibility) · real-time
-log · per-job zipped log archive with automatic cleanup · toast notifications and system tray ·
-email reports (SMTP), optionally only on errors
+**run history with in-app log viewer** · per-job health icons with plain-language tooltips,
+including a neutral "waiting for its disk" state · **icons that refresh the instant you plug or
+unplug a disk** · pre-run checks (destination reachable, disk space, VSS and versioning
+eligibility) · real-time log · per-job zipped log archive with automatic cleanup · toast
+notifications and system tray · email reports (SMTP), optionally only on errors
 
 **Fitting your setup**
 guided wizard or full manual editor · exact command preview · **per-job scheduling (daily /
@@ -113,6 +126,10 @@ automation · drag & drop job ordering · 5 languages · portable mode
 - **Windows 10/11 only** — RoboKeep builds on robocopy and other Windows-native features.
 - **Changed files are recopied whole** (no delta/block copy): fine for documents and photos,
   costly for single huge files that change daily.
+- **Rotating disks are matched by identity, not letter.** Tie a job to its disk in the editor
+  (**Protect with this disk**); from then on the job is skipped whenever a different disk — or no
+  disk — is in that slot, so it never mirrors onto the wrong one. Jobs on internal or network
+  destinations don't need it and aren't affected.
 - **Versions need a local NTFS destination** (hard-links don't exist on exFAT or network shares).
 - **Open-file copying needs a local NTFS source** and asks for one administrator confirmation
   (UAC) per run.
