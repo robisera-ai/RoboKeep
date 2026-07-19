@@ -1,0 +1,59 @@
+<ui:FluentWindow x:Class="RoboKeep.GuideWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:l="clr-namespace:RoboKeep.Localization"
+        Title="{l:Tr Guide_Title}" Width="900" Height="620" MinWidth="640" MinHeight="420"
+        ExtendsContentIntoTitleBar="True" WindowBackdropType="Mica"
+        WindowCornerPreference="Round" WindowStartupLocation="CenterOwner">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="{l:Tr Guide_Title}">
+            <ui:TitleBar.Icon><ui:SymbolIcon Symbol="SlideText24"/></ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <Grid Grid.Row="1" Margin="16,4,16,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="240" MinWidth="180"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Navigazione capitoli -->
+            <Border Grid.Column="0" CornerRadius="8" Padding="4"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                <ListBox x:Name="ChapterList" BorderThickness="0" Background="Transparent"
+                         SelectionChanged="OnChapterSelected"/>
+            </Border>
+
+            <GridSplitter Grid.Column="1" Width="10" HorizontalAlignment="Center"
+                          VerticalAlignment="Stretch" Background="Transparent"/>
+
+            <!-- Contenuto del capitolo + barra di navigazione precedente/successivo. -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Gli spazi interni li dà il PagePadding del documento (vedi
+                     MarkdownToFlowDocument): il Padding del contenitore non restringe il testo
+                     e non basta a scansare la barra di scorrimento in sovrapposizione. -->
+                <FlowDocumentScrollViewer x:Name="ContentView" Grid.Row="0"
+                                          VerticalScrollBarVisibility="Auto"
+                                          IsToolBarVisible="False" Padding="0"/>
+
+                <Grid Grid.Row="1" Margin="14,8,28,2">
+                    <ui:Button x:Name="PrevButton" HorizontalAlignment="Left" Appearance="Secondary"
+                               Click="OnPrevChapter"/>
+                    <ui:Button x:Name="NextButton" HorizontalAlignment="Right" Appearance="Secondary"
+                               Click="OnNextChapter"/>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Grid>
+</ui:FluentWindow>

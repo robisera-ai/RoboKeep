@@ -413,6 +413,27 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         win.ShowDialog();
     }
 
+    // La guida e' modeless (non blocca l'app): puoi seguirla mentre configuri i job. Una sola
+    // istanza: se e' gia' aperta la porta in primo piano invece di duplicarla.
+    private GuideWindow? _guide;
+
+    private void OnOpenGuide(object sender, RoutedEventArgs e) => OpenGuide();
+
+    private void OpenGuide()
+    {
+        if (_guide is { IsLoaded: true }) { _guide.Activate(); return; }
+        _guide = new GuideWindow { Owner = this };
+        _guide.Closed += (_, _) => _guide = null;
+        _guide.Show();
+    }
+
+    // F1: apre la guida, la scorciatoia universale di Windows per l'aiuto.
+    protected override void OnPreviewKeyDown(System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.F1) { OpenGuide(); e.Handled = true; }
+        base.OnPreviewKeyDown(e);
+    }
+
     private void OnBrowseVersions(object sender, RoutedEventArgs e)
     {
         var selected = _vm.SelectedJob;

@@ -15,6 +15,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- I capitoli della guida (Markdown, nel repo sotto docs/guide) vengono copiati accanto
+         all'eseguibile in Guide/<lingua>/ e letti a runtime da GuideLibrary. -->
+    <Content Include="..\..\docs\guide\**\*.md"
+             Link="Guide\%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="RoboKeep.Tests" />
   </ItemGroup>
 
