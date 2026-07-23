@@ -61,7 +61,14 @@ public sealed class SnapshotService
             // tra unlink e robocopy romperebbero la garanzia di sovrainsieme sicuro.
             var source = sourceOverride ?? job.Source;
             progress?.Report($"[versioning] clono lo snapshot precedente ({prevName}) via hard-link...");
-            await Task.Run(() => HardLinkCloner.Clone(prevPath, curr), ct).ConfigureAwait(false);
+            // Un file illeggibile nel vecchio snapshot (settore danneggiato) non deve far fallire
+            // il backup: viene saltato qui e ricopiato fresco da robocopy poco dopo.
+            var skipped = await Task.Run(() => HardLinkCloner.Clone(prevPath, curr,
+                (path, badSector) => progress?.Report(string.Format(
+                    CoreLoc.S(badSector ? "Versioning_SkipBadSector" : "Versioning_SkipFile"), path))),
+                ct).ConfigureAwait(false);
+            if (skipped > 0)
+                progress?.Report(string.Format(CoreLoc.S("Versioning_SkipSummary"), skipped));
             // Pre-passata: rompe l'hard-link dei file cambiati, cosi robocopy li ricrea nuovi
             // senza modificare sul posto i file ancora condivisi col precedente.
             progress?.Report("[versioning] preparo lo snapshot (rompo gli hard-link dei file cambiati)...");

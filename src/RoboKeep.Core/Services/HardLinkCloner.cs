@@ -6,22 +6,63 @@ namespace RoboKeep.Core.Services;
 /// </summary>
 public static class HardLinkCloner
 {
-    public static void Clone(string sourceDir, string destDir)
+    // Un solo file illeggibile nel vecchio snapshot non deve far crollare l'intero backup: lo si
+    // salta e si prosegue. I file saltati non vengono collegati, ma robocopy — che gira subito dopo
+    // sullo snapshot — li ricopia freschi dalla sorgente sana. Cosi' il backup si completa comunque.
+    private const int MaxReported = 10; // oltre questa soglia si contano soltanto, per non intasare il log
+
+    /// <summary>Clona <paramref name="sourceDir"/> in <paramref name="destDir"/> via hard-link.
+    /// <paramref name="onSkip"/> viene invocato per ogni elemento saltato (percorso, <c>badSector</c>
+    /// = errore riconducibile a un settore danneggiato). Restituisce il numero di elementi saltati.</summary>
+    public static int Clone(string sourceDir, string destDir, System.Action<string, bool>? onSkip = null)
     {
         Directory.CreateDirectory(destDir);
+        var state = new State { OnSkip = onSkip };
+        Walk(sourceDir, sourceDir, destDir, state);
+        return state.Skipped;
+    }
 
-        foreach (var dir in Directory.EnumerateDirectories(sourceDir, "*", SearchOption.AllDirectories))
+    private sealed class State
+    {
+        public System.Action<string, bool>? OnSkip;
+        public int Skipped;
+        public int Reported;
+    }
+
+    private static void Skip(State s, string path, System.Exception ex)
+    {
+        s.Skipped++;
+        if (s.Reported >= MaxReported) return;
+        s.Reported++;
+        s.OnSkip?.Invoke(path, DiskError.IsUnreadable(ex));
+    }
+
+    private static void Walk(string root, string dir, string destRoot, State s)
+    {
+        string[] files;
+        try { files = Directory.GetFiles(dir); }
+        catch (System.Exception ex) { Skip(s, dir, ex); files = System.Array.Empty<string>(); }
+
+        foreach (var file in files)
         {
-            var rel = Path.GetRelativePath(sourceDir, dir);
-            Directory.CreateDirectory(Path.Combine(destDir, rel));
+            try
+            {
+                var target = Path.Combine(destRoot, Path.GetRelativePath(root, file));
+                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                HardLink.Create(target, file);
+            }
+            catch (System.Exception ex) { Skip(s, file, ex); }
         }
 
-        foreach (var file in Directory.EnumerateFiles(sourceDir, "*", SearchOption.AllDirectories))
+        string[] subs;
+        try { subs = Directory.GetDirectories(dir); }
+        catch (System.Exception ex) { Skip(s, dir, ex); subs = System.Array.Empty<string>(); }
+
+        foreach (var sub in subs)
         {
-            var rel = Path.GetRelativePath(sourceDir, file);
-            var target = Path.Combine(destDir, rel);
-            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            HardLink.Create(target, file);
+            try { Directory.CreateDirectory(Path.Combine(destRoot, Path.GetRelativePath(root, sub))); }
+            catch (System.Exception ex) { Skip(s, sub, ex); continue; }
+            Walk(root, sub, destRoot, s);
         }
     }
 }

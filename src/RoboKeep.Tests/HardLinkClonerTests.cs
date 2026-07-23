@@ -30,4 +30,25 @@ public class HardLinkClonerTests : IDisposable
         }
         Assert.Equal("ZZZ", File.ReadAllText(Path.Combine(dst, "a.txt")));
     }
+
+    [Fact]
+    public void Clone_SkipsUnlinkableFile_AndContinues()
+    {
+        // Un file che non si riesce a collegare non deve far crollare il clone: viene saltato,
+        // gli altri proseguono. Simuliamo il fallimento pre-creando la destinazione di "a.txt"
+        // come CARTELLA, cosi' l'hard-link su quel percorso fallisce (come farebbe un settore rotto).
+        var src = Path.Combine(_root, "src");
+        var dst = Path.Combine(_root, "dst");
+        Directory.CreateDirectory(src);
+        File.WriteAllText(Path.Combine(src, "a.txt"), "AAA");
+        File.WriteAllText(Path.Combine(src, "b.txt"), "BBB");
+        Directory.CreateDirectory(Path.Combine(dst, "a.txt")); // ostacolo: a.txt gia' esiste come cartella
+
+        var skippedPaths = new List<string>();
+        var skipped = HardLinkCloner.Clone(src, dst, (path, _) => skippedPaths.Add(path));
+
+        Assert.Equal(1, skipped);                                  // solo a.txt saltato
+        Assert.Contains(skippedPaths, p => p.EndsWith("a.txt"));
+        Assert.Equal("BBB", File.ReadAllText(Path.Combine(dst, "b.txt"))); // b.txt collegato lo stesso
+    }
 }

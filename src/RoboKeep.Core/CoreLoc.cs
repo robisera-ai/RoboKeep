@@ -173,6 +173,24 @@ public static class CoreLoc
             "[versionado] ATENCIÓN: el destino no admite enlaces duros. Ejecuto un espejo simple (sin instantánea). Usa un destino NTFS local para las versiones.",
             "[versioning] ATTENTION : la destination ne prend pas en charge les liens physiques. Miroir simple exécuté (pas d'instantané). Utilisez une destination NTFS locale pour les versions.",
             "[Versionierung] ACHTUNG: das Ziel unterstützt keine Hardlinks. Einfache Spiegelung wird ausgeführt (kein Snapshot). Verwenden Sie ein lokales NTFS-Ziel für Versionen."),
+        ["Versioning_SkipFile"] = L(
+            "[versioning] file del vecchio snapshot non leggibile, saltato (verrà ricopiato dalla sorgente): {0}",
+            "[versioning] file in the previous snapshot could not be read, skipped (it will be recopied from the source): {0}",
+            "[versionado] archivo de la instantánea anterior ilegible, omitido (se volverá a copiar desde el origen): {0}",
+            "[versioning] fichier de l'instantané précédent illisible, ignoré (il sera recopié depuis la source) : {0}",
+            "[Versionierung] Datei im vorherigen Snapshot nicht lesbar, übersprungen (wird aus der Quelle neu kopiert): {0}"),
+        ["Versioning_SkipBadSector"] = L(
+            "[versioning] file illeggibile, saltato — POSSIBILE SETTORE DANNEGGIATO sul disco di destinazione: {0}",
+            "[versioning] unreadable file, skipped — POSSIBLE BAD SECTOR on the destination disk: {0}",
+            "[versionado] archivo ilegible, omitido — POSIBLE SECTOR DAÑADO en el disco de destino: {0}",
+            "[versioning] fichier illisible, ignoré — SECTEUR DÉFECTUEUX POSSIBLE sur le disque de destination : {0}",
+            "[Versionierung] Datei nicht lesbar, übersprungen — MÖGLICHER DEFEKTER SEKTOR auf dem Zieldatenträger: {0}"),
+        ["Versioning_SkipSummary"] = L(
+            "[versioning] {0} file del vecchio snapshot saltati. Se si ripete, controlla la salute del disco di destinazione (es. CrystalDiskInfo): potrebbe avere settori danneggiati.",
+            "[versioning] {0} files skipped from the previous snapshot. If this recurs, check the destination disk's health (e.g. CrystalDiskInfo): it may have bad sectors.",
+            "[versionado] {0} archivos omitidos de la instantánea anterior. Si se repite, revisa la salud del disco de destino (p. ej. CrystalDiskInfo): puede tener sectores dañados.",
+            "[versioning] {0} fichiers ignorés de l'instantané précédent. Si cela se répète, vérifiez l'état du disque de destination (p. ex. CrystalDiskInfo) : il peut avoir des secteurs défectueux.",
+            "[Versionierung] {0} Dateien aus dem vorherigen Snapshot übersprungen. Wenn das wiederkehrt, prüfen Sie den Zustand des Zieldatenträgers (z. B. CrystalDiskInfo): möglicherweise defekte Sektoren."),
         ["Email_SendFailed"] = L(
             "[email] invio non riuscito: {0}",
             "[email] send failed: {0}",
