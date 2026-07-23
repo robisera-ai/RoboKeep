@@ -29,3 +29,9 @@ Il disco o la share di destinazione **non sono collegati**. Collega il disco est
 ### La verifica dice «modificati dopo il backup»
 
 Non è **corruzione**. Significa che hai **modificato i file dopo averli copiati**: sono più recenti nella sorgente rispetto alla copia. RoboKeep te lo segnala così apposta, per non spaventarti con un falso allarme. Al prossimo backup tornano allineati.
+
+### Un job fallisce con «controllo di ridondanza ciclico» (CRC)
+
+Questo messaggio arriva da Windows, non da RoboKeep, e significa che **il disco di destinazione non riesce a leggere un settore**: quasi sempre un **settore danneggiato**. Se succede su un job con le versioni, RoboKeep ora **salta il file illeggibile e continua** (te lo scrive nel log), ma il messaggio resta un campanello importante.
+
+Controlla la **salute del disco di destinazione** con un programma come **CrystalDiskInfo** (gratuito): guarda i valori *Settori scrittura pendente* e *Errori non correggibili*. Se sono diversi da zero o lo stato è «A rischio», il disco sta cedendo: **smetti di usarlo per i backup** e passa a uno sano. I tuoi dati originali sono al sicuro nella sorgente — le copie si ricreano su un disco nuovo.

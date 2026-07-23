@@ -1,5 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Threading;
 using RoboKeep.Guide;
 using RoboKeep.Localization;
 
@@ -36,6 +38,25 @@ public partial class GuideWindow : Wpf.Ui.Controls.FluentWindow
         ContentView.Document = doc;
 
         UpdateNavButtons(idx);
+
+        // Riporta lo scorrimento in cima: cambiando capitolo il visualizzatore terrebbe la
+        // posizione precedente e il nuovo capitolo apparirebbe gia' scrollato a meta'. Rimandato
+        // dopo il layout del nuovo documento, quando la barra di scorrimento e' aggiornata.
+        Dispatcher.BeginInvoke(ScrollContentToTop, DispatcherPriority.Loaded);
+    }
+
+    private void ScrollContentToTop()
+    {
+        if (FindScrollViewer(ContentView) is { } sv) sv.ScrollToTop();
+    }
+
+    private static ScrollViewer? FindScrollViewer(DependencyObject root)
+    {
+        if (root is ScrollViewer sv) return sv;
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++)
+            if (FindScrollViewer(VisualTreeHelper.GetChild(root, i)) is { } found)
+                return found;
+        return null;
     }
 
     // Le frecce mostrano il titolo del capitolo vicino e spariscono ai due estremi.

@@ -18,7 +18,9 @@ creazione guidata o, se la salti, un editor vuoto — oppure da **Modifica** su 
   più nuova, la lascia stare.
 - **Copia anche ACL/owner** — porta con sé permessi e proprietario dei file; utile sulle share
   di rete.
-- **Multi-thread** — copia più file in parallelo, più veloce sui tanti file piccoli.
+- **Multi-thread** — copia più file in parallelo, più veloce sui tanti file piccoli. Conviene sugli
+  **SSD**; su un **disco meccanico** un valore alto fa saltare di continuo la testina tra file diversi
+  e spesso rallenta: lì tieniti su valori bassi (2-4).
 - **Ottimizza file grandi** — modalità pensata per i file molto grossi.
 - **Copia riavviabile** — se la copia di un file enorme si interrompe, riparte da dove era
   arrivata.

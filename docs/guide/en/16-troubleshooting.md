@@ -29,3 +29,9 @@ The destination disk or share **isn't connected**. Plug in the external disk or 
 ### Verification says "modified after the backup"
 
 That's not **corruption**. It means you **edited the files after copying them**: they're newer in the source than in the copy. RoboKeep reports it this way on purpose, so it doesn't scare you with a false alarm. The next backup brings them back in sync.
+
+### A job fails with "data error (cyclic redundancy check)" (CRC)
+
+This message comes from Windows, not from RoboKeep, and means the **destination disk can't read a sector** — almost always a **bad sector**. If it happens on a versioned job, RoboKeep now **skips the unreadable file and carries on** (it says so in the log), but the message is still an important warning.
+
+Check the **destination disk's health** with a tool like **CrystalDiskInfo** (free): look at *Current Pending Sectors* and *Reported Uncorrectable Errors*. If they're above zero or the status is "Caution", the disk is failing: **stop using it for backups** and switch to a healthy one. Your original data is safe in the source — the copies can be rebuilt on a new disk.

@@ -18,7 +18,9 @@ guided setup or, if you skip it, an empty editor — or from **Edit** on an exis
   destination, leave it be.
 - **Copy ACLs/owner too** — carries file permissions and ownership along; handy on network
   shares.
-- **Multi-thread** — copies several files in parallel, faster with lots of small files.
+- **Multi-thread** — copies several files in parallel, faster with lots of small files. It helps on
+  **SSDs**; on a **mechanical disk** a high value makes the head jump constantly between files and
+  often slows things down, so keep it low there (2-4).
 - **Optimize large files** — a mode meant for very big files.
 - **Restartable copy** — if copying a huge file is interrupted, it resumes where it left off.
 - **Log every file** — records every copied file, not just the summary.
