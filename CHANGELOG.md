@@ -4,6 +4,35 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.6.0] - 2026-07-23 — In-app guide & versioning resilience
+
+### Added
+- **Built-in guide** — a browsable manual right inside the app, opened from the **Guide** button
+  in the toolbar or with **F1**. Chapters on the left, content on the right, previous/next
+  navigation at the bottom; the window is modeless, so you can follow it while you work. 17
+  chapters in **Italian and English** (other app languages fall back to English), covering
+  installation, the job editor, mirror vs accumulate, versions, open-file copying, integrity
+  verification, scheduling, disk rotation, network backups, history, notifications, settings, the
+  command line, troubleshooting, and privacy. Rendered natively — no new dependencies. The
+  chapters also live in the repo under `docs/guide/`.
+
+### Changed
+- **Versioning is now resilient to a bad file in the previous snapshot.** If cloning the previous
+  version via hard-links hits an unreadable file (e.g. a bad sector on the destination disk),
+  RoboKeep now **skips that file and continues** — it gets recopied fresh from the source by the
+  ensuing robocopy pass — instead of failing the whole job. The skipped files are logged, with a
+  count summary.
+- **Clearer disk-error messages.** A read failure that means a likely **bad sector** (cyclic
+  redundancy check and similar) is now reported as such, pointing you to check the destination
+  disk's health — instead of a cryptic "data error (cyclic redundancy check)".
+- Guide note: on **mechanical destination disks**, keep the multi-thread count low (2-4); a high
+  count only helps on SSDs.
+
+### Downloads
+- **`RoboKeep-1.6.0-win-x64-selfcontained.zip`** — bundles .NET 10: extract and run, nothing to install.
+- **`RoboKeep-1.6.0-win-x64-framework-dependent.zip`** — smaller; requires the
+  [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
+
 ## [1.5.1] - 2026-07-18
 
 A small follow-up to 1.5.0, driven by field feedback and housekeeping.
