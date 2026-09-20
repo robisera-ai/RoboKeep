@@ -32,6 +32,20 @@ public sealed class JobResult
     /// comparire in rosso: sono due domande diverse ("ha copiato?" contro "c'è un problema?").</para></summary>
     public bool Skipped { get; set; }
 
+    /// <summary>true se il job è stato INTERROTTO perché un disco (o il suo collegamento) ha
+    /// segnalato un errore hardware (CRC, settore non trovato, errore del dispositivo I/O).
+    /// È sempre un fallimento (<c>Success = false</c>): serve a distinguerlo da un normale
+    /// errore di copia, perché qui la cosa giusta NON è riprovare ma controllare il supporto.</summary>
+    public bool HardwareError { get; set; }
+
+    /// <summary>Dettaglio dell'errore hardware (codice, azione e percorso), se <see cref="HardwareError"/>.</summary>
+    public string? HardwareErrorDetail { get; set; }
+
+    /// <summary>Avviso "thread limitati perché è coinvolto un disco meccanico", se il tetto è
+    /// scattato. Viene ripetuto nel riepilogo finale: in cima al log finirebbe sepolto sotto
+    /// migliaia di righe di robocopy.</summary>
+    public string? ThreadCapNote { get; set; }
+
     // Conteggi estratti dal riepilogo robocopy (best-effort, indipendenti dalla lingua).
     public long DirsCopied { get; set; }
     public long FilesCopied { get; set; }

@@ -20,9 +20,10 @@ public static class RobocopyArgsBuilder
     /// <param name="logFile">Se valorizzato aggiunge <c>/TEE</c> e <c>/LOG:&lt;file&gt;</c>.</param>
     /// <param name="destinationOverride">Destinazione alternativa (usata dal versioning per scrivere nello snapshot corrente).</param>
     /// <param name="sourceOverride">Sorgente alternativa (usata da VSS per leggere dallo snapshot congelato).</param>
+    /// <param name="maxThreads">Tetto ai thread <c>/MT</c> deciso a runtime dal tipo di disco (vedi <see cref="StorageProbe"/>). null = nessun tetto.</param>
     public static IReadOnlyList<string> Build(
         BackupJob job, bool dryRun = false, string? logFile = null, string? destinationOverride = null,
-        string? sourceOverride = null)
+        string? sourceOverride = null, int? maxThreads = null)
     {
         ArgumentNullException.ThrowIfNull(job);
 
@@ -55,7 +56,7 @@ public static class RobocopyArgsBuilder
         }
         else if (job.MultiThread > 0)
         {
-            var threads = Math.Min(job.MultiThread, MaxThreads);
+            var threads = Math.Min(job.MultiThread, Math.Min(MaxThreads, maxThreads ?? MaxThreads));
             args.Add($"/MT:{threads}");
         }
 
@@ -109,7 +110,7 @@ public static class RobocopyArgsBuilder
     /// </summary>
     public static IReadOnlyList<string> BuildForceCopyPass(
         BackupJob job, IReadOnlyList<string> filters, bool dryRun = false, string? logFile = null,
-        string? destinationOverride = null, string? sourceOverride = null)
+        string? destinationOverride = null, string? sourceOverride = null, int? maxThreads = null)
     {
         ArgumentNullException.ThrowIfNull(job);
         ArgumentNullException.ThrowIfNull(filters);
@@ -132,7 +133,7 @@ public static class RobocopyArgsBuilder
         if (job.InterPacketGapMs > 0)
             args.Add($"/IPG:{job.InterPacketGapMs}");
         else if (job.MultiThread > 0)
-            args.Add($"/MT:{Math.Min(job.MultiThread, MaxThreads)}");
+            args.Add($"/MT:{Math.Min(job.MultiThread, Math.Min(MaxThreads, maxThreads ?? MaxThreads))}");
 
         if (job.UnbufferedIO)
             args.Add("/J");

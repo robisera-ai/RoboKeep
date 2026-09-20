@@ -36,7 +36,8 @@ public class HardLinkClonerTests : IDisposable
     {
         // Un file che non si riesce a collegare non deve far crollare il clone: viene saltato,
         // gli altri proseguono. Simuliamo il fallimento pre-creando la destinazione di "a.txt"
-        // come CARTELLA, cosi' l'hard-link su quel percorso fallisce (come farebbe un settore rotto).
+        // come CARTELLA, cosi' l'hard-link su quel percorso fallisce (errore NON hardware: si salta;
+        // un errore hardware invece interrompe, vedi DiskError).
         var src = Path.Combine(_root, "src");
         var dst = Path.Combine(_root, "dst");
         Directory.CreateDirectory(src);
@@ -45,7 +46,7 @@ public class HardLinkClonerTests : IDisposable
         Directory.CreateDirectory(Path.Combine(dst, "a.txt")); // ostacolo: a.txt gia' esiste come cartella
 
         var skippedPaths = new List<string>();
-        var skipped = HardLinkCloner.Clone(src, dst, (path, _) => skippedPaths.Add(path));
+        var skipped = HardLinkCloner.Clone(src, dst, path => skippedPaths.Add(path));
 
         Assert.Equal(1, skipped);                                  // solo a.txt saltato
         Assert.Contains(skippedPaths, p => p.EndsWith("a.txt"));

@@ -20,7 +20,9 @@ creazione guidata o, se la salti, un editor vuoto — oppure da **Modifica** su 
   di rete.
 - **Multi-thread** — copia più file in parallelo, più veloce sui tanti file piccoli. Conviene sugli
   **SSD**; su un **disco meccanico** un valore alto fa saltare di continuo la testina tra file diversi
-  e spesso rallenta: lì tieniti su valori bassi (2-4).
+  e spesso rallenta. Per questo RoboKeep riconosce da solo i dischi meccanici (e i dischi USB che
+  non si lasciano identificare) e, quando ne è coinvolto uno, **limita i thread a 2** qualunque
+  valore sia impostato qui, scrivendolo nel log.
 - **Ottimizza file grandi** — modalità pensata per i file molto grossi.
 - **Copia riavviabile** — se la copia di un file enorme si interrompe, riparte da dove era
   arrivata.

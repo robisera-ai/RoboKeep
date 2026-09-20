@@ -6,15 +6,16 @@ namespace RoboKeep.Core.Services;
 /// </summary>
 public static class HardLinkCloner
 {
-    // Un solo file illeggibile nel vecchio snapshot non deve far crollare l'intero backup: lo si
-    // salta e si prosegue. I file saltati non vengono collegati, ma robocopy — che gira subito dopo
-    // sullo snapshot — li ricopia freschi dalla sorgente sana. Cosi' il backup si completa comunque.
+    // Un solo file non collegabile nel vecchio snapshot (bloccato, permessi, nome in conflitto) non
+    // deve far crollare l'intero backup: lo si salta e si prosegue. I file saltati non vengono
+    // collegati, ma robocopy — che gira subito dopo sullo snapshot — li ricopia freschi dalla
+    // sorgente. Fanno eccezione gli errori HARDWARE del disco: quelli interrompono tutto (vedi Skip).
     private const int MaxReported = 10; // oltre questa soglia si contano soltanto, per non intasare il log
 
     /// <summary>Clona <paramref name="sourceDir"/> in <paramref name="destDir"/> via hard-link.
-    /// <paramref name="onSkip"/> viene invocato per ogni elemento saltato (percorso, <c>badSector</c>
-    /// = errore riconducibile a un settore danneggiato). Restituisce il numero di elementi saltati.</summary>
-    public static int Clone(string sourceDir, string destDir, System.Action<string, bool>? onSkip = null)
+    /// <paramref name="onSkip"/> viene invocato per ogni elemento saltato. Restituisce il numero di
+    /// elementi saltati. Lancia <see cref="DiskHardwareException"/> al primo errore hardware.</summary>
+    public static int Clone(string sourceDir, string destDir, System.Action<string>? onSkip = null)
     {
         Directory.CreateDirectory(destDir);
         var state = new State { OnSkip = onSkip };
@@ -24,17 +25,24 @@ public static class HardLinkCloner
 
     private sealed class State
     {
-        public System.Action<string, bool>? OnSkip;
+        public System.Action<string>? OnSkip;
         public int Skipped;
         public int Reported;
     }
 
     private static void Skip(State s, string path, System.Exception ex)
     {
+        // Eccezione alla regola "salta e prosegui": un errore HARDWARE (CRC, settore non trovato,
+        // errore del dispositivo) non si aggira. Creare un hard-link non legge i dati del file:
+        // se fallisce cosi', e' illeggibile la zona dei metadati NTFS, e proseguire vorrebbe dire
+        // far scrivere a robocopy un intero backup su un disco che sta cedendo.
+        if (DiskError.IsUnreadable(ex))
+            throw new DiskHardwareException(path, ex);
+
         s.Skipped++;
         if (s.Reported >= MaxReported) return;
         s.Reported++;
-        s.OnSkip?.Invoke(path, DiskError.IsUnreadable(ex));
+        s.OnSkip?.Invoke(path);
     }
 
     private static void Walk(string root, string dir, string destRoot, State s)

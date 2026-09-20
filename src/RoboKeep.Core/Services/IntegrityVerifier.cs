@@ -86,12 +86,17 @@ public static class IntegrityVerifier
             }
 
             byte[] srcHash, dstHash;
+            var reading = srcFile;
             try
             {
                 srcHash = HashFile(srcFile, ct);
+                reading = dstFile;
                 dstHash = HashFile(dstFile, ct);
             }
             catch (OperationCanceledException) { throw; }
+            // Un file in uso si salta; un errore HARDWARE no: la verifica legge tutto il disco, e
+            // insistere su un supporto che sta cedendo lo peggiora. Ci si ferma al primo.
+            catch (IOException ex) when (DiskError.IsUnreadable(ex)) { throw new DiskHardwareException(reading, ex); }
             catch (IOException) { skipped++; continue; }
             catch (UnauthorizedAccessException) { skipped++; continue; }
 

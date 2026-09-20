@@ -20,7 +20,9 @@ guided setup or, if you skip it, an empty editor — or from **Edit** on an exis
   shares.
 - **Multi-thread** — copies several files in parallel, faster with lots of small files. It helps on
   **SSDs**; on a **mechanical disk** a high value makes the head jump constantly between files and
-  often slows things down, so keep it low there (2-4).
+  often slows things down. That's why RoboKeep detects mechanical disks on its own (and USB disks
+  that can't be identified) and, whenever one is involved, **caps the threads at 2** whatever value
+  is set here, noting it in the log.
 - **Optimize large files** — a mode meant for very big files.
 - **Restartable copy** — if copying a huge file is interrupted, it resumes where it left off.
 - **Log every file** — records every copied file, not just the summary.

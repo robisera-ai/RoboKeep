@@ -30,8 +30,13 @@ Il disco o la share di destinazione **non sono collegati**. Collega il disco est
 
 Non è **corruzione**. Significa che hai **modificato i file dopo averli copiati**: sono più recenti nella sorgente rispetto alla copia. RoboKeep te lo segnala così apposta, per non spaventarti con un falso allarme. Al prossimo backup tornano allineati.
 
-### Un job fallisce con «controllo di ridondanza ciclico» (CRC)
+### Un job si interrompe con «ERRORE HARDWARE» (CRC, controllo di ridondanza ciclico)
 
-Questo messaggio arriva da Windows, non da RoboKeep, e significa che **il disco di destinazione non riesce a leggere un settore**: quasi sempre un **settore danneggiato**. Se succede su un job con le versioni, RoboKeep ora **salta il file illeggibile e continua** (te lo scrive nel log), ma il messaggio resta un campanello importante.
+L'errore arriva da Windows, non da RoboKeep, e significa che **un disco — o il suo collegamento — ha segnalato un problema fisico**: errore nei dati (CRC), settore non trovato o errore del dispositivo. Le cause sono due, e vanno distinte: un **disco che sta cedendo** (settori danneggiati) oppure **cavo, box USB o alimentazione** difettosi, che su un disco esterno danno esattamente gli stessi messaggi.
 
-Controlla la **salute del disco di destinazione** con un programma come **CrystalDiskInfo** (gratuito): guarda i valori *Settori scrittura pendente* e *Errori non correggibili*. Se sono diversi da zero o lo stato è «A rischio», il disco sta cedendo: **smetti di usarlo per i backup** e passa a uno sano. I tuoi dati originali sono al sicuro nella sorgente — le copie si ricreano su un disco nuovo.
+In questi casi RoboKeep **si ferma subito**, al primo errore, e segna il job come fallito: continuare a leggere e scrivere su un supporto che dà errori fisici peggiora il danno. Per lo stesso motivo gli altri job della stessa sessione che usano quel disco **non vengono avviati**. Non rilanciare il backup a ripetizione: prima controlla.
+
+1. **Cavo e alimentazione** — prova un altro cavo e un'altra porta USB (meglio una porta posteriore, senza hub). Se il disco ha un alimentatore, verifica quello.
+2. **Salute del disco** — con un programma come **CrystalDiskInfo** (gratuito) guarda le voci *05 Settori riallocati*, *C5 Settori in attesa* e *C6 Errori non correggibili*: se sono diverse da zero, o lo stato è «A rischio», **il disco sta cedendo**. La voce *C7 Errori CRC UltraDMA* in crescita, con le altre a zero, punta invece al **cavo**.
+
+Se il disco che cede è quello dei backup, **smetti di usarlo** e passa a uno sano: i tuoi dati originali sono al sicuro nella sorgente, le copie si ricreano. Se invece è il disco **sorgente**, metti in salvo i dati prima di ogni altra cosa.

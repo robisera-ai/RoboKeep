@@ -21,13 +21,17 @@ public sealed class RobocopyRunner
 {
     private readonly string _robocopyPath;
     private readonly ForceCopyPlanner? _forceCopyPlanner;
+    private readonly Func<string?, DiskMedia> _detectMedia;
 
     private static readonly Encoding OemEncoding = ResolveOemEncoding();
 
-    public RobocopyRunner(string? robocopyPath = null, ForceCopyPlanner? forceCopyPlanner = null)
+    /// <param name="detectMedia">Rilevatore del tipo di disco (iniettabile nei test); default <see cref="StorageProbe.Detect"/>.</param>
+    public RobocopyRunner(string? robocopyPath = null, ForceCopyPlanner? forceCopyPlanner = null,
+        Func<string?, DiskMedia>? detectMedia = null)
     {
         _robocopyPath = robocopyPath ?? Path.Combine(Environment.SystemDirectory, "Robocopy.exe");
         _forceCopyPlanner = forceCopyPlanner;
+        _detectMedia = detectMedia ?? StorageProbe.Detect;
     }
 
     [DllImport("kernel32.dll")]
@@ -52,25 +56,45 @@ public sealed class RobocopyRunner
     {
         var started = DateTime.Now;
 
-        // Passata principale (mirror/copia normale): comportamento invariato.
-        var (exit1, text1) = await RunPassAsync(
+        // Tetto ai thread secondo il supporto fisico: su un disco meccanico piu' thread significano
+        // solo salti continui della testina. Si interroga il job, non gli override: lo snapshot VSS
+        // e la cartella .inprogress stanno sugli stessi dischi di sorgente e destinazione.
+        var destMedia = _detectMedia(job.Destination);
+        var maxThreads = StorageProbe.ThreadCap(_detectMedia(job.Source), destMedia);
+        string? capNote = null;
+        if (maxThreads is int cap && job.InterPacketGapMs <= 0 && job.MultiThread > cap)
+        {
+            var hdd = destMedia == DiskMedia.Hdd ? job.Destination : job.Source;
+            capNote = string.Format(CoreLoc.S("Threads_Capped"),
+                Path.GetPathRoot(hdd) ?? hdd, job.MultiThread, cap);
+            progress?.Report(capNote);
+        }
+
+        // Passata principale (mirror/copia normale).
+        var (exit1, text1, hardwareError) = await RunPassAsync(
             RobocopyArgsBuilder.Build(job, dryRun, destinationOverride: destinationOverride,
-                sourceOverride: sourceOverride), progress, ct)
+                sourceOverride: sourceOverride, maxThreads: maxThreads), progress, ct)
             .ConfigureAwait(false);
-        var fullText = new StringBuilder(text1);
+        // L'avviso sui thread va anche nel log salvato, non solo a video: chi rilegge il file deve
+        // capire perche' robocopy e' partito con un /MT diverso da quello impostato nel job.
+        var fullText = new StringBuilder();
+        if (capNote is not null) fullText.AppendLine(capNote);
+        fullText.Append(text1);
         var counts = RobocopyOutputParser.ParseCounts(text1.Split('\n'));
         var exitCombined = exit1;
 
-        // Passata "Forza copia": solo se la lista è valorizzata e c'è un pianificatore.
-        if (job.ForceCopyFiles is { Count: > 0 } && _forceCopyPlanner is not null)
+        // Passata "Forza copia": solo se la lista è valorizzata e c'è un pianificatore — e mai
+        // dopo un errore hardware: il disco va lasciato in pace.
+        if (hardwareError is null && job.ForceCopyFiles is { Count: > 0 } && _forceCopyPlanner is not null)
         {
             var plan = await _forceCopyPlanner.PlanAsync(job, progress, ct).ConfigureAwait(false);
             if (plan.Filters.Count > 0)
             {
                 var pass2Args = RobocopyArgsBuilder.BuildForceCopyPass(
                     job, plan.Filters, dryRun, destinationOverride: destinationOverride,
-                    sourceOverride: sourceOverride);
-                var (exit2, text2) = await RunPassAsync(pass2Args, progress, ct).ConfigureAwait(false);
+                    sourceOverride: sourceOverride, maxThreads: maxThreads);
+                var (exit2, text2, hardwareError2) = await RunPassAsync(pass2Args, progress, ct).ConfigureAwait(false);
+                hardwareError = hardwareError2;
                 fullText.AppendLine().Append(text2);
                 exitCombined |= exit2; // gli exit code robocopy sono bitfield: l'OR preserva l'esito peggiore
 
@@ -85,10 +109,15 @@ public sealed class RobocopyRunner
                     counts.DirsExtra + c2.DirsExtra);
 
                 // Aggiorna gli hash salvati solo a passata forzata riuscita (così un errore = ricopia al prossimo run).
-                if (!dryRun && plan.Smart && ExitCodeInterpreter.Interpret(exit2).Success)
+                if (!dryRun && plan.Smart && hardwareError2 is null && ExitCodeInterpreter.Interpret(exit2).Success)
                     _forceCopyPlanner.Commit(job.Name, plan.NewHashes);
             }
         }
+
+        // Robocopy ucciso per errore hardware: il suo exit code non significa nulla. Si registra
+        // l'errore grave (16), cosi' anche chi guarda solo il codice vede un fallimento.
+        if (hardwareError is not null)
+            exitCombined = HardwareFailureExitCode;
 
         var interpreted = ExitCodeInterpreter.Interpret(exitCombined);
         var text = fullText.ToString();
@@ -98,7 +127,10 @@ public sealed class RobocopyRunner
             JobName = job.Name,
             ExitCode = exitCombined,
             Success = interpreted.Success,
-            Status = interpreted.Summary,
+            Status = hardwareError is null ? interpreted.Summary : CoreLoc.S("Hw_Status"),
+            HardwareError = hardwareError is not null,
+            HardwareErrorDetail = hardwareError,
+            ThreadCapNote = capNote,
             StartedAt = started,
             Duration = DateTime.Now - started,
             DryRun = dryRun,
@@ -114,11 +146,16 @@ public sealed class RobocopyRunner
         return new RobocopyRunResult { Result = result, Output = text };
     }
 
-    /// <summary>Avvia un singolo processo robocopy e restituisce (exit code, output catturato).</summary>
-    private async Task<(int ExitCode, string Output)> RunPassAsync(
+    /// <summary>Exit code registrato per un job interrotto da un errore hardware (bit "errore grave").</summary>
+    public const int HardwareFailureExitCode = 16;
+
+    /// <summary>Avvia un singolo processo robocopy e restituisce (exit code, output catturato,
+    /// dettaglio dell'errore hardware che ha fatto interrompere la passata, o null).</summary>
+    private async Task<(int ExitCode, string Output, string? HardwareError)> RunPassAsync(
         IReadOnlyList<string> args, IProgress<string>? progress, CancellationToken ct)
     {
         var output = new StringBuilder();
+        string? hardwareError = null;
 
         var psi = new ProcessStartInfo
         {
@@ -140,6 +177,16 @@ public sealed class RobocopyRunner
             if (line is null) return;
             lock (output) output.AppendLine(line);
             progress?.Report(line);
+
+            // Primo errore hardware (CRC, settore non trovato, errore del dispositivo): robocopy
+            // riproverebbe (/R) e poi passerebbe al file dopo, per migliaia di file, su un disco
+            // che sta cedendo. Lo si ferma subito, prima ancora del primo nuovo tentativo.
+            if (DiskError.IsRobocopyHardwareErrorLine(line, out var detail)
+                && Interlocked.CompareExchange(ref hardwareError, detail, null) is null)
+            {
+                try { if (!process.HasExited) process.Kill(entireProcessTree: true); }
+                catch { /* il processo potrebbe essere già terminato */ }
+            }
         }
 
         process.OutputDataReceived += (_, e) => OnData(e.Data);
@@ -158,6 +205,6 @@ public sealed class RobocopyRunner
             await process.WaitForExitAsync(ct).ConfigureAwait(false);
         }
 
-        return (process.ExitCode, output.ToString());
+        return (process.ExitCode, output.ToString(), Volatile.Read(ref hardwareError));
     }
 }

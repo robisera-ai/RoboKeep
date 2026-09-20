@@ -44,7 +44,8 @@ public sealed class SnapshotService
                 await Task.Run(() => FileSystemDelete.DeleteDirectory(stale), ct).ConfigureAwait(false);
                 progress?.Report($"[versioning] rimosso snapshot incompleto di un run interrotto: {Path.GetFileName(stale)}");
             }
-            catch (Exception ex)
+            // Best-effort vale per lock e permessi, NON per un errore hardware: quello ferma il job.
+            catch (Exception ex) when (!DiskError.IsUnreadable(ex))
             {
                 progress?.Report($"[versioning] residuo {Path.GetFileName(stale)} non rimosso: {ex.Message}");
             }
@@ -61,11 +62,11 @@ public sealed class SnapshotService
             // tra unlink e robocopy romperebbero la garanzia di sovrainsieme sicuro.
             var source = sourceOverride ?? job.Source;
             progress?.Report($"[versioning] clono lo snapshot precedente ({prevName}) via hard-link...");
-            // Un file illeggibile nel vecchio snapshot (settore danneggiato) non deve far fallire
-            // il backup: viene saltato qui e ricopiato fresco da robocopy poco dopo.
+            // Un file non collegabile nel vecchio snapshot (lock, permessi) non deve far fallire il
+            // backup: viene saltato qui e ricopiato fresco da robocopy poco dopo. Un errore hardware
+            // del disco invece interrompe il clone con DiskHardwareException (gestita da BackupRunner).
             var skipped = await Task.Run(() => HardLinkCloner.Clone(prevPath, curr,
-                (path, badSector) => progress?.Report(string.Format(
-                    CoreLoc.S(badSector ? "Versioning_SkipBadSector" : "Versioning_SkipFile"), path))),
+                path => progress?.Report(string.Format(CoreLoc.S("Versioning_SkipFile"), path))),
                 ct).ConfigureAwait(false);
             if (skipped > 0)
                 progress?.Report(string.Format(CoreLoc.S("Versioning_SkipSummary"), skipped));
@@ -97,13 +98,13 @@ public sealed class SnapshotService
                         FileSystemDelete.DeleteDirectory(Path.Combine(dest, name));
                         progress?.Report($"[versioning] rimosso snapshot vecchio: {name}");
                     }
-                    catch (Exception ex)
+                    catch (Exception ex) when (!DiskError.IsUnreadable(ex))
                     {
                         progress?.Report($"[versioning] impossibile rimuovere {name}: {ex.Message}");
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (!DiskError.IsUnreadable(ex))
             {
                 progress?.Report($"[versioning] backup riuscito ma rinomina snapshot fallita ({ex.Message}); resta {Path.GetFileName(curr)}.");
             }

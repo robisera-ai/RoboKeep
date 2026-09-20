@@ -179,18 +179,50 @@ public static class CoreLoc
             "[versionado] archivo de la instantánea anterior ilegible, omitido (se volverá a copiar desde el origen): {0}",
             "[versioning] fichier de l'instantané précédent illisible, ignoré (il sera recopié depuis la source) : {0}",
             "[Versionierung] Datei im vorherigen Snapshot nicht lesbar, übersprungen (wird aus der Quelle neu kopiert): {0}"),
-        ["Versioning_SkipBadSector"] = L(
-            "[versioning] file illeggibile, saltato — POSSIBILE SETTORE DANNEGGIATO sul disco di destinazione: {0}",
-            "[versioning] unreadable file, skipped — POSSIBLE BAD SECTOR on the destination disk: {0}",
-            "[versionado] archivo ilegible, omitido — POSIBLE SECTOR DAÑADO en el disco de destino: {0}",
-            "[versioning] fichier illisible, ignoré — SECTEUR DÉFECTUEUX POSSIBLE sur le disque de destination : {0}",
-            "[Versionierung] Datei nicht lesbar, übersprungen — MÖGLICHER DEFEKTER SEKTOR auf dem Zieldatenträger: {0}"),
         ["Versioning_SkipSummary"] = L(
-            "[versioning] {0} file del vecchio snapshot saltati. Se si ripete, controlla la salute del disco di destinazione (es. CrystalDiskInfo): potrebbe avere settori danneggiati.",
-            "[versioning] {0} files skipped from the previous snapshot. If this recurs, check the destination disk's health (e.g. CrystalDiskInfo): it may have bad sectors.",
-            "[versionado] {0} archivos omitidos de la instantánea anterior. Si se repite, revisa la salud del disco de destino (p. ej. CrystalDiskInfo): puede tener sectores dañados.",
-            "[versioning] {0} fichiers ignorés de l'instantané précédent. Si cela se répète, vérifiez l'état du disque de destination (p. ex. CrystalDiskInfo) : il peut avoir des secteurs défectueux.",
-            "[Versionierung] {0} Dateien aus dem vorherigen Snapshot übersprungen. Wenn das wiederkehrt, prüfen Sie den Zustand des Zieldatenträgers (z. B. CrystalDiskInfo): möglicherweise defekte Sektoren."),
+            "[versioning] {0} file del vecchio snapshot saltati (bloccati o non accessibili): verranno ricopiati dalla sorgente.",
+            "[versioning] {0} files skipped from the previous snapshot (locked or not accessible): they will be recopied from the source.",
+            "[versionado] {0} archivos omitidos de la instantánea anterior (bloqueados o inaccesibles): se volverán a copiar desde el origen.",
+            "[versioning] {0} fichiers ignorés de l'instantané précédent (verrouillés ou inaccessibles) : ils seront recopiés depuis la source.",
+            "[Versionierung] {0} Dateien aus dem vorherigen Snapshot übersprungen (gesperrt oder nicht zugänglich): sie werden aus der Quelle neu kopiert."),
+
+        ["Hw_Stop"] = L(
+            "[disco] ERRORE HARDWARE — job INTERROTTO per non peggiorare il danno: {0}",
+            "[disk] HARDWARE ERROR — job STOPPED to avoid making the damage worse: {0}",
+            "[disco] ERROR DE HARDWARE — trabajo DETENIDO para no agravar el daño: {0}",
+            "[disque] ERREUR MATÉRIELLE — tâche ARRÊTÉE pour ne pas aggraver les dégâts : {0}",
+            "[Datenträger] HARDWAREFEHLER — Job GESTOPPT, um den Schaden nicht zu vergrößern: {0}"),
+        ["Hw_Advice"] = L(
+            "[disco] Un disco (sorgente o destinazione) o il suo collegamento ha segnalato un errore fisico. Non rilanciare il backup a ripetizione. Controlla: 1) cavo, box USB e alimentazione (prova un altro cavo/porta); 2) la salute del disco (SMART, es. CrystalDiskInfo: voci 05, C5, C6 = disco; C7 = cavo). Se il disco sta cedendo, metti in salvo i dati prima di ogni altra cosa.",
+            "[disk] A disk (source or destination) or its connection reported a physical error. Do not keep re-running the backup. Check: 1) cable, USB enclosure and power (try another cable/port); 2) the disk's health (SMART, e.g. CrystalDiskInfo: attributes 05, C5, C6 = disk; C7 = cable). If the disk is failing, rescue your data before anything else.",
+            "[disco] Un disco (origen o destino) o su conexión ha notificado un error físico. No relances la copia repetidamente. Comprueba: 1) cable, caja USB y alimentación (prueba otro cable/puerto); 2) la salud del disco (SMART, p. ej. CrystalDiskInfo: atributos 05, C5, C6 = disco; C7 = cable). Si el disco está fallando, pon a salvo los datos antes que nada.",
+            "[disque] Un disque (source ou destination) ou sa connexion a signalé une erreur physique. Ne relancez pas la sauvegarde en boucle. Vérifiez : 1) câble, boîtier USB et alimentation (essayez un autre câble/port) ; 2) l'état du disque (SMART, p. ex. CrystalDiskInfo : attributs 05, C5, C6 = disque ; C7 = câble). Si le disque est en train de lâcher, mettez vos données à l'abri avant tout.",
+            "[Datenträger] Ein Datenträger (Quelle oder Ziel) oder seine Verbindung hat einen physischen Fehler gemeldet. Das Backup nicht wiederholt neu starten. Prüfen: 1) Kabel, USB-Gehäuse und Stromversorgung (anderes Kabel/anderen Port testen); 2) den Zustand des Datenträgers (SMART, z. B. CrystalDiskInfo: Attribute 05, C5, C6 = Datenträger; C7 = Kabel). Wenn der Datenträger ausfällt, zuerst die Daten retten."),
+        ["Hw_Status"] = L(
+            "INTERROTTO: errore hardware del disco o del collegamento.",
+            "STOPPED: hardware error from the disk or its connection.",
+            "DETENIDO: error de hardware del disco o de su conexión.",
+            "ARRÊTÉ : erreur matérielle du disque ou de sa connexion.",
+            "GESTOPPT: Hardwarefehler des Datenträgers oder seiner Verbindung."),
+        ["Hw_SkippedAfterFault"] = L(
+            "[disco] job NON eseguito: il disco {0} ha segnalato un errore hardware in un job precedente di questa sessione.",
+            "[disk] job NOT run: disk {0} reported a hardware error in an earlier job of this session.",
+            "[disco] trabajo NO ejecutado: el disco {0} notificó un error de hardware en un trabajo anterior de esta sesión.",
+            "[disque] tâche NON exécutée : le disque {0} a signalé une erreur matérielle lors d'une tâche précédente de cette session.",
+            "[Datenträger] Job NICHT ausgeführt: Datenträger {0} hat in einem früheren Job dieser Sitzung einen Hardwarefehler gemeldet."),
+        ["Hw_VerifyStop"] = L(
+            "[verifica] INTERROTTA per errore hardware: {0}",
+            "[verify] STOPPED due to a hardware error: {0}",
+            "[verificación] DETENIDA por error de hardware: {0}",
+            "[vérification] ARRÊTÉE pour erreur matérielle : {0}",
+            "[Prüfung] GESTOPPT wegen Hardwarefehler: {0}"),
+
+        ["Threads_Capped"] = L(
+            "[disco] {0} è un disco meccanico (o un disco USB non identificabile): thread di copia limitati da {1} a {2} per non stressare la testina.",
+            "[disk] {0} is a mechanical disk (or an unidentifiable USB disk): copy threads limited from {1} to {2} to avoid thrashing the head.",
+            "[disco] {0} es un disco mecánico (o un disco USB no identificable): hilos de copia limitados de {1} a {2} para no forzar el cabezal.",
+            "[disque] {0} est un disque mécanique (ou un disque USB non identifiable) : threads de copie limités de {1} à {2} pour ménager la tête de lecture.",
+            "[Datenträger] {0} ist eine mechanische Festplatte (oder ein nicht identifizierbarer USB-Datenträger): Kopier-Threads von {1} auf {2} begrenzt, um den Kopf zu schonen."),
         ["Email_SendFailed"] = L(
             "[email] invio non riuscito: {0}",
             "[email] send failed: {0}",

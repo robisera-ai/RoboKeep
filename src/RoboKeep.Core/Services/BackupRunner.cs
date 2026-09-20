@@ -20,6 +20,11 @@ public sealed class BackupRunner
     private readonly string? _vssSessionRoot;
     private readonly RunHistoryStore? _history;
 
+    // Dischi (radici, es. "E:\") che in questa sessione hanno segnalato un errore hardware: i job
+    // successivi che li toccano non partono. Un --run-all notturno con cinque job sullo stesso
+    // disco non deve martellarlo cinque volte dopo il primo errore.
+    private readonly HashSet<string> _faultedRoots = new(StringComparer.OrdinalIgnoreCase);
+
     public BackupRunner(
         AppConfig config,
         RobocopyRunner runner,
@@ -85,6 +90,35 @@ public sealed class BackupRunner
             };
         }
 
+        // Disco che ha gia' segnalato un errore hardware in questa sessione: non lo si tocca piu'.
+        // A differenza del disco assente, questo E' un fallimento (il backup non e' stato fatto
+        // e c'e' un problema da risolvere): Success = false, Skipped = false.
+        var faulted = RootOf(job.Destination) is { } dr && _faultedRoots.Contains(dr) ? dr
+            : RootOf(job.Source) is { } sr && _faultedRoots.Contains(sr) ? sr
+            : null;
+        if (faulted is not null)
+        {
+            progress?.Report(string.Format(CoreLoc.S("Hw_SkippedAfterFault"), faulted));
+            var now = DateTime.Now;
+            if (!dryRun)
+                _history?.Append(new RunHistoryEntry(job.Name, RunHistoryEntry.KindBackup, now, now,
+                    false, RobocopyRunner.HardwareFailureExitCode, 0, 0, 0, 0, 0, null));
+            return new JobResult
+            {
+                JobName = job.Name,
+                Success = false,
+                ExitCode = RobocopyRunner.HardwareFailureExitCode,
+                HardwareError = true,
+                Status = CoreLoc.S("Hw_Status"),
+                StartedAt = now,
+                DryRun = dryRun,
+            };
+        }
+
+        // Il PC non deve sospendersi per inattivita' nel mezzo del lavoro: a un disco USB la
+        // sospensione toglie l'alimentazione durante le scritture.
+        using var awake = SleepBlocker.Acquire($"RoboKeep: {job.Name}");
+
         // Il lock file persiste se il processo viene terminato brutalmente; viene rimosso nel
         // finally (via using) quando il run termina normalmente (successo, errore o cancel).
         using var lockHandle = dryRun || _lockFolder is null ? null : JobLockFile.Acquire(_lockFolder, job.Name);
@@ -128,27 +162,65 @@ public sealed class BackupRunner
                 connected = true;
             }
 
+            var startedAt = DateTime.Now;
+            string? faultPath = null;
             RobocopyRunResult run;
-            if (job.Versioned && !dryRun && _snapshots is not null)
+            try
             {
-                if (HardLinkSupport.IsSupported(job.Destination))
+                if (job.Versioned && !dryRun && _snapshots is not null)
                 {
-                    run = await _snapshots.RunVersionedAsync(job, progress, ct, sourceOverride).ConfigureAwait(false);
+                    if (HardLinkSupport.IsSupported(job.Destination))
+                    {
+                        run = await _snapshots.RunVersionedAsync(job, progress, ct, sourceOverride).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        progress?.Report(CoreLoc.S("Versioning_NoHardLink"));
+                        run = await _runner.RunAsync(job, dryRun, progress, ct, sourceOverride: sourceOverride).ConfigureAwait(false);
+                    }
                 }
                 else
                 {
-                    progress?.Report(CoreLoc.S("Versioning_NoHardLink"));
                     run = await _runner.RunAsync(job, dryRun, progress, ct, sourceOverride: sourceOverride).ConfigureAwait(false);
                 }
             }
-            else
+            catch (Exception ex) when (ex is not OperationCanceledException && DiskError.IsUnreadable(ex))
             {
-                run = await _runner.RunAsync(job, dryRun, progress, ct, sourceOverride: sourceOverride).ConfigureAwait(false);
+                // Errore hardware fuori da robocopy (clone hard-link, pulizia snapshot, hash della
+                // forza-copia): stesso trattamento, il job diventa un fallimento con log ed email.
+                faultPath = (ex as DiskHardwareException)?.FaultPath;
+                run = new RobocopyRunResult
+                {
+                    Output = "",
+                    Result = new JobResult
+                    {
+                        JobName = job.Name,
+                        ExitCode = RobocopyRunner.HardwareFailureExitCode,
+                        Success = false,
+                        Status = CoreLoc.S("Hw_Status"),
+                        HardwareError = true,
+                        HardwareErrorDetail = ex.Message,
+                        StartedAt = startedAt,
+                        Duration = DateTime.Now - startedAt,
+                        DryRun = dryRun,
+                    },
+                };
             }
 
             // Riepilogo nostro, leggibile e in italiano (l'output nativo di robocopy ha le
             // intestazioni localizzate che sbordano dalle colonne).
-            var recap = BuildRecap(run.Result, dryRun);
+            var recap = BuildRecap(run.Result, dryRun).ToList();
+            if (run.Result.ThreadCapNote is { } capNote)
+                recap.Add(capNote);
+            if (run.Result.HardwareError)
+            {
+                // Dalle righe di robocopy non si distingue il lato che ha ceduto (il percorso
+                // riportato e' sempre quello sorgente): in mancanza di un percorso certo si mette
+                // a riposo il disco di destinazione, quello su cui il job scrive.
+                MarkFaulted(faultPath ?? job.Destination);
+                recap.Add(string.Format(CoreLoc.S("Hw_Stop"), run.Result.HardwareErrorDetail));
+                recap.Add(CoreLoc.S("Hw_Advice"));
+            }
             foreach (var line in recap)
                 progress?.Report(line);
 
@@ -210,6 +282,14 @@ public sealed class BackupRunner
                     }
                 }
                 catch (OperationCanceledException) { throw; }
+                catch (Exception ex) when (DiskError.IsUnreadable(ex))
+                {
+                    // La verifica legge TUTTO il disco: al primo errore hardware si ferma, e il
+                    // disco va a riposo anche per i job successivi di questa sessione.
+                    MarkFaulted((ex as DiskHardwareException)?.FaultPath ?? job.Destination);
+                    progress?.Report(string.Format(CoreLoc.S("Hw_VerifyStop"), ex.Message));
+                    progress?.Report(CoreLoc.S("Hw_Advice"));
+                }
                 catch (Exception ex)
                 {
                     progress?.Report(string.Format(CoreLoc.S("Verify_Failed"), ex.Message));
@@ -229,6 +309,25 @@ public sealed class BackupRunner
             if (connected && cred is not null)
                 _credentials.Disconnect(cred.Host);
         }
+    }
+
+    /// <summary>Radice del volume locale di un percorso ("E:\"), o null per percorsi vuoti,
+    /// di rete o non interpretabili: solo un disco locale puo' essere "messo a riposo".</summary>
+    private static string? RootOf(string? path)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(path)) return null;
+            var root = Path.GetPathRoot(Path.GetFullPath(path));
+            if (string.IsNullOrEmpty(root) || root.StartsWith(@"\\", StringComparison.Ordinal)) return null;
+            return root;
+        }
+        catch { return null; }
+    }
+
+    private void MarkFaulted(string? path)
+    {
+        if (RootOf(path) is { } root) _faultedRoots.Add(root);
     }
 
     private static string[] BuildRecap(JobResult r, bool dryRun)

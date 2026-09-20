@@ -491,6 +491,8 @@ public sealed class MainViewModel : ObservableObject
                 Enqueue(RoboKeep.Core.CoreLoc.S("Verify_NothingToVerify"));
                 return;
             }
+            // La verifica legge per ore: il PC non deve sospendersi per inattivita' nel mezzo.
+            using var awake = SleepBlocker.Acquire($"RoboKeep: {sel.Name}");
             var vr = await IntegrityVerifier.VerifyAsync(job.Source, target, job.ExcludeFiles, job.ExcludeDirs, progress, _cts.Token);
             BackupRunner.ReportVerify(vr, progress);
             _host.History.Append(RunHistoryEntry.ForVerify(job.Name, started, vr));
@@ -498,6 +500,11 @@ public sealed class MainViewModel : ObservableObject
         catch (OperationCanceledException)
         {
             Enqueue($"!! {sel.Name}: {Loc.Instance["Run_CancelledUser"]}");
+        }
+        catch (Exception ex) when (DiskError.IsUnreadable(ex))
+        {
+            Enqueue(string.Format(RoboKeep.Core.CoreLoc.S("Hw_VerifyStop"), ex.Message));
+            Enqueue(RoboKeep.Core.CoreLoc.S("Hw_Advice"));
         }
         catch (Exception ex)
         {

@@ -30,8 +30,13 @@ The destination disk or share **isn't connected**. Plug in the external disk or 
 
 That's not **corruption**. It means you **edited the files after copying them**: they're newer in the source than in the copy. RoboKeep reports it this way on purpose, so it doesn't scare you with a false alarm. The next backup brings them back in sync.
 
-### A job fails with "data error (cyclic redundancy check)" (CRC)
+### A job stops with "HARDWARE ERROR" (CRC, cyclic redundancy check)
 
-This message comes from Windows, not from RoboKeep, and means the **destination disk can't read a sector** — almost always a **bad sector**. If it happens on a versioned job, RoboKeep now **skips the unreadable file and carries on** (it says so in the log), but the message is still an important warning.
+The error comes from Windows, not from RoboKeep, and means **a disk — or its connection — reported a physical problem**: data error (CRC), sector not found, or I/O device error. There are two possible causes, and they need telling apart: a **failing disk** (bad sectors), or a faulty **cable, USB enclosure or power supply**, which on an external disk produce exactly the same messages.
 
-Check the **destination disk's health** with a tool like **CrystalDiskInfo** (free): look at *Current Pending Sectors* and *Reported Uncorrectable Errors*. If they're above zero or the status is "Caution", the disk is failing: **stop using it for backups** and switch to a healthy one. Your original data is safe in the source — the copies can be rebuilt on a new disk.
+When this happens RoboKeep **stops immediately**, at the first error, and marks the job as failed: carrying on reading and writing to media that reports physical errors makes the damage worse. For the same reason, the other jobs of the same session that use that disk **are not started**. Don't keep re-running the backup: check first.
+
+1. **Cable and power** — try another cable and another USB port (preferably a rear port, no hub). If the disk has its own power supply, check that too.
+2. **Disk health** — with a tool like **CrystalDiskInfo** (free), look at *05 Reallocated Sectors*, *C5 Current Pending Sectors* and *C6 Uncorrectable Sectors*: if they're above zero, or the status is "Caution", **the disk is failing**. A rising *C7 UltraDMA CRC Error Count* with the others at zero points to the **cable** instead.
+
+If the failing disk is the backup disk, **stop using it** and switch to a healthy one: your original data is safe in the source, and the copies can be rebuilt. If it's the **source** disk instead, rescue your data before anything else.

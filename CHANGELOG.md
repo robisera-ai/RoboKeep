@@ -4,6 +4,33 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] — Hardware safety of the backup media
+
+### Changed
+- **A hardware error now stops the job at once.** When a disk — or its cable/enclosure — reports a
+  physical error (data error/CRC, sector not found, I/O device error), RoboKeep **kills robocopy at
+  the first such line**, before it retries and moves on to thousands of other files, and marks the
+  job as failed with a clear "hardware error" status and actionable advice (check cable and power
+  first, then SMART). The same applies to the hard-link clone and cleanup of versioned jobs and to
+  the integrity verification. This **reverses the 1.6.0 behaviour** of skipping an unreadable file
+  in the previous snapshot and carrying on: writing a whole backup onto a disk that has just
+  reported a physical error is the wrong call. Files that can't be linked for ordinary reasons
+  (locked, permissions) are still skipped and recopied.
+- **A faulted disk is left alone for the rest of the session.** After a hardware error, the
+  remaining jobs of the same run (`--run-all`, or a batch from the window) that use that disk are
+  not started and are reported as failed.
+- **Disk-error wording no longer blames the disk alone**: on external disks the same errors often
+  come from a bad cable, USB enclosure or power supply, and the message now says so.
+
+### Added
+- **The PC stays awake while a backup or verification runs.** RoboKeep holds a Windows power
+  request for the duration of the work, so automatic sleep can't cut power to a USB disk in the
+  middle of a write. (Closing the lid or pressing the sleep button still sleeps the PC.)
+- **Automatic thread cap on mechanical disks.** RoboKeep asks Windows what kind of media sits
+  behind source and destination; when either is a mechanical disk — or a USB disk that can't be
+  identified and doesn't support TRIM — copy threads are capped at 2 whatever the job says, and the
+  log notes it. SSDs and network paths are unaffected.
+
 ## [1.6.0] - 2026-07-23 — In-app guide & versioning resilience
 
 ### Added
