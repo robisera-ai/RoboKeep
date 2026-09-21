@@ -17,9 +17,21 @@ You can **filter by job** to focus on a single backup and follow how it's done o
 
 ## Reading the full log
 
-**Double-click** an entry in the history: RoboKeep opens that run's **full log** and shows it right
-inside the app. The log is read straight from the zip it's archived in, so you never have to hunt
-for files or extract anything by hand.
+**Double-click** an entry in the history: RoboKeep opens that run's **full log** in **Notepad**,
+where you can search (Ctrl+F), copy and save, while the history stays usable. The log is extracted
+automatically from the zip it's archived in, so you never have to hunt for files or extract
+anything by hand.
+
+**Every entry has its own log**: **verifications** too — automatic or run by hand — save a log of
+their own (the file is named after the job followed by `-verify`), with the outcome and the full
+list of any differing files. The backup's log, in turn, notes when the verification wasn't
+scheduled that day and when the next one is due.
+
+## Where the log files are
+
+Logs live in RoboKeep's data folder (`%APPDATA%\RoboKeep\logs`), **not** next to the program, in
+one folder per day. To get there, click **Log folder** in the log panel of the main window:
+Explorer opens with the most recent day selected.
 
 ## The real-time log
 

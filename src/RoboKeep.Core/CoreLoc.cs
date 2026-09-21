@@ -167,6 +167,17 @@ public static class CoreLoc
             "[verificación] nada que verificar: el trabajo versionado aún no tiene instantáneas.",
             "[vérification] rien à vérifier : la tâche versionnée n'a pas encore d'instantanés.",
             "[Prüfung] nichts zu prüfen: der versionierte Job hat noch keine Snapshots."),
+        ["Verify_LogTitle"] = L(
+            "VERIFICA INTEGRITÀ", "INTEGRITY VERIFICATION", "VERIFICACIÓN DE INTEGRIDAD",
+            "VÉRIFICATION D'INTÉGRITÉ", "INTEGRITÄTSPRÜFUNG"),
+        // Finisce nel nome del file: solo lettere semplici, niente spazi né accenti.
+        ["Verify_LogSuffix"] = L("verifica", "verify", "verificacion", "verification", "pruefung"),
+        ["Verify_LogMismatchList"] = L(
+            "File DIFFERENTI dalla sorgente (elenco completo, fino a 50):",
+            "Files DIFFERENT from the source (full list, up to 50):",
+            "Archivos DIFERENTES del origen (lista completa, hasta 50):",
+            "Fichiers DIFFÉRENTS de la source (liste complète, jusqu'à 50) :",
+            "Dateien, die von der Quelle ABWEICHEN (vollständige Liste, bis zu 50):"),
         ["Verify_NotDue"] = L(
             "[verifica] non prevista oggi: l'ultima è del {0}, la prossima tra {1} giorni.",
             "[verify] not scheduled today: the last one was on {0}, the next is in {1} days.",

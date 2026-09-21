@@ -136,6 +136,57 @@ public sealed class DiskHealthAndVerifyScheduleTests : IDisposable
     }
 
     [Fact]
+    public async Task Verification_GetsItsOwnLog_LinkedToItsHistoryEntry()
+    {
+        // 60 file: abbastanza da far scattare la riga di avanzamento ("verificati 50/61"), che
+        // deve restare solo a video.
+        for (var i = 0; i < 60; i++) File.WriteAllText(Path.Combine(Src, $"f{i}.txt"), "x");
+        var history = new RunHistoryStore(Path.Combine(_root, "history.json"));
+        var job = new BackupJob { Name = "T", Source = Src, Destination = Dst, VerifyAfterRun = true, VerifyEveryDays = 0 };
+        var lines = new List<string>();
+
+        await NewRunner(history, _ => DiskEventSummary.None).RunJobAsync(job, progress: new Collect(lines));
+
+        var entries = history.List("T");
+        var verify = Assert.Single(entries, e => e.Kind == RunHistoryEntry.KindVerify);
+        var backup = Assert.Single(entries, e => e.Kind == RunHistoryEntry.KindBackup);
+        Assert.NotNull(verify.LogPath);
+        Assert.NotEqual(backup.LogPath, verify.LogPath); // due voci, due log
+        // Il suffisso e' localizzato (verifica/verify/...): si chiede a CoreLoc, cosi' il test regge anche in CI.
+        Assert.Contains("-" + RoboKeep.Core.CoreLoc.S("Verify_LogSuffix"), Path.GetFileName(verify.LogPath!));
+
+        var text = LogArchiveReader.ReadLogText(verify.LogPath)!;
+        Assert.Contains("61", text);                     // l'esito: 61 file identici
+        Assert.Contains(lines, l => l.Contains("50/61")); // l'avanzamento si vede a video...
+        Assert.DoesNotContain("50/61", text);             // ...ma non intasa il file
+    }
+
+    [Fact]
+    public async Task NotDueNote_IsWrittenInTheBackupLog()
+    {
+        var history = new RunHistoryStore(Path.Combine(_root, "history.json"));
+        var job = new BackupJob { Name = "T", Source = Src, Destination = Dst, VerifyAfterRun = true, VerifyEveryDays = 7 };
+        var runner = NewRunner(history, _ => DiskEventSummary.None);
+
+        await runner.RunJobAsync(job);              // verifica eseguita
+        var second = await runner.RunJobAsync(job); // verifica rimandata
+
+        var text = LogArchiveReader.ReadLogText(second.LogPath)!;
+        Assert.Contains(DateTime.Now.ToString("d"), text); // "l'ultima è del <oggi>": ora sta anche nel file
+    }
+
+    [Fact]
+    public void InterruptedVerify_DoesNotCountAsTheLastVerification()
+    {
+        var interrupted = RunHistoryEntry.ForVerifyInterrupted("T", DateTime.Now, null);
+        var completed = RunHistoryEntry.ForVerify("T", DateTime.Now, new VerifyResult(10, 2, 0, 0, 0, new[] { "a", "b" }));
+
+        Assert.False(interrupted.Success);
+        Assert.False(interrupted.IsCompletedVerify); // interrotta: la prossima verifica resta dovuta
+        Assert.True(completed.IsCompletedVerify);    // completata, anche se ha trovato differenze
+    }
+
+    [Fact]
     public void NewJobs_GetSafeDefaults_ButSavedJobsKeepTheirRetention()
     {
         var fresh = new BackupJob();

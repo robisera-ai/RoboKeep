@@ -482,6 +482,7 @@ public sealed class MainViewModel : ObservableObject
         IProgress<string> progress = new DirectProgress(Enqueue);
         _logTimer.Start();
         var started = DateTime.Now;
+        VerifyLogRecorder? verifyLog = null;
         try
         {
             Enqueue($"===== {Loc.Instance["Verify_Header"]} {DateTime.Now:HH:mm:ss} — {sel.Name} =====");
@@ -493,9 +494,12 @@ public sealed class MainViewModel : ObservableObject
             }
             // La verifica legge per ore: il PC non deve sospendersi per inattivita' nel mezzo.
             using var awake = SleepBlocker.Acquire($"RoboKeep: {sel.Name}");
-            var vr = await IntegrityVerifier.VerifyAsync(job.Source, target, job.ExcludeFiles, job.ExcludeDirs, progress, _cts.Token);
-            BackupRunner.ReportVerify(vr, progress);
-            _host.History.Append(RunHistoryEntry.ForVerify(job.Name, started, vr));
+            // Anche la verifica manuale lascia il suo log, collegato alla voce di cronologia.
+            verifyLog = new VerifyLogRecorder(progress);
+            var vr = await IntegrityVerifier.VerifyAsync(job.Source, target, job.ExcludeFiles, job.ExcludeDirs, verifyLog, _cts.Token);
+            BackupRunner.ReportVerify(vr, verifyLog);
+            _host.History.Append(RunHistoryEntry.ForVerify(job.Name, started, vr,
+                verifyLog.Save(new LogService(_host.Config.Settings), job.Name, started, vr)));
         }
         catch (OperationCanceledException)
         {
@@ -503,8 +507,11 @@ public sealed class MainViewModel : ObservableObject
         }
         catch (Exception ex) when (DiskError.IsUnreadable(ex))
         {
-            Enqueue(string.Format(RoboKeep.Core.CoreLoc.S("Hw_VerifyStop"), ex.Message));
-            Enqueue(RoboKeep.Core.CoreLoc.S("Hw_Advice"));
+            var rec = verifyLog ?? new VerifyLogRecorder(progress);
+            rec.Report(string.Format(RoboKeep.Core.CoreLoc.S("Hw_VerifyStop"), ex.Message));
+            rec.Report(RoboKeep.Core.CoreLoc.S("Hw_Advice"));
+            _host.History.Append(RunHistoryEntry.ForVerifyInterrupted(job.Name, started,
+                rec.Save(new LogService(_host.Config.Settings), job.Name, started, null)));
         }
         catch (Exception ex)
         {

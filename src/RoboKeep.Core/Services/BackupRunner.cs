@@ -240,6 +240,20 @@ public sealed class BackupRunner
                 recap.Add(string.Format(CoreLoc.S("Hw_Stop"), run.Result.HardwareErrorDetail));
                 recap.Add(CoreLoc.S("Hw_Advice"));
             }
+
+            // La verifica rilegge per intero sorgente e destinazione: si fa ogni VerifyEveryDays
+            // giorni, non a ogni backup. Conta qualunque verifica COMPLETATA in cronologia, anche
+            // manuale; una interrotta da un errore hardware no. Si decide qui, prima di chiudere
+            // il log del backup, cosi' "non prevista oggi" resta scritto anche nel file.
+            var verifyWanted = job.VerifyAfterRun && !dryRun && run.Result.Success;
+            var lastVerify = verifyWanted && job.VerifyEveryDays > 0
+                ? _history?.List(job.Name).FirstOrDefault(e => e.IsCompletedVerify)?.StartedAt
+                : null;
+            var verifyDue = VerifySchedule.IsDue(job.VerifyEveryDays, lastVerify, DateTime.Now);
+            if (verifyWanted && !verifyDue)
+                recap.Add(string.Format(CoreLoc.S("Verify_NotDue"), lastVerify!.Value.ToString("d"),
+                    VerifySchedule.DaysUntilDue(job.VerifyEveryDays, lastVerify, DateTime.Now)));
+
             foreach (var line in recap)
                 progress?.Report(line);
 
@@ -280,20 +294,12 @@ public sealed class BackupRunner
                 progress?.Report(string.Format(CoreLoc.S("Email_SendFailed"), ex.Message));
             }
 
-            // Verifica integrità automatica: solo per run reali riusciti, mai bloccante.
-            // La verifica rilegge per intero sorgente e destinazione: si fa ogni VerifyEveryDays
-            // giorni, non a ogni backup. Conta qualunque verifica in cronologia, anche manuale.
-            var lastVerify = job.VerifyAfterRun && job.VerifyEveryDays > 0
-                ? _history?.List(job.Name).FirstOrDefault(e => e.Kind == RunHistoryEntry.KindVerify)?.StartedAt
-                : null;
-            var verifyDue = VerifySchedule.IsDue(job.VerifyEveryDays, lastVerify, DateTime.Now);
-            if (job.VerifyAfterRun && !dryRun && run.Result.Success && !verifyDue)
-                progress?.Report(string.Format(CoreLoc.S("Verify_NotDue"), lastVerify!.Value.ToString("d"),
-                    VerifySchedule.DaysUntilDue(job.VerifyEveryDays, lastVerify, DateTime.Now)));
-
-            if (job.VerifyAfterRun && !dryRun && run.Result.Success && verifyDue)
+            // Verifica integrità automatica: solo per run reali riusciti, mai bloccante. Ha un log
+            // suo, collegato alla sua voce di cronologia: il log del backup qui e' gia' chiuso.
+            if (verifyWanted && verifyDue)
             {
                 var verifyStart = DateTime.Now;
+                var verifyLog = new VerifyLogRecorder(progress);
                 try
                 {
                     var target = VerifyTargetResolver.Resolve(job);
@@ -304,10 +310,11 @@ public sealed class BackupRunner
                     else
                     {
                         var vr = await IntegrityVerifier.VerifyAsync(
-                            sourceOverride ?? job.Source, target, job.ExcludeFiles, job.ExcludeDirs, progress, ct)
+                            sourceOverride ?? job.Source, target, job.ExcludeFiles, job.ExcludeDirs, verifyLog, ct)
                             .ConfigureAwait(false);
-                        ReportVerify(vr, progress);
-                        _history?.Append(RunHistoryEntry.ForVerify(job.Name, verifyStart, vr));
+                        ReportVerify(vr, verifyLog);
+                        _history?.Append(RunHistoryEntry.ForVerify(job.Name, verifyStart, vr,
+                            verifyLog.Save(_log, job.Name, verifyStart, vr)));
                     }
                 }
                 catch (OperationCanceledException) { throw; }
@@ -316,8 +323,10 @@ public sealed class BackupRunner
                     // La verifica legge TUTTO il disco: al primo errore hardware si ferma, e il
                     // disco va a riposo anche per i job successivi di questa sessione.
                     MarkFaulted((ex as DiskHardwareException)?.FaultPath ?? job.Destination);
-                    progress?.Report(string.Format(CoreLoc.S("Hw_VerifyStop"), ex.Message));
-                    progress?.Report(CoreLoc.S("Hw_Advice"));
+                    verifyLog.Report(string.Format(CoreLoc.S("Hw_VerifyStop"), ex.Message));
+                    verifyLog.Report(CoreLoc.S("Hw_Advice"));
+                    _history?.Append(RunHistoryEntry.ForVerifyInterrupted(job.Name, verifyStart,
+                        verifyLog.Save(_log, job.Name, verifyStart, null)));
                 }
                 catch (Exception ex)
                 {

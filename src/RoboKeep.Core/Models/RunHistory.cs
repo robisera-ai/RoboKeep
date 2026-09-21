@@ -41,10 +41,23 @@ public sealed record RunHistoryEntry(
     /// secondo la convenzione documentata sopra (Copied=verificati, Failed=differenti+mancanti,
     /// Skipped=saltati). Success = nessun file differente.</summary>
     public static RunHistoryEntry ForVerify(
-        string jobName, DateTime startedAt, Services.VerifyResult result) =>
+        string jobName, DateTime startedAt, Services.VerifyResult result, string? logPath = null) =>
         new(jobName, KindVerify, startedAt, DateTime.Now,
             result.Mismatched == 0, 0,
-            result.Checked, result.Skipped, 0, result.Mismatched + result.Missing, 0, null);
+            result.Checked, result.Skipped, 0, result.Mismatched + result.Missing, 0, logPath);
+
+    /// <summary>Exit code delle verifiche INTERROTTE (errore hardware): distingue una verifica
+    /// non portata a termine da una completata, che ha sempre 0.</summary>
+    public const int VerifyInterruptedExitCode = 16;
+
+    /// <summary>Voce di cronologia per una verifica interrotta da un errore hardware: è un
+    /// fallimento, e NON conta come "ultima verifica fatta" ai fini della cadenza.</summary>
+    public static RunHistoryEntry ForVerifyInterrupted(string jobName, DateTime startedAt, string? logPath) =>
+        new(jobName, KindVerify, startedAt, DateTime.Now, false, VerifyInterruptedExitCode, 0, 0, 0, 0, 0, logPath);
+
+    /// <summary>true per una verifica arrivata in fondo (con o senza differenze trovate).</summary>
+    [JsonIgnore]
+    public bool IsCompletedVerify => Kind == KindVerify && ExitCode == 0;
 
     /// <summary>Voce di cronologia per un job saltato perché il disco atteso non era collegato.
     /// Success = true: saltare non è fallire, e la cronologia non deve mostrare un errore.

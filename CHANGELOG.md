@@ -57,6 +57,12 @@ All notable changes to RoboKeep are documented here. The format is based on
   work, and the history window is no longer blocked while a log is open. Since logs are archived
   as `.zip`, a throwaway plain copy is extracted first (and cleaned up the next day); the built-in
   viewer remains as a fallback.
+- **Verifications have their own log.** Every integrity verification — automatic or manual — now
+  saves a log of its own (`<date>-<job>-verify.log`), linked to its entry in the history, with the
+  outcome and the full list of differing files; before, a verification left no file at all and
+  its history entry had nothing to open. A verification interrupted by a hardware error is
+  recorded as failed and does not count as "done" for the periodic schedule. The backup's own log
+  now also records when the verification was not due that day.
 - **Early warning from the Windows event log.** A USB disk's SMART data can't be read without
   administrator rights (and Windows, without them, reports even a disk with pending sectors as
   healthy), so RoboKeep reads the System event log instead: bad blocks, I/O errors and lost writes

@@ -18,8 +18,20 @@ Puoi **filtrare per job** per concentrarti su un solo backup e seguirne l'andame
 ## Leggere il log completo
 
 Fai **doppio clic** su una voce della cronologia: RoboKeep apre il **log completo** di
-quell'esecuzione e te lo mostra dentro l'app. Il log viene letto direttamente dallo zip in cui è
-archiviato, quindi non devi cercare file né estrarre nulla a mano.
+quell'esecuzione nel **Blocco note**, dove puoi cercare (Ctrl+F), copiare e salvare, mentre la
+cronologia resta utilizzabile. Il log viene estratto da solo dallo zip in cui è archiviato, quindi
+non devi cercare file né estrarre nulla a mano.
+
+**Ogni voce ha il suo log**: anche le **verifiche** — automatiche o lanciate a mano — salvano un
+log proprio (il file ha il nome del job seguito da `-verifica`), con l'esito e l'elenco completo
+degli eventuali file differenti. Il log del backup riporta invece, quando capita, che la verifica
+non era prevista quel giorno e quando sarà la prossima.
+
+## Dove sono i file di log
+
+I log stanno nella cartella dati di RoboKeep (`%APPDATA%\RoboKeep\logs`), **non** accanto al
+programma, divisi in una cartella per giorno. Per arrivarci premi **Cartella log** nel pannello
+del log della finestra principale: si apre Esplora risorse con il giorno più recente selezionato.
 
 ## Il log in tempo reale
 
