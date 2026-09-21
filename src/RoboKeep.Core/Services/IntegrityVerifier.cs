@@ -77,7 +77,13 @@ public static class IntegrityVerifier
             done++;
 
             if (done % ProgressEvery == 0)
-                progress?.Report(string.Format(CoreLoc.S("Verify_Progress"), done, files.Count));
+            {
+                // Avanzamento: riga di passaggio. Chi conserva le righe (il log della verifica)
+                // la mostra senza tenerla; gli altri la ricevono come una riga qualunque.
+                var tick = string.Format(CoreLoc.S("Verify_Progress"), done, files.Count);
+                if (progress is ITransientProgress transient) transient.ReportTransient(tick);
+                else progress?.Report(tick);
+            }
 
             if (!File.Exists(dstFile))
             {

@@ -2,6 +2,16 @@ using System.Text;
 
 namespace RoboKeep.Core.Services;
 
+/// <summary>Un <see cref="IProgress{T}"/> che distingue le righe "di passaggio" (avanzamento,
+/// utili solo a video) da quelle che contano. Chi produce le righe dichiara da sé quali sono
+/// transitorie: niente riconoscimento dal testo, che è localizzato e dipende dalla lingua del
+/// thread su cui gira chi scrive.</summary>
+public interface ITransientProgress : IProgress<string>
+{
+    /// <summary>Riga da mostrare ma non da conservare.</summary>
+    void ReportTransient(string value);
+}
+
 /// <summary>
 /// Raccoglie le righe di una verifica integrità mentre le inoltra a video, e a fine lavoro le
 /// salva come log a sé (<c>AAAAMMGG-HHMMSS-&lt;job&gt;-verifica.log[.zip]</c>) da collegare alla
@@ -11,27 +21,20 @@ namespace RoboKeep.Core.Services;
 /// Le righe di avanzamento ("verificati 50/16000...") restano solo a video: nel file sarebbero
 /// centinaia di righe senza informazione.
 /// </summary>
-public sealed class VerifyLogRecorder : IProgress<string>
+public sealed class VerifyLogRecorder : ITransientProgress
 {
     private readonly IProgress<string>? _inner;
     private readonly StringBuilder _text = new();
-    private readonly string _progressPrefix;
 
-    public VerifyLogRecorder(IProgress<string>? inner)
-    {
-        _inner = inner;
-        // Parte fissa di "[verifica] verificati {0}/{1}...", nella lingua corrente.
-        var template = CoreLoc.S("Verify_Progress");
-        var cut = template.IndexOf("{0}", StringComparison.Ordinal);
-        _progressPrefix = cut > 0 ? template[..cut] : template;
-    }
+    public VerifyLogRecorder(IProgress<string>? inner) => _inner = inner;
 
     public void Report(string value)
     {
         _inner?.Report(value);
-        if (value.StartsWith(_progressPrefix, StringComparison.Ordinal)) return;
         lock (_text) _text.AppendLine(value);
     }
+
+    public void ReportTransient(string value) => _inner?.Report(value);
 
     /// <summary>Salva il log e ne restituisce il percorso (null se la scrittura fallisce: un log
     /// mancato non deve far fallire una verifica). Con <paramref name="result"/> valorizzato

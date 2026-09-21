@@ -152,13 +152,56 @@ public sealed class DiskHealthAndVerifyScheduleTests : IDisposable
         var backup = Assert.Single(entries, e => e.Kind == RunHistoryEntry.KindBackup);
         Assert.NotNull(verify.LogPath);
         Assert.NotEqual(backup.LogPath, verify.LogPath); // due voci, due log
-        // Il suffisso e' localizzato (verifica/verify/...): si chiede a CoreLoc, cosi' il test regge anche in CI.
-        Assert.Contains("-" + RoboKeep.Core.CoreLoc.S("Verify_LogSuffix"), Path.GetFileName(verify.LogPath!));
+        // Il suffisso e' localizzato (verifica/verify/...) e altri test, in parallelo, cambiano la
+        // lingua del processo: si controlla la FORMA del nome, non la parola.
+        Assert.Matches(@"-T-[a-z]+\.log", Path.GetFileName(verify.LogPath!));
 
         var text = LogArchiveReader.ReadLogText(verify.LogPath)!;
         Assert.Contains("61", text);                     // l'esito: 61 file identici
         Assert.Contains(lines, l => l.Contains("50/61")); // l'avanzamento si vede a video...
         Assert.DoesNotContain("50/61", text);             // ...ma non intasa il file
+    }
+
+    [Fact]
+    public async Task Verifier_SendsProgressTicksThroughTheTransientChannel()
+    {
+        // Regressione della release 1.7.0 fallita in CI: le righe di avanzamento venivano
+        // riconosciute dal TESTO, che e' localizzato; su un thread con un'altra lingua non
+        // combaciavano e finivano nel log. Ora chi le produce le dichiara transitorie.
+        for (var i = 0; i < 120; i++) File.WriteAllText(Path.Combine(Src, $"f{i}.txt"), "x");
+        var split = new SplitProgress();
+
+        await IntegrityVerifier.VerifyAsync(Src, Dst, null, null, split, CancellationToken.None);
+
+        Assert.Equal(2, split.Transient.Count);                    // 50/121 e 100/121
+        Assert.All(split.Transient, l => Assert.Contains("/121", l));
+        Assert.DoesNotContain(split.Kept, l => l.Contains("50/121") || l.Contains("100/121"));
+    }
+
+    [Fact]
+    public void Recorder_KeepsReportedLines_ButOnlyForwardsTransientOnes()
+    {
+        var shown = new List<string>();
+        var rec = new VerifyLogRecorder(new Collect(shown));
+        rec.Report("esito");
+        rec.ReportTransient("avanzamento");
+
+        var settings = new AppConfig().Settings;
+        settings.LogRoot = Path.Combine(_root, "logs");
+        settings.TempRoot = Path.Combine(_root, "temp");
+        var text = LogArchiveReader.ReadLogText(rec.Save(new LogService(settings), "T", DateTime.Now, null))!;
+
+        Assert.Equal(new[] { "esito", "avanzamento" }, shown); // a video arrivano entrambe
+        Assert.Contains("esito", text);
+        Assert.DoesNotContain("avanzamento", text);            // nel file solo quella che conta
+    }
+
+    private sealed class SplitProgress : ITransientProgress
+    {
+        public List<string> Kept { get; } = new();
+        public List<string> Transient { get; } = new();
+        public void Report(string value) { lock (Kept) Kept.Add(value); }
+        public void ReportTransient(string value) { lock (Transient) Transient.Add(value); }
     }
 
     [Fact]
