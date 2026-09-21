@@ -226,8 +226,13 @@
                             <ui:SymbolIcon Symbol="SlideText24" Margin="0,0,8,0"/>
                             <TextBlock Text="{l:Tr Main_LogTitle}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         </StackPanel>
-                        <ui:Button HorizontalAlignment="Right" Icon="{ui:SymbolIcon Eraser24}" Content="{l:Tr Main_Clear}"
-                                   Appearance="Secondary" Command="{Binding ClearLogCommand}"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <ui:Button Icon="{ui:SymbolIcon FolderOpen24}" Content="{l:Tr Main_OpenLogs}"
+                                       ToolTip="{l:Tr Main_OpenLogsTip}" Appearance="Secondary"
+                                       Click="OnOpenLogFolder" Margin="0,0,8,0"/>
+                            <ui:Button Icon="{ui:SymbolIcon Eraser24}" Content="{l:Tr Main_Clear}"
+                                       Appearance="Secondary" Command="{Binding ClearLogCommand}"/>
+                        </StackPanel>
                     </Grid>
                     <Border Margin="12,0,12,12" CornerRadius="6" Background="#1E1E1E">
                         <TextBox x:Name="LogBox" IsReadOnly="True" Style="{x:Null}"

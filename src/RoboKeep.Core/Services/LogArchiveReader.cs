@@ -26,4 +26,34 @@ public static class LogArchiveReader
         }
         catch { return null; }
     }
+
+    /// <summary>
+    /// Prepara una copia in chiaro del log da aprire con un editor esterno (Blocco note): i log
+    /// sono archiviati in .zip e un editor non li apre. Scrive <c>&lt;nome&gt;.log</c> in
+    /// <paramref name="viewerDir"/> (UTF-8 con BOM, cosi' le accentate si leggono giuste) e
+    /// restituisce il percorso; null se il log non e' piu' disponibile. Le copie dei giorni
+    /// precedenti vengono rimosse: sono duplicati usa-e-getta, l'originale resta nell'archivio.
+    /// </summary>
+    public static string? ExtractForViewing(string? logPath, string viewerDir)
+    {
+        var text = ReadLogText(logPath);
+        if (text is null) return null;
+        try
+        {
+            Directory.CreateDirectory(viewerDir);
+            foreach (var old in Directory.GetFiles(viewerDir, "*.log"))
+            {
+                try { if (File.GetLastWriteTime(old) < DateTime.Now.AddDays(-1)) File.Delete(old); }
+                catch { /* aperto in un editor: lo si lascia */ }
+            }
+
+            var name = Path.GetFileName(logPath!);
+            if (name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)) name = name[..^4];
+            if (!name.EndsWith(".log", StringComparison.OrdinalIgnoreCase)) name += ".log";
+            var target = Path.Combine(viewerDir, name);
+            File.WriteAllText(target, text, new System.Text.UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+            return target;
+        }
+        catch { return null; }
+    }
 }

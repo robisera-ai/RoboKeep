@@ -21,8 +21,48 @@ All notable changes to RoboKeep are documented here. The format is based on
   not started and are reported as failed.
 - **Disk-error wording no longer blames the disk alone**: on external disks the same errors often
   come from a bad cable, USB enclosure or power supply, and the message now says so.
+- **Versioning no longer creates a snapshot identical to the previous one.** Before cloning,
+  RoboKeep runs a read-only preview against the latest snapshot; if nothing changed — no file or
+  folder to copy, nothing to remove — it skips the new snapshot, says so in the log, and reports
+  the job as successful and up to date. Creating a snapshot writes one metadata entry per file,
+  changed or not (and deletes as many when retention later removes it): on a mechanical disk that
+  is the heaviest workload in the whole program, and it is now paid only when there is something
+  to version.
+- **Integrity verification is periodic, not after every backup.** A new per-job setting, *verify
+  every N days* (default **7**, `0` = after every backup), spaces out the full re-read of source
+  and destination. **This also applies to existing jobs that had verification enabled**: they move
+  from every run to weekly; set `0` to keep the old behaviour. A manual verification counts
+  towards the interval.
+- **New jobs keep 30 versions by default** instead of an unlimited number. Jobs already saved keep
+  their own value — including unlimited — so no existing version is deleted behind your back.
+- **The age-based retention never deletes the most recent snapshot**, which is the current backup
+  even when the source hasn't changed for longer than the age limit.
+
+### Fixed
+- **Force copy actually recopies changed files again.** Recent Windows builds of robocopy classify
+  a file rewritten with the same size and date — exactly what Force copy exists for — as
+  "modified" and skip it despite `/IS /IT`, so the forced pass silently copied nothing. RoboKeep
+  now adds `/IM` when the installed robocopy supports it.
+- **Force copy no longer rewrites history in versioned jobs.** The forced pass overwrites in place;
+  on a file still hard-linked to older snapshots that would have changed every previous version
+  too. Those files are now unlinked from the new snapshot first, so robocopy recreates them.
+- The "unlimited" hard-link clone could hit NTFS's limit of 1023 links per file; the new default
+  retention keeps new jobs well below it.
 
 ### Added
+- **"Log folder" button** in the log panel of the main window: opens the saved logs in Explorer
+  with the most recent day selected. Logs live in the data folder (`%APPDATA%\RoboKeep\logs`), not
+  next to the executable, so without a button they were hard to find.
+- **History opens logs in Notepad** instead of the built-in dark viewer: search, copy and save
+  work, and the history window is no longer blocked while a log is open. Since logs are archived
+  as `.zip`, a throwaway plain copy is extracted first (and cleaned up the next day); the built-in
+  viewer remains as a fallback.
+- **Early warning from the Windows event log.** A USB disk's SMART data can't be read without
+  administrator rights (and Windows, without them, reports even a disk with pending sectors as
+  healthy), so RoboKeep reads the System event log instead: bad blocks, I/O errors and lost writes
+  logged for the source or destination disk in the last 14 days are shown in the pre-run checks
+  and, for scheduled backups, at the end of the job log. It warns, it doesn't block: the log names
+  disks by letter and number, not by identity. New dependency: `System.Diagnostics.EventLog`.
 - **The PC stays awake while a backup or verification runs.** RoboKeep holds a Windows power
   request for the duration of the work, so automatic sleep can't cut power to a USB disk in the
   middle of a write. (Closing the lid or pressing the sleep button still sleeps the PC.)

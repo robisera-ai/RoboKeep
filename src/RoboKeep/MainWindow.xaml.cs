@@ -413,6 +413,31 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         win.ShowDialog();
     }
 
+    // Apre in Esplora risorse la cartella dei log salvati. I log stanno nella cartella dati
+    // (%APPDATA%\RoboKeep\logs), non accanto all'eseguibile: senza un pulsante non li trova nessuno.
+    // Si apre la radice con il giorno piu' recente gia' selezionato; se non c'e' ancora nessun log
+    // si crea e si apre la radice vuota, cosi' il pulsante non "non fa niente".
+    private void OnOpenLogFolder(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var root = _host.Config.Settings.LogRoot;
+            System.IO.Directory.CreateDirectory(root);
+            var latest = LogService.LatestLogFolder(root);
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "explorer.exe",
+                Arguments = latest == root ? $"\"{root}\"" : $"/select,\"{latest}\"",
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception ex)
+        {
+            System.Windows.MessageBox.Show(ex.Message, Loc.Instance["Main_OpenLogs"],
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
     // La guida e' modeless (non blocca l'app): puoi seguirla mentre configuri i job. Una sola
     // istanza: se e' gia' aperta la porta in primo piano invece di duplicarla.
     private GuideWindow? _guide;

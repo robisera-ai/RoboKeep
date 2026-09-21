@@ -110,7 +110,8 @@ public static class RobocopyArgsBuilder
     /// </summary>
     public static IReadOnlyList<string> BuildForceCopyPass(
         BackupJob job, IReadOnlyList<string> filters, bool dryRun = false, string? logFile = null,
-        string? destinationOverride = null, string? sourceOverride = null, int? maxThreads = null)
+        string? destinationOverride = null, string? sourceOverride = null, int? maxThreads = null,
+        bool includeModified = false)
     {
         ArgumentNullException.ThrowIfNull(job);
         ArgumentNullException.ThrowIfNull(filters);
@@ -127,6 +128,11 @@ public static class RobocopyArgsBuilder
         args.Add("/E");                 // ricorsivo, mai /MIR (la passata forzata non cancella)
         args.Add("/IS");                // include same: copia anche i file identici
         args.Add("/IT");                // include tweaked
+        // I robocopy recenti classificano "modificato" (change time diverso) il file riscritto con
+        // stessa data e dimensione - proprio il caso d'uso della forza copia - e senza /IM lo saltano
+        // nonostante /IS /IT. L'opzione non esiste nei robocopy vecchi: la decide il chiamante.
+        if (includeModified)
+            args.Add("/IM");
         args.Add(job.CopyAll ? "/COPYALL" : "/COPY:DAT");
         args.Add("/XJ");
 

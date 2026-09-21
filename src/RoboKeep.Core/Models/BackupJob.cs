@@ -80,8 +80,14 @@ public sealed class BackupJob
     /// <summary>true → mantiene snapshot datati con hard-link (versioning). Richiede destinazione NTFS locale.</summary>
     public bool Versioned { get; set; }
 
-    /// <summary>Numero massimo di snapshot da conservare. 0 = nessun limite di numero.</summary>
-    public int SnapshotKeepCount { get; set; }
+    /// <summary>Numero massimo di snapshot da conservare. 0 = nessun limite di numero.
+    /// Default 30 per i job NUOVI: senza limite la MFT della destinazione cresce all'infinito e
+    /// NTFS rifiuta nuovi hard-link oltre i 1023 per file. I job gia' salvati conservano il loro
+    /// valore (anche 0): una ritenzione non si stringe alle spalle dell'utente, cancellerebbe versioni.</summary>
+    public int SnapshotKeepCount { get; set; } = DefaultSnapshotKeepCount;
+
+    /// <summary>Snapshot conservati per default nei job nuovi.</summary>
+    public const int DefaultSnapshotKeepCount = 30;
 
     /// <summary>Elimina gli snapshot più vecchi di questi giorni. 0 = nessun limite di età.</summary>
     public int SnapshotMaxAgeDays { get; set; }
@@ -105,6 +111,15 @@ public sealed class BackupJob
 
     /// <summary>true → dopo ogni backup riuscito esegue la verifica integrità (hash) e la registra in cronologia.</summary>
     public bool VerifyAfterRun { get; set; }
+
+    /// <summary>Ogni quanti giorni eseguire la verifica automatica (se <see cref="VerifyAfterRun"/>).
+    /// 0 = dopo OGNI backup. La verifica rilegge per intero sorgente e destinazione: farla a ogni
+    /// run su un disco meccanico e' ore di lettura continua al giorno; una volta a settimana trova
+    /// la stessa corruzione silenziosa con un settimo del carico.</summary>
+    public int VerifyEveryDays { get; set; } = DefaultVerifyEveryDays;
+
+    /// <summary>Intervallo di verifica predefinito, in giorni.</summary>
+    public const int DefaultVerifyEveryDays = 7;
 
     /// <summary>Millisecondi di pausa tra i pacchetti robocopy (/IPG). 0 = piena velocità.
     /// Con un valore > 0 il job gira senza /MT: il ritardo è per thread e con più thread

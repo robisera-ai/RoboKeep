@@ -20,7 +20,10 @@ public static class PreflightCollector
         bool? hardLinks = reachable && job.Versioned ? HardLinkSupport.IsSupported(job.Destination) : null;
         // Solo per i job VSS: la sorgente deve stare su un volume NTFS locale.
         bool? vssEligible = job.UseVss ? VssEligibility.IsEligible(job.Source) : null;
-        return new PreflightInputs(reachable, free, minFreeBytes, size, hardLinks, vssEligible);
+        // "Salute" di sorgente e destinazione dal registro eventi (lo SMART di un disco USB non si
+        // legge senza privilegi di amministratore).
+        return new PreflightInputs(reachable, free, minFreeBytes, size, hardLinks, vssEligible,
+            DiskEventLog.Collect(job.Destination), DiskEventLog.Collect(job.Source));
     }
 
     private static bool IsReachable(string dest)

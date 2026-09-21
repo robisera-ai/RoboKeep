@@ -7,6 +7,7 @@ following third-party packages, all under the MIT License:
 |---|---|---|
 | WPF-UI | © lepo.co | https://github.com/lepoco/wpfui |
 | H.NotifyIcon.Wpf | © Oleg Shilo, Philipp Sumi, Robin Krom, Konstantin S. | https://github.com/HavenDV/H.NotifyIcon |
+| System.Diagnostics.EventLog | © Microsoft Corporation / .NET Foundation | https://github.com/dotnet/runtime |
 | System.Management | © Microsoft Corporation / .NET Foundation | https://github.com/dotnet/runtime |
 | System.Security.Cryptography.ProtectedData | © Microsoft Corporation / .NET Foundation | https://github.com/dotnet/runtime |
 

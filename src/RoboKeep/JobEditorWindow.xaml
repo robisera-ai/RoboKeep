@@ -255,6 +255,9 @@
                             <CheckBox Content="{l:Tr Editor_VerifyAfterRun}" IsChecked="{Binding VerifyAfterRun}"/>
                             <ctl:InfoHint Margin="6,0,0,0" Text="{l:Tr Editor_VerifyAfterRunTip}"/>
                         </StackPanel>
+                        <TextBlock Text="{l:Tr Editor_VerifyEveryDays}" Style="{StaticResource Label}"/>
+                        <ui:TextBox Text="{Binding VerifyEveryDays, UpdateSourceTrigger=PropertyChanged, FallbackValue=7}"
+                                    IsEnabled="{Binding VerifyAfterRun}" MaxWidth="180" HorizontalAlignment="Left"/>
 
                         <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                             <TextBlock Text="{l:Tr Editor_Ipg}" Style="{StaticResource Label}"/>

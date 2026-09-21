@@ -263,6 +263,12 @@ public sealed class JobEditorViewModel : ObservableObject
         set { _job.VerifyAfterRun = value; OnPropertyChanged(); }
     }
 
+    public int VerifyEveryDays
+    {
+        get => _job.VerifyEveryDays;
+        set { _job.VerifyEveryDays = Math.Max(0, value); OnPropertyChanged(); }
+    }
+
     public int InterPacketGapMs
     {
         get => _job.InterPacketGapMs;

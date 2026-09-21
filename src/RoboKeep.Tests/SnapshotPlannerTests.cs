@@ -46,8 +46,22 @@ public class SnapshotPlannerTests
     [Fact]
     public void IgnoresInProgressAndInvalid()
     {
-        var names = new[] { "2026-06-28_120000.inprogress", "latest", SnapshotName.For(Now.AddDays(-10)) };
+        var names = new[]
+        {
+            "2026-06-28_120000.inprogress", "latest",
+            SnapshotName.For(Now.AddDays(-10)), SnapshotName.For(Now.AddDays(-1)),
+        };
         var del = SnapshotPlanner.SnapshotsToDelete(names, keepCount: 0, maxAgeDays: 3, Now);
         Assert.Equal(new[] { SnapshotName.For(Now.AddDays(-10)) }, del);
+    }
+
+    [Fact]
+    public void AgeLimit_NeverDeletesTheNewestSnapshot()
+    {
+        // Sorgente ferma da settimane = nessuno snapshot nuovo: l'ultimo e' il backup corrente e
+        // non deve sparire solo perche' ha superato l'eta' massima.
+        var names = new[] { SnapshotName.For(Now.AddDays(-40)), SnapshotName.For(Now.AddDays(-30)) };
+        var del = SnapshotPlanner.SnapshotsToDelete(names, keepCount: 0, maxAgeDays: 3, Now);
+        Assert.Equal(new[] { SnapshotName.For(Now.AddDays(-40)) }, del);
     }
 }

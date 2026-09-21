@@ -50,6 +50,40 @@ public sealed class SnapshotService
                 progress?.Report($"[versioning] residuo {Path.GetFileName(stale)} non rimosso: {ex.Message}");
             }
         }
+
+        // Niente di cambiato = niente snapshot nuovo. Clonare lo snapshot precedente costa una
+        // scrittura di metadati (MFT, indice, journal) per OGNI file, e altrettante cancellazioni
+        // quando la ritenzione lo eliminera': su un disco meccanico e' il carico piu' pesante
+        // dell'intero programma, e pagarlo per ottenere una copia identica alla precedente non ha
+        // senso. Un'anteprima (/L) contro l'ultimo snapshot e' di sola lettura e dice se serve.
+        if (prevName is not null)
+        {
+            progress?.Report(CoreLoc.S("Versioning_Checking"));
+            // Anteprima SENZA multi-thread: con /MT robocopy conta come "copiata" ogni cartella
+            // anche quando non c'e' nulla da fare, e il suo exit code resta 0 perfino con una
+            // cartella vuota nuova. Solo i conteggi a thread singolo dicono il vero; e per una
+            // semplice enumerazione il parallelismo non serve.
+            var previewJob = job.Clone();
+            previewJob.MultiThread = 0;
+            var preview = await _runner.RunAsync(previewJob, dryRun: true, progress: null, ct,
+                destinationOverride: Path.Combine(dest, prevName), sourceOverride: sourceOverride)
+                .ConfigureAwait(false);
+            if (NothingToDo(preview.Result))
+            {
+                var note = string.Format(CoreLoc.S("Versioning_NoChanges"), prevName);
+                progress?.Report(note);
+                preview.Result.DryRun = false; // e' l'esito reale del job: "gia' allineato"
+                preview.Result.ThreadCapNote = null; // non si e' copiato nulla: l'avviso sui thread sarebbe rumore
+                return new RobocopyRunResult { Result = preview.Result, Output = note };
+            }
+            // Un errore hardware gia' in anteprima: inutile (e dannoso) proseguire.
+            if (preview.Result.HardwareError)
+            {
+                preview.Result.DryRun = false;
+                return preview;
+            }
+        }
+
         Directory.CreateDirectory(curr);
 
         if (prevName is not null)
@@ -76,8 +110,13 @@ public sealed class SnapshotService
             await Task.Run(() => SnapshotChangedUnlinker.UnlinkChanged(source, curr), ct).ConfigureAwait(false);
         }
 
+        // La passata "forza copia" sovrascrive SUL POSTO: sui file ancora hard-linkati al vecchio
+        // snapshot riscriverebbe anche le versioni precedenti. Prima di lasciarla partire si
+        // scollegano dal nuovo snapshot i file che ricopiera', cosi' robocopy li crea ex novo.
         var run = await _runner.RunAsync(job, dryRun: false, progress, ct, destinationOverride: curr,
-            sourceOverride: sourceOverride).ConfigureAwait(false);
+            sourceOverride: sourceOverride,
+            beforeForceCopyPass: filters => Task.Run(() => SnapshotChangedUnlinker.UnlinkMatching(curr, filters), ct))
+            .ConfigureAwait(false);
 
         if (run.Result.Success)
         {
@@ -116,6 +155,15 @@ public sealed class SnapshotService
 
         return run;
     }
+
+    /// <summary>true se l'anteprima dice che sorgente e ultimo snapshot sono gia' allineati: nessun
+    /// file o cartella da copiare, nessun extra da rimuovere, nessun errore. Si pretendono sia
+    /// l'exit code 0 sia i conteggi a zero: due letture indipendenti dello stesso fatto.</summary>
+    private static bool NothingToDo(JobResult r) =>
+        !r.HardwareError && r.ExitCode == 0
+        && r.FilesCopied == 0 && r.DirsCopied == 0
+        && r.FilesExtra == 0 && r.DirsExtra == 0
+        && r.FilesFailed == 0 && r.DirsFailed == 0;
 
     // Toglie l'attributo sola-lettura dalla cartella-snapshot. robocopy copia gli attributi della
     // cartella sorgente: se la sorgente e' una cartella "speciale" (es. Desktop) read-only con un

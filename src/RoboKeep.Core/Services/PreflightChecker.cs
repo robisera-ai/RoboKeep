@@ -12,6 +12,13 @@ public static class PreflightChecker
     {
         var w = new List<PreflightWarning>();
 
+        // Errori disco recenti nel registro di Windows: valgono anche a destinazione irraggiungibile
+        // (un disco che "sparisce" e' proprio uno dei modi in cui si manifestano).
+        if (i.DestinationDiskEvents is { Total: > 0 } de)
+            w.Add(new PreflightWarning(PreflightSeverity.Warning, "Preflight_DiskEventsDest", de.Describe()));
+        if (i.SourceDiskEvents is { Total: > 0 } se)
+            w.Add(new PreflightWarning(PreflightSeverity.Warning, "Preflight_DiskEventsSource", se.Describe()));
+
         if (!i.DestinationReachable)
         {
             w.Add(new PreflightWarning(PreflightSeverity.Warning, "Preflight_DestUnreachable", ""));

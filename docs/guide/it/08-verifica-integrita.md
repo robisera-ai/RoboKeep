@@ -24,8 +24,14 @@ Rileggere tutto potrebbe generare allarmi inutili. RoboKeep li evita:
 ## Quando eseguirla
 
 - **A richiesta**, quando vuoi una conferma: seleziona il job e premi **Verifica**.
-- **Automatica dopo ogni backup**, con l'opzione per job **"Verifica dopo ogni backup"**: ogni
-  esecuzione si conclude con il suo controllo di integrità, registrato in cronologia.
+- **Automatica e periodica**, con l'opzione per job **"Verifica periodicamente l'integrità dopo
+  il backup"**: al termine del backup parte il controllo di integrità, registrato in cronologia.
+  Accanto scegli **ogni quanti giorni**: il valore predefinito è **7**. Rileggere tutto a ogni
+  backup affatica inutilmente i dischi meccanici; una volta a settimana trova la stessa
+  corruzione con un settimo del lavoro. Con **0** la verifica torna a ogni backup. Conta anche la
+  verifica fatta a mano: se l'hai appena eseguita, quella automatica aspetta il suo turno.
+- Se durante la verifica un disco segnala un **errore hardware**, RoboKeep **si ferma subito**
+  invece di continuare a leggere (vedi *Risoluzione dei problemi*).
 
 ## Quanto dura
 

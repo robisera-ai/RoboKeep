@@ -42,4 +42,39 @@ public class LogArchiveReaderTests : IDisposable
         File.WriteAllText(zip, "non sono uno zip");
         Assert.Null(LogArchiveReader.ReadLogText(zip));
     }
+
+    [Fact]
+    public void ExtractForViewing_UnzipsToAPlainLog_ReadableByNotepad()
+    {
+        var inner = Path.Combine(_dir, "20260920-164615-Progetti.log");
+        File.WriteAllText(inner, "Più recente: è andato tutto bene");
+        var zip = inner + ".zip";
+        using (var z = ZipFile.Open(zip, ZipArchiveMode.Create))
+            z.CreateEntryFromFile(inner, Path.GetFileName(inner));
+        var viewer = Path.Combine(_dir, "viewer");
+
+        var copy = LogArchiveReader.ExtractForViewing(zip, viewer);
+
+        Assert.Equal(Path.Combine(viewer, "20260920-164615-Progetti.log"), copy);
+        Assert.Equal("Più recente: è andato tutto bene", File.ReadAllText(copy!));
+        // BOM UTF-8: senza, il Blocco note puo' sbagliare le accentate.
+        Assert.Equal(new byte[] { 0xEF, 0xBB, 0xBF }, File.ReadAllBytes(copy!).Take(3).ToArray());
+        Assert.True(File.Exists(zip)); // l'originale in archivio non si tocca
+    }
+
+    [Fact]
+    public void ExtractForViewing_RemovesYesterdaysCopies_AndReturnsNullWhenLogIsGone()
+    {
+        var viewer = Path.Combine(_dir, "viewer");
+        Directory.CreateDirectory(viewer);
+        var stale = Path.Combine(viewer, "vecchio.log");
+        File.WriteAllText(stale, "x");
+        File.SetLastWriteTime(stale, DateTime.Now.AddDays(-3));
+        var log = Path.Combine(_dir, "run.log");
+        File.WriteAllText(log, "oggi");
+
+        Assert.NotNull(LogArchiveReader.ExtractForViewing(log, viewer));
+        Assert.False(File.Exists(stale));
+        Assert.Null(LogArchiveReader.ExtractForViewing(Path.Combine(_dir, "sparito.log.zip"), viewer));
+    }
 }

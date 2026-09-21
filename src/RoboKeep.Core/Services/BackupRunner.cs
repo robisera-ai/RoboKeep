@@ -19,6 +19,7 @@ public sealed class BackupRunner
     private readonly string? _lockFolder;
     private readonly string? _vssSessionRoot;
     private readonly RunHistoryStore? _history;
+    private readonly Func<string?, DiskEventSummary> _diskEvents;
 
     // Dischi (radici, es. "E:\") che in questa sessione hanno segnalato un errore hardware: i job
     // successivi che li toccano non partono. Un --run-all notturno con cinque job sullo stesso
@@ -35,8 +36,10 @@ public sealed class BackupRunner
         SnapshotService? snapshots = null,
         string? lockFolder = null,
         string? vssSessionRoot = null,
-        RunHistoryStore? history = null)
+        RunHistoryStore? history = null,
+        Func<string?, DiskEventSummary>? diskEvents = null)
     {
+        _diskEvents = diskEvents ?? (path => DiskEventLog.Collect(path));
         _config = config;
         _runner = runner;
         _log = log;
@@ -118,6 +121,21 @@ public sealed class BackupRunner
         // Il PC non deve sospendersi per inattivita' nel mezzo del lavoro: a un disco USB la
         // sospensione toglie l'alimentazione durante le scritture.
         using var awake = SleepBlocker.Acquire($"RoboKeep: {job.Name}");
+
+        // Errori disco che Windows ha registrato di recente per sorgente e destinazione: e' il
+        // preavviso che di solito precede il danno di settimane. Non blocca il job (gli eventi non
+        // identificano il disco fisico con certezza), ma lo dice all'inizio E nel riepilogo: i
+        // backup pianificati non passano dal pre-avvio della finestra, e questo e' il loro unico avviso.
+        var healthNotes = new List<string>();
+        foreach (var root in new[] { job.Destination, job.Source }.Select(RootOf).OfType<string>()
+                     .Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            var events = _diskEvents(root);
+            if (events.Total > 0)
+                healthNotes.Add(string.Format(CoreLoc.S("Health_Warning"), root, events.Describe()));
+        }
+        foreach (var note in healthNotes)
+            progress?.Report(note);
 
         // Il lock file persiste se il processo viene terminato brutalmente; viene rimosso nel
         // finally (via using) quando il run termina normalmente (successo, errore o cancel).
@@ -212,6 +230,7 @@ public sealed class BackupRunner
             var recap = BuildRecap(run.Result, dryRun).ToList();
             if (run.Result.ThreadCapNote is { } capNote)
                 recap.Add(capNote);
+            recap.AddRange(healthNotes);
             if (run.Result.HardwareError)
             {
                 // Dalle righe di robocopy non si distingue il lato che ha ceduto (il percorso
@@ -262,7 +281,17 @@ public sealed class BackupRunner
             }
 
             // Verifica integrità automatica: solo per run reali riusciti, mai bloccante.
-            if (job.VerifyAfterRun && !dryRun && run.Result.Success)
+            // La verifica rilegge per intero sorgente e destinazione: si fa ogni VerifyEveryDays
+            // giorni, non a ogni backup. Conta qualunque verifica in cronologia, anche manuale.
+            var lastVerify = job.VerifyAfterRun && job.VerifyEveryDays > 0
+                ? _history?.List(job.Name).FirstOrDefault(e => e.Kind == RunHistoryEntry.KindVerify)?.StartedAt
+                : null;
+            var verifyDue = VerifySchedule.IsDue(job.VerifyEveryDays, lastVerify, DateTime.Now);
+            if (job.VerifyAfterRun && !dryRun && run.Result.Success && !verifyDue)
+                progress?.Report(string.Format(CoreLoc.S("Verify_NotDue"), lastVerify!.Value.ToString("d"),
+                    VerifySchedule.DaysUntilDue(job.VerifyEveryDays, lastVerify, DateTime.Now)));
+
+            if (job.VerifyAfterRun && !dryRun && run.Result.Success && verifyDue)
             {
                 var verifyStart = DateTime.Now;
                 try

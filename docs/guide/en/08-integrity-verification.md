@@ -23,8 +23,14 @@ Re-reading everything could raise pointless alarms. RoboKeep avoids them:
 ## When to run it
 
 - **On demand**, when you want reassurance: select the job and click **Verify**.
-- **Automatically after every backup**, with the per-job option **"Verify after each backup"**:
-  every run ends with its own integrity check, recorded in the history.
+- **Automatically and periodically**, with the per-job option **"Periodically verify integrity
+  after the backup"**: when the backup ends, the integrity check runs and is recorded in the
+  history. Next to it you choose **every how many days**: the default is **7**. Re-reading
+  everything after every backup needlessly wears mechanical disks; once a week finds the same
+  corruption with a seventh of the work. With **0** verification goes back to every backup. A
+  manual verification counts too: if you've just run one, the automatic one waits its turn.
+- If a disk reports a **hardware error** during verification, RoboKeep **stops at once** instead
+  of carrying on reading (see *Troubleshooting*).
 
 ## How long it takes
 

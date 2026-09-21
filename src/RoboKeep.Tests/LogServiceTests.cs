@@ -90,4 +90,22 @@ public class LogServiceTests : IDisposable
         Assert.False(File.Exists(oldPath));
         Assert.True(File.Exists(recentPath));
     }
+
+    [Fact]
+    public void LatestLogFolder_PicksTheMostRecentDay_IgnoringOtherFolders()
+    {
+        Directory.CreateDirectory(Path.Combine(_root, "20260719"));
+        Directory.CreateDirectory(Path.Combine(_root, "20260920"));
+        Directory.CreateDirectory(Path.Combine(_root, "zzz-non-un-giorno"));
+
+        Assert.Equal(Path.Combine(_root, "20260920"), LogService.LatestLogFolder(_root));
+    }
+
+    [Fact]
+    public void LatestLogFolder_FallsBackToTheRoot_WhenThereAreNoLogsYet()
+    {
+        Assert.Equal(_root, LogService.LatestLogFolder(_root));
+        var missing = Path.Combine(_root, "non-esiste");
+        Assert.Equal(missing, LogService.LatestLogFolder(missing)); // best-effort: mai un'eccezione
+    }
 }

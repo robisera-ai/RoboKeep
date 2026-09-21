@@ -167,6 +167,12 @@ public static class CoreLoc
             "[verificación] nada que verificar: el trabajo versionado aún no tiene instantáneas.",
             "[vérification] rien à vérifier : la tâche versionnée n'a pas encore d'instantanés.",
             "[Prüfung] nichts zu prüfen: der versionierte Job hat noch keine Snapshots."),
+        ["Verify_NotDue"] = L(
+            "[verifica] non prevista oggi: l'ultima è del {0}, la prossima tra {1} giorni.",
+            "[verify] not scheduled today: the last one was on {0}, the next is in {1} days.",
+            "[verificación] no prevista hoy: la última fue el {0}, la próxima en {1} días.",
+            "[vérification] non prévue aujourd'hui : la dernière date du {0}, la prochaine dans {1} jours.",
+            "[Prüfung] heute nicht vorgesehen: die letzte war am {0}, die nächste in {1} Tagen."),
         ["Versioning_NoHardLink"] = L(
             "[versioning] ATTENZIONE: la destinazione non supporta gli hard-link. Eseguo un mirror semplice (nessuno snapshot). Usa una destinazione NTFS locale per le versioni.",
             "[versioning] WARNING: the destination does not support hard-links. Running a plain mirror (no snapshot). Use a local NTFS destination for versions.",
@@ -186,6 +192,32 @@ public static class CoreLoc
             "[versioning] {0} fichiers ignorés de l'instantané précédent (verrouillés ou inaccessibles) : ils seront recopiés depuis la source.",
             "[Versionierung] {0} Dateien aus dem vorherigen Snapshot übersprungen (gesperrt oder nicht zugänglich): sie werden aus der Quelle neu kopiert."),
 
+        ["Versioning_Checking"] = L(
+            "[versioning] controllo se è cambiato qualcosa rispetto all'ultima versione...",
+            "[versioning] checking whether anything changed since the last version...",
+            "[versionado] compruebo si algo ha cambiado desde la última versión...",
+            "[versioning] vérification des changements depuis la dernière version...",
+            "[Versionierung] prüfe, ob sich seit der letzten Version etwas geändert hat..."),
+        ["Versioning_NoChanges"] = L(
+            "[versioning] nessuna modifica dall'ultima versione ({0}): non creo un nuovo snapshot identico. Il backup è già aggiornato.",
+            "[versioning] nothing changed since the last version ({0}): no identical new snapshot is created. The backup is already up to date.",
+            "[versionado] ningún cambio desde la última versión ({0}): no creo una nueva instantánea idéntica. La copia ya está al día.",
+            "[versioning] aucun changement depuis la dernière version ({0}) : pas de nouvel instantané identique. La sauvegarde est déjà à jour.",
+            "[Versionierung] keine Änderung seit der letzten Version ({0}): kein identischer neuer Snapshot. Das Backup ist bereits aktuell."),
+
+        ["Health_Detail"] = L(
+            "{0} blocchi danneggiati, {1} errori di I/O, {2} errori del file system (ultimo: {3})",
+            "{0} bad blocks, {1} I/O errors, {2} file system errors (latest: {3})",
+            "{0} bloques dañados, {1} errores de E/S, {2} errores del sistema de archivos (último: {3})",
+            "{0} blocs défectueux, {1} erreurs d'E/S, {2} erreurs du système de fichiers (dernière : {3})",
+            "{0} defekte Blöcke, {1} E/A-Fehler, {2} Dateisystemfehler (zuletzt: {3})"),
+        ["Health_Warning"] = L(
+            "[disco] ATTENZIONE: negli ultimi giorni Windows ha registrato errori sul disco {0} (o su un altro disco che ha usato la stessa lettera): {1}. Controlla cavo, box e alimentazione, poi la salute del disco (SMART), prima che il problema diventi un danno.",
+            "[disk] WARNING: in the last few days Windows logged errors on disk {0} (or on another disk that used the same letter): {1}. Check cable, enclosure and power, then the disk's health (SMART), before the problem turns into damage.",
+            "[disco] ATENCIÓN: en los últimos días Windows registró errores en el disco {0} (o en otro disco que usó la misma letra): {1}. Comprueba cable, caja y alimentación, y luego la salud del disco (SMART), antes de que el problema se convierta en daño.",
+            "[disque] ATTENTION : ces derniers jours, Windows a enregistré des erreurs sur le disque {0} (ou sur un autre disque ayant utilisé la même lettre) : {1}. Vérifiez câble, boîtier et alimentation, puis l'état du disque (SMART), avant que le problème ne devienne un dégât.",
+            "[Datenträger] ACHTUNG: in den letzten Tagen hat Windows Fehler auf Datenträger {0} protokolliert (oder auf einem anderen Datenträger mit demselben Buchstaben): {1}. Kabel, Gehäuse und Stromversorgung prüfen, dann den Zustand des Datenträgers (SMART), bevor aus dem Problem ein Schaden wird."),
+
         ["Hw_Stop"] = L(
             "[disco] ERRORE HARDWARE — job INTERROTTO per non peggiorare il danno: {0}",
             "[disk] HARDWARE ERROR — job STOPPED to avoid making the damage worse: {0}",
@@ -193,11 +225,11 @@ public static class CoreLoc
             "[disque] ERREUR MATÉRIELLE — tâche ARRÊTÉE pour ne pas aggraver les dégâts : {0}",
             "[Datenträger] HARDWAREFEHLER — Job GESTOPPT, um den Schaden nicht zu vergrößern: {0}"),
         ["Hw_Advice"] = L(
-            "[disco] Un disco (sorgente o destinazione) o il suo collegamento ha segnalato un errore fisico. Non rilanciare il backup a ripetizione. Controlla: 1) cavo, box USB e alimentazione (prova un altro cavo/porta); 2) la salute del disco (SMART, es. CrystalDiskInfo: voci 05, C5, C6 = disco; C7 = cavo). Se il disco sta cedendo, metti in salvo i dati prima di ogni altra cosa.",
-            "[disk] A disk (source or destination) or its connection reported a physical error. Do not keep re-running the backup. Check: 1) cable, USB enclosure and power (try another cable/port); 2) the disk's health (SMART, e.g. CrystalDiskInfo: attributes 05, C5, C6 = disk; C7 = cable). If the disk is failing, rescue your data before anything else.",
-            "[disco] Un disco (origen o destino) o su conexión ha notificado un error físico. No relances la copia repetidamente. Comprueba: 1) cable, caja USB y alimentación (prueba otro cable/puerto); 2) la salud del disco (SMART, p. ej. CrystalDiskInfo: atributos 05, C5, C6 = disco; C7 = cable). Si el disco está fallando, pon a salvo los datos antes que nada.",
-            "[disque] Un disque (source ou destination) ou sa connexion a signalé une erreur physique. Ne relancez pas la sauvegarde en boucle. Vérifiez : 1) câble, boîtier USB et alimentation (essayez un autre câble/port) ; 2) l'état du disque (SMART, p. ex. CrystalDiskInfo : attributs 05, C5, C6 = disque ; C7 = câble). Si le disque est en train de lâcher, mettez vos données à l'abri avant tout.",
-            "[Datenträger] Ein Datenträger (Quelle oder Ziel) oder seine Verbindung hat einen physischen Fehler gemeldet. Das Backup nicht wiederholt neu starten. Prüfen: 1) Kabel, USB-Gehäuse und Stromversorgung (anderes Kabel/anderen Port testen); 2) den Zustand des Datenträgers (SMART, z. B. CrystalDiskInfo: Attribute 05, C5, C6 = Datenträger; C7 = Kabel). Wenn der Datenträger ausfällt, zuerst die Daten retten."),
+            "[disco] Un disco (sorgente o destinazione) o il suo collegamento ha segnalato un errore fisico. Non rilanciare il backup a ripetizione. Controlla: 1) cavo, box USB e alimentazione (prova un altro cavo/porta); 2) la salute del disco (SMART, es. CrystalDiskInfo: voci 05, C5, C6 = disco; C7 = collegamento tra box e disco — un cavo USB difettoso invece non lascia traccia nello SMART). Se il disco sta cedendo, metti in salvo i dati prima di ogni altra cosa.",
+            "[disk] A disk (source or destination) or its connection reported a physical error. Do not keep re-running the backup. Check: 1) cable, USB enclosure and power (try another cable/port); 2) the disk's health (SMART, e.g. CrystalDiskInfo: attributes 05, C5, C6 = disk; C7 = the link between enclosure and disk — a faulty USB cable, by contrast, leaves no trace in SMART). If the disk is failing, rescue your data before anything else.",
+            "[disco] Un disco (origen o destino) o su conexión ha notificado un error físico. No relances la copia repetidamente. Comprueba: 1) cable, caja USB y alimentación (prueba otro cable/puerto); 2) la salud del disco (SMART, p. ej. CrystalDiskInfo: atributos 05, C5, C6 = disco; C7 = enlace entre la caja y el disco; un cable USB defectuoso, en cambio, no deja rastro en SMART). Si el disco está fallando, pon a salvo los datos antes que nada.",
+            "[disque] Un disque (source ou destination) ou sa connexion a signalé une erreur physique. Ne relancez pas la sauvegarde en boucle. Vérifiez : 1) câble, boîtier USB et alimentation (essayez un autre câble/port) ; 2) l'état du disque (SMART, p. ex. CrystalDiskInfo : attributs 05, C5, C6 = disque ; C7 = liaison entre le boîtier et le disque — un câble USB défectueux, lui, ne laisse aucune trace dans SMART). Si le disque est en train de lâcher, mettez vos données à l'abri avant tout.",
+            "[Datenträger] Ein Datenträger (Quelle oder Ziel) oder seine Verbindung hat einen physischen Fehler gemeldet. Das Backup nicht wiederholt neu starten. Prüfen: 1) Kabel, USB-Gehäuse und Stromversorgung (anderes Kabel/anderen Port testen); 2) den Zustand des Datenträgers (SMART, z. B. CrystalDiskInfo: Attribute 05, C5, C6 = Datenträger; C7 = Verbindung zwischen Gehäuse und Datenträger — ein defektes USB-Kabel hinterlässt dagegen keine Spur in SMART). Wenn der Datenträger ausfällt, zuerst die Daten retten."),
         ["Hw_Status"] = L(
             "INTERROTTO: errore hardware del disco o del collegamento.",
             "STOPPED: hardware error from the disk or its connection.",

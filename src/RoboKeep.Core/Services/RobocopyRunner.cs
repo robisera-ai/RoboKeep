@@ -50,9 +50,40 @@ public sealed class RobocopyRunner
         }
     }
 
+    // Supporto a /IM, per eseguibile: si chiede a robocopy stesso (il suo help la elenca o no),
+    // una volta sola. Un'opzione sconosciuta lo farebbe uscire con errore grave senza copiare nulla.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, bool> IncludeModifiedSupport = new();
+
+    private bool SupportsIncludeModified() => IncludeModifiedSupport.GetOrAdd(_robocopyPath, path =>
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = path,
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                StandardOutputEncoding = OemEncoding,
+            };
+            psi.ArgumentList.Add("/?");
+            using var p = Process.Start(psi);
+            if (p is null) return false;
+            var help = p.StandardOutput.ReadToEnd();
+            p.WaitForExit(10_000);
+            return help.Contains("/IM ", StringComparison.OrdinalIgnoreCase);
+        }
+        catch { return false; }
+    });
+
+    /// <param name="beforeForceCopyPass">Invocato (mai in anteprima) subito prima della passata
+    /// "forza copia", con i filtri che robocopy ricevera'. Serve al versioning: la passata
+    /// sovrascrive SUL POSTO, e su un file ancora hard-linkato agli snapshot precedenti ne
+    /// riscriverebbe la storia; chi versiona deve prima scollegarli.</param>
     public async Task<RobocopyRunResult> RunAsync(
         BackupJob job, bool dryRun = false, IProgress<string>? progress = null, CancellationToken ct = default,
-        string? destinationOverride = null, string? sourceOverride = null)
+        string? destinationOverride = null, string? sourceOverride = null,
+        Func<IReadOnlyList<string>, Task>? beforeForceCopyPass = null)
     {
         var started = DateTime.Now;
 
@@ -90,9 +121,13 @@ public sealed class RobocopyRunner
             var plan = await _forceCopyPlanner.PlanAsync(job, progress, ct).ConfigureAwait(false);
             if (plan.Filters.Count > 0)
             {
+                if (!dryRun && beforeForceCopyPass is not null)
+                    await beforeForceCopyPass(plan.Filters).ConfigureAwait(false);
+
                 var pass2Args = RobocopyArgsBuilder.BuildForceCopyPass(
                     job, plan.Filters, dryRun, destinationOverride: destinationOverride,
-                    sourceOverride: sourceOverride, maxThreads: maxThreads);
+                    sourceOverride: sourceOverride, maxThreads: maxThreads,
+                    includeModified: SupportsIncludeModified());
                 var (exit2, text2, hardwareError2) = await RunPassAsync(pass2Args, progress, ct).ConfigureAwait(false);
                 hardwareError = hardwareError2;
                 fullText.AppendLine().Append(text2);

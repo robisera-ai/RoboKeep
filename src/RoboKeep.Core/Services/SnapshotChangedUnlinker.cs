@@ -17,6 +17,32 @@ public static class SnapshotChangedUnlinker
     public static bool Differs(long sizeA, DateTime mtimeA, long sizeB, DateTime mtimeB)
         => sizeA != sizeB || mtimeA != mtimeB;
 
+    /// <summary>Cancella dal clone i file che corrispondono ai filtri della passata "forza copia"
+    /// (nomi o pattern con wildcard, cercati in tutto l'albero come fa robocopy). La passata copia
+    /// con /IS /IT /IM, cioe' sovrascrive sul posto: senza questo passo scriverebbe attraverso
+    /// l'hard-link dentro gli snapshot precedenti. Restituisce il numero di file scollegati.</summary>
+    public static int UnlinkMatching(string snapshotDir, IReadOnlyList<string> filters)
+    {
+        ArgumentNullException.ThrowIfNull(snapshotDir);
+        ArgumentNullException.ThrowIfNull(filters);
+        if (!Directory.Exists(snapshotDir)) return 0;
+
+        var options = new EnumerationOptions
+        {
+            RecurseSubdirectories = true,
+            AttributesToSkip = FileAttributes.ReparsePoint,
+            MatchCasing = MatchCasing.CaseInsensitive,
+        };
+        var unlinked = 0;
+        foreach (var filter in filters.Where(f => !string.IsNullOrWhiteSpace(f)))
+            foreach (var file in Directory.EnumerateFiles(snapshotDir, filter.Trim(), options).ToList())
+            {
+                FileSystemDelete.DeleteFile(file);
+                unlinked++;
+            }
+        return unlinked;
+    }
+
     /// <summary>
     /// Per ogni file della sorgente presente anche nel clone, se differisce lo cancella dal clone.
     /// I file del clone assenti in sorgente vengono lasciati (robocopy /MIR li rimuoverà).

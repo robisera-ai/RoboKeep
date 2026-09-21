@@ -82,6 +82,26 @@ public partial class HistoryWindow : Wpf.Ui.Controls.FluentWindow
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
+
+        // Il log si apre nel Blocco note: ricerca (Ctrl+F), copia e salvataggio, e non blocca la
+        // cronologia come farebbe una finestra modale. I log sono in .zip, quindi se ne estrae una
+        // copia usa-e-getta. Se il Blocco note non parte, resta il visualizzatore interno.
+        try
+        {
+            var viewerDir = System.IO.Path.Combine(_host.Config.Settings.TempRoot, "viewer");
+            if (LogArchiveReader.ExtractForViewing(row.LogPath, viewerDir) is { } copy)
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "notepad.exe",
+                    Arguments = $"\"{copy}\"",
+                    UseShellExecute = true,
+                });
+                return;
+            }
+        }
+        catch { /* ripiego qui sotto */ }
+
         var win = new LogViewerWindow($"{row.Job} — {row.When}", text) { Owner = this };
         win.ShowDialog();
     }

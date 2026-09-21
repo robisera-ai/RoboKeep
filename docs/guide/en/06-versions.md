@@ -27,7 +27,18 @@ Snapshots don't pile up forever. In the job you set the **retention**:
 - keep the last **N versions**, and/or
 - keep versions up to a **maximum age in days**.
 
-The oldest ones are removed automatically, so you never have to think about it.
+The oldest ones are removed automatically, so you never have to think about it. A new job starts
+with **30 versions**; you can change the number, or set **0** for no limit (not recommended: the
+disk fills up with entries and slows down). The age limit never touches the most recent version:
+that one is your current backup, even if the files haven't changed for months.
+
+## No duplicate versions
+
+If **nothing has changed** since the last run, RoboKeep **doesn't create a new version** identical
+to the previous one: it says so in the log, and the backup still counts as successful and up to
+date. It's not just tidiness: creating a version means writing an entry on the disk for **every**
+file, even untouched ones, and it's the heaviest work RoboKeep asks of a mechanical disk. Doing it
+only when needed extends the disk's life.
 
 ## Browsing versions
 

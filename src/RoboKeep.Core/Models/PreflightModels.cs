@@ -12,6 +12,8 @@ public sealed record PreflightWarning(PreflightSeverity Severity, string Message
 /// <see cref="VersionedDestSupportsHardLinks"/> è null quando il controllo non è pertinente
 /// (job non versionato o destinazione non raggiungibile).
 /// <see cref="VssSourceEligible"/> è null quando il controllo non è pertinente (job senza VSS).
+/// <see cref="DestinationDiskEvents"/> e <see cref="SourceDiskEvents"/>: errori disco recenti nel
+/// registro eventi di Windows (null = non controllati).
 /// </summary>
 public sealed record PreflightInputs(
     bool DestinationReachable,
@@ -19,4 +21,6 @@ public sealed record PreflightInputs(
     long MinFreeBytes,
     long? SourceSizeBytes,
     bool? VersionedDestSupportsHardLinks = null,
-    bool? VssSourceEligible = null);
+    bool? VssSourceEligible = null,
+    Services.DiskEventSummary? DestinationDiskEvents = null,
+    Services.DiskEventSummary? SourceDiskEvents = null);

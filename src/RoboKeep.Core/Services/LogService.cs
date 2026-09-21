@@ -13,11 +13,33 @@ public sealed class LogService
 
     public LogService(AppSettings settings) => _settings = settings;
 
-    /// <summary>Cartella log predefinita: sottocartella <c>logs</c> accanto all'eseguibile.</summary>
+    /// <summary>Ripiego usato SOLO se <see cref="AppSettings.LogRoot"/> è vuoto: sottocartella
+    /// <c>logs</c> accanto all'eseguibile. Nell'app non succede: <c>AppHost</c> compila sempre
+    /// LogRoot con la cartella dati (<c>%APPDATA%\RoboKeep\logs</c>, o accanto all'exe solo in
+    /// modalità portatile). I log NON stanno quindi di norma accanto all'eseguibile.</summary>
     public static string DefaultLogRoot => Path.Combine(AppContext.BaseDirectory, "logs");
 
-    /// <summary>Cartella temporanea predefinita: sottocartella <c>temp</c> accanto all'eseguibile.</summary>
+    /// <summary>Ripiego per la cartella temporanea, con la stessa logica di <see cref="DefaultLogRoot"/>.</summary>
     public static string DefaultTempRoot => Path.Combine(AppContext.BaseDirectory, "temp");
+
+    /// <summary>Cartella da mostrare a chi chiede "dove sono i log": la cartella giornaliera più
+    /// recente (<c>AAAAMMGG</c>) se esiste, altrimenti la radice dei log. Le cartelle con altri
+    /// nomi vengono ignorate.</summary>
+    public static string LatestLogFolder(string logRoot)
+    {
+        try
+        {
+            if (!Directory.Exists(logRoot)) return logRoot;
+            var latest = Directory.GetDirectories(logRoot)
+                .Where(d => DateTime.TryParseExact(Path.GetFileName(d), "yyyyMMdd",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None, out _))
+                .OrderByDescending(d => Path.GetFileName(d), StringComparer.Ordinal)
+                .FirstOrDefault();
+            return latest ?? logRoot;
+        }
+        catch { return logRoot; }
+    }
 
     private string LogRoot =>
         string.IsNullOrWhiteSpace(_settings.LogRoot) ? DefaultLogRoot : _settings.LogRoot;
