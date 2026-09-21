@@ -4,7 +4,13 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased] — Hardware safety of the backup media
+## [1.7.0] - 2026-09-21 — Hardware safety of the backup media
+
+This release puts the physical health of your disks first. It grew out of a real incident: an
+external backup disk whose USB enclosure kept dropping out mid-write, leaving half-written sectors
+and a damaged file system — while RoboKeep made things worse by hammering the disk with eight
+threads, carrying on for hours over hundreds of read errors, and giving no warning during the month
+in which Windows was already logging the symptoms. Every one of those behaviours is fixed here.
 
 ### Changed
 - **A hardware error now stops the job at once.** When a disk — or its cable/enclosure — reports a
@@ -76,6 +82,11 @@ All notable changes to RoboKeep are documented here. The format is based on
   behind source and destination; when either is a mechanical disk — or a USB disk that can't be
   identified and doesn't support TRIM — copy threads are capped at 2 whatever the job says, and the
   log notes it. SSDs and network paths are unaffected.
+
+### Downloads
+- **`RoboKeep-1.7.0-win-x64-selfcontained.zip`** — bundles .NET 10: extract and run, nothing to install.
+- **`RoboKeep-1.7.0-win-x64-framework-dependent.zip`** — smaller; requires the
+  [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
 
 ## [1.6.0] - 2026-07-23 — In-app guide & versioning resilience
 
