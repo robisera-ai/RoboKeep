@@ -25,6 +25,15 @@ account, niente abbonamenti** — i tuoi file non lasciano mai i tuoi dischi.
 - 🧙 **Rispondi a qualche domanda, ottieni il backup giusto.** Non serve conoscere robocopy: la
   creazione guidata chiede dei tuoi dischi e dei tuoi dati in linguaggio semplice, e sceglie per
   te le impostazioni ottimali. Chi è esperto può comunque regolare tutto a mano.
+- 💿 **Si prende cura dei dischi, non solo dei file** *(novità della 1.7)*. Un programma di
+  backup può logorare proprio il disco su cui scrive. RoboKeep ora **si ferma al primo errore
+  hardware** (CRC, settore danneggiato, errore del dispositivo) invece di insistere per ore, e
+  lascia in pace quel disco per il resto della sessione; tiene il PC **sveglio**, così la
+  sospensione automatica non toglie corrente a un disco USB a metà scrittura; **limita i thread
+  di copia sui dischi meccanici**, che riconosce da solo; non crea una nuova versione quando
+  **non è cambiato nulla**; e legge il **registro eventi di Windows** per i blocchi danneggiati e
+  gli errori di I/O che precedono un guasto — avvisandoti *prima* del danno, non dopo. La verifica
+  integrità è ora **periodica** (ogni 7 giorni per default) invece che a ogni esecuzione.
 - 🛡️ **Ruoti i dischi di backup? Non scrive mai su quello sbagliato** *(novità della 1.5)*. Se
   alterni due dischi esterni, Windows spesso assegna loro la **stessa lettera** (`E:`) — e un job
   in mirror puntato su quello sbagliato potrebbe cancellarlo. RoboKeep riconosce ogni disco dalla
@@ -44,13 +53,15 @@ account, niente abbonamenti** — i tuoi file non lasciano mai i tuoi dischi.
   **Verifica** rilegge ogni file da entrambi i lati e confronta le impronte digitali (SHA-256):
   la corruzione silenziosa del disco — invisibile a qualunque controllo su data e dimensione —
   viene scovata. E con intelligenza: un file che hai modificato *dopo* il backup viene segnalato
-  come tale, mai come falso allarme. A richiesta, o automatica dopo ogni backup per i job critici.
+  come tale, mai come falso allarme. A richiesta, o automatica a cadenza periodica (ogni 7
+  giorni per default) per i job critici.
 - ⏰ **Ogni job col suo orario** *(novità della 1.4)*. Documenti ogni sera, foto la domenica,
   archivi una volta al mese: ogni job ha la sua attività pianificata di Windows e parte anche ad
   app chiusa.
 - 📜 **La memoria di ogni esecuzione** *(novità della 1.4)*. La finestra **Cronologia** elenca
   ogni backup e ogni verifica con esito, conteggi e durata — e col doppio clic il log completo si
-  apre direttamente nell'app, senza frugare tra gli zip.
+  apre nel Blocco note, senza frugare tra gli zip. Ogni voce ha il suo log, verifiche comprese;
+  il pulsante **Cartella log** ti porta dritto ai file.
 - 🚨 **Ti avvisa quando qualcosa non va — e solo allora.** Un backup che fallisce in silenzio è
   peggio di nessun backup. RoboKeep segna ogni job con problemi con un'icona colorata — rossa per
   fallito, ambra per "non eseguito da troppo tempo", arancio per "era stato interrotto", grigia
@@ -106,17 +117,22 @@ E se hai attivato le versioni, ogni esecuzione salva prima lo stato precedente c
 **Backup**
 modalità mirror o accumulo · **protezione dalla rotazione dei dischi: un job gira solo sul suo
 disco, identificato per volume — mai il mirror su quello sbagliato o assente** · versioni datate
-con hard-link e ritenzione configurabile · copia dei file aperti/bloccati via VSS · **verifica
-integrità (SHA-256), a richiesta o dopo ogni esecuzione** · copia multi-thread · esclusioni di
+con hard-link e ritenzione configurabile (nessuna versione doppia se non è cambiato nulla) ·
+copia dei file aperti/bloccati via VSS · **verifica integrità (SHA-256), a richiesta o
+periodica** · **stop su errore hardware: ferma la copia al primo errore CRC/settore/I/O e mette
+a riposo il disco** · **tetto automatico ai thread sui dischi meccanici** · **PC tenuto sveglio
+durante i backup** · copia multi-thread · esclusioni di
 file e cartelle per job · "forza copia" per i file con data/dimensione che non cambiano mai
 (container cifrati, alcuni database), con modalità opzionale a confronto di contenuto · modalità
 riavviabile per i file enormi · anteprima/dry-run
 
 **Ti tiene informato**
-**cronologia esecuzioni con visualizzatore log in-app** · icone di salute per job con spiegazioni
-in linguaggio semplice, incluso uno stato neutro "in attesa del suo disco" · **icone che si
-aggiornano nell'istante in cui colleghi o stacchi un disco** · controlli pre-avvio (destinazione
-raggiungibile, spazio disco, idoneità VSS e versioning) · log in tempo reale · archivio log
+**cronologia esecuzioni con un log per ogni voce (verifiche comprese), aperto nel Blocco note** ·
+**pulsante Cartella log** · icone di salute per job con spiegazioni in linguaggio semplice,
+incluso uno stato neutro "in attesa del suo disco" · **icone che si aggiornano nell'istante in
+cui colleghi o stacchi un disco** · controlli pre-avvio (destinazione raggiungibile, spazio
+disco, idoneità VSS e versioning, **errori disco recenti dal registro eventi di Windows**) · log
+in tempo reale · archivio log
 zippati per job con pulizia automatica · notifiche toast e area di notifica · report email
 (SMTP), anche solo in caso di errori
 
@@ -142,8 +158,12 @@ configurazione** · riga di comando per l'automazione · ordinamento dei job con
 - **La copia dei file aperti richiede una sorgente NTFS locale** e una conferma amministratore
   (UAC) per esecuzione.
 - **La verifica integrità rilegge ogni file da entrambi i lati**: è accurata per costruzione,
-  quindi dura all'incirca quanto un primo backup. Attiva "verifica dopo ogni backup" solo dove
-  conta davvero.
+  quindi dura all'incirca quanto un primo backup. Per questo la verifica automatica gira ogni N
+  giorni (7 per default) e non a ogni backup; con 0 torna a ogni esecuzione.
+- **Un disco che segnala un errore hardware ferma il job**, di proposito. Prima di rilanciare,
+  controlla cavo, box USB e alimentazione — sui dischi esterni danno esattamente gli stessi
+  errori di un disco che cede — e poi la salute SMART del disco. Vedi il capitolo *Risoluzione
+  dei problemi* della guida in-app.
 - Impostazioni, esiti e log vivono in `%APPDATA%\RoboKeep`: sopravvivono agli aggiornamenti
   dell'app. Le password sono cifrate con DPAPI di Windows, mai salvate in chiaro. Nota:
   l'ambito di cifratura predefinito è **a livello macchina** (così anche le attività

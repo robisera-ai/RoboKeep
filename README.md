@@ -25,6 +25,14 @@ files never leave your disks.
 - 🧙 **Answer a few questions, get the right backup.** No robocopy knowledge needed: the guided
   setup asks about your disks and your data in plain language, and picks the optimal settings
   for you. Experts can still tweak everything by hand.
+- 💿 **It looks after your disks, not just your files** *(new in 1.7)*. A backup tool can wear
+  out the very disk it writes to. RoboKeep now **stops at the first hardware error** (CRC, bad
+  sector, I/O device error) instead of grinding on for hours, and leaves that disk alone for the
+  rest of the session; keeps the PC **awake** so automatic sleep can't cut power to a USB disk
+  mid-write; **caps copy threads on mechanical disks**, which it detects on its own; skips
+  creating a new version when **nothing has changed**; and reads the **Windows event log** for
+  the bad blocks and I/O errors that precede a failure — warning you *before* the damage, not
+  after. Integrity checks are now **periodic** (weekly by default) instead of after every run.
 - 🛡️ **Rotating backup disks? It never writes to the wrong one** *(new in 1.5)*. If you alternate
   two external drives, Windows often hands them the **same letter** (`E:`) — and a mirror job
   aimed at the wrong one could wipe it clean. RoboKeep recognizes each disk by its true
@@ -42,14 +50,15 @@ files never leave your disks.
 - ✅ **Mathematical proof your backup is intact** *(new in 1.4)*. The **Verify** button re-reads
   every file on both sides and compares digital fingerprints (SHA-256): silent disk corruption —
   invisible to any date/size check — gets caught. Smart, too: a file you edited *after* the
-  backup is reported as such, never as a false alarm. Run it on demand, or automatically after
-  every backup for your critical jobs.
+  backup is reported as such, never as a false alarm. Run it on demand, or automatically on a
+  schedule (every 7 days by default) for your critical jobs.
 - ⏰ **Every job on its own schedule** *(new in 1.4)*. Documents every evening, photos on Sunday,
   archives once a month: each job gets its own Windows scheduled task and runs even with the app
   closed.
 - 📜 **A memory of every run** *(new in 1.4)*. The **History** window lists every backup and
   every integrity check with outcome, counts, and duration — and a double-click opens the full
-  log right inside the app, no digging through zip files.
+  log in Notepad, no digging through zip files. Every entry has its own log, verifications
+  included; a **Log folder** button takes you straight to the files.
 - 🚨 **It tells you when something's wrong — and only then.** A backup that fails silently is
   worse than no backup. RoboKeep marks each problematic job with a colored icon — red for
   failed, amber for "not run in too long", orange for "was interrupted", grey for "waiting for
@@ -102,17 +111,21 @@ And if you enabled versions, each run first saves the previous state as a dated 
 **Backing up**
 mirror or accumulate mode · **disk-rotation protection: a job runs only on its own disk,
 identified by volume — never mirrors onto the wrong or absent one** · dated versions with
-hard-links and configurable retention · open/locked file copying via VSS · **integrity
-verification (SHA-256), on demand or after every run** · multi-threaded copying · per-job file
+hard-links and configurable retention (no duplicate version when nothing changed) · open/locked
+file copying via VSS · **integrity verification (SHA-256), on demand or periodic** ·
+**hardware-error stop: kills the copy at the first CRC/bad-sector/I/O error and rests the disk**
+· **automatic thread cap on mechanical disks** · **PC kept awake during backups** ·
+multi-threaded copying · per-job file
 and folder exclusions · "force copy" for files whose date/size never change (encrypted
 containers, some databases), with an optional content-hash mode · restartable mode for huge
 files · preview/dry-run
 
 **Keeping you informed**
-**run history with in-app log viewer** · per-job health icons with plain-language tooltips,
-including a neutral "waiting for its disk" state · **icons that refresh the instant you plug or
-unplug a disk** · pre-run checks (destination reachable, disk space, VSS and versioning
-eligibility) · real-time log · per-job zipped log archive with automatic cleanup · toast
+**run history with a log for every entry (verifications too), opened in Notepad** · **Log folder
+button** · per-job health icons with plain-language tooltips, including a neutral "waiting for
+its disk" state · **icons that refresh the instant you plug or unplug a disk** · pre-run checks
+(destination reachable, disk space, VSS and versioning eligibility, **recent disk errors from the
+Windows event log**) · real-time log · per-job zipped log archive with automatic cleanup · toast
 notifications and system tray · email reports (SMTP), optionally only on errors
 
 **Fitting your setup**
@@ -134,8 +147,12 @@ automation · drag & drop job ordering · 5 languages · portable mode
 - **Open-file copying needs a local NTFS source** and asks for one administrator confirmation
   (UAC) per run.
 - **Integrity checks re-read every file on both sides**: thorough by design, so expect a check
-  to take roughly as long as a first backup. Enable "verify after each backup" only where it
-  matters.
+  to take roughly as long as a first backup. That's why the automatic check runs every N days
+  (7 by default) rather than after every backup; set 0 for every run.
+- **A disk that reports a hardware error stops the job**, on purpose. Before re-running, check
+  the cable, the USB enclosure and the power supply — on external disks they cause the very same
+  errors as a failing disk — then the disk's SMART health. See the in-app guide's
+  troubleshooting chapter.
 - Your settings, results, and logs live in `%APPDATA%\RoboKeep`, so they survive app updates.
   Passwords are encrypted with Windows DPAPI, never stored in plain text. Note: the default
   encryption scope is **machine-wide** (so scheduled tasks can decrypt them too) — on a shared

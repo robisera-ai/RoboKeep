@@ -47,14 +47,15 @@ Dateien verlassen nie Ihre Datenträger.
   **Prüfen** liest jede Datei auf beiden Seiten neu ein und vergleicht die digitalen Fingerabdrücke
   (SHA-256): stille Datenträger-Beschädigung — für jede Datums-/Größenprüfung unsichtbar — wird
   aufgedeckt. Und clever: Eine Datei, die Sie *nach* dem Backup bearbeitet haben, wird als solche
-  gemeldet, nie als Fehlalarm. Auf Wunsch oder automatisch nach jedem Backup für Ihre kritischen
-  Aufträge.
+  gemeldet, nie als Fehlalarm. Auf Wunsch oder automatisch in regelmäßigen Abständen (standardmäßig
+  alle 7 Tage) für Ihre kritischen Aufträge.
 - ⏰ **Jeder Auftrag nach eigenem Zeitplan** *(neu in 1.4)*. Dokumente jeden Abend, Fotos am
   Sonntag, Archive einmal im Monat: Jeder Auftrag hat seine eigene geplante Windows-Aufgabe und
   läuft auch bei geschlossener App.
 - 📜 **Das Gedächtnis jedes Laufs** *(neu in 1.4)*. Das Fenster **Verlauf** listet jedes Backup
   und jede Prüfung mit Ergebnis, Zählwerten und Dauer auf — und ein Doppelklick öffnet das
-  vollständige Protokoll direkt in der App, ohne in Zip-Dateien zu wühlen.
+  vollständige Protokoll im Editor (Notepad), ohne in Zip-Dateien zu wühlen. Jeder Eintrag hat sein
+  eigenes Protokoll, Prüfungen eingeschlossen; die Schaltfläche **Log-Ordner** führt direkt zu den Dateien.
 - 🚨 **Es warnt Sie, wenn etwas nicht stimmt — und nur dann.** Ein Backup, das stillschweigend
   fehlschlägt, ist schlimmer als gar keins. RoboKeep markiert jeden problematischen Auftrag mit
   einem farbigen Symbol — rot für fehlgeschlagen, gelb für „zu lange nicht ausgeführt“, orange für
@@ -113,7 +114,9 @@ datierten Schnappschuss.
 Spiegel- oder Ansammel-Modus · **Schutz bei Datenträger-Rotation: ein Auftrag läuft nur auf
 seinem Datenträger, per Volume erkannt — nie ein Spiegel auf den falschen oder fehlenden** ·
 datierte Versionen mit Hardlinks und konfigurierbarer Aufbewahrung · Kopieren offener/gesperrter
-Dateien via VSS · **Integritätsprüfung (SHA-256), auf Abruf oder nach jedem Lauf** ·
+Dateien via VSS · **Integritätsprüfung (SHA-256), auf Abruf oder regelmäßig** · **Stopp bei
+Hardwarefehler: bricht die Kopie beim ersten CRC-/Sektor-/E/A-Fehler ab und schont den Datenträger** ·
+**automatische Thread-Begrenzung auf mechanischen Festplatten** · **PC bleibt während des Backups wach** ·
 Multithread-Kopieren · Datei- und Ordnerausschlüsse pro Auftrag · „Kopie erzwingen“ für Dateien,
 deren Datum/Größe sich nie ändern (verschlüsselte Container, manche Datenbanken), mit optionalem
 Inhalts-Vergleichsmodus · fortsetzbarer Modus für riesige Dateien · Vorschau/Trockenlauf
@@ -149,7 +152,11 @@ Ziehen und Ablegen ordnen · 5 Sprachen · Portabler Modus
   Administrator-Bestätigung (UAC) pro Lauf.
 - **Integritätsprüfungen lesen jede Datei auf beiden Seiten neu ein**: gründlich per Design,
   rechnen Sie also damit, dass eine Prüfung ungefähr so lange dauert wie ein erstes Backup.
-  Aktivieren Sie „nach jedem Backup prüfen“ nur dort, wo es zählt.
+  Deshalb läuft die automatische Prüfung alle N Tage (standardmäßig 7) und nicht nach jedem Backup;
+  0 bedeutet nach jedem Lauf.
+- **Ein Datenträger, der einen Hardwarefehler meldet, stoppt den Auftrag** — absichtlich. Prüfen
+  Sie vor einem Neustart Kabel, USB-Gehäuse und Stromversorgung — bei externen Datenträgern
+  verursachen sie genau dieselben Fehler wie ein defekter Datenträger — und dann den SMART-Zustand.
 - Ihre Einstellungen, Ergebnisse und Protokolle liegen in `%APPDATA%\RoboKeep` und überstehen so
   App-Aktualisierungen. Passwörter werden mit der Windows-DPAPI verschlüsselt, nie im Klartext
   gespeichert. Hinweis: Der Standard-Verschlüsselungsbereich ist **maschinenweit** (damit auch

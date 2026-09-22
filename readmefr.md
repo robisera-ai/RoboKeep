@@ -49,13 +49,14 @@ ne quittent jamais vos disques.
   (SHA-256) : la corruption silencieuse du disque — invisible à tout contrôle de date ou de
   taille — est débusquée. Et intelligemment : un fichier que vous avez modifié *après* la
   sauvegarde est signalé comme tel, jamais comme une fausse alerte. À la demande, ou automatique
-  après chaque sauvegarde pour vos tâches critiques.
+  à intervalle régulier (tous les 7 jours par défaut) pour vos tâches critiques.
 - ⏰ **Chaque tâche selon son propre horaire** *(nouveauté en 1.4)*. Documents chaque soir, photos
   le dimanche, archives une fois par mois : chaque tâche possède sa propre tâche planifiée
   Windows et s'exécute même l'application fermée.
 - 📜 **La mémoire de chaque exécution** *(nouveauté en 1.4)*. La fenêtre **Historique** répertorie
   chaque sauvegarde et chaque vérification avec résultat, décomptes et durée — et un double-clic
-  ouvre le journal complet directement dans l'application, sans fouiller dans des fichiers zip.
+  ouvre le journal complet dans le Bloc-notes, sans fouiller dans des fichiers zip. Chaque entrée
+  a son propre journal, vérifications comprises ; le bouton **Dossier des journaux** mène aux fichiers.
 - 🚨 **Il vous prévient quand quelque chose ne va pas — et seulement alors.** Une sauvegarde qui
   échoue en silence est pire que pas de sauvegarde. RoboKeep marque chaque tâche problématique
   d'une icône colorée — rouge pour échouée, ambre pour « pas exécutée depuis trop longtemps »,
@@ -114,8 +115,10 @@ forme d'instantané daté.
 mode miroir ou accumulation · **protection contre la rotation des disques : une tâche ne
 s'exécute que sur son disque, identifié par volume — jamais de miroir sur le mauvais ou l'absent**
 · versions datées avec liens physiques et rétention configurable · copie des fichiers
-ouverts/verrouillés via VSS · **vérification d'intégrité (SHA-256), à la demande ou après chaque
-exécution** · copie multithread · exclusions de fichiers et dossiers par tâche · « forcer la
+ouverts/verrouillés via VSS · **vérification d'intégrité (SHA-256), à la demande ou
+périodique** · **arrêt sur erreur matérielle : stoppe la copie à la première erreur CRC/secteur/E-S
+et met le disque au repos** · **plafond automatique de threads sur les disques mécaniques** ·
+**PC maintenu éveillé pendant les sauvegardes** · copie multithread · exclusions de fichiers et dossiers par tâche · « forcer la
 copie » pour les fichiers dont la date/taille ne change jamais (conteneurs chiffrés, certaines
 bases de données), avec un mode facultatif de comparaison par contenu · mode redémarrable pour
 les fichiers énormes · aperçu/exécution à blanc
@@ -152,7 +155,11 @@ des tâches par glisser-déposer · 5 langues · mode portable
   administrateur (UAC) par exécution.
 - **Les vérifications d'intégrité relisent chaque fichier des deux côtés** : minutieuses par
   conception, donc attendez-vous à ce qu'une vérification dure à peu près autant qu'une première
-  sauvegarde. N'activez « vérifier après chaque sauvegarde » que là où ça compte.
+  sauvegarde. C'est pourquoi la vérification automatique s'exécute tous les N jours (7 par défaut)
+  et non après chaque sauvegarde ; 0 revient à chaque exécution.
+- **Un disque qui signale une erreur matérielle arrête la tâche**, volontairement. Avant de
+  relancer, vérifiez câble, boîtier USB et alimentation — sur les disques externes ils produisent
+  exactement les mêmes erreurs qu'un disque défaillant — puis l'état SMART du disque.
 - Vos réglages, résultats et journaux vivent dans `%APPDATA%\RoboKeep`, ils survivent donc aux
   mises à jour de l'application. Les mots de passe sont chiffrés avec la DPAPI de Windows, jamais
   stockés en clair. Note : la portée de chiffrement par défaut est **à l'échelle de la machine**

@@ -45,14 +45,15 @@ tus archivos nunca salen de tus discos.
   **Verificar** relee cada archivo en ambos lados y compara sus huellas digitales (SHA-256): la
   corrupción silenciosa del disco — invisible a cualquier control de fecha o tamaño — queda al
   descubierto. Y con inteligencia: un archivo que editaste *después* de la copia se señala como
-  tal, nunca como una falsa alarma. A demanda, o automática tras cada copia en tus tareas
-  críticas.
+  tal, nunca como una falsa alarma. A demanda, o automática de forma periódica (cada 7 días por
+  defecto) en tus tareas críticas.
 - ⏰ **Cada tarea con su propio horario** *(novedad en 1.4)*. Documentos cada tarde, fotos el
   domingo, archivos una vez al mes: cada tarea tiene su propia tarea programada de Windows y se
   ejecuta incluso con la app cerrada.
 - 📜 **La memoria de cada ejecución** *(novedad en 1.4)*. La ventana **Historial** enumera cada
   copia y cada verificación con resultado, recuentos y duración — y un doble clic abre el
-  registro completo dentro de la app, sin hurgar en archivos zip.
+  registro completo en el Bloc de notas, sin hurgar en archivos zip. Cada entrada tiene su
+  propio registro, verificaciones incluidas; el botón **Carpeta de registros** te lleva a los archivos.
 - 🚨 **Te avisa cuando algo va mal — y solo entonces.** Una copia que falla en silencio es peor
   que ninguna copia. RoboKeep marca cada tarea problemática con un icono de color — rojo para
   fallida, ámbar para "sin ejecutar demasiado tiempo", naranja para "quedó interrumpida", gris
@@ -109,8 +110,10 @@ instantánea fechada.
 modo espejo o acumular · **protección de rotación de discos: una tarea se ejecuta solo en su
 disco, identificado por volumen — nunca hace el espejo sobre el equivocado o ausente** ·
 versiones fechadas con enlaces duros y retención configurable · copia de archivos
-abiertos/bloqueados mediante VSS · **verificación de integridad (SHA-256), a demanda o tras cada
-ejecución** · copia multihilo · exclusiones de archivos y carpetas por tarea · "forzar copia"
+abiertos/bloqueados mediante VSS · **verificación de integridad (SHA-256), a demanda o
+periódica** · **parada por error de hardware: detiene la copia al primer error CRC/sector/E-S y deja
+el disco en reposo** · **límite automático de hilos en discos mecánicos** · **PC despierto durante
+las copias** · copia multihilo · exclusiones de archivos y carpetas por tarea · "forzar copia"
 para archivos cuya fecha/tamaño nunca cambian (contenedores cifrados, algunas bases de datos),
 con un modo opcional de comparación por contenido · modo reanudable para archivos enormes ·
 vista previa/ejecución en seco
@@ -145,7 +148,11 @@ configuración** · línea de comandos para automatización · reordenar tareas 
   administrador (UAC) por ejecución.
 - **Las verificaciones de integridad releen cada archivo en ambos lados**: minuciosas por
   diseño, así que espera que una verificación dure más o menos como una primera copia. Activa
-  "verificar tras cada copia" solo donde importe.
+  Por eso la verificación automática se ejecuta cada N días (7 por defecto) y no tras cada copia;
+  con 0 vuelve a cada ejecución.
+- **Un disco que notifica un error de hardware detiene la tarea**, a propósito. Antes de relanzar,
+  comprueba cable, caja USB y alimentación — en discos externos dan exactamente los mismos errores
+  que un disco que falla — y luego la salud SMART del disco.
 - Tus ajustes, resultados y registros viven en `%APPDATA%\RoboKeep`, así que sobreviven a las
   actualizaciones de la app. Las contraseñas se cifran con DPAPI de Windows, nunca se guardan en
   texto plano. Nota: el ámbito de cifrado predeterminado es **a nivel de máquina** (para que las
