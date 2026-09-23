@@ -48,6 +48,14 @@ public sealed class AppSettings
     /// <summary>Se true l'app si avvia minimizzata nel tray.</summary>
     public bool StartMinimized { get; set; } = false;
 
+    /// <summary>Controllo aggiornamenti automatico: null = mai chiesto (la finestra principale lo
+    /// chiede una volta), true/false = scelta dell'utente. Con false l'app non fa nessuna
+    /// connessione da se'; il pulsante "Controlla ora" delle Impostazioni resta valido perche'
+    /// e' l'utente a chiederlo in quel momento. Data dell'ultimo controllo e versione ignorata
+    /// stanno in <c>update-state.json</c> (vedi <c>UpdateStateStore</c>), non qui: si scrivono
+    /// anche a finestra Impostazioni aperta, dove la configurazione non va salvata.</summary>
+    public bool? UpdateCheck { get; set; }
+
     /// <summary>Impostazioni di notifica email.</summary>
     public EmailSettings Email { get; set; } = new();
 }

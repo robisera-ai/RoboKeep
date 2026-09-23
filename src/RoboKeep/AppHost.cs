@@ -16,6 +16,7 @@ public sealed class AppHost
     public ForceCopyHashStore ForceCopyHashes { get; }
     public RunHistoryStore History { get; }
     public FaultedDiskStore FaultedDisks { get; }
+    public UpdateStateStore UpdateState { get; }
     public string LockFolder => Path.Combine(Store.DirectoryPath, "locks");
 
     private AppHost(ConfigStore store, AppConfig config)
@@ -31,6 +32,7 @@ public sealed class AppHost
         ForceCopyHashes = new ForceCopyHashStore(Path.Combine(store.DirectoryPath, "forcecopy-hashes.json"));
         History = new RunHistoryStore(Path.Combine(store.DirectoryPath, "runhistory.json"));
         FaultedDisks = new FaultedDiskStore(Path.Combine(store.DirectoryPath, "faulted-disks.json"));
+        UpdateState = new UpdateStateStore(Path.Combine(store.DirectoryPath, "update-state.json"));
     }
 
     public static AppHost Load(string? configPath = null)

@@ -47,6 +47,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         InitializeComponent();
         _vm = new MainViewModel(_host);
         DataContext = _vm;
+        Loaded += OnLoadedCheckUpdates;
 
         // Il log viene riversato a blocchi (sul thread UI) per non ingolfare l'interfaccia.
         _vm.LogFlushed += text =>
@@ -65,6 +66,25 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             if (_host.Config.Settings.MinimizeToTray)
                 Loaded += OnLoadedHideToTray;
         }
+    }
+
+    // Consenso una volta sola, poi controllo in background (mai dalla riga di comando: questa e'
+    // la finestra). Se la rete manca, silenzio: l'utente non deve vedere errori all'avvio.
+    // La finestra puo' partire nascosta nel tray: in quel caso la domanda si rimanda al primo
+    // avvio visibile, perche' un MessageBox senza finestra a video sarebbe incomprensibile.
+    private async void OnLoadedCheckUpdates(object sender, RoutedEventArgs e)
+    {
+        Loaded -= OnLoadedCheckUpdates;
+        var s = _host.Config.Settings;
+        if (s.UpdateCheck is null && IsVisible && WindowState != System.Windows.WindowState.Minimized)
+        {
+            var r = System.Windows.MessageBox.Show(this, Loc.Instance["Upd_Consent"], Loc.Instance["Upd_ConsentTitle"],
+                MessageBoxButton.YesNo, MessageBoxImage.Question);
+            s.UpdateCheck = r == MessageBoxResult.Yes;
+            _host.SaveConfig();
+        }
+        try { await _vm.CheckForUpdatesAsync(force: false); }
+        catch { /* best-effort: nessun aggiornamento noto */ }
     }
 
     // Avvio minimizzato: nasconde nel tray dopo che la finestra e stata mostrata,
@@ -444,6 +464,14 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
     // Riattiva i dischi messi a riposo per un errore hardware: l'utente dichiara di averli
     // controllati. Conferma esplicita: riabilitare un disco che sta cedendo e' peggio del blocco.
+    // Pulsanti del banner aggiornamenti: gestori diretti, niente binding di comandi.
+    private void OnUpdateWhatsNew(object sender, RoutedEventArgs e) => _vm.OpenUpdatePage();
+    private async void OnUpdateDownload(object sender, RoutedEventArgs e)
+    {
+        try { await _vm.DownloadUpdateAsync(); } catch { /* il view model gia' gestisce gli errori */ }
+    }
+    private void OnUpdateIgnore(object sender, RoutedEventArgs e) => _vm.IgnoreUpdate();
+
     private void OnReenableDisks(object sender, RoutedEventArgs e)
     {
         // La conferma elenca i dischi: con piu' dischi in rotazione si deve sapere QUALE si riabilita.
@@ -514,11 +542,19 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
     private void OnSettings(object sender, RoutedEventArgs e)
     {
-        var win = new SettingsWindow(_host) { Owner = this };
+        var win = new SettingsWindow(_host, _vm) { Owner = this };
         if (win.ShowDialog() == true)
         {
             _host.SaveConfig();
             _vm.ReloadJobs(); // dopo un import la lista puo' essere completamente diversa
+        }
+        else
+        {
+            // Annulla: le Impostazioni scrivono direttamente sull'oggetto in memoria (la lingua
+            // si applica al volo). Si rilegge la config dal disco, cosi' niente resta a meta'.
+            _host.ReloadConfig();
+            Loc.Instance.ApplyFromSetting(_host.Config.Settings.Language);
+            _vm.ReloadJobs();
         }
     }
 

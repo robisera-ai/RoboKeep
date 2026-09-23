@@ -172,12 +172,12 @@ configurazione** · riga di comando per l'automazione · ordinamento dei job con
 
 ## Privacy
 
-RoboKeep non raccoglie **niente**. Zero telemetria, zero statistiche, zero controlli
-aggiornamenti, zero account, zero traffico di rete — a meno che non configuri *tu* i report
-email (verso il server SMTP che scegli, con TLS attivo di default). Tutto ciò che l'app sa —
-impostazioni dei job, esiti, cronologia, log — vive in file locali sul tuo PC, JSON leggibili
-che puoi ispezionare quando vuoi. I log contengono i percorsi dei file copiati e vengono
-ripuliti automaticamente dopo 30 giorni (configurabile).
+RoboKeep non raccoglie **niente**. Zero telemetria — solo un controllo aggiornamenti facoltativo (una
+richiesta a GitHub, spento finché non dici sì) — zero statistiche, zero account, zero traffico di
+rete — a meno che non configuri *tu* i report email (verso il server SMTP che scegli, con TLS attivo
+di default). Tutto ciò che l'app sa — impostazioni dei job, esiti, cronologia, log — vive in file
+locali sul tuo PC, JSON leggibili che puoi ispezionare quando vuoi. I log contengono i percorsi dei
+file copiati e vengono ripuliti automaticamente dopo 30 giorni (configurabile).
 
 ## Per utenti esperti
 

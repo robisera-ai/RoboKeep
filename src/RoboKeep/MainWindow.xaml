@@ -92,13 +92,29 @@
                 <RowDefinition Height="1.1*"/>
             </Grid.RowDefinitions>
 
-            <ui:InfoBar Grid.Row="0"
-                        Severity="Warning"
-                        IsOpen="{Binding HealthBannerVisible}"
-                        IsClosable="False"
-                        Title="{l:Tr Health_BannerTitle}"
-                        Message="{Binding HealthBannerText}"
-                        Margin="0,0,0,8"/>
+            <!-- Avvisi in cima al contenuto: salute dei job e aggiornamento disponibile. -->
+            <StackPanel Grid.Row="0" Orientation="Vertical">
+                <ui:InfoBar Severity="Warning"
+                            IsOpen="{Binding HealthBannerVisible}"
+                            IsClosable="False"
+                            Title="{l:Tr Health_BannerTitle}"
+                            Message="{Binding HealthBannerText}"
+                            Margin="0,0,0,8"/>
+
+                <!-- Aggiornamento disponibile: banner + riga di pulsanti SOTTO il banner, con gestori
+                     nel code-behind. Dentro InfoBar.Content i pulsanti non ricevevano il clic. -->
+                <ui:InfoBar Severity="Informational" IsClosable="True"
+                            IsOpen="{Binding UpdateBannerVisible, Mode=TwoWay}"
+                            Title="{l:Tr Upd_BannerTitle}" Message="{Binding UpdateBannerText}"
+                            Margin="0,0,0,4"/>
+                <StackPanel Orientation="Horizontal" Margin="12,0,0,8"
+                            Visibility="{Binding UpdateBannerVisible, Converter={StaticResource BoolToVis}}"
+                            IsEnabled="{Binding UpdateActionsEnabled}">
+                    <ui:Button Content="{l:Tr Upd_WhatsNew}" Icon="{ui:SymbolIcon Open24}" Click="OnUpdateWhatsNew" Margin="0,0,8,0"/>
+                    <ui:Button Content="{l:Tr Upd_Download}" Icon="{ui:SymbolIcon ArrowDownload24}" Appearance="Primary" Click="OnUpdateDownload" Margin="0,0,8,0"/>
+                    <ui:Button Content="{l:Tr Upd_Ignore}" Click="OnUpdateIgnore"/>
+                </StackPanel>
+            </StackPanel>
 
             <Border Grid.Row="1" CornerRadius="8" BorderThickness="1"
                     Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"

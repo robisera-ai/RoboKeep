@@ -82,6 +82,9 @@
                     <TextBlock Text="{l:Tr Set_CredSecurity}" Style="{StaticResource Label}"/>
                     <CheckBox Content="{l:Tr Set_CredScopeUser}" IsChecked="{Binding CredentialScopeUser}"/>
                     <TextBlock Opacity="0.7" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0" Text="{l:Tr Set_CredScopeHint}"/>
+
+                    <TextBlock Text="{l:Tr Set_UpdateSection}" Style="{StaticResource Label}"/>
+                    <CheckBox Content="{l:Tr Set_UpdateCheck}" IsChecked="{Binding UpdateCheck}"/>
                 </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -280,9 +283,11 @@
                     <TextBlock Text="{l:Tr About_Desc}" Opacity="0.85" TextWrapping="Wrap" Margin="0,6,0,0"/>
 
                     <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
-                        <TextBlock Text="{l:Tr About_Version}" FontWeight="SemiBold"/>
-                        <TextBlock x:Name="AppVersionText" Margin="6,0,0,0"/>
+                        <TextBlock Text="{l:Tr About_Version}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="AppVersionText" Margin="6,0,0,0" VerticalAlignment="Center"/>
+                        <ui:Button Content="{l:Tr Set_UpdateCheckNow}" Margin="12,0,0,0" Click="OnCheckUpdatesNow" x:Name="CheckUpdatesButton"/>
                     </StackPanel>
+                    <TextBlock x:Name="UpdateStatusText" Opacity="0.8" Margin="0,6,0,0" TextWrapping="Wrap"/>
                     <TextBlock Text="© 2026 Roberto Serafini" Margin="0,8,0,0"/>
                     <TextBlock Text="{l:Tr About_License}" Margin="0,2,0,0"/>
                     <TextBlock Text="{l:Tr About_BuiltOn}"

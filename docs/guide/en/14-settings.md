@@ -29,6 +29,12 @@ From here you turn on **toast notifications** and the **tray** behaviors (minimi
 
 The **"warn if a backup hasn't run in N days"** threshold raises an alert icon on jobs that haven't run in too long. Set it to **0** to never get this warning.
 
+## Updates
+
+The **"Check for updates automatically"** checkbox decides whether RoboKeep checks on its own for a newer version: one request to `api.github.com` at startup, at most once a day. If it finds a newer version, the notice appears in the main window with **What's new**, **Download** and **Ignore**. Off, RoboKeep never contacts GitHub on its own.
+
+The **About** tab also has a **"Check now"** button, which checks right away — it works even with the checkbox off, because it's an explicit action you decide in the moment. The result appears under the button: *you are up to date*, or *version X is available* (with the notice appearing in the main window), or *check failed* if there's no network or GitHub can't be reached.
+
 ## Export and import configuration
 
 You can save your whole configuration to a file and load it back elsewhere.

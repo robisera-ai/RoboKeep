@@ -161,12 +161,13 @@ configuración** · línea de comandos para automatización · reordenar tareas 
 
 ## Privacidad
 
-RoboKeep no recopila **nada**. Sin telemetría, sin analíticas, sin comprobaciones de
-actualización, sin cuenta, sin tráfico de red en absoluto a menos que *tú* configures los
-informes por correo (servidor SMTP de tu elección — TLS activado por defecto). Todo lo que la
-app sabe — ajustes de las tareas, resultados, historial, registros — vive en archivos locales de
-tu PC, JSON legible que puedes inspeccionar en cualquier momento. Los registros contienen las
-rutas de los archivos copiados y se limpian automáticamente tras 30 días (configurable).
+RoboKeep no recopila **nada**. Sin telemetría — solo una comprobación de actualizaciones opcional (una
+petición a GitHub, desactivada hasta que digas que sí) — sin analíticas, sin cuenta, sin tráfico de
+red en absoluto a menos que *tú* configures los informes por correo (servidor SMTP de tu elección —
+TLS activado por defecto). Todo lo que la app sabe — ajustes de las tareas, resultados, historial,
+registros — vive en archivos locales de tu PC, JSON legible que puedes inspeccionar en cualquier
+momento. Los registros contienen las rutas de los archivos copiados y se limpian automáticamente tras
+30 días (configurable).
 
 ## Para usuarios avanzados
 

@@ -4,7 +4,11 @@ RoboKeep è pensato per stare **a casa tua**: i tuoi file restano sui tuoi disch
 
 ## Non raccoglie niente
 
-RoboKeep **non raccoglie niente**: zero telemetria, zero statistiche, nessun controllo aggiornamenti, nessun account, nessun traffico di rete. L'unica eccezione la decidi **tu**: se configuri i **report via email**, l'app contatta il server **SMTP** che hai scelto tu (con TLS attivo di default) per spedire il resoconto. Fine. Nient'altro esce dal tuo PC.
+RoboKeep **non raccoglie niente**: zero telemetria, zero statistiche, nessun account e nessun traffico di rete, con **due eccezioni, entrambe a tua scelta**.
+
+Il **controllo aggiornamenti**: al primo avvio RoboKeep chiede se vuoi che controlli l'esistenza di una versione nuova; se dici sì, all'avvio (al massimo una volta al giorno) fa una richiesta HTTPS a `api.github.com` per leggere il numero dell'ultima versione pubblicata. La richiesta porta con sé il tuo indirizzo IP (come qualunque richiesta di rete) e uno User-Agent `RoboKeep/<versione>`; nient'altro — nessun dato sui tuoi job, dischi o file. Lo scaricamento parte solo se lo chiedi tu. Puoi spegnere tutto in Impostazioni.
+
+I **report via email**: se li configuri, l'app contatta il server **SMTP** che hai scelto tu (con TLS attivo di default) per spedire il resoconto. Fine. Nient'altro esce dal tuo PC.
 
 ## Tutto in file locali
 

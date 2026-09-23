@@ -70,12 +70,22 @@ jobs:
 
       # L'output "analysis" è "file=url,file=url": lo trasformo in una lista markdown
       # da mostrare nelle note di release, così chi scarica ha i report a portata di clic.
-      - name: Prepara i link VirusTotal
+      # Le note di release sono la sezione del CHANGELOG di questa versione (le note generate da
+      # GitHub elencano le pull request, che qui non esistono: la pagina restava vuota), seguita
+      # dai link VirusTotal. E' la pagina che apre il pulsante "Novita'" dell'app.
+      - name: Prepara le note di release (changelog + VirusTotal)
         id: vtlinks
         shell: bash
         run: |
           {
             echo 'body<<EOF'
+            # Dal titolo "## [X.Y.Z]" fino al titolo "## [" successivo, escluso; senza la riga del titolo.
+            awk -v ver="${{ steps.ver.outputs.v }}" '
+              index($0, "## [" ver "]") == 1 { on = 1; next }
+              on && /^## \[/ { exit }
+              on { print }
+            ' CHANGELOG.md
+            echo
             echo '## VirusTotal'
             IFS=',' read -ra items <<< "${{ steps.vt.outputs.analysis }}"
             for it in "${items[@]}"; do
@@ -90,7 +100,6 @@ jobs:
         with:
           name: RoboKeep ${{ steps.ver.outputs.v }}
           files: RoboKeep-*.zip
-          generate_release_notes: true
-          append_body: true
+          generate_release_notes: false
           body: ${{ steps.vtlinks.outputs.body }}
           fail_on_unmatched_files: true

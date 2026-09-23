@@ -59,6 +59,8 @@ public sealed class SettingsViewModel : ObservableObject
     public bool PreflightEnabled { get => _s.PreflightEnabled; set { _s.PreflightEnabled = value; OnPropertyChanged(); } }
     public bool NotificationsEnabled { get => _s.NotificationsEnabled; set { _s.NotificationsEnabled = value; OnPropertyChanged(); } }
     public bool MinimizeToTray { get => _s.MinimizeToTray; set { _s.MinimizeToTray = value; OnPropertyChanged(); } }
+    /// <summary>Controllo aggiornamenti: null (mai chiesto) vale come spento nella casella.</summary>
+    public bool UpdateCheck { get => _s.UpdateCheck == true; set { _s.UpdateCheck = value; OnPropertyChanged(); } }
     public bool StartMinimized { get => _s.StartMinimized; set { _s.StartMinimized = value; OnPropertyChanged(); } }
 
     public bool EmailEnabled { get => _s.Email.Enabled; set { _s.Email.Enabled = value; OnPropertyChanged(); } }

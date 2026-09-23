@@ -46,3 +46,12 @@ Preferisci tenere tutto insieme all'eseguibile — per esempio su una chiavetta?
 da quel momento configurazione, log ed esiti restano nella cartella dell'app.
 
 > Pronto? Nel capitolo *Il tuo primo backup* crei il primo job in pochi clic.
+
+## Aggiornare
+
+Quando esiste una versione nuova (se hai attivato il controllo), nella finestra principale
+compare un avviso con **Novità**, **Scarica** e **Ignora**. Scarica prende il pacchetto giusto
+per la tua installazione e lo mette in Download. Poi fai tu: chiudi RoboKeep, estrai lo zip
+**sopra** la cartella attuale (sovrascrivendo), riapri. Impostazioni, job, cronologia e log
+stanno in `%APPDATA%\RoboKeep` e non vengono toccati. Se un'attività pianificata punta a quella
+cartella, dopo la sostituzione usa la versione nuova da sola.

@@ -168,12 +168,13 @@ des tâches par glisser-déposer · 5 langues · mode portable
 
 ## Confidentialité
 
-RoboKeep ne collecte **rien**. Pas de télémétrie, pas d'analytique, pas de vérification de mises
-à jour, pas de compte, aucun trafic réseau à moins que *vous* ne configuriez les rapports par
-e-mail (serveur SMTP de votre choix — TLS activé par défaut). Tout ce que l'application sait —
-réglages des tâches, résultats, historique, journaux — vit dans des fichiers locaux sur votre PC,
-du JSON lisible que vous pouvez inspecter à tout moment. Les journaux contiennent les chemins des
-fichiers copiés et sont nettoyés automatiquement après 30 jours (configurable).
+RoboKeep ne collecte **rien**. Pas de télémétrie — seulement une recherche de mises à jour facultative
+(une requête à GitHub, désactivée tant que vous ne dites pas oui) — pas d'analytique, pas de compte,
+aucun trafic réseau à moins que *vous* ne configuriez les rapports par e-mail (serveur SMTP de votre
+choix — TLS activé par défaut). Tout ce que l'application sait — réglages des tâches, résultats,
+historique, journaux — vit dans des fichiers locaux sur votre PC, du JSON lisible que vous pouvez
+inspecter à tout moment. Les journaux contiennent les chemins des fichiers copiés et sont nettoyés
+automatiquement après 30 jours (configurable).
 
 ## Pour les utilisateurs avancés
 

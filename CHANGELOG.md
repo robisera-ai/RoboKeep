@@ -6,6 +6,13 @@ All notable changes to RoboKeep are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+- **Optional update check.** On first start RoboKeep asks whether it may check GitHub for a
+  newer version (one HTTPS request at startup, at most once a day, no data of yours). When one
+  exists, a banner offers *What's new*, *Download* (the right package for your install, into
+  Downloads, size-verified) and *Ignore*. You replace the files yourself; RoboKeep
+  never updates itself. Settings has the switch and a *Check now* button.
+
 ### Changed
 - **Monthly schedules can run on the last day of the month.** A fixed day 29-31 only fires in
   months that have it (the 31st: seven times a year); the new **Last day of the month** option, in

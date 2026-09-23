@@ -29,6 +29,12 @@ Da qui attivi le **notifiche toast** e i comportamenti del **tray** (riduci nel 
 
 La soglia **«avvisa se un backup è fermo da N giorni»** fa comparire un'icona d'allerta sui job che non girano da troppo tempo. Imposta **0** per non ricevere mai questo avviso.
 
+## Aggiornamenti
+
+La casella **«Cerca aggiornamenti automaticamente»** decide se RoboKeep controlla da solo l'esistenza di una versione nuova: una richiesta a `api.github.com` all'avvio, al massimo una volta al giorno. Se trova una versione più recente, l'avviso compare nella finestra principale con **Novità**, **Scarica** e **Ignora**. Spenta, RoboKeep non contatta mai GitHub di sua iniziativa.
+
+Nella scheda **Info** trovi anche il pulsante **«Controlla ora»**, che fa la verifica subito — funziona anche a casella spenta, perché è un'azione esplicita che decidi tu lì per lì. Il risultato compare sotto il pulsante: *sei aggiornato*, oppure *è disponibile la versione X* (con l'avviso che compare nella finestra principale), oppure *controllo non riuscito* se manca la rete o GitHub non è raggiungibile.
+
 ## Esporta e importa configurazione
 
 Puoi salvare tutta la tua configurazione in un file e ricaricarla altrove.

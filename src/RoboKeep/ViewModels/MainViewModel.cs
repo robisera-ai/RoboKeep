@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Text;
 using System.Windows.Input;
 using System.Windows.Threading;
@@ -56,6 +57,7 @@ public sealed class MainViewModel : ObservableObject
             LogCleared?.Invoke();
         });
         RefreshCommand = new RelayCommand(ReloadLastResults);
+
 
         Loc.Instance.PropertyChanged += (_, _) =>
         {
@@ -121,6 +123,22 @@ public sealed class MainViewModel : ObservableObject
         get => _healthBannerText;
         set => SetField(ref _healthBannerText, value);
     }
+
+    // --- Aggiornamenti ---
+    /// <summary>Esito di un controllo aggiornamenti, per chi lo mostra (Impostazioni).</summary>
+    public enum UpdateCheckOutcome { Skipped, UpToDate, Available, Unreachable, NotPublic }
+
+    private UpdateInfo? _update;
+    private string _updateBannerText = "";
+    private bool _updateBannerVisible;
+    private bool _updateBusy;
+
+    public string UpdateBannerText { get => _updateBannerText; private set => SetField(ref _updateBannerText, value); }
+    public bool UpdateBannerVisible { get => _updateBannerVisible; set => SetField(ref _updateBannerVisible, value); }
+    /// <summary>Scaricamento in corso: i pulsanti del banner si disattivano.</summary>
+    public bool UpdateActionsEnabled => !_updateBusy;
+    /// <summary>Versione nuova trovata dall'ultimo controllo (vuota se nessuna): la mostrano le Impostazioni.</summary>
+    public string LatestUpdateVersion => _update?.Latest.ToString() ?? "";
 
     private bool _hasFaultedDisks;
     /// <summary>true se c'e' almeno un disco a riposo per errore hardware: mostra "Riattiva dischi".</summary>
@@ -561,6 +579,98 @@ public sealed class MainViewModel : ObservableObject
             IsBusy = false;
             SetRunning(RunKind.None);
         }
+    }
+
+    /// <summary>Controlla se esiste una versione nuova. <paramref name="force"/> ignora la cadenza
+    /// e la versione ignorata (pulsante "Controlla ora"). Restituisce: null = errore,
+    /// false = aggiornato, true = nuova. Data e versione ignorata stanno in update-state.json:
+    /// qui la configurazione non si salva mai, perche' le Impostazioni possono essere aperte con
+    /// modifiche non confermate.</summary>
+    public async Task<UpdateCheckOutcome> CheckForUpdatesAsync(bool force)
+    {
+        var state = _host.UpdateState.Load();
+        if (!force && (_host.Config.Settings.UpdateCheck != true || !UpdateChecker.IsDue(state.LastCheck, DateTime.Now)))
+            return UpdateCheckOutcome.Skipped;
+
+        var (info, status) = await UpdateChecker.FetchWithStatusAsync();
+        // La data si aggiorna anche quando il controllo non riesce: senza rete il tentativo non
+        // va rifatto a ogni avvio.
+        _host.UpdateState.Save(state with { LastCheck = DateTime.Now });
+        if (info is null)
+            return status == FetchStatus.NotFound ? UpdateCheckOutcome.NotPublic : UpdateCheckOutcome.Unreachable;
+
+        if (!UpdateChecker.IsNewer(info.Latest, UpdateChecker.Current, force ? null : state.IgnoredVersion))
+        {
+            UpdateBannerVisible = false;
+            return UpdateCheckOutcome.UpToDate;
+        }
+        _update = info;
+        OnPropertyChanged(nameof(LatestUpdateVersion));
+        UpdateBannerText = string.Format(Loc.Instance["Upd_Available"], info.Latest, UpdateChecker.Current);
+        UpdateBannerVisible = true;
+        return UpdateCheckOutcome.Available;
+    }
+
+    /// <summary>Apre nel browser la pagina della release trovata (pulsante "Novita'").</summary>
+    public void OpenUpdatePage() => OpenUrl(_update?.ReleaseUrl);
+
+    public void IgnoreUpdate()
+    {
+        if (_update is null) return;
+        var state = _host.UpdateState.Load();
+        _host.UpdateState.Save(state with { IgnoredVersion = _update.Latest.ToString() });
+        UpdateBannerVisible = false;
+    }
+
+    public async Task DownloadUpdateAsync()
+    {
+        if (_update is null || _updateBusy) return;
+        var selfContained = InstallKind.IsSelfContained(AppContext.BaseDirectory);
+        var url = selfContained ? _update.SelfContainedUrl : _update.FrameworkDependentUrl;
+        var size = selfContained ? _update.SelfContainedSize : _update.FrameworkDependentSize;
+        var folder = DownloadsFolder();
+        var target = Path.Combine(folder, InstallKind.AssetName(_update.Latest, selfContained));
+
+        SetUpdateBusy(true);
+        try
+        {
+            // Nessun annullamento: il banner non ha un pulsante per fermarlo e DownloadAsync
+            // gestisce da se' gli errori (niente file a meta').
+            var progress = new Progress<double>(p => UpdateBannerText = string.Format(Loc.Instance["Upd_Downloading"], (int)(p * 100)));
+            var ok = await UpdateChecker.DownloadAsync(url, target, size, progress, CancellationToken.None);
+            UpdateBannerText = ok
+                ? string.Format(Loc.Instance["Upd_Downloaded"], folder)
+                : Loc.Instance["Upd_DownloadFailed"];
+            if (ok) RevealInExplorer(target);
+        }
+        finally { SetUpdateBusy(false); }
+    }
+
+    private void SetUpdateBusy(bool busy)
+    {
+        _updateBusy = busy;
+        OnPropertyChanged(nameof(UpdateActionsEnabled)); // disattiva la riga di pulsanti sotto il banner
+    }
+
+    /// <summary>Cartella Download dell'utente; se non esiste, %TEMP% (lo dice il banner).</summary>
+    private static string DownloadsFolder()
+    {
+        var dl = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+        return Directory.Exists(dl) ? dl : Path.GetTempPath();
+    }
+
+    /// <summary>Apre un indirizzo nel browser. Solo https: l'indirizzo viene da una risposta di
+    /// rete, e UseShellExecute su uno schema qualunque aprirebbe programmi o file locali.</summary>
+    private static void OpenUrl(string? url)
+    {
+        if (string.IsNullOrEmpty(url)) return;
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps) return;
+        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(uri.AbsoluteUri) { UseShellExecute = true }); } catch { }
+    }
+
+    private static void RevealInExplorer(string path)
+    {
+        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", $"/select,\"{path}\"") { UseShellExecute = true }); } catch { }
     }
 }
 

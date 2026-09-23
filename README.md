@@ -160,11 +160,12 @@ automation · drag & drop job ordering · 5 languages · portable mode
 
 ## Privacy
 
-RoboKeep collects **nothing**. No telemetry, no analytics, no update checks, no account, no
-network traffic at all unless *you* configure email reports (SMTP server of your choice — TLS
-on by default). Everything the app knows — job settings, results, history, logs — lives in
-local files on your PC, readable JSON you can inspect at any time. Logs contain the paths of
-the files that were copied and are cleaned up automatically after 30 days (configurable).
+RoboKeep collects **nothing**. No telemetry — only an optional update check (one request to GitHub,
+off until you say yes) — no analytics, no account, no network traffic at all unless *you* configure
+email reports (SMTP server of your choice — TLS on by default). Everything the app knows — job
+settings, results, history, logs — lives in local files on your PC, readable JSON you can inspect at
+any time. Logs contain the paths of the files that were copied and are cleaned up automatically
+after 30 days (configurable).
 
 ## For power users
 

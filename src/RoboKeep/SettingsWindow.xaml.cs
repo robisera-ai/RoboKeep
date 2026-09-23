@@ -18,11 +18,13 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
     private readonly SettingsViewModel _vm;
     private readonly SchedulerService _scheduler = new();
     private readonly CredentialService _credentials;
+    private readonly MainViewModel _main;
 
-    public SettingsWindow(AppHost host)
+    public SettingsWindow(AppHost host, MainViewModel main)
     {
         InitializeComponent();
         _host = host;
+        _main = main;
         _credentials = host.Credentials;
         _vm = new SettingsViewModel(host.Config.Settings, host.Config.Credentials, host.Credentials);
         DataContext = _vm;
@@ -37,6 +39,27 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
         // Versione mostrata nella scheda Info (es. 1.0.0), letta dai metadati dell'assembly.
         var v = Assembly.GetExecutingAssembly().GetName().Version;
         AppVersionText.Text = v is null ? "1.0.0" : $"{v.Major}.{v.Minor}.{v.Build}";
+    }
+
+    // "Controlla ora": controllo immediato, saltando la cadenza di 24 ore e la versione ignorata.
+    // Il banner (se c'e' una versione nuova) compare nella finestra principale: qui solo l'esito.
+    private async void OnCheckUpdatesNow(object sender, RoutedEventArgs e)
+    {
+        CheckUpdatesButton.IsEnabled = false;
+        try
+        {
+            var r = await _main.CheckForUpdatesAsync(force: true);
+            UpdateStatusText.Text = r switch
+            {
+                MainViewModel.UpdateCheckOutcome.Available => string.Format(Loc.Instance["Set_UpdateAvailable"], _main.LatestUpdateVersion),
+                MainViewModel.UpdateCheckOutcome.UpToDate => Loc.Instance["Set_UpdateUpToDate"],
+                MainViewModel.UpdateCheckOutcome.NotPublic => Loc.Instance["Set_UpdateNotPublic"],
+                _ => Loc.Instance["Set_UpdateFailed"],
+            };
+        }
+        // async void: un'eccezione non gestita qui farebbe cadere l'applicazione.
+        catch { UpdateStatusText.Text = Loc.Instance["Set_UpdateFailed"]; }
+        finally { CheckUpdatesButton.IsEnabled = true; }
     }
 
     // Apre un link esterno (es. il repository) nel browser predefinito.

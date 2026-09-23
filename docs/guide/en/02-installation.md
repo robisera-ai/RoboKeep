@@ -45,3 +45,12 @@ mode**: create an empty file named `portable.flag` next to `RoboKeep.exe`, and f
 configuration, logs, and results stay in the app folder.
 
 > Ready? In *Your first backup* you'll create your first job in a few clicks.
+
+## Updating
+
+When a new version exists (if you turned the check on), the main window shows a banner with
+**What's new**, **Download** and **Ignore**. Download grabs the right package for your install
+and puts it in Downloads. Then it's up to you: close RoboKeep, extract the zip **over** the
+current folder (overwriting it), reopen. Settings, jobs, history and logs live in
+`%APPDATA%\RoboKeep` and are left untouched. If a scheduled task points at that folder, it picks
+up the new version on its own after the replacement.

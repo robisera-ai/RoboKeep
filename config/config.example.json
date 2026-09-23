@@ -11,6 +11,7 @@
     "notificationsEnabled": true,
     "minimizeToTray": false,
     "startMinimized": false,
+    "updateCheck": null,
     "credentialScope": "Machine",
     "email": {
       "enabled": false,

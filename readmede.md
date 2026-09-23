@@ -166,12 +166,12 @@ Ziehen und Ablegen ordnen · 5 Sprachen · Portabler Modus
 
 ## Datenschutz
 
-RoboKeep sammelt **nichts**. Keine Telemetrie, keine Analyse, keine Update-Prüfungen, kein Konto,
-überhaupt kein Netzwerkverkehr, es sei denn, *Sie* richten E-Mail-Berichte ein (SMTP-Server Ihrer
-Wahl — TLS standardmäßig an). Alles, was die App weiß — Auftragseinstellungen, Ergebnisse,
-Verlauf, Protokolle — liegt in lokalen Dateien auf Ihrem PC, lesbares JSON, das Sie jederzeit
-einsehen können. Protokolle enthalten die Pfade der kopierten Dateien und werden nach 30 Tagen
-automatisch bereinigt (konfigurierbar).
+RoboKeep sammelt **nichts**. Keine Telemetrie — nur eine optionale Updateprüfung (eine Anfrage an
+GitHub, aus, bis Sie zustimmen) — keine Analyse, kein Konto, überhaupt kein Netzwerkverkehr, es sei
+denn, *Sie* richten E-Mail-Berichte ein (SMTP-Server Ihrer Wahl — TLS standardmäßig an). Alles, was
+die App weiß — Auftragseinstellungen, Ergebnisse, Verlauf, Protokolle — liegt in lokalen Dateien auf
+Ihrem PC, lesbares JSON, das Sie jederzeit einsehen können. Protokolle enthalten die Pfade der
+kopierten Dateien und werden nach 30 Tagen automatisch bereinigt (konfigurierbar).
 
 ## Für Fortgeschrittene
 
