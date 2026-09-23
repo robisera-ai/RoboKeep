@@ -85,49 +85,80 @@
                     </StackPanel>
                 </TabItem>
 
-                <!-- Passo 2: tipo dischi -->
+                <!-- Passo 2: comportamento -->
                 <TabItem>
                     <StackPanel>
                         <TextBlock Text="{l:Tr Wiz_Step2Title}" Style="{StaticResource StepTitle}"/>
-                        <TextBlock Text="{l:Tr Wiz_SourceKind}" Style="{StaticResource Label}"/>
-                        <ComboBox SelectedIndex="{Binding SourceStorageIndex}">
-                            <ComboBoxItem Content="{l:Tr Wiz_Ssd}"/>
-                            <ComboBoxItem Content="{l:Tr Wiz_Hdd}"/>
-                            <ComboBoxItem Content="{l:Tr Wiz_Usb}"/>
-                            <ComboBoxItem Content="{l:Tr Wiz_Network}"/>
-                        </ComboBox>
-                        <TextBlock Text="{l:Tr Wiz_DestKind}" Style="{StaticResource Label}"/>
-                        <ComboBox SelectedIndex="{Binding DestStorageIndex}">
-                            <ComboBoxItem Content="{l:Tr Wiz_Ssd}"/>
-                            <ComboBoxItem Content="{l:Tr Wiz_Hdd}"/>
-                            <ComboBoxItem Content="{l:Tr Wiz_Usb}"/>
-                            <ComboBoxItem Content="{l:Tr Wiz_Network}"/>
-                        </ComboBox>
-                        <TextBlock Style="{StaticResource Hint}" Text="{l:Tr Wiz_KindHint}" Margin="0,12,0,0"/>
-                    </StackPanel>
-                </TabItem>
-
-                <!-- Passo 3: comportamento -->
-                <TabItem>
-                    <StackPanel>
-                        <TextBlock Text="{l:Tr Wiz_Step3Title}" Style="{StaticResource StepTitle}"/>
                         <TextBlock Text="{l:Tr Wiz_SyncQuestion}" Style="{StaticResource Label}"/>
                         <RadioButton Content="{l:Tr Wiz_SyncMirror}" IsChecked="{Binding Mirror}" GroupName="sync"/>
                         <RadioButton Content="{l:Tr Wiz_SyncAccumulate}" IsChecked="{Binding Accumulate}" GroupName="sync" Margin="0,4,0,0"/>
                         <CheckBox Content="{l:Tr Wiz_Large}" IsChecked="{Binding HasLargeFiles}" Margin="0,18,0,0"/>
+                        <CheckBox Content="{l:Tr Wiz_KeepVersions}" IsChecked="{Binding KeepVersions}" Margin="0,18,0,0"/>
+                        <TextBlock Style="{StaticResource Hint}" Text="{l:Tr Wiz_KeepVersionsHint}"/>
+                        <StackPanel Orientation="Horizontal" Margin="24,6,0,0">
+                            <TextBlock Text="{l:Tr Wiz_VersionsToKeep}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <ui:TextBox Text="{Binding VersionsToKeep, UpdateSourceTrigger=PropertyChanged, FallbackValue=10}"
+                                        IsEnabled="{Binding KeepVersions}" Width="90"/>
+                        </StackPanel>
+                        <ui:InfoBar Margin="0,6,0,0" Severity="Warning" IsClosable="False"
+                                    IsOpen="{Binding ShowVersionsNote, Mode=OneWay}" Message="{l:Tr Preflight_NoHardLink}"/>
+                        <!-- Pianificazione: stessi controlli dell'editor (frequenza, giorno, orario). -->
+                        <TextBlock Text="{l:Tr Wiz_Schedule}" Style="{StaticResource Label}" Margin="0,18,8,4"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                <TextBlock Text="{l:Tr Editor_ScheduleFreq}" Style="{StaticResource Label}" Margin="0,0,8,4"/>
+                                <ComboBox SelectedIndex="{Binding ScheduleIndex}">
+                                    <ComboBoxItem Content="{l:Tr Sched_KindNone}"/>
+                                    <ComboBoxItem Content="{l:Tr Sched_Daily}"/>
+                                    <ComboBoxItem Content="{l:Tr Sched_Weekly}"/>
+                                    <ComboBoxItem Content="{l:Tr Sched_KindMonthly}"/>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="0,0,8,0">
+                                <TextBlock Text="{l:Tr Sched_Time}" Style="{StaticResource Label}" Margin="0,0,8,4"/>
+                                <ui:TextBox Text="{Binding ScheduleTime, UpdateSourceTrigger=PropertyChanged}"
+                                            IsEnabled="{Binding ScheduleEnabled}"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <StackPanel Visibility="{Binding ShowWeekDay, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="{l:Tr Editor_ScheduleDay}" Style="{StaticResource Label}" Margin="0,0,8,4"/>
+                                    <ComboBox SelectedIndex="{Binding ScheduleWeekDayIndex}">
+                                        <ComboBoxItem Content="{l:Tr Day_Mon}"/>
+                                        <ComboBoxItem Content="{l:Tr Day_Tue}"/>
+                                        <ComboBoxItem Content="{l:Tr Day_Wed}"/>
+                                        <ComboBoxItem Content="{l:Tr Day_Thu}"/>
+                                        <ComboBoxItem Content="{l:Tr Day_Fri}"/>
+                                        <ComboBoxItem Content="{l:Tr Day_Sat}"/>
+                                        <ComboBoxItem Content="{l:Tr Day_Sun}"/>
+                                    </ComboBox>
+                                </StackPanel>
+                                <StackPanel Visibility="{Binding ShowMonthDay, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="{l:Tr Editor_ScheduleMonthDay}" Style="{StaticResource Label}" Margin="0,0,8,4"/>
+                                    <ui:TextBox Text="{Binding ScheduleMonthDay, UpdateSourceTrigger=PropertyChanged, FallbackValue=1}"
+                                                IsEnabled="{Binding ScheduleFixedDayEnabled}"/>
+                                    <CheckBox Content="{l:Tr Sched_LastDay}" IsChecked="{Binding ScheduleLastDayOfMonth}" Margin="0,6,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Style="{StaticResource Hint}" Text="{l:Tr Editor_ScheduleHint}"/>
                     </StackPanel>
                 </TabItem>
 
-                <!-- Passo 4: casi speciali -->
+                <!-- Passo 3: casi speciali -->
                 <TabItem>
                     <StackPanel>
-                        <TextBlock Text="{l:Tr Wiz_Step4Title}" Style="{StaticResource StepTitle}"/>
+                        <TextBlock Text="{l:Tr Wiz_Step3Title}" Style="{StaticResource StepTitle}"/>
                         <CheckBox Content="{l:Tr Wiz_Frozen}" IsChecked="{Binding HasFrozen}"/>
                         <TextBlock Style="{StaticResource Hint}" Text="{l:Tr Wiz_FrozenHint}"/>
                         <TextBlock Text="{l:Tr Wiz_FrozenPatterns}" Style="{StaticResource Label}"/>
                         <ui:TextBox Text="{Binding FrozenPatternsText, UpdateSourceTrigger=PropertyChanged}"
                                     IsEnabled="{Binding HasFrozen}" AcceptsReturn="True" Height="56"
-                                    TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" PlaceholderText="*.vc"/>
+                                    TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" PlaceholderText="*.pst"/>
                         <CheckBox Content="{l:Tr Wiz_Perms}" IsChecked="{Binding PreservePermissions}" Margin="0,14,0,0"/>
                         <TextBlock Style="{StaticResource Hint}" Text="{l:Tr Wiz_PermsHint}"/>
                         <CheckBox Content="{l:Tr Wiz_Excl}" IsChecked="{Binding ExcludeCommonTemp}" Margin="0,14,0,0"/>
@@ -136,18 +167,36 @@
                     </StackPanel>
                 </TabItem>
 
-                <!-- Passo 5: riepilogo -->
+                <!-- Passo 4: riepilogo -->
                 <TabItem>
                     <StackPanel>
-                        <TextBlock Text="{l:Tr Wiz_Step5Title}" Style="{StaticResource StepTitle}"/>
+                        <TextBlock Text="{l:Tr Wiz_Step4Title}" Style="{StaticResource StepTitle}"/>
                         <TextBlock Text="{l:Tr Wiz_Summary}" Style="{StaticResource Label}"/>
                         <Border CornerRadius="6" Background="#1E1E1E" Padding="10">
                             <TextBox Text="{Binding CommandPreview, Mode=OneWay}" IsReadOnly="True" Style="{x:Null}"
                                      FontFamily="Cascadia Mono, Consolas" FontSize="12" TextWrapping="Wrap"
                                      Background="#1E1E1E" Foreground="#9CDCFE" BorderThickness="0" MinHeight="90"/>
                         </Border>
+                        <!-- Share di rete: credenziale gia' salvata -> solo un avviso; altrimenti si chiede qui. -->
                         <ui:InfoBar Margin="0,12,0,0" Severity="Informational" IsClosable="False"
-                                    IsOpen="{Binding ShowNetCredNote}" Message="{l:Tr Wiz_NetCredNote}"/>
+                                    IsOpen="{Binding ShowNetCredExisting, Mode=OneWay}" Message="{Binding NetCredIntro, Mode=OneWay}"/>
+                        <StackPanel Visibility="{Binding ShowNetCredFields, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="{Binding NetCredIntro, Mode=OneWay}" Style="{StaticResource Hint}" Margin="0,12,0,0"/>
+                            <Grid Margin="0,6,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                    <TextBlock Text="{l:Tr Wiz_NetCredUser}" Style="{StaticResource Label}" Margin="0,0,8,4"/>
+                                    <ui:TextBox Text="{Binding NetUser, UpdateSourceTrigger=PropertyChanged}"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{l:Tr Wiz_NetCredPassword}" Style="{StaticResource Label}" Margin="0,0,8,4"/>
+                                    <PasswordBox x:Name="NetPasswordBox"/>
+                                </StackPanel>
+                            </Grid>
+                        </StackPanel>
                     </StackPanel>
                 </TabItem>
             </TabControl>
@@ -162,7 +211,7 @@
                     <ui:Button Content="{l:Tr Wiz_Next}" Width="120" Appearance="Primary" Click="OnNext"
                                IsEnabled="{Binding CanGoNext}"
                                Visibility="{Binding ShowNext, Converter={StaticResource BoolToVis}}"/>
-                    <ui:Button Content="{l:Tr Wiz_Open}" Width="170" Appearance="Primary" Icon="{ui:SymbolIcon Edit24}" Click="OnOpen"
+                    <ui:Button Content="{l:Tr Wiz_Open}" Width="170" Appearance="Primary" Icon="{ui:SymbolIcon Save24}" Click="OnOpen"
                                Visibility="{Binding ShowOpen, Converter={StaticResource BoolToVis}}"/>
                 </StackPanel>
             </Grid>

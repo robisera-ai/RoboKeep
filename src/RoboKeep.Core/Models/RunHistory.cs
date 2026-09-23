@@ -30,6 +30,17 @@ public sealed record RunHistoryEntry(
     public const string KindBackup = "backup";
     public const string KindVerify = "verify";
     public const string KindSkipped = "skipped";
+    public const string KindCancelled = "cancelled";
+
+    /// <summary>true se il job e' stato annullato dall'utente a meta'. Ha il suo log (quel che
+    /// era stato fatto fino a li'), non e' un successo e non e' nemmeno un errore.</summary>
+    [JsonIgnore]
+    public bool IsCancelled => Kind == KindCancelled;
+
+    /// <summary>Voce per un job annullato dall'utente: Success = false ma <see cref="IsCancelled"/>
+    /// permette alla cronologia di scriverlo come "annullato" invece che come errore.</summary>
+    public static RunHistoryEntry ForCancelled(string jobName, DateTime startedAt, string? logPath) =>
+        new(jobName, KindCancelled, startedAt, DateTime.Now, false, 0, 0, 0, 0, 0, 0, logPath);
 
     /// <summary>true se il job non è stato eseguito perché il disco atteso non era collegato.
     /// Non guardare <see cref="Success"/> per capirlo: una voce saltata ha Success = true di

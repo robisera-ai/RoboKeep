@@ -43,7 +43,7 @@ public static class SchtasksArgs
             ScheduleKind.Monthly => $"""
       <ScheduleByMonth>
         <DaysOfMonth>
-          <Day>{Math.Clamp(job.ScheduleMonthDay, 1, 31)}</Day>
+          <Day>{(job.ScheduleLastDayOfMonth ? "Last" : Math.Clamp(job.ScheduleMonthDay, 1, 31).ToString())}</Day>
         </DaysOfMonth>
         <Months>
           <January /><February /><March /><April /><May /><June />

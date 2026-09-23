@@ -13,6 +13,10 @@ accesso, aggiungi una credenziale.
 
 Una credenziale è la terna **host, utente e password** con cui RoboKeep si autentica sul server.
 
+La via più corta è la **creazione guidata**: se sorgente o destinazione sono una share di rete,
+l'ultimo passo chiede utente e password e crea la credenziale al posto tuo (se per quel server ne
+esiste già una, la usa senza chiedere nulla). Altrimenti, a mano:
+
 1. Apri **Impostazioni** e vai alla gestione delle credenziali di rete.
 2. Aggiungi una credenziale indicando l'host (il nome del server), l'utente e la password.
 3. Salva.

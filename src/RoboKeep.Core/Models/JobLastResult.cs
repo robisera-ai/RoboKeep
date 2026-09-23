@@ -12,4 +12,10 @@ public sealed class JobLastResult
     public long FilesFailed { get; set; }
     public long DirsFailed { get; set; }
     public DateTime FinishedAt { get; set; }
+
+    /// <summary>true se l'ultimo run è stato interrotto da un errore hardware del disco (o non è
+    /// partito perché il disco era a riposo): la UI lo mostra con un'icona dedicata e il consiglio
+    /// di controllare il supporto.</summary>
+    public bool HardwareError { get; set; }
+    public string? HardwareErrorDetail { get; set; }
 }

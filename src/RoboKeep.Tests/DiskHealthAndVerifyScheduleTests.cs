@@ -92,8 +92,28 @@ public sealed class DiskHealthAndVerifyScheduleTests : IDisposable
             .RunJobAsync(new BackupJob { Name = "T", Source = Src, Destination = Dst }, progress: new Collect(lines));
 
         Assert.True(result.Success);
+        Assert.NotEmpty(result.HealthWarnings);
         var recap = lines.FindIndex(l => l.StartsWith("======"));
         Assert.True(lines.FindLastIndex(l => l.Contains("7 ") && l.Contains("SMART")) > recap);
+    }
+
+    [Fact]
+    public async Task HealthWarnings_GoToEmailOnlyWhenNewerThanLastRun_ButAlwaysToTheLog()
+    {
+        var results = new LastResultStore(Path.Combine(_root, "lastresults.json"));
+        var eventTime = new DateTime(2026, 9, 1, 12, 0, 0); // vecchio evento, sempre lo stesso
+        var runner = NewRunner(history: null, diskEvents: _ => new DiskEventSummary(3, 0, 0, eventTime), results);
+        var job = new BackupJob { Name = "T", Source = Src, Destination = Dst };
+
+        var lines1 = new List<string>();
+        var r1 = await runner.RunJobAsync(job, progress: new Collect(lines1));
+        Assert.NotEmpty(r1.HealthWarnings);                          // prima volta: in email
+        Assert.Contains(lines1, l => l.Contains("SMART"));
+
+        var lines2 = new List<string>();
+        var r2 = await runner.RunJobAsync(job, progress: new Collect(lines2));
+        Assert.Empty(r2.HealthWarnings);                             // stesso evento gia' segnalato: niente email
+        Assert.Contains(lines2, l => l.Contains("SMART"));           // ma nel log resta
     }
 
     // ---- verifica periodica ----
@@ -242,14 +262,15 @@ public sealed class DiskHealthAndVerifyScheduleTests : IDisposable
         Assert.Equal(0, saved.SnapshotKeepCount);
     }
 
-    private BackupRunner NewRunner(RunHistoryStore? history, Func<string?, DiskEventSummary> diskEvents)
+    private BackupRunner NewRunner(RunHistoryStore? history, Func<string?, DiskEventSummary> diskEvents,
+        LastResultStore? results = null)
     {
         var config = new AppConfig();
         config.Settings.LogRoot = Path.Combine(_root, "logs");
         config.Settings.TempRoot = Path.Combine(_root, "temp");
         var creds = new CredentialService(config.Settings.CredentialScope);
         return new BackupRunner(config, new RobocopyRunner(detectMedia: _ => DiskMedia.Unknown),
-            new LogService(config.Settings), new EmailService(creds), creds,
+            new LogService(config.Settings), new EmailService(creds), creds, results,
             history: history, diskEvents: diskEvents);
     }
 

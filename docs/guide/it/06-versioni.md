@@ -29,9 +29,16 @@ Le istantanee non si accumulano all'infinito. Nel job decidi la **ritenzione**:
 - tieni le versioni fino a un'**età massima in giorni**.
 
 Le più vecchie vengono rimosse in automatico, senza che tu debba pensarci. Un job nuovo parte
-con **30 versioni**; puoi cambiare il numero, o mettere **0** per non avere limite (sconsigliato:
+con **10 versioni**; puoi cambiare il numero, o mettere **0** per non avere limite (sconsigliato:
 il disco si riempie di voci e rallenta). Il limite di età non tocca mai la versione più recente:
 quella è il tuo backup attuale, anche se i file non cambiano da mesi.
+
+## Attivare le versioni su un job che esisteva già
+
+Se un job faceva finora una copia semplice e attivi le versioni, il backup che hai già non va
+perso né rifatto: al primo avvio RoboKeep **adotta la copia esistente come prima versione**,
+spostandola in una cartella datata (uno spostamento sullo stesso disco, istantaneo, senza
+ricopiare nulla). Da quel momento ogni versione costa solo ciò che è cambiato. Lo scrive nel log.
 
 ## Niente versioni doppie
 

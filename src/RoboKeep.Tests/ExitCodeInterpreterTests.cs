@@ -2,6 +2,7 @@ using RoboKeep.Core.Services;
 
 namespace RoboKeep.Tests;
 
+[Collection(CultureCollection.Name)]
 public class ExitCodeInterpreterTests
 {
     [Fact]

@@ -1,9 +1,16 @@
 {
   "settings": {
-    "logRoot": "D:\\Progetti\\RoboKeep\\logs",
-    "tempRoot": "D:\\Progetti\\RoboKeep\\temp",
+    "language": null,
+    "logRoot": "",
+    "tempRoot": "",
     "compressLogs": true,
     "logRetentionDays": 30,
+    "staleAfterDays": 7,
+    "preflightEnabled": true,
+    "minFreeSpaceMb": 1024,
+    "notificationsEnabled": true,
+    "minimizeToTray": false,
+    "startMinimized": false,
     "credentialScope": "Machine",
     "email": {
       "enabled": false,
@@ -34,27 +41,43 @@
       "excludeOlder": false,
       "copyAll": false,
       "multiThread": 8,
+      "unbufferedIO": false,
+      "restartable": false,
+      "logAllFiles": false,
       "excludeFiles": [ "*.tmp", "~$*" ],
       "excludeDirs": [ "cache" ],
+      "forceCopyFiles": [],
+      "forceCopySmart": false,
       "retries": 1,
       "wait": 5,
       "enabled": true,
-      "credentialId": null
+      "credentialId": null,
+      "versioned": true,
+      "snapshotKeepCount": 10,
+      "snapshotMaxAgeDays": 0,
+      "useVss": false,
+      "schedule": "Daily",
+      "scheduleTime": "21:00",
+      "scheduleWeekDay": "Monday",
+      "scheduleMonthDay": 1,
+      "verifyAfterRun": true,
+      "verifyEveryDays": 7,
+      "interPacketGapMs": 0,
+      "destinationVolumeId": null,
+      "destinationVolumeLabel": null
     },
     {
       "name": "Cartella-di-rete",
       "source": "\\\\nas01\\backup$\\Reparti\\Acquisti",
       "destination": "\\\\srv-backup\\backup$\\Reparti\\Acquisti",
       "mirror": true,
-      "excludeOlder": false,
       "copyAll": true,
       "multiThread": 16,
-      "excludeFiles": [],
-      "excludeDirs": [],
       "retries": 3,
       "wait": 15,
       "enabled": true,
-      "credentialId": "nas-ufficio"
+      "credentialId": "nas-ufficio",
+      "interPacketGapMs": 25
     }
   ]
 }

@@ -105,6 +105,51 @@ sempre un backup bloccato.
 - **Esporta/importa configurazione**, con validazione, copia di sicurezza automatica e
   riallineamento delle attività pianificate.
 
+### v1.5 — Rotazione dei dischi: l'identità, non la lettera
+
+Due dischi esterni alternati prendono la stessa lettera. Un mirror sul disco sbagliato cancella
+quello che trova. La difesa è identificare il disco per **volume GUID** (assegnato alla
+formattazione) e saltare, senza toccare nulla, quando il disco nello slot non è quello del job.
+"Saltato" è un terzo esito: né successo né errore, con la sua icona neutra e exit code 0 per
+l'attività pianificata.
+
+### v1.6 — Guida in-app
+
+Diciassette capitoli in italiano e inglese, resi nativamente in WPF. Il versioning imparò a
+saltare un file illeggibile nel vecchio snapshot: **scelta poi rovesciata** (v1.7).
+
+### v1.7 — La salute del disco viene prima del backup
+
+Nata da un incidente reale: un box USB che faceva sparire il disco a metà scrittura, 17 settori
+scritti a metà, la `$Mft` rovinata — e RoboKeep che aggravava con 8 thread su un 5400 rpm, ore
+di copia sopra centinaia di errori CRC e nessun avviso nel mese in cui il registro eventi di
+Windows già lo diceva. Le decisioni:
+
+- **Fermarsi al primo errore hardware** (Win32 23/27/1117) invece di aggirarlo: si uccide
+  robocopy prima del retry; il clone hard-link non salta più il file. Continuare a scrivere su un
+  disco che segnala errori fisici è la scelta sbagliata, sempre. Il disco resta a riposo per la
+  sessione; dalla versione successiva il riposo è persistente (`faulted-disks.json`, per identità
+  di volume, scadenza 7 giorni) e si toglie con un pulsante esplicito.
+- **Tenere sveglio il PC** con una power request (non `SetThreadExecutionState`, legata al
+  thread: il codice async lo cambia).
+- **Tetto `/MT:2` sui dischi meccanici**, riconosciuti via `IOCTL_STORAGE_QUERY_PROPERTY`
+  (nessuna elevazione). Un bridge USB muto senza TRIM è trattato da HDD: limitare un SSD costa
+  minuti, non limitare un HDD lo maltratta.
+- **Niente snapshot se nulla è cambiato**: un'anteprima `/L` decide. Fatta **senza `/MT`**:
+  in multi-thread robocopy conta come copiate tutte le cartelle e dà exit 0 anche con una
+  cartella nuova.
+- **Salute dal registro eventi**, non dallo SMART: lo SMART di un disco USB non si legge senza
+  privilegi di amministratore, e Windows senza elevazione dichiara "Healthy" un disco con settori
+  pendenti. Il registro Sistema conserva blocchi danneggiati, errori di I/O e scritture perse, e
+  si legge da utente normale. Avvisa, non blocca: nomina i dischi per lettera e numero.
+- **Forza copia con `/IM`**: i robocopy recenti classificano "modificato" un file riscritto con
+  stessa data e dimensione e lo saltano nonostante `/IS /IT`. Nei job versionati i file da
+  forzare vengono prima scollegati dallo snapshot: la passata sovrascrive sul posto.
+- **Verifica periodica** (7 giorni) invece che a ogni backup, con un log a sé per ogni verifica.
+- Lezione di processo: un test asseriva su testo localizzato mentre un altro cambiava la lingua
+  del processo in parallelo; la release è fallita in CI al primo tentativo. Ora nessun codice
+  riconosce righe dal loro testo, e i test che toccano la lingua girano in una collection isolata.
+
 ## Qualità del processo
 
 Ogni tappa segue lo stesso ciclo: **brainstorming → spec scritta → piano di implementazione →

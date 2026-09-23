@@ -12,16 +12,63 @@ public class JobWizardPlannerTests
         Destination = @"D:\dst",
     };
 
-    [Theory]
-    [InlineData(StorageKind.Ssd, StorageKind.Ssd, 16)]
-    [InlineData(StorageKind.Ssd, StorageKind.Hdd, 2)]
-    [InlineData(StorageKind.Ssd, StorageKind.Usb, 4)]
-    [InlineData(StorageKind.Ssd, StorageKind.Network, 8)]
-    [InlineData(StorageKind.Network, StorageKind.Network, 8)]
-    [InlineData(StorageKind.Hdd, StorageKind.Network, 2)]
-    public void RecommendedThreads_TakesMinOfBothEnds(StorageKind src, StorageKind dst, int expected)
+    [Fact]
+    public void Threads_AreEightAndLeftToTheRuntimeCap()
     {
-        Assert.Equal(expected, JobWizardPlanner.RecommendedThreads(src, dst));
+        // Il tipo di disco non si chiede piu': lo rileva StorageProbe a runtime e limita a 2 se
+        // serve. Il wizard mette il valore buono per SSD/rete.
+        var job = JobWizardPlanner.BuildJob(new JobWizardAnswers { Name = "j", Source = @"C:\s", Destination = @"E:\d" });
+        Assert.Equal(8, job.MultiThread);
+    }
+
+    [Fact]
+    public void NetworkPath_GetsMoreRetries_DetectedFromThePath()
+    {
+        var local = JobWizardPlanner.BuildJob(new JobWizardAnswers { Name = "j", Source = @"C:\s", Destination = @"E:\d" });
+        var unc = JobWizardPlanner.BuildJob(new JobWizardAnswers { Name = "j", Source = @"C:\s", Destination = @"\\nas\share\d" });
+        Assert.Equal((1, 5), (local.Retries, local.Wait));
+        Assert.Equal((3, 10), (unc.Retries, unc.Wait));
+    }
+
+    [Fact]
+    public void KeepVersions_TurnsOnVersioningWithDefaultRetention()
+    {
+        var job = JobWizardPlanner.BuildJob(new JobWizardAnswers { Name = "j", Source = @"C:\s", Destination = @"E:\d", KeepVersions = true });
+        Assert.True(job.Versioned);
+        Assert.Equal(BackupJob.DefaultSnapshotKeepCount, job.SnapshotKeepCount); // lo stesso default dell'editor
+        Assert.False(JobWizardPlanner.BuildJob(new JobWizardAnswers { Name = "j", Source = @"C:\s", Destination = @"E:\d" }).Versioned);
+    }
+
+    [Fact]
+    public void KeepVersions_UsesTheChosenCount()
+    {
+        var job = JobWizardPlanner.BuildJob(new JobWizardAnswers { Name = "j", Source = @"C:\s", Destination = @"E:\d", KeepVersions = true, VersionsToKeep = 7 });
+        Assert.Equal(7, job.SnapshotKeepCount);
+        // Un valore assurdo (0 o negativo) non produce una ritenzione illimitata: torna il default.
+        var bad = JobWizardPlanner.BuildJob(new JobWizardAnswers { Name = "j", Source = @"C:\s", Destination = @"E:\d", KeepVersions = true, VersionsToKeep = 0 });
+        Assert.Equal(BackupJob.DefaultSnapshotKeepCount, bad.SnapshotKeepCount);
+    }
+
+    [Fact]
+    public void Schedule_IsAppliedWithFrequencyDayAndTime()
+    {
+        var daily = JobWizardPlanner.BuildJob(new JobWizardAnswers { Name = "j", Source = @"C:\s", Destination = @"E:\d", Schedule = ScheduleKind.Daily, ScheduleTime = "22:30" });
+        Assert.Equal(ScheduleKind.Daily, daily.Schedule);
+        Assert.Equal("22:30", daily.ScheduleTime);
+
+        var weekly = JobWizardPlanner.BuildJob(new JobWizardAnswers { Name = "j", Source = @"C:\s", Destination = @"E:\d", Schedule = ScheduleKind.Weekly, ScheduleWeekDay = DayOfWeek.Friday });
+        Assert.Equal(ScheduleKind.Weekly, weekly.Schedule);
+        Assert.Equal(DayOfWeek.Friday, weekly.ScheduleWeekDay);
+
+        var monthly = JobWizardPlanner.BuildJob(new JobWizardAnswers { Name = "j", Source = @"C:\s", Destination = @"E:\d", Schedule = ScheduleKind.Monthly, ScheduleMonthDay = 15 });
+        Assert.Equal(ScheduleKind.Monthly, monthly.Schedule);
+        Assert.Equal(15, monthly.ScheduleMonthDay);
+        Assert.False(monthly.ScheduleLastDayOfMonth);
+
+        var last = JobWizardPlanner.BuildJob(new JobWizardAnswers { Name = "j", Source = @"C:\s", Destination = @"E:\d", Schedule = ScheduleKind.Monthly, ScheduleLastDayOfMonth = true });
+        Assert.True(last.ScheduleLastDayOfMonth);
+
+        Assert.Equal(ScheduleKind.None, JobWizardPlanner.BuildJob(new JobWizardAnswers { Name = "j", Source = @"C:\s", Destination = @"E:\d" }).Schedule);
     }
 
     [Fact]
@@ -75,7 +122,7 @@ public class JobWizardPlannerTests
     [Fact]
     public void BuildJob_Network_RaisesRetriesAndWait()
     {
-        var a = Base(); a.DestStorage = StorageKind.Network;
+        var a = Base(); a.Destination = @"\\nas\share\dst";
         var job = JobWizardPlanner.BuildJob(a);
         Assert.Equal(3, job.Retries);
         Assert.Equal(10, job.Wait);

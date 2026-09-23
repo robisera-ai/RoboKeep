@@ -4,6 +4,53 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- **Monthly schedules can run on the last day of the month.** A fixed day 29-31 only fires in
+  months that have it (the 31st: seven times a year); the new **Last day of the month** option, in
+  the editor and in the wizard, fires on the 28th/29th/30th/31st as appropriate.
+- **The wizard is simpler and asks what matters.** The "disk type" step is gone (the disk type is
+  detected at run time since 1.7); instead it asks whether to keep previous versions and how many,
+  and when to run automatically (daily, weekly or monthly, with day and time), like the editor.
+- **Turning versions on for an existing job no longer recopies everything.** The plain copy
+  already in the destination is adopted as the first version (moved into a dated folder, an
+  instant same-disk rename), so the first versioned run copies only what changed and no loose
+  duplicate is left behind.
+- **A cancelled job still leaves a log** with what was done up to the interruption, and a
+  "cancelled" entry in the history that opens it.
+- **The wizard asks for network credentials when it sees a share.** If the source or destination
+  is a UNC path, the last step asks for user and password, saves the credential (DPAPI-encrypted)
+  and assigns it to the job; an existing credential for that server is reused without asking.
+- **The wizard saves the job as soon as it finishes** and selects it in the list; it no longer
+  opens the editor afterwards (use Edit if you want to fine-tune). Before, the job was only
+  created by the editor's Save, so leaving the editor lost the job you had just set up.
+- **New jobs now keep 10 versions by default** (was 30 in 1.7.0), in the editor and in the wizard
+  alike; the wizard also lets you type the number. Saved jobs keep their own value.
+- **A disk rested after a hardware error stays rested across sessions** — scheduled backups
+  included — until you click the new **Re-enable disks** button (shown only when needed) or 7
+  days pass. Disks are tracked by volume identity, not letter; a job skipped because its disk is
+  rested is reported as "Not run", not as "interrupted".
+- **Hardware errors have their own health state**: a dedicated icon and tooltip in the job list
+  (with the error detail), their own count in the warning banner, and a result email titled
+  "HARDWARE ERROR" that leads with what happened and what to check. Only one email per episode is
+  sent, not one per skipped job per night.
+- **A hardware error found during integrity verification now marks the job** with the hardware
+  health state (icon, tooltip with the detail) and fails the scheduled task, instead of leaving the
+  job "OK" with the failure buried in the verification log.
+- **Disk-health warnings from the Windows event log now reach you by email** — once per new
+  event, and even when the backup itself succeeded (with "only on error" enabled): they are the
+  early warning that precedes a failure. Previews never send email.
+
+### Fixed
+- Tests that change the process language now run in an isolated, non-parallel collection: the
+  intermittent CI failure that broke the first v1.7.0 release attempt can't recur.
+- Guide chapter 08 and `config/config.example.json` brought up to date (the example was missing
+  every field added since 1.0).
+
+### Docs
+- `ANALISI.md` now covers v1.5–v1.7 and the engineering decisions behind the hardware-safety work.
+
 ## [1.7.0] - 2026-09-21 — Hardware safety of the backup media
 
 This release puts the physical health of your disks first. It grew out of a real incident: an

@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using RoboKeep.Core;
 using RoboKeep.Core.Models;
 using RoboKeep.Core.Services;
 
@@ -36,6 +37,51 @@ public sealed class HardwareSafetyTests : IDisposable
             "ping -n 30 127.0.0.1 >nul\r\n" +
             "echo FINE-NON-RAGGIUNTA\r\n");
         return path;
+    }
+
+    /// <summary>Finto robocopy che lavora un po' (stampa righe) e poi resta appeso: serve a provare
+    /// l'annullamento a meta'.</summary>
+    private string FakeRobocopyThatHangs()
+    {
+        var path = Path.Combine(_root, "fake-robocopy-hang.cmd");
+        File.WriteAllText(path,
+            "@echo off\r\n" +
+            "echo     Nuovo file  		      12	primo.txt\r\n" +
+            "echo     Nuovo file  		      34	secondo.txt\r\n" +
+            "ping -n 30 127.0.0.1 >nul\r\n" +
+            "echo FINE-NON-RAGGIUNTA\r\n");
+        return path;
+    }
+
+    [Fact]
+    public async Task Cancelled_Job_StillWritesALog_AndAHistoryEntry()
+    {
+        var config = new AppConfig();
+        config.Settings.LogRoot = Path.Combine(_root, "logs");
+        config.Settings.TempRoot = Path.Combine(_root, "temp");
+        config.Settings.CompressLogs = false;
+        var creds = new CredentialService(config.Settings.CredentialScope);
+        var history = new RunHistoryStore(Path.Combine(_root, "history.json"));
+        var runner = new BackupRunner(config,
+            new RobocopyRunner(FakeRobocopyThatHangs(), detectMedia: _ => DiskMedia.Unknown),
+            new LogService(config.Settings), new EmailService(creds), creds, history: history);
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2)); // annulla a lavoro iniziato
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => runner.RunJobAsync(Job(), ct: cts.Token));
+
+        // Il log c'e', contiene quel che era stato fatto e dice che e' stato annullato.
+        var log = Assert.Single(Directory.GetFiles(Path.Combine(_root, "logs"), "*.log", SearchOption.AllDirectories));
+        var text = File.ReadAllText(log);
+        Assert.Contains("primo.txt", text);
+        Assert.Contains("secondo.txt", text);
+        Assert.DoesNotContain("FINE-NON-RAGGIUNTA", text);
+        Assert.Contains(CoreLoc.S("Run_CancelledRecap").Split('{')[0].Trim(), text);
+
+        // E la cronologia ha una voce "annullato" che lo apre.
+        var entry = Assert.Single(history.List("T"));
+        Assert.True(entry.IsCancelled);
+        Assert.False(entry.Success);
+        Assert.Equal(log, entry.LogPath);
     }
 
     private BackupJob Job(string name = "T") => new()
@@ -118,9 +164,60 @@ public sealed class HardwareSafetyTests : IDisposable
 
         Assert.True(second.HardwareError);
         Assert.False(second.Success);
+        Assert.True(second.NotStarted);
+        Assert.Null(second.LogPath); // niente log: il disco non e' stato toccato
         // Il finto robocopy impiegherebbe secondi anche solo per partire ed essere ucciso: un
         // ritorno immediato prova che il disco non e' stato piu' toccato.
         Assert.True(sw.Elapsed < TimeSpan.FromSeconds(1), $"il secondo job e' partito: {sw.Elapsed}");
+
+        // E non solo il secondo: un --run-all notturno con cinque job sullo stesso disco li salta
+        // tutti, non e' il primo salto a "consumare" il riposo del disco.
+        var third = await runner.RunJobAsync(Job("Terzo"), progress: progress);
+        Assert.True(third.NotStarted);
+        Assert.Null(third.LogPath);
+    }
+
+    [Fact]
+    public async Task HardwareError_RestsTheDisk_AcrossRunners_AndIsPersistedInLastResult()
+    {
+        var config = new AppConfig();
+        config.Settings.LogRoot = Path.Combine(_root, "logs");
+        config.Settings.TempRoot = Path.Combine(_root, "temp");
+        var creds = new CredentialService(config.Settings.CredentialScope);
+        var results = new LastResultStore(Path.Combine(_root, "lastresults.json"));
+        var faulted = new FaultedDiskStore(Path.Combine(_root, "faulted-disks.json"));
+        BackupRunner NewRunner() => new(config,
+            new RobocopyRunner(FakeRobocopyWithCrcError(), detectMedia: _ => DiskMedia.Unknown),
+            new LogService(config.Settings), new EmailService(creds), creds, results, faultedDisks: faulted);
+
+        var first = await NewRunner().RunJobAsync(Job("Primo"));
+        Assert.True(first.HardwareError);
+        var saved = results.Load()["Primo"];
+        Assert.True(saved.HardwareError);                       // la UI lo sapra' anche domani
+        Assert.Contains("Win32 23", saved.HardwareErrorDetail);
+        var entry = Assert.Single(faulted.Load(DateTime.Now));  // il volume della temp e' a riposo
+        // Email disabilitata: nessuno e' stato avvisato, e la voce non deve sostenere il contrario.
+        Assert.False(entry.Notified);
+
+        // Un runner NUOVO (= un altro processo, es. l'attivita' pianificata) non tocca il disco.
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var second = await NewRunner().RunJobAsync(Job("Secondo"));
+        Assert.True(second.HardwareError);
+        Assert.True(second.NotStarted);
+        Assert.Equal(CoreLoc.S("Hw_NotStartedStatus"), second.Status); // non "INTERROTTO": non e' partito
+        Assert.True(results.Load()["Secondo"].HardwareError);
+        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(1));
+        Assert.Null(second.LogPath);                            // niente log: il disco non e' stato toccato
+        // Email ancora disabilitata: il tentativo di avvisare non e' andato a buon fine, quindi
+        // l'episodio resta da raccontare (la prossima volta che l'email funzionera').
+        Assert.False(Assert.Single(faulted.Load(DateTime.Now)).Notified);
+
+        faulted.Clear();                                        // "ho controllato il disco"
+        var third = await NewRunner().RunJobAsync(Job("Terzo")); // riparte (e rifallisce sul finto robocopy)
+        Assert.True(third.HardwareError);
+        Assert.False(third.NotStarted);
+        Assert.NotNull(third.LogPath);                          // e' partito davvero: ha il suo log
+        Assert.Single(faulted.Load(DateTime.Now));              // e il disco e' tornato a riposo
     }
 
     // ---- Tetto ai thread ----

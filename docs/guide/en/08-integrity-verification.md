@@ -39,5 +39,5 @@ backup**. It's slow by design: certainty is paid for in reading. So enable autom
 **only where it truly counts** — your critical data — and run it on demand elsewhere when you need
 it.
 
-> Every verification lands in the *history*, with outcome and duration; a double-click opens the
-> full log inside the app.
+> Every verification lands in the *history*, with outcome, duration and its own log: a
+> double-click opens it in Notepad.

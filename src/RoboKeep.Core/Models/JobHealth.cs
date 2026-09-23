@@ -17,6 +17,9 @@ public enum BackupHealth
     Waiting,
     /// <summary>Esiste un file di lock residuo: il job era in corso all'ultima chiusura anomala.</summary>
     Interrupted,
+    /// <summary>Ultimo run interrotto da un errore hardware del disco (o non partito perché il
+    /// disco è a riposo): non "riprova", controlla il supporto.</summary>
+    HardwareError,
 }
 
 /// <summary>Salute di un job (nome + stato).</summary>

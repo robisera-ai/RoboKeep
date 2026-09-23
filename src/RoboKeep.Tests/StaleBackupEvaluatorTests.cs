@@ -113,6 +113,19 @@ public class StaleBackupEvaluatorTests
     }
 
     [Fact]
+    public void HardwareError_BeatsPlainFailure()
+    {
+        var results = new Dictionary<string, JobLastResult>
+        {
+            ["hw"] = new() { JobName = "hw", Success = false, HardwareError = true, FinishedAt = DateTime.Now },
+            ["ko"] = new() { JobName = "ko", Success = false, FinishedAt = DateTime.Now },
+        };
+        var h = StaleBackupEvaluator.Evaluate(new[] { "hw", "ko" }, results, 7, DateTime.Now);
+        Assert.Equal(BackupHealth.HardwareError, h[0].Health);
+        Assert.Equal(BackupHealth.Failed, h[1].Health);
+    }
+
+    [Fact]
     public void OnlyAwayJob_IsWaiting_PresentJob_IsStale()
     {
         // La distinzione dipende solo dall'insieme: A a riposo (Waiting), B col disco presente (Stale).

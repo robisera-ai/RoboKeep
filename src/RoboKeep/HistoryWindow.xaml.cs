@@ -50,10 +50,12 @@ public partial class HistoryWindow : Wpf.Ui.Controls.FluentWindow
         };
         var outcome = e.IsSkipped
             ? Loc.Instance["Hist_OutcomeSkipped"]
+            : e.IsCancelled ? Loc.Instance["Run_Cancelled"]
             : e.Success ? "OK" : Loc.Instance["Run_Error"];
         var counts = e.Kind switch
         {
             RunHistoryEntry.KindSkipped => Loc.Instance["Hist_CountsSkipped"],
+            RunHistoryEntry.KindCancelled => Loc.Instance["Hist_CountsCancelled"],
             RunHistoryEntry.KindVerify => string.Format(Loc.Instance["Hist_CountsVerify"], e.FilesCopied, e.FilesFailed, e.FilesSkipped),
             _ => string.Format(Loc.Instance["Hist_CountsBackup"], e.FilesCopied, e.FilesSkipped, e.FilesFailed + e.DirsFailed),
         };

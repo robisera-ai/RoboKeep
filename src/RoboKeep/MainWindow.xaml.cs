@@ -349,19 +349,48 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private void OnNewJob(object sender, RoutedEventArgs e)
     {
         // Creazione guidata; "Salta" restituisce ResultJob = null -> editor vuoto come prima.
-        var wizard = new JobWizardWindow { Owner = this };
+        var wizard = new JobWizardWindow(_host.Config.Credentials) { Owner = this };
         if (wizard.ShowDialog() != true)
             return;
 
-        var job = wizard.ResultJob ?? new BackupJob { Name = Loc.Instance["Editor_NewJobName"] };
+        if (wizard.ResultJob is { } fromWizard)
+        {
+            // Credenziale di rete chiesta dal wizard: si crea qui (cifratura DPAPI) e si assegna
+            // al job, cosi' il backup su share funziona senza passare da Impostazioni.
+            if (wizard.NewCredential is { } cred)
+            {
+                var entry = new CredentialEntry
+                {
+                    Id = NetworkShare.SuggestId(cred.Share, _host.Config.Credentials.Select(c => c.Id)),
+                    Host = cred.Share,
+                    User = cred.User,
+                    PasswordProtected = _host.Credentials.Protect(cred.Password),
+                };
+                _host.Config.Credentials.Add(entry);
+                fromWizard.CredentialId = entry.Id;
+            }
+
+            // Il wizard ha gia' raccolto tutto: il job si salva SUBITO (lista, config, attivita'
+            // pianificata, disco associato) e resta selezionato nella lista. Niente editor dopo:
+            // chi vuole rivederlo apre le impostazioni. Prima il salvataggio dipendeva dal "Salva"
+            // dell'editor: chi usciva convinto di aver finito perdeva il job appena creato.
+            JobVolumeAssociation.ToCurrentDisk(fromWizard);
+            var jvm = new JobViewModel(fromWizard);
+            _vm.Jobs.Add(jvm);
+            _vm.SelectedJob = jvm;
+            _vm.PersistJobs();
+            TrySyncJobTask(fromWizard);
+            return;
+        }
+
+        // "Salta e configura a mano": editor vuoto, il job nasce solo con "Salva".
+        var job = new BackupJob { Name = Loc.Instance["Editor_NewJobName"] };
         if (ShowEditor(job))
         {
             // Job nuovo → lo leghiamo al disco attualmente collegato: è il lato "job nuovo"
-            // della regola di associazione. Se la destinazione arriva dal wizard, il setter
-            // dell'editor non è scattato e senza questo il job nascerebbe senza protezione.
-            // Solo se non già associato: cambiando la destinazione nell'editor l'ha già fatto.
-            // In modifica (OnEditJob) NON si associa mai: riassociare un job esistente è la
-            // falla che la regola impedisce.
+            // della regola di associazione. Solo se non già associato: cambiando la destinazione
+            // nell'editor l'ha già fatto. In modifica (OnEditJob) NON si associa mai: riassociare
+            // un job esistente è la falla che la regola impedisce.
             if (string.IsNullOrEmpty(job.DestinationVolumeId))
                 JobVolumeAssociation.ToCurrentDisk(job);
             _vm.Jobs.Add(new JobViewModel(job));
@@ -411,6 +440,19 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     {
         var win = new HistoryWindow(_host, _vm.SelectedJob?.Name) { Owner = this };
         win.ShowDialog();
+    }
+
+    // Riattiva i dischi messi a riposo per un errore hardware: l'utente dichiara di averli
+    // controllati. Conferma esplicita: riabilitare un disco che sta cedendo e' peggio del blocco.
+    private void OnReenableDisks(object sender, RoutedEventArgs e)
+    {
+        // La conferma elenca i dischi: con piu' dischi in rotazione si deve sapere QUALE si riabilita.
+        var ok = System.Windows.MessageBox.Show(
+            _vm.FaultedDisksSummary + Environment.NewLine + Environment.NewLine + Loc.Instance["Main_ReenableDisksConfirm"],
+            Loc.Instance["Main_ReenableDisks"], MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        if (ok != MessageBoxResult.Yes) return;
+        _host.FaultedDisks.Clear();
+        _vm.ReloadLastResults();
     }
 
     // Apre in Esplora risorse la cartella dei log salvati. I log stanno nella cartella dati

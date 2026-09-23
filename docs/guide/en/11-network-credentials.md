@@ -13,6 +13,10 @@ credential.
 
 A credential is the **host, user, and password** trio RoboKeep uses to authenticate to the server.
 
+The shortest route is the **wizard**: if the source or destination is a network share, its last
+step asks for user and password and creates the credential for you (if one already exists for
+that server, it is used without asking). Otherwise, by hand:
+
 1. Open **Settings** and go to network credential management.
 2. Add a credential with the host (the server name), the user, and the password.
 3. Save.

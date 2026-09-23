@@ -5,25 +5,13 @@ namespace RoboKeep.Core.Services;
 /// <summary>Traduce le risposte della creazione guidata in un <see cref="BackupJob"/> (funzione pura).</summary>
 public static class JobWizardPlanner
 {
-    /// <summary>Thread /MT consigliati = minimo tra sorgente e destinazione
-    /// (HDD=2, USB=4, Rete=8, SSD=16): un HDD coinvolto abbassa sempre il parallelismo.</summary>
-    public static int RecommendedThreads(StorageKind source, StorageKind dest) =>
-        Math.Min(Rank(source), Rank(dest));
-
-    private static int Rank(StorageKind kind) => kind switch
-    {
-        StorageKind.Hdd => 2,
-        StorageKind.Usb => 4,
-        StorageKind.Network => 8,
-        StorageKind.Ssd => 16,
-        _ => 8,
-    };
-
     public static BackupJob BuildJob(JobWizardAnswers a)
     {
         ArgumentNullException.ThrowIfNull(a);
 
-        var onNetwork = a.SourceStorage == StorageKind.Network || a.DestStorage == StorageKind.Network;
+        // La rete si riconosce dal percorso, non da una domanda. Il tipo di disco non si chiede:
+        // StorageProbe lo rileva a runtime e limita i thread sui dischi meccanici.
+        var onNetwork = VolumeIdentity.IsNetworkPath(a.Source) || VolumeIdentity.IsNetworkPath(a.Destination);
 
         var job = new BackupJob
         {
@@ -31,7 +19,7 @@ public static class JobWizardPlanner
             Source = (a.Source ?? "").Trim(),
             Destination = (a.Destination ?? "").Trim(),
             Mirror = a.Mirror,
-            MultiThread = RecommendedThreads(a.SourceStorage, a.DestStorage),
+            MultiThread = 8,
             Restartable = a.HasLargeFiles,
             UnbufferedIO = false,
             CopyAll = a.PreservePermissions,
@@ -44,6 +32,14 @@ public static class JobWizardPlanner
             ForceCopySmart = false,
             Enabled = true,
             UseVss = a.HasOpenFiles,
+            Versioned = a.KeepVersions,
+            // Il wizard non offre "illimitato": un valore non positivo torna al default.
+            SnapshotKeepCount = a.VersionsToKeep > 0 ? a.VersionsToKeep : BackupJob.DefaultSnapshotKeepCount,
+            Schedule = a.Schedule,
+            ScheduleTime = string.IsNullOrWhiteSpace(a.ScheduleTime) ? "21:00" : a.ScheduleTime.Trim(),
+            ScheduleWeekDay = a.ScheduleWeekDay,
+            ScheduleMonthDay = Math.Clamp(a.ScheduleMonthDay, 1, 31),
+            ScheduleLastDayOfMonth = a.ScheduleLastDayOfMonth,
         };
 
         if (a.ExcludeCommonTemp)

@@ -122,6 +122,23 @@ public sealed class MainViewModel : ObservableObject
         set => SetField(ref _healthBannerText, value);
     }
 
+    private bool _hasFaultedDisks;
+    /// <summary>true se c'e' almeno un disco a riposo per errore hardware: mostra "Riattiva dischi".</summary>
+    public bool HasFaultedDisks
+    {
+        get => _hasFaultedDisks;
+        private set => SetField(ref _hasFaultedDisks, value);
+    }
+
+    private string _faultedDisksSummary = "";
+    /// <summary>Elenco leggibile dei dischi a riposo (etichetta, lettera, da quando, motivo): nel
+    /// tooltip del pulsante e nella conferma, cosi' con piu' dischi si sa quale si sta riabilitando.</summary>
+    public string FaultedDisksSummary
+    {
+        get => _faultedDisksSummary;
+        private set => SetField(ref _faultedDisksSummary, value);
+    }
+
     private JobViewModel? _selectedJob;
     public JobViewModel? SelectedJob
     {
@@ -301,7 +318,7 @@ public sealed class MainViewModel : ObservableObject
         var interrupted = JobLockFile.GetInterrupted(_host.LockFolder, names);
 
         // Il dettaglio per job sta nel tooltip dell'icona sulla riga; il banner riporta solo i conteggi.
-        int nInterrupted = 0, nFailed = 0, nStale = 0;
+        int nInterrupted = 0, nFailed = 0, nStale = 0, nHardware = 0;
         for (int i = 0; i < Jobs.Count && i < health.Count; i++)
         {
             var jvm = Jobs[i];
@@ -318,7 +335,15 @@ public sealed class MainViewModel : ObservableObject
 
             var h = health[i].Health;
             jvm.Health = h;
-            if (h == BackupHealth.Failed)
+            // L'errore hardware viene prima del fallimento generico: il consiglio non e'
+            // "riprova" ma "controlla il supporto", e il dettaglio (codice, percorso) aiuta.
+            if (h == BackupHealth.HardwareError)
+            {
+                var detail = results.TryGetValue(jvm.Name, out var hr) ? hr.HardwareErrorDetail ?? "" : "";
+                jvm.HealthTooltip = string.Format(Loc.Instance["Health_Hardware"], detail).Trim();
+                nHardware++;
+            }
+            else if (h == BackupHealth.Failed)
             {
                 jvm.HealthTooltip = Loc.Instance["Health_Failed"];
                 nFailed++;
@@ -350,8 +375,18 @@ public sealed class MainViewModel : ObservableObject
 
         var parts = new List<string>();
         if (nInterrupted > 0) parts.Add(string.Format(Loc.Instance["Health_CountInterrupted"], nInterrupted));
+        if (nHardware > 0) parts.Add(string.Format(Loc.Instance["Health_CountHardware"], nHardware));
         if (nFailed > 0) parts.Add(string.Format(Loc.Instance["Health_CountFailed"], nFailed));
         if (nStale > 0) parts.Add(string.Format(Loc.Instance["Health_CountStale"], nStale));
+
+        // Prima del rientro anticipato: il pulsante "Riattiva dischi" dipende dai dischi a
+        // riposo, non dal banner — un disco bloccato senza job in allarme va comunque liberato.
+        var faulted = _host.FaultedDisks.Load(DateTime.Now);
+        HasFaultedDisks = faulted.Count > 0;
+        FaultedDisksSummary = string.Join(Environment.NewLine, faulted.Select(d =>
+            string.Format(Loc.Instance["Main_ReenableDisksItem"],
+                string.IsNullOrEmpty(d.Label) ? RoboKeep.Core.CoreLoc.S("Volume_Unknown") : d.Label,
+                d.Root, d.Since.ToString("g"), d.Detail)));
 
         if (parts.Count == 0)
         {

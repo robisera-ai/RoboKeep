@@ -45,6 +45,70 @@ public sealed class VersioningLoadAndForceCopyTests : IDisposable
 
     // ---- niente snapshot se nulla e' cambiato ----
 
+    // ---- adozione di una copia semplice preesistente ----
+
+    [Fact]
+    public async Task ExistingPlainMirror_IsAdoptedAsFirstVersion_WithoutRecopying()
+    {
+        // Ieri: job senza versioni -> i file stanno direttamente nella destinazione.
+        File.WriteAllText(Path.Combine(Src, "a.txt"), "aaa");
+        Directory.CreateDirectory(Path.Combine(Src, "sub"));
+        File.WriteAllText(Path.Combine(Src, "sub", "b.txt"), "bbb");
+        var plain = new BackupJob { Name = "V", Source = Src, Destination = Dst, Mirror = true };
+        await new RobocopyRunner().RunAsync(plain);
+        Assert.True(File.Exists(Path.Combine(Dst, "a.txt")));
+
+        // Oggi: stesso job, versioni attivate. La copia di ieri deve diventare la prima versione
+        // (spostata, non ricopiata) e la nuova versione deve costare solo cio' che e' cambiato.
+        File.WriteAllText(Path.Combine(Src, "a.txt"), "AAA-nuovo");
+        var lines = new List<string>();
+        var versioned = new BackupJob { Name = "V", Source = Src, Destination = Dst, Versioned = true };
+        var run = await new SnapshotService(new RobocopyRunner()).RunVersionedAsync(versioned, new Collect(lines));
+
+        Assert.True(run.Result.Success);
+        var snaps = Snapshots();
+        Assert.Equal(2, snaps.Length);                                             // adottata + nuova
+        Assert.Equal("aaa", File.ReadAllText(Path.Combine(Dst, snaps[0], "a.txt")));     // la versione di ieri
+        Assert.Equal("bbb", File.ReadAllText(Path.Combine(Dst, snaps[0], "sub", "b.txt")));
+        Assert.Equal("AAA-nuovo", File.ReadAllText(Path.Combine(Dst, snaps[1], "a.txt"))); // quella di oggi
+        Assert.False(File.Exists(Path.Combine(Dst, "a.txt")));                     // niente piu' file sciolti
+        Assert.Equal(1, run.Result.FilesCopied);                                   // solo il file cambiato
+        Assert.Contains(lines, l => l.Contains(snaps[0]) && l.Contains("[versioning]"));
+    }
+
+    [Fact]
+    public async Task DestinationWithForeignItems_IsNotAdopted_AndLeftAlone()
+    {
+        // Nella destinazione c'e' anche roba che nella sorgente non esiste: non e' una copia di
+        // questo job. Non si sposta niente e la prima versione parte da zero.
+        // Stessa cartella di primo livello ("Docs") ma con dentro un file che la sorgente non ha:
+        // il controllo deve guardare in profondita', non solo i nomi di primo livello.
+        Directory.CreateDirectory(Path.Combine(Src, "Docs"));
+        File.WriteAllText(Path.Combine(Src, "Docs", "a.txt"), "aaa");
+        Directory.CreateDirectory(Path.Combine(Dst, "Docs", "Foto di famiglia"));
+        File.WriteAllText(Path.Combine(Dst, "Docs", "a.txt"), "vecchio contenuto"); // stesso percorso: ok
+        File.WriteAllText(Path.Combine(Dst, "Docs", "Foto di famiglia", "x.jpg"), "jpg");
+
+        var lines = new List<string>();
+        var job = new BackupJob { Name = "V", Source = Src, Destination = Dst, Versioned = true };
+        var run = await new SnapshotService(new RobocopyRunner()).RunVersionedAsync(job, new Collect(lines));
+
+        Assert.True(run.Result.Success);
+        Assert.Single(Snapshots());                                                   // solo la nuova
+        Assert.True(File.Exists(Path.Combine(Dst, "Docs", "Foto di famiglia", "x.jpg"))); // intatta, dov'era
+        Assert.Equal("vecchio contenuto", File.ReadAllText(Path.Combine(Dst, "Docs", "a.txt"))); // nemmeno questo si tocca
+        Assert.Contains(lines, l => l.Contains("Foto di famiglia"));                       // e il log dice perche'
+    }
+
+    [Fact]
+    public async Task EmptyDestination_IsNotAdopted()
+    {
+        File.WriteAllText(Path.Combine(Src, "a.txt"), "aaa");
+        var job = new BackupJob { Name = "V", Source = Src, Destination = Dst, Versioned = true };
+        await new SnapshotService(new RobocopyRunner()).RunVersionedAsync(job);
+        Assert.Single(Snapshots()); // nessuna versione "adottata" da una cartella vuota
+    }
+
     [Fact]
     public async Task UnchangedSource_DoesNotCreateASecondSnapshot()
     {

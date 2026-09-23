@@ -6,14 +6,17 @@ save (the source folder) and **where** (the destination folder, usually on an ex
 ## Step 1 — Start the guided setup
 
 In the top toolbar, click **New**. The wizard opens and asks a few questions in plain language:
-which folder to copy, to which destination, and whether files stay open while you work. Based on
+which folder to copy, where to, whether to keep previous versions and how many, when to run it
+automatically (daily, weekly or monthly, and at what time), and a few special cases (open files,
+very large files). It doesn't ask what kind of disk you have: it detects that on its own. Based on
 your answers, it picks the best settings for you.
 
 If you'd rather do everything by hand, you can skip the wizard and fill in the editor directly.
 
-## Step 2 — Check the settings
+## Step 2 — Check the settings (if you like)
 
-Before saving, the editor shows the main choices:
+When the wizard finishes, the job is **already saved** and appears in the list. To review or
+fine-tune the choices, select it and click **Edit**: the editor shows everything, including:
 
 - **Mirror**: the destination becomes an exact copy of the source. Careful: in mirror mode, what
   you delete from the source is also removed from the destination. If you only want to add and

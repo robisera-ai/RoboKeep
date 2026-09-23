@@ -10,7 +10,9 @@ partire.
 
 - **Giornaliero** — ogni giorno all'ora che indichi.
 - **Settimanale** — nei giorni della settimana che scegli, all'ora indicata.
-- **Mensile** — una volta al mese, nel giorno e all'ora che imposti.
+- **Mensile** — una volta al mese, nel giorno e all'ora che imposti. Attenzione ai giorni 29, 30
+  e 31: Windows li fa scattare solo nei mesi che li hanno (il 31 gira sette volte l'anno). Per
+  "a fine mese" spunta **Ultimo giorno del mese**: scatta il 28, 29, 30 o 31 a seconda del mese.
 
 Ogni job ha il *suo* ritmo: i documenti ogni sera, le foto la domenica, gli archivi una volta al
 mese. Salvi il job e la pianificazione è attiva.

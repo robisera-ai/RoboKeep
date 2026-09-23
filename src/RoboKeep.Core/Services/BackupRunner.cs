@@ -20,11 +20,19 @@ public sealed class BackupRunner
     private readonly string? _vssSessionRoot;
     private readonly RunHistoryStore? _history;
     private readonly Func<string?, DiskEventSummary> _diskEvents;
+    private readonly FaultedDiskStore? _faultedDisks;
 
     // Dischi (radici, es. "E:\") che in questa sessione hanno segnalato un errore hardware: i job
     // successivi che li toccano non partono. Un --run-all notturno con cinque job sullo stesso
-    // disco non deve martellarlo cinque volte dopo il primo errore.
+    // disco non deve martellarlo cinque volte dopo il primo errore. Il set in memoria copre la
+    // sessione; _faultedDisks lo fa durare anche nei processi di domani (attivita' pianificata).
     private readonly HashSet<string> _faultedRoots = new(StringComparer.OrdinalIgnoreCase);
+
+    // Dischi per cui l'email dell'episodio e' GIA' partita in questa sessione. Serve dove lo store
+    // non arriva: un'unita' di rete mappata ha una radice ("Z:\") ma nessuna identita' di volume,
+    // quindi niente voce su cui segnare "avvisato". Senza questo, un --run-all manderebbe
+    // un'email per ogni job saltato invece di una per episodio.
+    private readonly HashSet<string> _notifiedRoots = new(StringComparer.OrdinalIgnoreCase);
 
     public BackupRunner(
         AppConfig config,
@@ -37,7 +45,8 @@ public sealed class BackupRunner
         string? lockFolder = null,
         string? vssSessionRoot = null,
         RunHistoryStore? history = null,
-        Func<string?, DiskEventSummary>? diskEvents = null)
+        Func<string?, DiskEventSummary>? diskEvents = null,
+        FaultedDiskStore? faultedDisks = null)
     {
         _diskEvents = diskEvents ?? (path => DiskEventLog.Collect(path));
         _config = config;
@@ -50,6 +59,7 @@ public sealed class BackupRunner
         _lockFolder = lockFolder;
         _vssSessionRoot = vssSessionRoot;
         _history = history;
+        _faultedDisks = faultedDisks;
     }
 
     /// <summary>Trova un job per nome (case-insensitive).</summary>
@@ -93,29 +103,82 @@ public sealed class BackupRunner
             };
         }
 
-        // Disco che ha gia' segnalato un errore hardware in questa sessione: non lo si tocca piu'.
-        // A differenza del disco assente, questo E' un fallimento (il backup non e' stato fatto
-        // e c'e' un problema da risolvere): Success = false, Skipped = false.
-        var faulted = RootOf(job.Destination) is { } dr && _faultedRoots.Contains(dr) ? dr
-            : RootOf(job.Source) is { } sr && _faultedRoots.Contains(sr) ? sr
-            : null;
+        // Disco a riposo dopo un errore hardware: non lo si tocca piu'. Puo' esserlo in questa
+        // sessione (set in memoria) o da prima (store, per identita' di volume: anche l'attivita'
+        // pianificata di domani, che gira in un altro processo, lo rispetta). A differenza del
+        // disco assente, questo E' un fallimento (il backup non e' stato fatto e c'e' un problema
+        // da risolvere): Success = false, Skipped = false.
+        var now0 = DateTime.Now;
+        string? faulted = null;
+        var sessionFault = false;
+        FaultedDisk? persisted = null;
+        foreach (var root in RootsOf(job))
+        {
+            sessionFault = _faultedRoots.Contains(root);
+            // Lo store si consulta anche quando il set in memoria ha gia' deciso: e' lui a sapere
+            // se l'utente e' stato avvisato, e senza quell'informazione un --run-all notturno
+            // manderebbe un'email per ogni job saltato invece di una per episodio.
+            persisted = _faultedDisks?.Find(VolumeIdentity.ForPath(root)?.VolumeId, now0);
+            if (sessionFault || persisted is not null) { faulted = root; break; }
+        }
         if (faulted is not null)
         {
-            progress?.Report(string.Format(CoreLoc.S("Hw_SkippedAfterFault"), faulted));
-            var now = DateTime.Now;
-            if (!dryRun)
-                _history?.Append(new RunHistoryEntry(job.Name, RunHistoryEntry.KindBackup, now, now,
-                    false, RobocopyRunner.HardwareFailureExitCode, 0, 0, 0, 0, 0, null));
-            return new JobResult
+            // Chi e' stato fermato in questa stessa sessione se lo sente raccontare cosi'; a chi
+            // trova il disco gia' a riposo serve invece sapere da quando e come riabilitarlo.
+            var skipNote = sessionFault
+                ? string.Format(CoreLoc.S("Hw_SkippedAfterFault"), faulted)
+                : string.Format(CoreLoc.S("Hw_SkippedPersisted"), faulted,
+                    persisted!.Since.ToString("d"), FaultedDiskStore.ExpiryDays);
+            progress?.Report(skipNote);
+            var skippedResult = new JobResult
             {
                 JobName = job.Name,
                 Success = false,
                 ExitCode = RobocopyRunner.HardwareFailureExitCode,
                 HardwareError = true,
-                Status = CoreLoc.S("Hw_Status"),
-                StartedAt = now,
+                NotStarted = true,
+                HardwareErrorDetail = skipNote,
+                // Non "INTERROTTO": qui non c'e' stato niente da interrompere.
+                Status = CoreLoc.S("Hw_NotStartedStatus"),
+                StartedAt = now0,
                 DryRun = dryRun,
             };
+            if (!dryRun)
+            {
+                _history?.Append(new RunHistoryEntry(job.Name, RunHistoryEntry.KindBackup, now0, now0,
+                    false, RobocopyRunner.HardwareFailureExitCode, 0, 0, 0, 0, 0, null));
+                _results?.Update(new JobLastResult
+                {
+                    JobName = job.Name,
+                    Success = false,
+                    ExitCode = RobocopyRunner.HardwareFailureExitCode,
+                    HardwareError = true,
+                    HardwareErrorDetail = skipNote,
+                    FinishedAt = now0,
+                });
+
+                // Una email per episodio, non una per job per notte: se l'utente e' gia' stato
+                // avvisato per questo disco (l'email di errore del run che l'ha messo a riposo, o
+                // il primo job saltato) gli altri job saltati restano solo nel log.
+                if ((persisted is null || !persisted.Notified) && !_notifiedRoots.Contains(faulted))
+                {
+                    try
+                    {
+                        var sent = await _email.SendResultAsync(_config.Settings.Email, skippedResult, null, ct)
+                            .ConfigureAwait(false);
+                        if (sent)
+                        {
+                            _notifiedRoots.Add(faulted);
+                            if (persisted is not null) _faultedDisks?.MarkNotified(persisted.VolumeId);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        progress?.Report(string.Format(CoreLoc.S("Email_SendFailed"), ex.Message));
+                    }
+                }
+            }
+            return skippedResult;
         }
 
         // Il PC non deve sospendersi per inattivita' nel mezzo del lavoro: a un disco USB la
@@ -126,13 +189,20 @@ public sealed class BackupRunner
         // preavviso che di solito precede il danno di settimane. Non blocca il job (gli eventi non
         // identificano il disco fisico con certezza), ma lo dice all'inizio E nel riepilogo: i
         // backup pianificati non passano dal pre-avvio della finestra, e questo e' il loro unico avviso.
+        // L'email invece la merita solo un avviso NUOVO: gli eventi restano nel registro per giorni,
+        // e ripetere ogni notte la stessa mail per lo stesso errore la fa diventare rumore da
+        // ignorare. Nel log e nel riepilogo ci sono sempre tutti.
+        var previousFinish = _results?.Load().GetValueOrDefault(job.Name)?.FinishedAt;
         var healthNotes = new List<string>();
-        foreach (var root in new[] { job.Destination, job.Source }.Select(RootOf).OfType<string>()
-                     .Distinct(StringComparer.OrdinalIgnoreCase))
+        var newHealthNotes = new List<string>();
+        foreach (var root in RootsOf(job))
         {
             var events = _diskEvents(root);
-            if (events.Total > 0)
-                healthNotes.Add(string.Format(CoreLoc.S("Health_Warning"), root, events.Describe()));
+            if (events.Total == 0) continue;
+            var note = string.Format(CoreLoc.S("Health_Warning"), root, events.Describe());
+            healthNotes.Add(note);
+            if (previousFinish is null || (events.Latest is DateTime latest && latest > previousFinish))
+                newHealthNotes.Add(note);
         }
         foreach (var note in healthNotes)
             progress?.Report(note);
@@ -202,7 +272,25 @@ public sealed class BackupRunner
                     run = await _runner.RunAsync(job, dryRun, progress, ct, sourceOverride: sourceOverride).ConfigureAwait(false);
                 }
             }
-            catch (Exception ex) when (ex is not OperationCanceledException && DiskError.IsUnreadable(ex))
+            catch (OperationCanceledException ex)
+            {
+                // Annullato dall'utente: il job si ferma, ma quello che ha fatto fino a li' non
+                // deve sparire. Si scrive comunque il log (output parziale + riga di chiusura) e
+                // una voce di cronologia "annullato" che lo apre. Poi si rilancia: per chi chiama
+                // resta un annullamento, non un esito.
+                if (!dryRun)
+                {
+                    var partial = (ex as JobCancelledException)?.PartialOutput ?? "";
+                    var closing = string.Format(CoreLoc.S("Run_CancelledRecap"), DateTime.Now);
+                    progress?.Report(closing);
+                    string? logPath = null;
+                    try { logPath = _log.WriteAndArchive(job.Name, partial + Environment.NewLine + closing, startedAt); }
+                    catch { /* un log mancato non deve mascherare l'annullamento */ }
+                    _history?.Append(RunHistoryEntry.ForCancelled(job.Name, startedAt, logPath));
+                }
+                throw;
+            }
+            catch (Exception ex) when (DiskError.IsUnreadable(ex))
             {
                 // Errore hardware fuori da robocopy (clone hard-link, pulizia snapshot, hash della
                 // forza-copia): stesso trattamento, il job diventa un fallimento con log ed email.
@@ -225,18 +313,25 @@ public sealed class BackupRunner
                 };
             }
 
+            run.Result.HealthWarnings.AddRange(newHealthNotes);
+
             // Riepilogo nostro, leggibile e in italiano (l'output nativo di robocopy ha le
             // intestazioni localizzate che sbordano dalle colonne).
             var recap = BuildRecap(run.Result, dryRun).ToList();
             if (run.Result.ThreadCapNote is { } capNote)
                 recap.Add(capNote);
             recap.AddRange(healthNotes);
+            // Disco messo a riposo da questo run: radice e identita' di volume servono piu' sotto,
+            // quando si sapra' se l'email dell'episodio e' partita davvero.
+            string? markedRoot = null, markedVolumeId = null;
             if (run.Result.HardwareError)
             {
                 // Dalle righe di robocopy non si distingue il lato che ha ceduto (il percorso
                 // riportato e' sempre quello sorgente): in mancanza di un percorso certo si mette
                 // a riposo il disco di destinazione, quello su cui il job scrive.
-                MarkFaulted(faultPath ?? job.Destination);
+                var faultTarget = faultPath ?? job.Destination;
+                markedRoot = RootOf(faultTarget);
+                markedVolumeId = MarkFaulted(faultTarget, run.Result.HardwareErrorDetail ?? "");
                 recap.Add(string.Format(CoreLoc.S("Hw_Stop"), run.Result.HardwareErrorDetail));
                 recap.Add(CoreLoc.S("Hw_Advice"));
             }
@@ -274,6 +369,8 @@ public sealed class BackupRunner
                     FilesExtra = run.Result.FilesExtra,
                     FilesFailed = run.Result.FilesFailed,
                     DirsFailed = run.Result.DirsFailed,
+                    HardwareError = run.Result.HardwareError,
+                    HardwareErrorDetail = run.Result.HardwareErrorDetail,
                     FinishedAt = DateTime.Now,
                 });
 
@@ -286,8 +383,16 @@ public sealed class BackupRunner
 
             try
             {
-                await _email.SendResultAsync(_config.Settings.Email, run.Result, run.Result.LogPath, ct)
+                var sent = await _email.SendResultAsync(_config.Settings.Email, run.Result, run.Result.LogPath, ct)
                     .ConfigureAwait(false);
+                // Solo ORA l'episodio risulta raccontato: i job che seguono sullo stesso disco
+                // restano nel log senza una seconda email. Se l'email era spenta o non e' partita,
+                // "avvisato" non si segna: a dirlo sara' il primo job saltato che riuscira' a farlo.
+                if (sent && run.Result.HardwareError)
+                {
+                    if (markedRoot is not null) _notifiedRoots.Add(markedRoot);
+                    if (markedVolumeId is not null) _faultedDisks?.MarkNotified(markedVolumeId);
+                }
             }
             catch (Exception ex)
             {
@@ -322,11 +427,35 @@ public sealed class BackupRunner
                 {
                     // La verifica legge TUTTO il disco: al primo errore hardware si ferma, e il
                     // disco va a riposo anche per i job successivi di questa sessione.
-                    MarkFaulted((ex as DiskHardwareException)?.FaultPath ?? job.Destination);
-                    verifyLog.Report(string.Format(CoreLoc.S("Hw_VerifyStop"), ex.Message));
+                    MarkFaulted((ex as DiskHardwareException)?.FaultPath ?? job.Destination, ex.Message);
+                    var verifyDetail = string.Format(CoreLoc.S("Hw_VerifyStop"), ex.Message);
+                    verifyLog.Report(verifyDetail);
                     verifyLog.Report(CoreLoc.S("Hw_Advice"));
                     _history?.Append(RunHistoryEntry.ForVerifyInterrupted(job.Name, verifyStart,
                         verifyLog.Save(_log, job.Name, verifyStart, null)));
+
+                    // Il backup era riuscito, ma il disco ha ceduto rileggendolo: l'esito del job
+                    // diventa errore hardware, cosi' la riga nella finestra principale lo mostra
+                    // (icona e dettaglio) anche domani, e l'attivita' pianificata esce con errore.
+                    // L'email di questo run e' gia' partita come "OK": la notizia sta qui e nel log.
+                    run.Result.Success = false;
+                    run.Result.Status = CoreLoc.S("Hw_Status");
+                    run.Result.HardwareError = true;
+                    run.Result.HardwareErrorDetail = verifyDetail;
+                    _results?.Update(new JobLastResult
+                    {
+                        JobName = job.Name,
+                        Success = false,
+                        ExitCode = RobocopyRunner.HardwareFailureExitCode,
+                        FilesCopied = run.Result.FilesCopied,
+                        FilesSkipped = run.Result.FilesSkipped,
+                        FilesExtra = run.Result.FilesExtra,
+                        FilesFailed = run.Result.FilesFailed,
+                        DirsFailed = run.Result.DirsFailed,
+                        HardwareError = true,
+                        HardwareErrorDetail = verifyDetail,
+                        FinishedAt = DateTime.Now,
+                    });
                 }
                 catch (Exception ex)
                 {
@@ -363,9 +492,26 @@ public sealed class BackupRunner
         catch { return null; }
     }
 
-    private void MarkFaulted(string? path)
+    /// <summary>Le radici locali toccate da un job, destinazione prima: e' quella che il job
+    /// scrive, ed e' la piu' probabile responsabile di un errore.</summary>
+    private static IEnumerable<string> RootsOf(BackupJob job) =>
+        new[] { job.Destination, job.Source }.Select(RootOf).OfType<string>()
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Mette a riposo il disco di un percorso: per questa sessione (set in memoria) e sul
+    /// disco (store), cosi' che anche un altro processo lo rispetti. La voce nasce NON notificata:
+    /// l'email dell'episodio non e' ancora partita (puo' essere spenta o fallire), e dichiararlo in
+    /// anticipo zittirebbe l'unico avviso che l'utente riceverebbe.
+    /// <para>Restituisce l'identita' del volume messo a riposo, o null se il volume non e'
+    /// identificabile (unita' di rete mappata, disco gia' scomparso): in quel caso esiste solo il
+    /// riposo di sessione, niente voce nello store da marcare come notificata.</para></summary>
+    private string? MarkFaulted(string? path, string detail)
     {
-        if (RootOf(path) is { } root) _faultedRoots.Add(root);
+        if (RootOf(path) is not { } root) return null;
+        _faultedRoots.Add(root);
+        if (VolumeIdentity.ForPath(root) is not { } vol) return null;
+        _faultedDisks?.Mark(new FaultedDisk(vol.VolumeId, vol.Label, root, DateTime.Now, detail));
+        return vol.VolumeId;
     }
 
     private static string[] BuildRecap(JobResult r, bool dryRun)

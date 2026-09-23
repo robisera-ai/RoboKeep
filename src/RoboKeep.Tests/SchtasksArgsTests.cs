@@ -48,6 +48,18 @@ public class SchtasksArgsTests
     }
 
     [Fact]
+    public void Xml_Monthly_LastDay_UsesLastNotANumber()
+    {
+        // "Ultimo giorno del mese": Windows lo esprime con <Day>Last</Day>, e cosi' scatta il 28,
+        // 29, 30 o 31 a seconda del mese, invece di saltare i mesi corti.
+        var job = Job(ScheduleKind.Monthly);
+        job.ScheduleLastDayOfMonth = true;
+        var xml = SchtasksArgs.BuildTaskXml(job, @"C:\app\RoboKeep.exe");
+        Assert.Contains("<Day>Last</Day>", xml);
+        Assert.DoesNotContain("<Day>15</Day>", xml);
+    }
+
+    [Fact]
     public void Xml_BadTime_FallsBackTo2100()
     {
         var job = Job(ScheduleKind.Daily);

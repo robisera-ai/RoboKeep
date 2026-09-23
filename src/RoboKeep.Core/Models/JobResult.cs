@@ -41,6 +41,15 @@ public sealed class JobResult
     /// <summary>Dettaglio dell'errore hardware (codice, azione e percorso), se <see cref="HardwareError"/>.</summary>
     public string? HardwareErrorDetail { get; set; }
 
+    /// <summary>true se il job non è partito perché il suo disco è a riposo: è sempre anche un
+    /// <see cref="HardwareError"/>, ma il racconto cambia — non c'è nulla di INTERROTTO, il lavoro
+    /// non è nemmeno iniziato, e <see cref="HardwareErrorDetail"/> è già la frase completa.</summary>
+    public bool NotStarted { get; set; }
+
+    /// <summary>Avvisi di salute del disco (registro eventi) emessi per questo run: finiscono
+    /// anche nell'email, non solo nel log.</summary>
+    public List<string> HealthWarnings { get; } = new();
+
     /// <summary>Avviso "thread limitati perché è coinvolto un disco meccanico", se il tetto è
     /// scattato. Viene ripetuto nel riepilogo finale: in cima al log finirebbe sepolto sotto
     /// migliaia di righe di robocopy.</summary>

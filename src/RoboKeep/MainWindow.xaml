@@ -69,6 +69,11 @@
                 <ui:Button Icon="{ui:SymbolIcon Eye24}" Content="{Binding VerifyLabel}" Command="{Binding VerifySelectedCommand}"
                            Appearance="{Binding VerifyCancel, Converter={StaticResource CancelAppearance}, ConverterParameter=Secondary}" Margin="0,0,8,0"/>
                 <ui:Button Icon="{ui:SymbolIcon History24}" Content="{l:Tr Main_History}" Click="OnShowHistory" Margin="0,0,8,0"/>
+                <!-- Compare solo se c'e' davvero un disco a riposo: un pulsante sempre visibile
+                     inviterebbe a premerlo senza aver controllato niente. -->
+                <ui:Button Icon="{ui:SymbolIcon ArrowReset24}" Content="{l:Tr Main_ReenableDisks}" ToolTip="{Binding FaultedDisksSummary}" Click="OnReenableDisks"
+                           Appearance="Caution" Margin="0,0,8,0"
+                           Visibility="{Binding HasFaultedDisks, Converter={StaticResource BoolToVis}}"/>
             </WrapPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <ui:Button Icon="{ui:SymbolIcon ArrowSync24}" ToolTip="{l:Tr Main_Refresh}"
@@ -124,6 +129,9 @@
                                     <DataTrigger Binding="{Binding Health}" Value="Interrupted">
                                         <Setter Property="Background" Value="#33FF8C00"/>
                                     </DataTrigger>
+                                    <DataTrigger Binding="{Binding Health}" Value="HardwareError">
+                                        <Setter Property="Background" Value="#33B00020"/>
+                                    </DataTrigger>
                                     <!-- Hover e selezione vincono sull'eventuale tinta di salute (trigger in coda). -->
                                     <Trigger Property="IsMouseOver" Value="True">
                                         <Setter Property="Background" Value="#22000000"/>
@@ -173,6 +181,11 @@
                                                         <DataTrigger Binding="{Binding Health}" Value="Interrupted">
                                                             <Setter Property="Visibility" Value="Visible"/>
                                                             <Setter Property="Foreground" Value="#E8710A"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Health}" Value="HardwareError">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Setter Property="Foreground" Value="#B00020"/>
+                                                            <Setter Property="Text" Value="&#x26D4;"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding Health}" Value="Waiting">
                                                             <Setter Property="Visibility" Value="Visible"/>

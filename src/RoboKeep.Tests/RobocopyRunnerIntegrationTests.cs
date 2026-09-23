@@ -8,6 +8,7 @@ namespace RoboKeep.Tests;
 /// verificando il comportamento descritto dall'utente: skip degli uguali, sovrascrittura dei
 /// più recenti, cancellazione in mirror e nessuna modifica in dry-run.
 /// </summary>
+[Collection(CultureCollection.Name)]
 public sealed class RobocopyRunnerIntegrationTests : IDisposable
 {
     private readonly string _base;

@@ -81,13 +81,14 @@ public sealed class BackupJob
     public bool Versioned { get; set; }
 
     /// <summary>Numero massimo di snapshot da conservare. 0 = nessun limite di numero.
-    /// Default 30 per i job NUOVI: senza limite la MFT della destinazione cresce all'infinito e
-    /// NTFS rifiuta nuovi hard-link oltre i 1023 per file. I job gia' salvati conservano il loro
-    /// valore (anche 0): una ritenzione non si stringe alle spalle dell'utente, cancellerebbe versioni.</summary>
+    /// Default 10 per i job NUOVI (editor e wizard): senza limite la MFT della destinazione cresce
+    /// all'infinito e NTFS rifiuta nuovi hard-link oltre i 1023 per file. I job gia' salvati
+    /// conservano il loro valore (anche 0): una ritenzione non si stringe alle spalle dell'utente,
+    /// cancellerebbe versioni.</summary>
     public int SnapshotKeepCount { get; set; } = DefaultSnapshotKeepCount;
 
-    /// <summary>Snapshot conservati per default nei job nuovi.</summary>
-    public const int DefaultSnapshotKeepCount = 30;
+    /// <summary>Snapshot conservati per default nei job nuovi, ovunque vengano creati.</summary>
+    public const int DefaultSnapshotKeepCount = 10;
 
     /// <summary>Elimina gli snapshot più vecchi di questi giorni. 0 = nessun limite di età.</summary>
     public int SnapshotMaxAgeDays { get; set; }
@@ -108,6 +109,11 @@ public sealed class BackupJob
 
     /// <summary>Giorno del mese 1-31 (solo per Schedule = Monthly). 29-31 scattano solo nei mesi che li hanno.</summary>
     public int ScheduleMonthDay { get; set; } = 1;
+
+    /// <summary>true → la pianificazione mensile scatta l'ULTIMO giorno del mese (28, 29, 30 o 31 a
+    /// seconda del mese) invece del giorno fisso <see cref="ScheduleMonthDay"/>. Un giorno fisso 29-31
+    /// nei mesi corti non scatta affatto: per "a fine mese" serve questa opzione.</summary>
+    public bool ScheduleLastDayOfMonth { get; set; }
 
     /// <summary>true → dopo ogni backup riuscito esegue la verifica integrità (hash) e la registra in cronologia.</summary>
     public bool VerifyAfterRun { get; set; }

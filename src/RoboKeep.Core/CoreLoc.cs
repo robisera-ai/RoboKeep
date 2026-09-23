@@ -90,6 +90,13 @@ public static class CoreLoc
             "Completato con errori.", "Completed with errors.",
             "Completado con errores.", "Terminé avec des erreurs.", "Mit Fehlern abgeschlossen."),
 
+        ["Run_CancelledRecap"] = L(
+            "====== ANNULLATO DALL'UTENTE alle {0:HH:mm:ss} (RoboKeep) ======",
+            "====== CANCELLED BY THE USER at {0:HH:mm:ss} (RoboKeep) ======",
+            "====== CANCELADO POR EL USUARIO a las {0:HH:mm:ss} (RoboKeep) ======",
+            "====== ANNULÉ PAR L'UTILISATEUR à {0:HH:mm:ss} (RoboKeep) ======",
+            "====== VOM BENUTZER ABGEBROCHEN um {0:HH:mm:ss} (RoboKeep) ======"),
+
         ["Recap_TitlePreview"] = L(
             "RIEPILOGO ANTEPRIMA (RoboKeep)", "PREVIEW SUMMARY (RoboKeep)",
             "RESUMEN VISTA PREVIA (RoboKeep)", "RÉSUMÉ APERÇU (RoboKeep)",
@@ -203,6 +210,18 @@ public static class CoreLoc
             "[versioning] {0} fichiers ignorés de l'instantané précédent (verrouillés ou inaccessibles) : ils seront recopiés depuis la source.",
             "[Versionierung] {0} Dateien aus dem vorherigen Snapshot übersprungen (gesperrt oder nicht zugänglich): sie werden aus der Quelle neu kopiert."),
 
+        ["Versioning_Adopted"] = L(
+            "[versioning] trovata una copia semplice già presente nella destinazione: diventa la prima versione ({0}, {1} elementi spostati, nessuna ricopia). Da ora si copia solo ciò che cambia.",
+            "[versioning] found an existing plain copy in the destination: it becomes the first version ({0}, {1} items moved, nothing recopied). From now on only changes are copied.",
+            "[versionado] se encontró una copia simple ya presente en el destino: pasa a ser la primera versión ({0}, {1} elementos movidos, nada recopiado). Desde ahora solo se copia lo que cambia.",
+            "[versioning] copie simple déjà présente dans la destination : elle devient la première version ({0}, {1} éléments déplacés, rien recopié). Désormais seuls les changements sont copiés.",
+            "[Versionierung] vorhandene einfache Kopie im Ziel gefunden: sie wird zur ersten Version ({0}, {1} Elemente verschoben, nichts neu kopiert). Ab jetzt wird nur kopiert, was sich ändert."),
+        ["Versioning_NotAdopted"] = L(
+            "[versioning] nella destinazione ci sono elementi che non esistono nella sorgente (es. {0}; {1} in tutto): non è una copia di questo job, quindi non viene adottata come prima versione. Restano dove sono; la prima versione parte da zero.",
+            "[versioning] the destination contains items that do not exist in the source (e.g. {0}; {1} in total): it is not a copy made by this job, so it is not adopted as the first version. They stay where they are; the first version starts from scratch.",
+            "[versionado] el destino contiene elementos que no existen en el origen (p. ej. {0}; {1} en total): no es una copia de este trabajo, así que no se adopta como primera versión. Se quedan donde están; la primera versión empieza desde cero.",
+            "[versioning] la destination contient des éléments absents de la source (ex. {0} ; {1} au total) : ce n'est pas une copie faite par cette tâche, elle n'est donc pas adoptée comme première version. Ils restent en place ; la première version part de zéro.",
+            "[Versionierung] das Ziel enthält Elemente, die es in der Quelle nicht gibt (z. B. {0}; {1} insgesamt): es ist keine Kopie dieses Jobs und wird daher nicht als erste Version übernommen. Sie bleiben, wo sie sind; die erste Version beginnt von vorn."),
         ["Versioning_Checking"] = L(
             "[versioning] controllo se è cambiato qualcosa rispetto all'ultima versione...",
             "[versioning] checking whether anything changed since the last version...",
@@ -247,12 +266,26 @@ public static class CoreLoc
             "DETENIDO: error de hardware del disco o de su conexión.",
             "ARRÊTÉ : erreur matérielle du disque ou de sa connexion.",
             "GESTOPPT: Hardwarefehler des Datenträgers oder seiner Verbindung."),
+        ["Hw_NotStartedStatus"] = L(
+            "Non eseguito: il disco è a riposo dopo un errore hardware.",
+            "Not run: the disk is resting after a hardware error.",
+            "No ejecutado: el disco está en reposo tras un error de hardware.",
+            "Non exécutée : le disque est au repos après une erreur matérielle.",
+            "Nicht ausgeführt: der Datenträger ruht nach einem Hardwarefehler."),
+        ["Email_HardwareError"] = L("ERRORE HARDWARE", "HARDWARE ERROR", "ERROR DE HARDWARE",
+            "ERREUR MATÉRIELLE", "HARDWAREFEHLER"),
         ["Hw_SkippedAfterFault"] = L(
             "[disco] job NON eseguito: il disco {0} ha segnalato un errore hardware in un job precedente di questa sessione.",
             "[disk] job NOT run: disk {0} reported a hardware error in an earlier job of this session.",
             "[disco] trabajo NO ejecutado: el disco {0} notificó un error de hardware en un trabajo anterior de esta sesión.",
             "[disque] tâche NON exécutée : le disque {0} a signalé une erreur matérielle lors d'une tâche précédente de cette session.",
             "[Datenträger] Job NICHT ausgeführt: Datenträger {0} hat in einem früheren Job dieser Sitzung einen Hardwarefehler gemeldet."),
+        ["Hw_SkippedPersisted"] = L(
+            "[disco] job NON eseguito: il disco {0} è a riposo dal {1} per un errore hardware. Controllalo, poi premi «Riattiva dischi» nella finestra principale (si riattiva da solo dopo {2} giorni).",
+            "[disk] job NOT run: disk {0} has been resting since {1} after a hardware error. Check it, then click \"Re-enable disks\" in the main window (it re-enables itself after {2} days).",
+            "[disco] trabajo NO ejecutado: el disco {0} está en reposo desde el {1} por un error de hardware. Compruébalo y pulsa «Rehabilitar discos» en la ventana principal (se rehabilita solo tras {2} días).",
+            "[disque] tâche NON exécutée : le disque {0} est au repos depuis le {1} après une erreur matérielle. Vérifiez-le, puis cliquez sur « Réactiver les disques » dans la fenêtre principale (réactivation automatique après {2} jours).",
+            "[Datenträger] Job NICHT ausgeführt: Datenträger {0} ruht seit {1} nach einem Hardwarefehler. Prüfen Sie ihn und klicken Sie im Hauptfenster auf „Datenträger freigeben“ (nach {2} Tagen automatisch)."),
         ["Hw_VerifyStop"] = L(
             "[verifica] INTERROTTA per errore hardware: {0}",
             "[verify] STOPPED due to a hardware error: {0}",

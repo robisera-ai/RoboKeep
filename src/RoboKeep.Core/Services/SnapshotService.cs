@@ -23,9 +23,9 @@ public sealed class SnapshotService
         var dest = (job.Destination ?? "").Trim();
         Directory.CreateDirectory(dest);
 
-        var prevName = SnapshotName.Latest(dest);
-
         var now = DateTime.Now;
+        var prevName = SnapshotName.Latest(dest) ?? AdoptPlainMirror(dest, sourceOverride ?? job.Source, now, progress);
+
         var newName = SnapshotName.For(now);
         var curr = Path.Combine(dest, newName + SnapshotName.InProgressSuffix);
 
@@ -154,6 +154,107 @@ public sealed class SnapshotService
         }
 
         return run;
+    }
+
+    /// <summary>
+    /// Un job che passa da "copia semplice" a "con versioni" ha gia' un backup completo: i file
+    /// stanno sciolti nella destinazione. Ignorarli vorrebbe dire ricopiare tutto in una cartella
+    /// datata e lasciare il doppione sciolto a occupare il disco. Qui invece la copia esistente
+    /// viene ADOTTATA come prima versione: si spostano le voci sciolte in una cartella datata
+    /// (rinomina sullo stesso volume: istantanea, zero copia), e il run che segue clona da li' e
+    /// copia solo cio' che e' cambiato. Scatta solo quando NON esiste nessuno snapshot, la
+    /// destinazione non e' vuota E il contenuto sciolto e' riconoscibile come copia della sorgente:
+    /// ogni voce di primo livello deve avere un omonimo dello stesso tipo nella sorgente (una copia
+    /// puo' avere MENO voci della sorgente, per le esclusioni, mai una in piu'). Basta una voce
+    /// estranea e non si adotta niente: meglio una prima versione "da zero" che spostare roba
+    /// altrui. Le voci nascoste o di sistema (es. "System Volume Information" se la destinazione
+    /// e' la radice di un disco) non si toccano. Restituisce il nome dello snapshot adottato, o
+    /// null se non c'era nulla da adottare.
+    /// </summary>
+    private static string? AdoptPlainMirror(string dest, string source, DateTime now, IProgress<string>? progress)
+    {
+        var entries = new DirectoryInfo(dest).EnumerateFileSystemInfos()
+            .Where(e => (e.Attributes & (FileAttributes.Hidden | FileAttributes.System)) == 0)
+            .Where(e => !SnapshotName.IsInProgress(e.Name) && !e.Name.Contains(".deleting-", StringComparison.Ordinal))
+            .ToList();
+        if (entries.Count == 0) return null;
+
+        // Riconoscimento: e' davvero una copia della sorgente? Una copia (anche con esclusioni) e'
+        // un SOTTOINSIEME della sorgente: ogni file e cartella della destinazione deve esistere
+        // nella sorgente allo stesso percorso relativo. Contenuto diverso va bene (e' la versione
+        // precedente, proprio quella da adottare); un percorso che nella sorgente non c'e' no.
+        // Costa un'enumerazione della destinazione, una volta sola nella vita del job. Se la
+        // sorgente non e' leggibile non si puo' dire, quindi non si adotta.
+        if (!Directory.Exists(source)) return null;
+        var foreign = ForeignPaths(dest, source, entries, max: 3, out var foreignCount);
+        if (foreignCount > 0)
+        {
+            progress?.Report(string.Format(CoreLoc.S("Versioning_NotAdopted"),
+                string.Join(", ", foreign), foreignCount));
+            return null;
+        }
+
+        // Datata con l'ultima scrittura DENTRO la copia (= quando l'ultimo backup semplice l'ha
+        // scritta), non con quella della cartella di destinazione, che chiunque puo' toccare
+        // (Esplora risorse, un run interrotto). Mai uguale al nome che sta per nascere: la versione
+        // adottata deve risultare piu' vecchia della nuova.
+        var stamp = entries.Max(e => e.LastWriteTime);
+        // I nomi hanno la risoluzione del secondo: se cade nello stesso secondo del nuovo snapshot
+        // (o dopo), si arretra di un secondo, altrimenti i due nomi coinciderebbero.
+        if (stamp >= now || SnapshotName.For(stamp) == SnapshotName.For(now)) stamp = now.AddSeconds(-1);
+        var adoptedName = SnapshotName.For(stamp);
+        var adoptedDir = Path.Combine(dest, adoptedName);
+        Directory.CreateDirectory(adoptedDir);
+
+        var moved = 0;
+        foreach (var e in entries)
+        {
+            try
+            {
+                var target = Path.Combine(adoptedDir, e.Name);
+                if (e is DirectoryInfo d) d.MoveTo(target); else ((FileInfo)e).MoveTo(target);
+                moved++;
+            }
+            catch (Exception ex) when (!DiskError.IsUnreadable(ex))
+            {
+                // Una voce bloccata resta sciolta: la ritenzione la ignora e robocopy /MIR nella
+                // nuova versione la ricopia dalla sorgente. Non vale un fallimento.
+                progress?.Report($"[versioning] {e.Name} non spostato nella versione adottata: {ex.Message}");
+            }
+        }
+        // Lo spostamento ha appena toccato la cartella: si ripristina la data che documenta l'adozione.
+        try { Directory.SetLastWriteTime(adoptedDir, stamp); } catch { /* solo cosmetico */ }
+
+        progress?.Report(string.Format(CoreLoc.S("Versioning_Adopted"), adoptedName, moved));
+        return adoptedName;
+    }
+
+    /// <summary>Percorsi relativi presenti sotto <paramref name="entries"/> (in destinazione) ma
+    /// assenti nella sorgente. Restituisce i primi <paramref name="max"/> per il messaggio e in
+    /// <paramref name="count"/> il totale; si ferma presto se ne trova piu' di quanti servono per
+    /// decidere (bastano pochi esempi per dire "non e' una copia").</summary>
+    private static List<string> ForeignPaths(string dest, string source, IEnumerable<FileSystemInfo> entries, int max, out int count)
+    {
+        var examples = new List<string>();
+        count = 0;
+        var options = new EnumerationOptions { RecurseSubdirectories = true, AttributesToSkip = FileAttributes.ReparsePoint };
+        foreach (var entry in entries)
+        {
+            var toCheck = entry is DirectoryInfo dir
+                ? new[] { dir.FullName }.Concat(Directory.EnumerateFileSystemEntries(dir.FullName, "*", options))
+                : new[] { entry.FullName };
+            foreach (var path in toCheck)
+            {
+                var rel = Path.GetRelativePath(dest, path);
+                var inSource = Path.Combine(source, rel);
+                var isDir = Directory.Exists(path);
+                if (isDir ? Directory.Exists(inSource) : File.Exists(inSource)) continue;
+                count++;
+                if (examples.Count < max) examples.Add(rel);
+                if (count >= 1000) return examples; // abbastanza: non e' una copia, inutile contare oltre
+            }
+        }
+        return examples;
     }
 
     /// <summary>true se l'anteprima dice che sorgente e ultimo snapshot sono gia' allineati: nessun

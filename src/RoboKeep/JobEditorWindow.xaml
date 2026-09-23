@@ -245,7 +245,9 @@
                                 </StackPanel>
                                 <StackPanel Visibility="{Binding ShowMonthDay, Converter={StaticResource BoolToVis}}">
                                     <TextBlock Text="{l:Tr Editor_ScheduleMonthDay}" Style="{StaticResource Label}"/>
-                                    <ui:TextBox Text="{Binding ScheduleMonthDay, UpdateSourceTrigger=PropertyChanged, FallbackValue=1}"/>
+                                    <ui:TextBox Text="{Binding ScheduleMonthDay, UpdateSourceTrigger=PropertyChanged, FallbackValue=1}"
+                                                IsEnabled="{Binding ScheduleFixedDayEnabled}"/>
+                                    <CheckBox Content="{l:Tr Sched_LastDay}" IsChecked="{Binding ScheduleLastDayOfMonth}" Margin="0,6,0,0"/>
                                 </StackPanel>
                             </StackPanel>
                         </Grid>

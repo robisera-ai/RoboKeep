@@ -257,6 +257,15 @@ public sealed class JobEditorViewModel : ObservableObject
         set { _job.ScheduleMonthDay = Math.Clamp(value, 1, 31); OnPropertyChanged(); }
     }
 
+    public bool ScheduleLastDayOfMonth
+    {
+        get => _job.ScheduleLastDayOfMonth;
+        set { _job.ScheduleLastDayOfMonth = value; OnPropertyChanged(); OnPropertyChanged(nameof(ScheduleFixedDayEnabled)); }
+    }
+
+    /// <summary>Il numero del giorno si modifica solo se non e' scelto "ultimo del mese".</summary>
+    public bool ScheduleFixedDayEnabled => !_job.ScheduleLastDayOfMonth;
+
     public bool VerifyAfterRun
     {
         get => _job.VerifyAfterRun;

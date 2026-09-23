@@ -39,7 +39,7 @@ public static class StaleBackupEvaluator
         // Mai eseguito o ultimo esito fallito: sono fatti reali che l'assenza del disco non
         // cancella. Un fallimento avvenuto resta un fallimento, non diventa "in attesa".
         if (!lastResults.TryGetValue(name, out var r)) return BackupHealth.NeverRun;
-        if (!r.Success) return BackupHealth.Failed;
+        if (!r.Success) return r.HardwareError ? BackupHealth.HardwareError : BackupHealth.Failed;
 
         // Soglia disattivata (0 = mai avvisare): tutto Ok, nessuna anzianita' conta.
         if (staleAfterDays <= 0) return BackupHealth.Ok;

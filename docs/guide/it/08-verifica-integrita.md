@@ -39,5 +39,5 @@ Poiché rilegge davvero **tutto**, una verifica dura all'incirca **quanto un pri
 lenta per scelta: la sicurezza si paga in lettura. Perciò attiva la verifica automatica **solo
 dove conta davvero** — i dati critici — e per il resto eseguila a richiesta quando ti serve.
 
-> Ogni verifica finisce in *cronologia*, con esito e durata; un doppio clic apre il log completo
-> nell'app.
+> Ogni verifica finisce in *cronologia*, con esito e durata e con il suo log: un doppio clic lo
+> apre nel Blocco note.

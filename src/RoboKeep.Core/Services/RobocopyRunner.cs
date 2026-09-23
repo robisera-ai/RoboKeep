@@ -5,6 +5,16 @@ using RoboKeep.Core.Models;
 
 namespace RoboKeep.Core.Services;
 
+/// <summary>Annullamento dell'utente durante robocopy: porta con se' l'output prodotto fino a
+/// quel momento, cosi' chi orchestra puo' scrivere comunque il log di quel che e' stato fatto.
+/// Deriva da <see cref="OperationCanceledException"/>: chi gia' gestisce l'annullamento non cambia.</summary>
+public sealed class JobCancelledException : OperationCanceledException
+{
+    public string PartialOutput { get; }
+    public JobCancelledException(string partialOutput, CancellationToken token)
+        : base("Annullato dall'utente.", token) => PartialOutput = partialOutput;
+}
+
 /// <summary>Risultato grezzo di un'esecuzione robocopy: esito + output testuale completo.</summary>
 public sealed class RobocopyRunResult
 {
@@ -101,15 +111,26 @@ public sealed class RobocopyRunner
             progress?.Report(capNote);
         }
 
-        // Passata principale (mirror/copia normale).
-        var (exit1, text1, hardwareError) = await RunPassAsync(
-            RobocopyArgsBuilder.Build(job, dryRun, destinationOverride: destinationOverride,
-                sourceOverride: sourceOverride, maxThreads: maxThreads), progress, ct)
-            .ConfigureAwait(false);
         // L'avviso sui thread va anche nel log salvato, non solo a video: chi rilegge il file deve
         // capire perche' robocopy e' partito con un /MT diverso da quello impostato nel job.
         var fullText = new StringBuilder();
         if (capNote is not null) fullText.AppendLine(capNote);
+
+        // Passata principale (mirror/copia normale).
+        (int exit1, string text1, string? hardwareError) pass1;
+        try
+        {
+            pass1 = await RunPassAsync(
+                RobocopyArgsBuilder.Build(job, dryRun, destinationOverride: destinationOverride,
+                    sourceOverride: sourceOverride, maxThreads: maxThreads), progress, ct)
+                .ConfigureAwait(false);
+        }
+        catch (JobCancelledException ex)
+        {
+            // Annullato a meta': l'output parziale (con l'eventuale avviso sui thread) va nel log.
+            throw new JobCancelledException(fullText + ex.PartialOutput, ct);
+        }
+        var (exit1, text1, hardwareError) = pass1;
         fullText.Append(text1);
         var counts = RobocopyOutputParser.ParseCounts(text1.Split('\n'));
         var exitCombined = exit1;
@@ -237,7 +258,20 @@ public sealed class RobocopyRunner
             catch { /* il processo potrebbe essere già terminato */ }
         }))
         {
-            await process.WaitForExitAsync(ct).ConfigureAwait(false);
+            try
+            {
+                await process.WaitForExitAsync(ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                // Il processo e' stato ucciso dalla registrazione qui sopra: si aspetta che esca
+                // davvero (pochi ms), cosi' le ultime righe arrivano, e si consegna l'output parziale.
+                try { await process.WaitForExitAsync(CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(false); }
+                catch { /* se non esce in tempo, il log conterra' quel che c'e' */ }
+                string partial;
+                lock (output) partial = output.ToString();
+                throw new JobCancelledException(partial, ct);
+            }
         }
 
         return (process.ExitCode, output.ToString(), Volatile.Read(ref hardwareError));

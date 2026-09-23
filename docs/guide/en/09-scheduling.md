@@ -9,7 +9,9 @@ Open the job with **Edit**: in the scheduling section, choose how often it shoul
 
 - **Daily** — every day at the time you set.
 - **Weekly** — on the weekdays you pick, at the time you set.
-- **Monthly** — once a month, on the day and at the time you set.
+- **Monthly** — once a month, on the day and at the time you set. Mind days 29, 30 and 31: Windows
+  fires them only in months that have them (the 31st runs seven times a year). For "month-end",
+  tick **Last day of the month**: it fires on the 28th, 29th, 30th or 31st depending on the month.
 
 Each job keeps its *own* rhythm: documents every evening, photos on Sunday, archives once a month.
 Save the job and the schedule is active.
