@@ -24,7 +24,7 @@ cioè non fare nulla senza consenso esplicito e dichiarare esattamente cosa fa.
   GitHub non raggiungibile, risposta inattesa) è silenzioso: nessun messaggio a video.
 - **Avviso:** un banner nella finestra principale, sotto la barra dei pulsanti: «È disponibile
   RoboKeep 1.8.0 (hai la 1.7.0)». Pulsanti: **Novità** (apre la pagina della release nel
-  browser), **Scarica**, **Ignora questa versione** (salva `IgnoredUpdateVersion`; la versione
+  browser), **Scarica**, **Ignora** (salva `IgnoredUpdateVersion`; la versione
   successiva viene proposta di nuovo).
 - **Scarica:** RoboKeep riconosce da solo se gira come *self-contained* o *framework-dependent*
   e scarica il pacchetto corrispondente nella cartella Download di Windows, con avanzamento nel

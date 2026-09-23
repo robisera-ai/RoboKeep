@@ -409,7 +409,7 @@ Nota: `HttpListener` su `127.0.0.1` con porta alta non richiede privilegi. Se un
 | Upd_Available | È disponibile RoboKeep {0} (hai la {1}). Scarica lo zip, chiudi RoboKeep, estrailo sopra la cartella attuale e riapri. | RoboKeep {0} is available (you have {1}). Download the zip, close RoboKeep, extract it over the current folder and reopen. | RoboKeep {0} está disponible (tienes la {1}). Descarga el zip, cierra RoboKeep, extráelo sobre la carpeta actual y vuelve a abrir. | RoboKeep {0} est disponible (vous avez la {1}). Téléchargez le zip, fermez RoboKeep, extrayez-le sur le dossier actuel et rouvrez. | RoboKeep {0} ist verfügbar (Sie haben {1}). Laden Sie die Zip-Datei herunter, schließen Sie RoboKeep, entpacken Sie sie über den aktuellen Ordner und öffnen Sie es erneut. |
 | Upd_WhatsNew | Novità | What's new | Novedades | Nouveautés | Neuerungen |
 | Upd_Download | Scarica | Download | Descargar | Télécharger | Herunterladen |
-| Upd_Ignore | Ignora questa versione | Ignore this version | Ignorar esta versión | Ignorer cette version | Diese Version ignorieren |
+| Upd_Ignore | Ignora | Ignore | Ignorar | Ignorer | Ignorieren |
 | Upd_Downloading | Scaricamento… {0}% | Downloading… {0}% | Descargando… {0}% | Téléchargement… {0} % | Wird heruntergeladen… {0}% |
 | Upd_Downloaded | Scaricato in {0}. Chiudi RoboKeep, estrai lo zip sopra la cartella attuale e riapri. | Downloaded to {0}. Close RoboKeep, extract the zip over the current folder and reopen. | Descargado en {0}. Cierra RoboKeep, extrae el zip sobre la carpeta actual y vuelve a abrir. | Téléchargé dans {0}. Fermez RoboKeep, extrayez le zip sur le dossier actuel et rouvrez. | Heruntergeladen nach {0}. Schließen Sie RoboKeep, entpacken Sie die Zip-Datei über den aktuellen Ordner und öffnen Sie es erneut. |
 | Upd_DownloadFailed | Scaricamento non riuscito: riprova, oppure scarica dalla pagina della release. | Download failed: try again, or download from the release page. | Descarga fallida: inténtalo de nuevo o descarga desde la página de la versión. | Téléchargement échoué : réessayez ou téléchargez depuis la page de la version. | Download fehlgeschlagen: erneut versuchen oder von der Release-Seite herunterladen. |
@@ -654,7 +654,7 @@ EN: «no account and no network traffic, with **one exception, and it's your cal
 
 - [ ] **Step 2: cap. 02** — aggiungere in coda una sezione «Aggiornare» / «Updating»:
 
-IT: «Quando esiste una versione nuova (se hai attivato il controllo), nella finestra principale compare un avviso con **Novità**, **Scarica** e **Ignora questa versione**. Scarica prende il pacchetto giusto per la tua installazione e lo mette in Download. Poi fai tu: chiudi RoboKeep, estrai lo zip **sopra** la cartella attuale (sovrascrivendo), riapri. Impostazioni, job, cronologia e log stanno in `%APPDATA%\RoboKeep` e non vengono toccati. Se un'attività pianificata punta a quella cartella, dopo la sostituzione usa la versione nuova da sola.»
+IT: «Quando esiste una versione nuova (se hai attivato il controllo), nella finestra principale compare un avviso con **Novità**, **Scarica** e **Ignora**. Scarica prende il pacchetto giusto per la tua installazione e lo mette in Download. Poi fai tu: chiudi RoboKeep, estrai lo zip **sopra** la cartella attuale (sovrascrivendo), riapri. Impostazioni, job, cronologia e log stanno in `%APPDATA%\RoboKeep` e non vengono toccati. Se un'attività pianificata punta a quella cartella, dopo la sostituzione usa la versione nuova da sola.»
 
 EN: equivalente.
 
