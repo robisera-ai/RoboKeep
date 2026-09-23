@@ -11,6 +11,11 @@ public partial class JobEditorWindow : Wpf.Ui.Controls.FluentWindow
 {
     private readonly JobEditorViewModel _vm;
     private readonly string _originalSnapshot;
+    // OnSave e' asincrono (controllo della destinazione fino a 8 s): in quell'attesa l'utente
+    // puo' premere Salva di nuovo, Annulla o la X. Senza queste guardie la continuazione
+    // impostava DialogResult su una finestra gia' chiusa: eccezione non gestita, app chiusa.
+    private bool _saving;
+    private bool _closed;
 
     public JobEditorWindow(BackupJob job, IEnumerable<CredentialEntry> credentials)
     {
@@ -21,6 +26,7 @@ public partial class JobEditorWindow : Wpf.Ui.Controls.FluentWindow
         // per sapere se c'e' davvero qualcosa da perdere (vedi OnClosing).
         _originalSnapshot = Snapshot();
         Closing += OnClosing;
+        Closed += (_, _) => _closed = true;
     }
 
     private string Snapshot()
@@ -65,52 +71,66 @@ public partial class JobEditorWindow : Wpf.Ui.Controls.FluentWindow
 
     private async void OnSave(object sender, RoutedEventArgs e)
     {
-        var error = _vm.Validate();
-        if (error is not null)
+        if (_saving) return;                              // doppio clic o Invio ripetuto
+        _saving = true;
+        try
         {
-            MessageBox.Show(error, Loc.Instance["Common_MissingData"], MessageBoxButton.OK, MessageBoxImage.Warning);
-            return;
-        }
-
-        // Controllo idoneita' destinazione fuori dal thread UI (su UNC irraggiungibile
-        // Directory.Exists puo' bloccare 20-30s): Task.Run con timeout, niente freeze.
-        if (_vm.Versioned)
-        {
-            var dest = _vm.Destination;
-            bool? supported = null; // null = non determinato entro il tempo
-            try
+            var error = _vm.Validate();
+            if (error is not null)
             {
-                supported = await System.Threading.Tasks.Task.Run(
-                    () => RoboKeep.Core.Services.HardLinkSupport.IsSupported(dest))
-                    .WaitAsync(System.TimeSpan.FromSeconds(8));
-            }
-            catch (System.TimeoutException) { /* non determinato: vedi sotto */ }
-
-            // Blocca SOLO con una risposta certa "non supportato". Un timeout (disco esterno
-            // lento a rispondere allo spin-up) non deve impedire di salvare un job legittimo su
-            // NTFS: al run, se davvero gli hard-link non ci sono, il versioning degrada a copia
-            // normale con avviso, mai perdita di dati. "Non lo so" non e' "no".
-            if (supported == false)
-            {
-                MessageBox.Show(Loc.Instance["Ver_DestNotSupported"],
-                    Loc.Instance["Common_MissingData"], MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show(error, Loc.Instance["Common_MissingData"], MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
-        }
 
-        // VSS richiede sorgente su volume NTFS locale: avvisa subito, non solo al run.
-        // Solo informativo: il salvataggio prosegue (al run scatterà il fallback con avviso).
-        if (_vm.Job.UseVss && !RoboKeep.Core.Services.VssEligibility.IsEligible(_vm.Job.Source))
+            // Controllo idoneita' destinazione fuori dal thread UI (su UNC irraggiungibile
+            // Directory.Exists puo' bloccare 20-30s): Task.Run con timeout, niente freeze.
+            if (_vm.Versioned)
+            {
+                var dest = _vm.Destination;
+                bool? supported = null; // null = non determinato entro il tempo
+                try
+                {
+                    supported = await System.Threading.Tasks.Task.Run(
+                        () => RoboKeep.Core.Services.HardLinkSupport.IsSupported(dest))
+                        .WaitAsync(System.TimeSpan.FromSeconds(8));
+                }
+                catch (System.TimeoutException) { /* non determinato: vedi sotto */ }
+
+                if (_closed) return;                      // chiusa con Annulla o la X nell'attesa
+
+                // Blocca SOLO con una risposta certa "non supportato". Un timeout (disco esterno
+                // lento a rispondere allo spin-up) non deve impedire di salvare un job legittimo su
+                // NTFS: al run, se davvero gli hard-link non ci sono, il versioning degrada a copia
+                // normale con avviso, mai perdita di dati. "Non lo so" non e' "no".
+                if (supported == false)
+                {
+                    MessageBox.Show(Loc.Instance["Ver_DestNotSupported"],
+                        Loc.Instance["Common_MissingData"], MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+            }
+
+            // VSS richiede sorgente su volume NTFS locale: avvisa subito, non solo al run.
+            // Solo informativo: il salvataggio prosegue (al run scatterà il fallback con avviso).
+            if (_vm.Job.UseVss && !RoboKeep.Core.Services.VssEligibility.IsEligible(_vm.Job.Source))
+            {
+                MessageBox.Show(
+                    Loc.Instance["Preflight_VssNotEligible"],
+                    _vm.Job.Name,
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+
+            if (!_closed) DialogResult = true;
+        }
+        finally
         {
-            MessageBox.Show(
-                Loc.Instance["Preflight_VssNotEligible"],
-                _vm.Job.Name,
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
+            _saving = false;
         }
-
-        DialogResult = true;
     }
 
-    private void OnCancel(object sender, RoutedEventArgs e) => DialogResult = false;
+    private void OnCancel(object sender, RoutedEventArgs e)
+    {
+        if (!_closed) DialogResult = false;
+    }
 }

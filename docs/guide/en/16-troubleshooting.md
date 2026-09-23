@@ -18,6 +18,10 @@ Dated versions use hard-links, which exist only on **local NTFS**. You need an *
 
 The app **isn't digitally signed yet**, so Windows SmartScreen warns you. It's **safe**: click **"More info"** and then **"Run anyway"**.
 
+### "Unexpected error" appears
+
+Something in the app went wrong where it wasn't expected. RoboKeep **stays open** and writes the details to `crash.log` in the data folder (`%APPDATA%\RoboKeep`, or the app folder in portable mode). If something stops responding, close and reopen the app. The file is useful when reporting the problem: it holds the date, the version and the error trace, no personal data beyond any paths involved.
+
 ### A scheduled task doesn't start
 
 Check that the credentials' **DPAPI encryption scope** is **machine-wide**: only then can the scheduled task decrypt the credentials and run with the app closed. With per-user scope, the task can't read them. See *Settings*.

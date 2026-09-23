@@ -18,6 +18,10 @@ Le versioni datate usano gli hard-link, che esistono solo su **NTFS locale**. Se
 
 L'app **non è ancora firmata digitalmente**, perciò Windows SmartScreen ti avvisa. È **sicura**: premi **«Ulteriori informazioni»** e poi **«Esegui comunque»**.
 
+### Compare «Errore imprevisto»
+
+Qualcosa nell'app è andato storto in un punto non previsto. RoboKeep **resta aperto** e scrive i dettagli in `crash.log` nella cartella dati (`%APPDATA%\RoboKeep`, oppure la cartella dell'app in modalità portatile). Se qualcosa non risponde più, chiudi e riapri l'app. Il file è utile per segnalare il problema: contiene data, versione e la traccia dell'errore, nessun dato personale oltre ai percorsi eventualmente coinvolti.
+
 ### Un'attività pianificata non parte
 
 Controlla che l'**ambito di cifratura DPAPI** delle credenziali sia **a livello macchina**: solo così l'attività pianificata può decifrare le credenziali e girare ad app chiusa. Con l'ambito per-utente, l'attività non riesce a leggerle. Vedi *Impostazioni*.

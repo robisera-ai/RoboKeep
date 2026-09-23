@@ -4,6 +4,18 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- **The job editor could close the whole app on Save.** Save checks the destination in the
+  background (up to 8 s on a slow external disk); pressing Save again, Cancel or the X during that
+  wait made the first Save touch a window that was already closed, and the unhandled error
+  killed RoboKeep with everything unsaved. Save now ignores repeated clicks and does nothing if
+  the editor was closed meanwhile.
+- **Unexpected errors no longer close the app silently.** They are written to `crash.log` in the
+  data folder (`%APPDATA%\RoboKeep`, or the app folder in portable mode) with date, version and
+  full details, and a message tells you what happened while RoboKeep stays open.
+
 ## [1.8.0] - 2026-09-23 — Disk health, update check, simpler wizard
 
 This release builds on the hardware-safety work of 1.7: RoboKeep can now read every disk's SMART

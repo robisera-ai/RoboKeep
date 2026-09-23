@@ -47,6 +47,32 @@ public partial class App : Application
             return;
         }
 
+        // Rete di sicurezza della GUI: un'eccezione non gestita (es. in un gestore async void)
+        // chiudeva l'app senza una parola, con il lavoro in corso perso. Ora finisce in
+        // crash.log nella cartella dati, l'utente vede cosa e' successo e l'app resta aperta.
+        DispatcherUnhandledException += (_, args) =>
+        {
+            var path = RoboKeep.Core.Services.CrashLog.Write(args.Exception, "UI");
+            args.Handled = true;
+            try
+            {
+                MessageBox.Show(
+                    string.Format(Localization.Loc.Instance["App_CrashBody"], args.Exception.Message, path ?? "-"),
+                    Localization.Loc.Instance["App_CrashTitle"], MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch { /* se non riusciamo nemmeno a mostrare il messaggio, il log basta */ }
+        };
+        // Thread non UI e task dimenticati: qui non si puo' impedire la chiusura, ma almeno resta traccia.
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            if (args.ExceptionObject is Exception ex) RoboKeep.Core.Services.CrashLog.Write(ex, "thread");
+        };
+        System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            RoboKeep.Core.Services.CrashLog.Write(args.Exception, "task");
+            args.SetObserved();
+        };
+
         // Applica il tema (chiaro/scuro) seguendo le impostazioni di sistema.
         ApplicationThemeManager.ApplySystemTheme();
 

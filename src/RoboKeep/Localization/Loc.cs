@@ -75,6 +75,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Common_Save"] = "Salva",
         ["Common_Cancel"] = "Annulla",
         ["Common_MissingData"] = "Dati mancanti",
+        ["App_CrashTitle"] = "Errore imprevisto",
+        ["App_CrashBody"] = "RoboKeep ha incontrato un errore imprevisto e lo ha registrato. L'app resta aperta, ma se qualcosa non risponde chiudila e riaprila.\n\n{0}\n\nDettagli in: {1}",
         ["Common_Confirm"] = "Conferma",
 
         ["Main_Title"] = "RoboKeep — Backup configurabile",
@@ -456,6 +458,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Common_Save"] = "Save",
         ["Common_Cancel"] = "Cancel",
         ["Common_MissingData"] = "Missing data",
+        ["App_CrashTitle"] = "Unexpected error",
+        ["App_CrashBody"] = "RoboKeep ran into an unexpected error and logged it. The app stays open, but if something stops responding, close and reopen it.\n\n{0}\n\nDetails in: {1}",
         ["Common_Confirm"] = "Confirm",
 
         ["Main_Title"] = "RoboKeep — Configurable backup",
@@ -837,6 +841,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Common_Save"] = "Guardar",
         ["Common_Cancel"] = "Cancelar",
         ["Common_MissingData"] = "Faltan datos",
+        ["App_CrashTitle"] = "Error inesperado",
+        ["App_CrashBody"] = "RoboKeep ha encontrado un error inesperado y lo ha registrado. La aplicación sigue abierta, pero si algo deja de responder, ciérrala y vuelve a abrirla.\n\n{0}\n\nDetalles en: {1}",
         ["Common_Confirm"] = "Confirmar",
 
         ["Main_Title"] = "RoboKeep — Copia de seguridad configurable",
@@ -1218,6 +1224,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Common_Save"] = "Enregistrer",
         ["Common_Cancel"] = "Annuler",
         ["Common_MissingData"] = "Données manquantes",
+        ["App_CrashTitle"] = "Erreur inattendue",
+        ["App_CrashBody"] = "RoboKeep a rencontré une erreur inattendue et l'a consignée. L'application reste ouverte, mais si quelque chose ne répond plus, fermez-la et rouvrez-la.\n\n{0}\n\nDétails dans : {1}",
         ["Common_Confirm"] = "Confirmer",
 
         ["Main_Title"] = "RoboKeep — Sauvegarde configurable",
@@ -1599,6 +1607,8 @@ public sealed class Loc : INotifyPropertyChanged
         ["Common_Save"] = "Speichern",
         ["Common_Cancel"] = "Abbrechen",
         ["Common_MissingData"] = "Fehlende Daten",
+        ["App_CrashTitle"] = "Unerwarteter Fehler",
+        ["App_CrashBody"] = "RoboKeep ist auf einen unerwarteten Fehler gestoßen und hat ihn protokolliert. Die App bleibt geöffnet; falls etwas nicht mehr reagiert, schließen Sie sie und öffnen Sie sie erneut.\n\n{0}\n\nDetails in: {1}",
         ["Common_Confirm"] = "Bestätigen",
 
         ["Main_Title"] = "RoboKeep — Konfigurierbares Backup",
