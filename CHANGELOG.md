@@ -4,7 +4,7 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.8.1] - 2026-09-23 — Job editor crash fix
 
 ### Fixed
 - **The job editor could close the whole app on Save.** Save checks the destination in the
@@ -15,6 +15,11 @@ All notable changes to RoboKeep are documented here. The format is based on
 - **Unexpected errors no longer close the app silently.** They are written to `crash.log` in the
   data folder (`%APPDATA%\RoboKeep`, or the app folder in portable mode) with date, version and
   full details, and a message tells you what happened while RoboKeep stays open.
+
+### Downloads
+- **`RoboKeep-1.8.1-win-x64-selfcontained.zip`** — bundles .NET 10: extract and run, nothing to install.
+- **`RoboKeep-1.8.1-win-x64-framework-dependent.zip`** — smaller; requires the
+  [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
 
 ## [1.8.0] - 2026-09-23 — Disk health, update check, simpler wizard
 
