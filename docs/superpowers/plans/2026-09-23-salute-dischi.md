@@ -8,6 +8,20 @@
 
 **Tech Stack:** .NET 10, WPF + WPF-UI 4.3, xUnit, P/Invoke su kernel32 (`CreateFileW`, `DeviceIoControl`).
 
+> **Esito (23/09/2026, commit 7777d88):** piano eseguito. Scostamenti rispetto al testo sotto,
+> tutti verificati sull'hardware e in revisione:
+> - `STORAGE_DEVICE_DESCRIPTOR`: gli offset giusti sono `VendorIdOffset` 12, `ProductIdOffset` 16,
+>   `SerialNumberOffset` 24, `BusType` 28 (il piano dice 8/12/20).
+> - C7: riga `Smart_LinkErrors` emessa solo con raw > 0 (con 0 la riga non compare); il test
+>   `Ata_C7Only_IsNote…` va letto di conseguenza.
+> - Temperatura ATA (C2/BE): solo il byte basso del raw, `null` fuori da 0..120 (i byte alti
+>   portano min/max su Seagate/WD e davano falsi «Attenzione»).
+> - `ReadNvme` valida il descrittore restituito (offset/lunghezza dati, log tutto a zero → null).
+> - Fusione app↔helper per numero **e** seriale; `SmartSnapshot.HelperFailed` usato a video
+>   (`Smart_ReadFailed`); helper terminato e cartelle residue ripulite al timeout.
+> - Finestra senza `Owner` (posseduta restava sempre sopra la principale e la copriva).
+> - Colori del verdetto dai brush di tema WPF-UI, non esadecimali.
+
 **Regole del repo:** nessun commit finché l'utente non ha verificato; CRLF (`unix2dos -q`); mai terminare RoboKeep se blocca la build (chiedere di chiuderlo); `Loc.cs` in 5 sezioni con parità (`LocParityTests`); i simboli WPF-UI vanno verificati (`grep -c <Nome> ~/.nuget/packages/wpf-ui/4.3.0/lib/net9.0-windows7.0/Wpf.Ui.dll` > 0). Commenti in italiano; nel Core apostrofi ASCII.
 
 **Fatti verificati sull'hardware** (sonde del 23/09/2026, da rispettare): l'ATA passthrough funziona solo con handle `GENERIC_READ|GENERIC_WRITE` (0xC0000000) su `\\.\PhysicalDriveN` e richiede admin; su un NVMe torna `ScsiStatus=2` con buffer spazzatura → accettare solo `ScsiStatus==0` e azzerare il buffer prima; il log NVMe via `IOCTL_STORAGE_QUERY_PROPERTY` (PropertyId 50, ProtocolTypeNvme=3, NVMeDataTypeLogPage=2, log page 2, offset dati 40, lunghezza 512) funziona senza admin con handle ad accesso 0.

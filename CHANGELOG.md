@@ -4,7 +4,13 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.8.0] - 2026-09-23 — Disk health, update check, simpler wizard
+
+This release builds on the hardware-safety work of 1.7: RoboKeep can now read every disk's SMART
+and tell you, in plain words, whether it is healthy — the early warning that the event log gives
+too late. It also learns to tell you when a newer version exists (if you allow it), makes the
+wizard ask only what matters, and stops recopying everything when you turn versions on for an
+existing job.
 
 ### Added
 - **Optional update check.** On first start RoboKeep asks whether it may check GitHub for a
@@ -62,6 +68,11 @@ All notable changes to RoboKeep are documented here. The format is based on
 
 ### Docs
 - `ANALISI.md` now covers v1.5–v1.7 and the engineering decisions behind the hardware-safety work.
+
+### Downloads
+- **`RoboKeep-1.8.0-win-x64-selfcontained.zip`** — bundles .NET 10: extract and run, nothing to install.
+- **`RoboKeep-1.8.0-win-x64-framework-dependent.zip`** — smaller; requires the
+  [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
 
 ## [1.7.0] - 2026-09-21 — Hardware safety of the backup media
 
