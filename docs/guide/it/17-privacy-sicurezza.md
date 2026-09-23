@@ -10,6 +10,8 @@ Il **controllo aggiornamenti**: al primo avvio RoboKeep chiede se vuoi che contr
 
 I **report via email**: se li configuri, l'app contatta il server **SMTP** che hai scelto tu (con TLS attivo di default) per spedire il resoconto. Fine. Nient'altro esce dal tuo PC.
 
+Anche la lettura della **salute dei dischi** (SMART) è del tutto locale: l'app parla direttamente con i dischi collegati al PC, niente esce verso l'esterno.
+
 ## Tutto in file locali
 
 Tutto ciò che l'app sa — impostazioni, esiti, cronologia, log — vive in **file locali** sul tuo PC. È **JSON leggibile**: puoi aprirlo e ispezionarlo quando vuoi, senza strumenti speciali. Nessun database opaco, nessun formato segreto.

@@ -18,6 +18,8 @@ public sealed class AppHost
     public FaultedDiskStore FaultedDisks { get; }
     public UpdateStateStore UpdateState { get; }
     public string LockFolder => Path.Combine(Store.DirectoryPath, "locks");
+    /// <summary>Cartella delle sessioni usa-e-getta per lo scambio con l'helper SMART elevato.</summary>
+    public string SmartSessionRoot => Path.Combine(Store.DirectoryPath, "smart");
 
     private AppHost(ConfigStore store, AppConfig config)
     {

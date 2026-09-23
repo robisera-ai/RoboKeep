@@ -35,6 +35,10 @@ The **"Check for updates automatically"** checkbox decides whether RoboKeep chec
 
 The **About** tab also has a **"Check now"** button, which checks right away — it works even with the checkbox off, because it's an explicit action you decide in the moment. The result appears under the button: *you are up to date*, or *version X is available* (with the notice appearing in the main window), or *check failed* if there's no network or GitHub can't be reached.
 
+## Disk health
+
+The **"Disk health"** button, in the main window's toolbar, reads the SMART data of every physical disk and shows an explained verdict. SATA and USB disks need one administrator prompt per reading; the **Refresh** button in the window repeats the reading. What the values mean is in the *Troubleshooting* chapter.
+
 ## Export and import configuration
 
 You can save your whole configuration to a file and load it back elsewhere.

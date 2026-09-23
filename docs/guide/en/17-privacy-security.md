@@ -10,6 +10,8 @@ The **update check**: on first start RoboKeep asks whether you want it to check 
 
 **Email reports**: if you set them up, the app contacts the **SMTP** server you chose (with TLS on by default) to send the summary. That's it. Nothing else leaves your PC.
 
+Reading **disk health** (SMART) is entirely local too: the app talks directly to the disks connected to your PC, nothing goes out.
+
 ## Everything in local files
 
 Everything the app knows — settings, outcomes, history, logs — lives in **local files** on your PC. It's **readable JSON**: you can open and inspect it whenever you like, no special tools needed. No opaque database, no secret format.

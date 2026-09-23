@@ -12,6 +12,11 @@ All notable changes to RoboKeep are documented here. The format is based on
   exists, a banner offers *What's new*, *Download* (the right package for your install, into
   Downloads, size-verified) and *Ignore*. You replace the files yourself; RoboKeep
   never updates itself. Settings has the switch and a *Check now* button.
+- **Disk health window.** One click reads every disk's SMART (NVMe without prompts; SATA/USB
+  through a one-time administrator prompt, the only way through USB enclosures) and gives a
+  plain-language verdict — Good, Caution, Danger — with the handful of values that matter
+  (reallocated, pending and uncorrectable sectors, link CRC errors, temperature, hours; spare,
+  wear and media errors for NVMe), each explained. Read-only; nothing is written or tested.
 
 ### Changed
 - **Monthly schedules can run on the last day of the month.** A fixed day 29-31 only fires in

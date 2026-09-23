@@ -41,8 +41,29 @@ When this happens RoboKeep **stops immediately**, at the first error, and marks 
 
 ### "Recent disk errors" shows up before a backup
 
-A USB disk's SMART data can't be read without administrator rights, and without them Windows reports even a disk with pending sectors as "healthy". So RoboKeep looks at the **Windows event log**, which keeps bad blocks, I/O errors and lost writes for weeks: these are the signs that usually **precede** damage, sometimes by a month. If it finds any for the source or destination disk in the last 14 days, it tells you before starting (and, in scheduled backups, writes it at the end of the log).
+A USB disk's SMART data can't be read without administrator rights, and without them Windows reports even a disk with pending sectors as "healthy". So RoboKeep looks at the **Windows event log**, which keeps bad blocks, I/O errors and lost writes for weeks: these are the signs that usually **precede** damage, sometimes by a month. If it finds any for the source or destination disk in the last 14 days, it tells you before starting (and, in scheduled backups, writes it at the end of the log). To read that disk's SMART data for real there is the **"Disk health"** button, which asks for administrator approval when needed: see *Reading disk health*, just below.
 
 The warning **doesn't block** the backup, because the log names disks by letter and number, not by identity: if you alternate two disks on the same letter, one disk's errors can show up while the other is connected. Take it for what it is — a good reason to check cable, enclosure, power and SMART right away.
 
 If the failing disk is the backup disk, **stop using it** and switch to a healthy one: your original data is safe in the source, and the copies can be rebuilt. If it's the **source** disk instead, rescue your data before anything else.
+
+### Reading disk health
+
+The **"Disk health"** button, in the main window's toolbar, reads the SMART data of every connected physical disk and shows a plain-language verdict, with the values that matter explained one by one. For **NVMe** disks the reading needs no prompt; **SATA and USB** disks need **one administrator prompt** (once per reading: it's the only way through USB enclosures). It's a **read-only** operation: no SMART test is started, nothing is written to the disks.
+
+The verdict is one of:
+
+- **Good** — no critical value.
+- **Caution** — a value worth watching (pending sectors, wear, high temperature).
+- **Danger** — the disk is failing: back up your data and replace it soon.
+
+The values that matter, for ATA/SATA/USB disks:
+
+- **05 Reallocated sectors** — above zero the disk is failing: replace it.
+- **C5 Pending sectors** — unreadable sectors not yet rewritten, often the sign of **interrupted writes** (a cable pulled out, lost power) rather than a fault. A **full format** rewrites them; if reallocated (05) then rises, the disk really is failing. This happened to a disk in this very project: 17 pending sectors with 05 at zero, gone after a full format.
+- **C6 Uncorrectable sectors** — data lost for good in those sectors: replace the disk.
+- **C7 CRC errors on the link** — transmission errors between the enclosure (or controller) and the disk, not on the disk itself. The row **appears only when the value is greater than zero**: on a healthy link it would have nothing to say. A **faulty USB cable leaves no trace here**: a C7 of zero doesn't clear it.
+- **BB Reported uncorrectable errors** — cumulative history since the disk was new. What matters isn't the absolute number, but whether it **grows** between one reading and the next.
+- **Temperature** — a mechanical disk above **50 °C** suffers; an NVMe is fine up to **70 °C**.
+
+**NVMe** disks show different values: **critical warning** (anything but zero is serious), **available spare** against the manufacturer's threshold (below threshold is serious), **media errors** (serious), **percentage used** (caution past 90%), **unsafe shutdowns** (informational).

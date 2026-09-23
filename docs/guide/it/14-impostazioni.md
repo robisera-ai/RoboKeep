@@ -35,6 +35,10 @@ La casella **«Cerca aggiornamenti automaticamente»** decide se RoboKeep contro
 
 Nella scheda **Info** trovi anche il pulsante **«Controlla ora»**, che fa la verifica subito — funziona anche a casella spenta, perché è un'azione esplicita che decidi tu lì per lì. Il risultato compare sotto il pulsante: *sei aggiornato*, oppure *è disponibile la versione X* (con l'avviso che compare nella finestra principale), oppure *controllo non riuscito* se manca la rete o GitHub non è raggiungibile.
 
+## Salute dischi
+
+Il pulsante **«Salute dischi»**, nella barra della finestra principale, legge lo SMART di ogni disco fisico e mostra un verdetto spiegato. Per i dischi SATA e USB serve una richiesta di amministratore, una per ogni lettura; il pulsante **Aggiorna** nella finestra ripete la lettura. Il significato dei valori è nel capitolo *Risoluzione problemi*.
+
 ## Esporta e importa configurazione
 
 Puoi salvare tutta la tua configurazione in un file e ricaricarla altrove.

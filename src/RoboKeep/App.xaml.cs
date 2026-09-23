@@ -20,6 +20,13 @@ public partial class App : Application
         base.OnStartup(e);
 
         var options = CliOptions.Parse(e.Args);
+        if (options.SmartHelperDir is not null)
+        {
+            // Helper elevato per lo SMART: legge e scrive smart.json, poi esce. Niente GUI.
+            Shutdown(RoboKeep.Core.Services.Smart.SmartHelper.Run(options.SmartHelperDir));
+            return;
+        }
+
         if (options.VssHelperDir is not null)
         {
             // Modalità helper elevato: crea lo snapshot, attende il rilascio, pulisce, esce.

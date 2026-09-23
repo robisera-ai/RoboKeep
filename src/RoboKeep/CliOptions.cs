@@ -14,6 +14,11 @@ public sealed class CliOptions
     /// (creazione snapshot) e termina. Uso interno, non documentato all'utente.</summary>
     public string? VssHelperDir { get; private set; }
 
+    /// <summary>Cartella di sessione SMART: se presente, il processo esegue il helper elevato
+    /// (lettura SMART ATA, scrittura di smart.json) e termina. Uso interno, non documentato
+    /// all'utente.</summary>
+    public string? SmartHelperDir { get; private set; }
+
     /// <summary>true se è stata richiesta un'esecuzione headless (niente GUI).</summary>
     public bool HasCommand => RunAll || !string.IsNullOrEmpty(JobName);
 
@@ -46,6 +51,10 @@ public sealed class CliOptions
                 case "--vss-helper":
                     if (i + 1 < args.Length)
                         o.VssHelperDir = args[++i];
+                    break;
+                case "--smart-helper":
+                    if (i + 1 < args.Length)
+                        o.SmartHelperDir = args[++i];
                     break;
             }
         }

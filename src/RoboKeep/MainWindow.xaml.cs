@@ -160,6 +160,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     {
         _exiting = true;
         TrayIcon.Dispose();
+        _diskHealth?.Close();                             // finestra indipendente: non si chiude da sola
         base.OnClosed(e);
     }
 
@@ -460,6 +461,22 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     {
         var win = new HistoryWindow(_host, _vm.SelectedJob?.Name) { Owner = this };
         win.ShowDialog();
+    }
+
+    // La salute dei dischi e' modeless come la guida: la lettura chiede l'autorizzazione di
+    // amministratore e puo' durare qualche secondo, ma non deve bloccare il resto dell'app.
+    // Senza Owner: una finestra posseduta resta sempre sopra la principale e, centrata su di
+    // essa, la copre rendendola di fatto inutilizzabile. Indipendente, la principale puo'
+    // tornare in primo piano; alla chiusura dell'app la chiude OnClosed.
+    // Una sola istanza: se e' gia' aperta la porta in primo piano invece di duplicarla.
+    private DiskHealthWindow? _diskHealth;
+
+    private void OnDiskHealth(object sender, RoutedEventArgs e)
+    {
+        if (_diskHealth is { IsLoaded: true }) { _diskHealth.Activate(); return; }
+        _diskHealth = new DiskHealthWindow(_host) { WindowStartupLocation = WindowStartupLocation.CenterScreen };
+        _diskHealth.Closed += (_, _) => _diskHealth = null;
+        _diskHealth.Show();
     }
 
     // Riattiva i dischi messi a riposo per un errore hardware: l'utente dichiara di averli

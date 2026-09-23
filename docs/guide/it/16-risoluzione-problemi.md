@@ -41,8 +41,29 @@ In questi casi RoboKeep **si ferma subito**, al primo errore, e segna il job com
 
 ### Prima di un backup compare «errori disco recenti»
 
-Lo SMART di un disco USB non si può leggere senza privilegi di amministratore, e Windows, senza, dichiara «integro» anche un disco con settori in attesa. RoboKeep guarda allora il **registro eventi di Windows**, che conserva per settimane blocchi danneggiati, errori di I/O e scritture perse: sono i segnali che di solito **precedono** un danno, a volte di un mese. Se negli ultimi 14 giorni ne trova per il disco sorgente o di destinazione, te lo dice prima di partire (e, nei backup pianificati, lo scrive in fondo al log).
+Lo SMART di un disco USB non si può leggere senza privilegi di amministratore, e Windows, senza, dichiara «integro» anche un disco con settori in attesa. RoboKeep guarda allora il **registro eventi di Windows**, che conserva per settimane blocchi danneggiati, errori di I/O e scritture perse: sono i segnali che di solito **precedono** un danno, a volte di un mese. Se negli ultimi 14 giorni ne trova per il disco sorgente o di destinazione, te lo dice prima di partire (e, nei backup pianificati, lo scrive in fondo al log). Per leggere davvero lo SMART di quel disco c'è il pulsante **«Salute dischi»**, che chiede l'autorizzazione di amministratore quando serve: vedi *Leggere la salute del disco*, qui sotto.
 
 L'avviso **non blocca** il backup, perché il registro nomina i dischi per lettera e numero, non per identità: se alterni due dischi sulla stessa lettera, gli errori dell'uno possono comparire mentre è collegato l'altro. Prendilo per quello che è — un buon motivo per controllare subito cavo, box, alimentazione e SMART.
 
 Se il disco che cede è quello dei backup, **smetti di usarlo** e passa a uno sano: i tuoi dati originali sono al sicuro nella sorgente, le copie si ricreano. Se invece è il disco **sorgente**, metti in salvo i dati prima di ogni altra cosa.
+
+### Leggere la salute del disco
+
+Il pulsante **«Salute dischi»**, nella barra della finestra principale, legge lo SMART di ogni disco fisico collegato e mostra un verdetto in chiaro, con i valori che contano spiegati uno per uno. Per i dischi **NVMe** la lettura non chiede nulla; per i dischi **SATA e USB** serve **una richiesta di amministratore** (una sola per ogni lettura: è l'unica strada che attraversa i box USB). È una lettura **soltanto**: nessun test SMART viene avviato, niente viene scritto sui dischi.
+
+Il verdetto è uno tra:
+
+- **Buono** — nessun valore critico.
+- **Attenzione** — un valore da tenere d'occhio (settori in attesa, usura, temperatura alta).
+- **Pericolo** — il disco sta cedendo: metti al sicuro i dati e sostituiscilo appena puoi.
+
+I valori che contano, per i dischi ATA/SATA/USB:
+
+- **05 Settori riallocati** — sopra zero il disco sta cedendo: sostituiscilo.
+- **C5 Settori in attesa** — settori illeggibili non ancora riscritti, spesso il segno di **scritture interrotte** (cavo staccato, alimentazione mancata) più che di un guasto. Una **formattazione completa** li riscrive; se dopo la formattazione i riallocati (05) salgono, allora il disco sta davvero cedendo. È successo proprio a un disco di questo progetto: 17 settori in attesa con 05 a zero, spariti dopo una formattazione completa.
+- **C6 Settori non correggibili** — dati persi per sempre in quei settori: sostituisci il disco.
+- **C7 Errori CRC sul collegamento** — errori di trasmissione tra il box (o il controller) e il disco, non sul disco stesso. La riga **compare solo quando il valore è maggiore di zero**: su un collegamento sano non avrebbe nulla da dire. Un **cavo USB difettoso non lascia alcuna traccia qui**: un C7 a zero non lo esclude.
+- **BB Errori non correggibili segnalati** — storico cumulativo dall'origine del disco. Non conta il numero assoluto, ma se **cresce** tra una lettura e la successiva.
+- **Temperatura** — un disco meccanico sopra i **50 °C** soffre; un NVMe sta bene fino a **70 °C**.
+
+Per i dischi **NVMe** i valori sono diversi: **avviso critico** (qualunque cosa diversa da zero è grave), **riserva disponibile** rispetto alla soglia del produttore (sotto soglia è grave), **errori del supporto** (media errors, gravi), **percentuale di usura** (attenzione oltre il 90 %), **spegnimenti non protetti** (informativo).
