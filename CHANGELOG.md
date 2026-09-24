@@ -4,6 +4,15 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- **The window no longer freezes ("not responding") when you start a job.** The pre-run checks
+  read the Windows event log for source and destination, which can take several seconds on a
+  large log, and they ran on the UI thread before the first log line appeared. They now run in
+  the background with a "Running pre-run checks…" status, and the event-log reading is cached for
+  two minutes so the same disk isn't queried twice per job (once by the checks, once by the run).
+
 ## [1.8.1] - 2026-09-23 — Job editor crash fix
 
 ### Fixed

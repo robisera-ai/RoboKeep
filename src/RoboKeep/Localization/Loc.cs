@@ -387,6 +387,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Health_CountStale"] = "{0} non eseguiti da troppo tempo",
 
         ["Preflight_ConfirmTitle"] = "Controlli pre-avvio",
+        ["Status_Preflight"] = "Controlli pre-avvio in corso…",
         ["Preflight_ConfirmIntro"] = "Alcuni controlli segnalano possibili problemi. Avviare comunque?",
         ["Preflight_DestUnreachable"] = "destinazione non raggiungibile",
         ["Preflight_NoHardLink"] = "non è possibile tenere traccia delle versioni: la destinazione non supporta gli hard-link (verrà eseguito un mirror semplice, senza snapshot)",
@@ -770,6 +771,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Health_CountStale"] = "{0} not run for too long",
 
         ["Preflight_ConfirmTitle"] = "Pre-run checks",
+        ["Status_Preflight"] = "Running pre-run checks…",
         ["Preflight_ConfirmIntro"] = "Some checks report possible problems. Run anyway?",
         ["Preflight_DestUnreachable"] = "destination not reachable",
         ["Preflight_NoHardLink"] = "version history is not possible: the destination does not support hard-links (a simple mirror will run, without snapshots)",
@@ -1153,6 +1155,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Health_CountStale"] = "{0} sin ejecutar por demasiado tiempo",
 
         ["Preflight_ConfirmTitle"] = "Comprobaciones previas",
+        ["Status_Preflight"] = "Comprobaciones previas en curso…",
         ["Preflight_ConfirmIntro"] = "Algunas comprobaciones detectan posibles problemas. ¿Ejecutar de todos modos?",
         ["Preflight_DestUnreachable"] = "destino no accesible",
         ["Preflight_NoHardLink"] = "no es posible mantener el historial de versiones: el destino no admite enlaces físicos (se ejecutará un espejo simple, sin instantáneas)",
@@ -1536,6 +1539,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Health_CountStale"] = "{0} non exécutés depuis trop longtemps",
 
         ["Preflight_ConfirmTitle"] = "Vérifications avant lancement",
+        ["Status_Preflight"] = "Vérifications avant lancement en cours…",
         ["Preflight_ConfirmIntro"] = "Certaines vérifications signalent des problèmes possibles. Lancer quand même ?",
         ["Preflight_DestUnreachable"] = "destination injoignable",
         ["Preflight_NoHardLink"] = "impossible de conserver l'historique des versions : la destination ne prend pas en charge les liens physiques (un miroir simple sera exécuté, sans instantanés)",
@@ -1919,6 +1923,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Health_CountStale"] = "{0} zu lange nicht ausgeführt",
 
         ["Preflight_ConfirmTitle"] = "Prüfungen vor dem Start",
+        ["Status_Preflight"] = "Prüfungen vor dem Start laufen…",
         ["Preflight_ConfirmIntro"] = "Einige Prüfungen melden mögliche Probleme. Trotzdem starten?",
         ["Preflight_DestUnreachable"] = "Ziel nicht erreichbar",
         ["Preflight_NoHardLink"] = "Kein Versionsverlauf möglich: Das Ziel unterstützt keine Hardlinks (es wird eine einfache Spiegelung ohne Snapshots ausgeführt)",

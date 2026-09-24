@@ -193,7 +193,7 @@ public sealed class MainViewModel : ObservableObject
     }
 
     public string StatusText => IsBusy
-        ? Loc.Instance["Status_Running"]
+        ? Loc.Instance[_preflighting ? "Status_Preflight" : "Status_Running"]
         : string.Format(Loc.Instance["Status_JobsConfigured"], Jobs.Count);
 
     public RelayCommand PreviewSelectedCommand { get; }
@@ -245,7 +245,7 @@ public sealed class MainViewModel : ObservableObject
     private void Toggle(RunKind k)
     {
         if (_running == k) { _cts?.Cancel(); return; }
-        if (_running != RunKind.None) return;
+        if (_running != RunKind.None || _preflighting) return;
         _ = StartAsync(k);
     }
 
@@ -268,26 +268,47 @@ public sealed class MainViewModel : ObservableObject
 
         // Pre-check: nessuno stato di esecuzione è ancora impostato qui, quindi un return basta
         // per tornare all'idle. Preview e --run-all (non-interattivo) saltano il controllo.
-        if (!ConfirmPreflight(jobs, dryRun)) return;
+        if (!await ConfirmPreflightAsync(jobs, dryRun)) return;
 
         await RunJobsAsync(jobs, dryRun, k);
     }
 
-    private bool ConfirmPreflight(IReadOnlyList<JobViewModel> jobs, bool dryRun)
+    // I controlli pre-avvio leggono il registro eventi di Windows (secondi, su un registro
+    // grande) e misurano la sorgente: sul thread della UI congelavano la finestra prima ancora
+    // della prima riga di log ("non risponde"). Girano su un thread di lavoro; la finestra di
+    // conferma, se serve, resta sulla UI.
+    private bool _preflighting;
+
+    private async Task<bool> ConfirmPreflightAsync(IReadOnlyList<JobViewModel> jobs, bool dryRun)
     {
         if (dryRun || !_host.Config.Settings.PreflightEnabled)
             return true;
 
         long minFree = (long)_host.Config.Settings.MinFreeSpaceMb * 1024 * 1024;
         var budget = TimeSpan.FromSeconds(2);
-        var messages = new List<string>();
+        var models = jobs.Select(j => (j.Name, j.Model)).ToList();
+        List<string> messages;
 
-        foreach (var jvm in jobs)
+        _preflighting = true;
+        IsBusy = true;
+        try
         {
-            var job = jvm.Model;
-            var inputs = PreflightCollector.Collect(job, minFree, budget);
-            foreach (var warn in PreflightChecker.Evaluate(inputs))
-                messages.Add($"- {jvm.Name}: {Loc.Instance[warn.MessageKey]} {warn.Detail}".TrimEnd());
+            messages = await Task.Run(() =>
+            {
+                var list = new List<string>();
+                foreach (var (name, job) in models)
+                {
+                    var inputs = PreflightCollector.Collect(job, minFree, budget);
+                    foreach (var warn in PreflightChecker.Evaluate(inputs))
+                        list.Add($"- {name}: {Loc.Instance[warn.MessageKey]} {warn.Detail}".TrimEnd());
+                }
+                return list;
+            });
+        }
+        finally
+        {
+            _preflighting = false;
+            IsBusy = false;
         }
 
         if (messages.Count == 0)

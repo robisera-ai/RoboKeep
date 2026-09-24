@@ -78,6 +78,18 @@ public static class DiskEventLog
         return new DiskEventSummary(bad, io, fs, latest);
     }
 
+    /// <summary>Validità della cache per lettera: la lettura del registro costa secondi, e lo
+    /// stesso disco viene interrogato dal pre-avvio e poi dal runner, per ogni job in coda.</summary>
+    public static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(2);
+
+    private static readonly Dictionary<(char, TimeSpan), (DateTime At, DiskEventSummary Summary)> _cache = new();
+
+    /// <summary>Svuota la cache (test, o dopo una riattivazione manuale dei dischi).</summary>
+    public static void ClearCache()
+    {
+        lock (_cache) _cache.Clear();
+    }
+
     /// <summary>Errori recenti registrati per il disco locale che ospita <paramref name="path"/>.</summary>
     public static DiskEventSummary Collect(string? path, TimeSpan? window = null)
     {
@@ -88,7 +100,24 @@ public static class DiskEventLog
             if (string.IsNullOrEmpty(root) || root.Length < 2 || root[1] != ':') return DiskEventSummary.None;
             if (!Directory.Exists(root)) return DiskEventSummary.None;
 
-            var letter = root[0];
+            var key = (char.ToUpperInvariant(root[0]), window ?? DefaultWindow);
+            lock (_cache)
+            {
+                if (_cache.TryGetValue(key, out var hit) && DateTime.Now - hit.At < CacheTtl)
+                    return hit.Summary;
+            }
+            var summary = Read(root[0], window);
+            lock (_cache) _cache[key] = (DateTime.Now, summary);
+            return summary;
+        }
+        catch { return DiskEventSummary.None; }
+    }
+
+    private static DiskEventSummary Read(char letter, TimeSpan? window)
+    {
+        try
+        {
+            var root = $"{letter}:\\";
             var diskNumber = GetDiskNumber(letter);
             var since = DateTime.Now - (window ?? DefaultWindow);
             // La radice di un volume nasce con la formattazione: gli eventi precedenti riguardano
