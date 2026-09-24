@@ -39,6 +39,10 @@ The **About** tab also has a **"Check now"** button, which checks right away —
 
 The **"Disk health"** button, in the main window's toolbar, reads the SMART data of every physical disk and shows an explained verdict. SATA and USB disks need one administrator prompt per reading; the **Refresh** button in the window repeats the reading. What the values mean is in the *Troubleshooting* chapter.
 
+## Scheduled tasks
+
+The **"Scheduled tasks"** button, next to *Disk health*, shows the tasks RoboKeep registered in the Windows Task Scheduler: one for every job with a schedule, plus the one for *Run all*. For each you see the job it belongs to, the next run, the last run and its result, and the registered command. **Orphan** tasks — the ones with no job left, or that start another copy of RoboKeep — are highlighted and can be **deleted** from here; deleting the task of a job that still exists leaves that job without an automatic schedule. Nothing is edited: you change the schedule in the job editor, which rewrites the task when you save. Avoid deleting or editing RoboKeep's tasks directly in the Windows Task Scheduler: job and task would go out of sync. The button is off when there are no RoboKeep tasks.
+
 ## Export and import configuration
 
 You can save your whole configuration to a file and load it back elsewhere.

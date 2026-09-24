@@ -148,6 +148,55 @@ public sealed class MainViewModel : ObservableObject
         private set => SetField(ref _hasFaultedDisks, value);
     }
 
+    private bool _hasScheduledTasks;
+    /// <summary>
+    /// true se in Windows c'e' almeno un'attivita' pianificata di RoboKeep: accende il
+    /// pulsante «Attivita' pianificate». Senza attivita' il pulsante resterebbe una porta
+    /// su una finestra vuota.
+    /// </summary>
+    public bool HasScheduledTasks
+    {
+        get => _hasScheduledTasks;
+        private set => SetField(ref _hasScheduledTasks, value);
+    }
+
+    // Numero progressivo delle letture in corso: vale solo l'ultima partita.
+    private int _scheduledTasksTicket;
+
+    /// <summary>
+    /// Rilegge in sottofondo l'elenco delle attivita' di Windows. La lettura passa dall'API
+    /// COM e puo' costare qualche decimo di secondo: mai sul thread della UI. Best-effort:
+    /// se l'API non risponde o l'accesso e' negato, il pulsante resta spento e nessun errore
+    /// arriva a video — non e' un guasto di cui l'utente debba occuparsi.
+    /// Rinominare un job fa partire due letture in fila (rimozione + creazione dell'attivita'):
+    /// senza il contatore, la risposta della prima — piu' lenta e gia' vecchia — arriverebbe
+    /// per ultima e spegnerebbe il pulsante su un'attivita' appena creata.
+    /// </summary>
+    /// <returns>I job che hanno una pianificazione ma non piu' la loro attivita' in Windows
+    /// (vuoto se la lettura e' fallita o e' stata superata da una piu' recente).</returns>
+    public async Task<IReadOnlyList<string>> RefreshScheduledTasksAsync()
+    {
+        var mine = Interlocked.Increment(ref _scheduledTasksTicket);
+        try
+        {
+            var jobs = _host.Config.Jobs.ToList();
+            var (count, missing) = await Task.Run(() =>
+            {
+                var tasks = TaskSchedulerCatalog.List();
+                return (tasks.Count, ScheduledTaskInfo.JobsWithoutTask(jobs, tasks));
+            });
+            if (mine != Volatile.Read(ref _scheduledTasksTicket)) return Array.Empty<string>();
+            HasScheduledTasks = count > 0;
+            return missing;
+        }
+        catch
+        {
+            if (mine == Volatile.Read(ref _scheduledTasksTicket))
+                HasScheduledTasks = false;
+            return Array.Empty<string>();
+        }
+    }
+
     private string _faultedDisksSummary = "";
     /// <summary>Elenco leggibile dei dischi a riposo (etichetta, lettera, da quando, motivo): nel
     /// tooltip del pulsante e nella conferma, cosi' con piu' dischi si sa quale si sta riabilitando.</summary>

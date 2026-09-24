@@ -39,6 +39,10 @@ Nella scheda **Info** trovi anche il pulsante **«Controlla ora»**, che fa la v
 
 Il pulsante **«Salute dischi»**, nella barra della finestra principale, legge lo SMART di ogni disco fisico e mostra un verdetto spiegato. Per i dischi SATA e USB serve una richiesta di amministratore, una per ogni lettura; il pulsante **Aggiorna** nella finestra ripete la lettura. Il significato dei valori è nel capitolo *Risoluzione problemi*.
 
+## Attività pianificate
+
+Il pulsante **«Attività pianificate»**, accanto a *Salute dischi*, mostra le attività che RoboKeep ha registrato nell'Utilità di pianificazione di Windows: una per ogni job con una pianificazione, più quella di *Avvia tutti*. Di ciascuna leggi il job collegato, la prossima esecuzione, l'ultima e il suo esito, e il comando registrato. Le attività **orfane** — quelle senza più un job, o che lanciano un'altra copia di RoboKeep — sono evidenziate e si possono **eliminare** da qui; eliminando l'attività di un job ancora esistente, il job resta senza pianificazione automatica. Non si modifica niente: la pianificazione si cambia nell'editor del job, che riscrive l'attività al salvataggio. Evita di cancellare o ritoccare le attività di RoboKeep direttamente nell'Utilità di pianificazione di Windows: job e attività andrebbero fuori sincrono. Il pulsante è spento quando non c'è nessuna attività di RoboKeep.
+
 ## Esporta e importa configurazione
 
 Puoi salvare tutta la tua configurazione in un file e ricaricarla altrove.

@@ -26,6 +26,10 @@ Something in the app went wrong where it wasn't expected. RoboKeep **stays open*
 
 Check that the credentials' **DPAPI encryption scope** is **machine-wide**: only then can the scheduled task decrypt the credentials and run with the app closed. With per-user scope, the task can't read them. See *Settings*.
 
+### A task runs but the job no longer exists
+
+RoboKeep deletes the Windows task when you delete or rename a job, but it can't always get there: if `config.json` was deleted by hand, if a portable copy runs from another folder, or if the job was renamed directly in the file, the task is left **orphaned** and still runs at night. Open **"Scheduled tasks"** from the main window's toolbar: orphans are highlighted — *no job by this name* or *points to another copy of RoboKeep* — and you remove them with **Delete**. If you delete the task of a job that still exists, the job loses its automatic schedule (the editor will show "None"): you can set it again any time from the job editor. The reverse holds too: if a scheduled job has lost its task (deleted from Task Scheduler or by another copy of RoboKeep), RoboKeep tells you at startup and asks whether to recreate it or drop the schedule.
+
 ### "Destination unreachable"
 
 The destination disk or share **isn't connected**. Plug in the external disk or check the network connection, then try again.

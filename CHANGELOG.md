@@ -6,6 +6,17 @@ All notable changes to RoboKeep are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+- **You can now see and remove RoboKeep's Windows scheduled tasks.** A new **Scheduled tasks**
+  button in the main toolbar lists only the tasks RoboKeep created, with the job each one belongs
+  to, the next and last run with its result, and the registered command. Tasks left **orphaned** —
+  the job is gone, or the command starts another copy of RoboKeep — are highlighted and can be
+  deleted from the window; until now they kept firing at night with no way to find them from the
+  app. Deleting the task of an existing job removes that job's schedule, so editor and Windows
+  stay in step. The reverse is covered too: if a scheduled job has lost its task (deleted from
+  Task Scheduler or by another copy), RoboKeep asks at startup whether to recreate it or drop
+  the schedule. Nothing is edited here: the schedule still lives in the job editor.
+
 ### Fixed
 - **The window no longer freezes ("not responding") when you start a job.** The pre-run checks
   read the Windows event log for source and destination, which can take several seconds on a

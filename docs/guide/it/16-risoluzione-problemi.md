@@ -26,6 +26,10 @@ Qualcosa nell'app è andato storto in un punto non previsto. RoboKeep **resta ap
 
 Controlla che l'**ambito di cifratura DPAPI** delle credenziali sia **a livello macchina**: solo così l'attività pianificata può decifrare le credenziali e girare ad app chiusa. Con l'ambito per-utente, l'attività non riesce a leggerle. Vedi *Impostazioni*.
 
+### Un'attività parte ma il job non esiste più
+
+RoboKeep cancella l'attività di Windows quando cancelli o rinomini il job, ma non può arrivarci sempre: se `config.json` è stato cancellato a mano, se una copia portatile gira da un'altra cartella, o se il job è stato rinominato direttamente nel file, l'attività resta **orfana** e parte lo stesso di notte. Apri **«Attività pianificate»** dalla barra della finestra principale: le orfane sono evidenziate — *nessun job con questo nome* oppure *punta a un'altra copia di RoboKeep* — e si eliminano con **Elimina**. Se elimini l'attività di un job ancora esistente, al job viene tolta la pianificazione automatica (l'editor mostrerà «Nessuna»): potrai rimetterla quando vuoi dall'editor del job. Vale anche il contrario: se un job pianificato ha perso la sua attività (cancellata dall'Utilità di pianificazione o da un'altra copia di RoboKeep), all'avvio RoboKeep te lo dice e chiede se ricrearla o togliere la pianificazione.
+
 ### «Destinazione non raggiungibile»
 
 Il disco o la share di destinazione **non sono collegati**. Collega il disco esterno o verifica la connessione di rete, poi riprova.

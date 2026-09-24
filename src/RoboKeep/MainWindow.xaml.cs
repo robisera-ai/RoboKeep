@@ -48,6 +48,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         _vm = new MainViewModel(_host);
         DataContext = _vm;
         Loaded += OnLoadedCheckUpdates;
+        Loaded += OnLoadedScheduledTasks;
 
         // Il log viene riversato a blocchi (sul thread UI) per non ingolfare l'interfaccia.
         _vm.LogFlushed += text =>
@@ -85,6 +86,35 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         }
         try { await _vm.CheckForUpdatesAsync(force: false); }
         catch { /* best-effort: nessun aggiornamento noto */ }
+    }
+
+    // L'elenco delle attivita' pianificate di Windows si legge in sottofondo: il pulsante
+    // «Attivita' pianificate» resta spento finche' non si sa che ce n'e' almeno una. Niente
+    // await: l'avvio della finestra non deve aspettare una lettura COM.
+    // Se un job pianificato ha perso la sua attivita' (cancellata dall'Utilita' di
+    // pianificazione o da un'altra copia), l'editor direbbe «giornaliera» e nulla partirebbe:
+    // lo si chiede subito. Solo a finestra visibile: un MessageBox dal tray sarebbe incomprensibile.
+    private async void OnLoadedScheduledTasks(object sender, RoutedEventArgs e)
+    {
+        Loaded -= OnLoadedScheduledTasks;
+        var missing = await _vm.RefreshScheduledTasksAsync();
+        if (missing.Count == 0 || !IsVisible || WindowState == System.Windows.WindowState.Minimized) return;
+
+        var r = System.Windows.MessageBox.Show(this,
+            string.Format(Loc.Instance["Tasks_MissingBody"], string.Join("\n", missing.Select(n => "- " + n))),
+            Loc.Instance["Tasks_MissingTitle"], MessageBoxButton.YesNo, MessageBoxImage.Question);
+        var jobs = _host.Config.Jobs.Where(j => missing.Contains(j.Name)).ToList();
+        if (r == MessageBoxResult.Yes)
+        {
+            foreach (var job in jobs) TrySyncJobTask(job);
+        }
+        else
+        {
+            foreach (var job in jobs) job.Schedule = ScheduleKind.None;
+            _host.SaveConfig();
+            _vm.ReloadJobs();
+            _ = _vm.RefreshScheduledTasksAsync();
+        }
     }
 
     // Avvio minimizzato: nasconde nel tray dopo che la finestra e stata mostrata,
@@ -573,6 +603,10 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             Loc.Instance.ApplyFromSetting(_host.Config.Settings.Language);
             _vm.ReloadJobs();
         }
+
+        // Le Impostazioni creano e cancellano l'attivita' di «Avvia tutti», e un import
+        // risincronizza quelle dei job: l'elenco delle attivita' puo' essere cambiato.
+        _ = _vm.RefreshScheduledTasksAsync();
     }
 
     private bool ShowEditor(BackupJob job)
@@ -594,11 +628,28 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             MessageBox.Show(string.Format(Loc.Instance["Sched_Error"], ex.Message),
                 job.Name, MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+        finally
+        {
+            // L'attivita' puo' essere appena nata o appena sparita: il pulsante deve saperlo.
+            _ = _vm.RefreshScheduledTasksAsync();
+        }
     }
 
     private void TryRemoveJobTask(string jobName)
     {
         try { new SchedulerService().RemoveJobTask(jobName); } catch { }
+        _ = _vm.RefreshScheduledTasksAsync();
     }
 
+    // Le attivita' di Windows sono una finestra modale come la cronologia: e' un elenco breve
+    // su cui si decide (elimina / lascia), non qualcosa da tenere aperto mentre si lavora.
+    private void OnScheduledTasks(object sender, RoutedEventArgs e)
+    {
+        var win = new ScheduledTasksWindow(_host) { Owner = this };
+        win.ShowDialog();
+        // Eliminare l'attivita' di un job gli toglie la pianificazione: l'elenco va riletto.
+        if (win.JobsChanged) _vm.ReloadJobs();
+        // Dentro si possono eliminare attivita': l'ultima eliminata puo' spegnere il pulsante.
+        _ = _vm.RefreshScheduledTasksAsync();
+    }
 }
