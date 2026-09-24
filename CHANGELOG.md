@@ -4,7 +4,7 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.8.2] - 2026-09-24 — Scheduled tasks window, responsive start
 
 ### Added
 - **You can now see and remove RoboKeep's Windows scheduled tasks.** A new **Scheduled tasks**
@@ -23,6 +23,11 @@ All notable changes to RoboKeep are documented here. The format is based on
   large log, and they ran on the UI thread before the first log line appeared. They now run in
   the background with a "Running pre-run checks…" status, and the event-log reading is cached for
   two minutes so the same disk isn't queried twice per job (once by the checks, once by the run).
+
+### Downloads
+- **`RoboKeep-1.8.2-win-x64-selfcontained.zip`** — bundles .NET 10: extract and run, nothing to install.
+- **`RoboKeep-1.8.2-win-x64-framework-dependent.zip`** — smaller; requires the
+  [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
 
 ## [1.8.1] - 2026-09-23 — Job editor crash fix
 
