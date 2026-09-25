@@ -4,6 +4,12 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- Wizard, step 2: the "very large files" and "keep previous versions" boxes are now aligned with
+  the mirror/accumulate choices instead of being indented as if they belonged to "Accumulate".
+
 ## [1.8.2] - 2026-09-24 — Scheduled tasks window, responsive start
 
 ### Added
