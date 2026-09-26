@@ -160,6 +160,24 @@ Netzwerkverkehr ist der, den Sie selbst aktivieren: die optionale Updateprüfung
 GitHub) und E-Mail-Berichte (Ihr SMTP-Server, standardmäßig TLS). Alles, was die App weiß, liegt
 in lesbaren JSON-Dateien auf Ihrem PC.
 
+## Code signing policy
+
+Kostenlose Code-Signierung bereitgestellt von [SignPath.io](https://about.signpath.io),
+Zertifikat der [SignPath Foundation](https://signpath.org) (*Free code signing provided by
+SignPath.io, certificate by SignPath Foundation*). *Stand: Antrag eingereicht; Versionen bis
+1.8.2 sind unsigniert, die erste signierte Version wird im Changelog genannt.*
+
+- **Autoren und Reviewer**: [Roberto Serafini](https://github.com/robisera-ai)
+- **Freigeber**: [Roberto Serafini](https://github.com/robisera-ai)
+
+Nur der Release-Workflow ([`.github/workflows/release.yml`](.github/workflows/release.yml))
+reicht Builds zur Signierung ein, von einem Tag auf `main`; ein auf einem Entwicklungsrechner
+erstellter Build wird nie signiert und nie veröffentlicht. Jede Signieranfrage wird von Hand
+freigegeben.
+
+Datenschutz: RoboKeep sammelt nichts, siehe [Datenschutz](#datenschutz) oben und das
+[Kapitel des Handbuchs](docs/guide/en/17-privacy-security.md).
+
 ## Mitwirken
 
 Die Übersetzungen werden von der Community gepflegt: Ist Ihnen eine Formulierung aufgefallen, die

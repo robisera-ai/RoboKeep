@@ -159,6 +159,23 @@ red es el que tú mismo habilitas: la comprobación de actualizaciones opcional 
 GitHub) y los informes por correo (tu propio servidor SMTP, con TLS por defecto). Todo lo que
 sabe vive en archivos JSON legibles en tu PC.
 
+## Code signing policy
+
+Firma de código gratuita proporcionada por [SignPath.io](https://about.signpath.io),
+certificado de [SignPath Foundation](https://signpath.org) (*Free code signing provided by
+SignPath.io, certificate by SignPath Foundation*). *Estado: solicitud enviada; las versiones
+hasta la 1.8.2 no están firmadas y la primera firmada lo indicará en el changelog.*
+
+- **Autores y revisores**: [Roberto Serafini](https://github.com/robisera-ai)
+- **Aprobadores**: [Roberto Serafini](https://github.com/robisera-ai)
+
+Solo el flujo de publicación ([`.github/workflows/release.yml`](.github/workflows/release.yml))
+envía las compilaciones a firmar, desde una etiqueta en `main`; una compilación hecha en un
+equipo de desarrollo nunca se firma ni se publica. Cada solicitud de firma se aprueba a mano.
+
+Política de privacidad: RoboKeep no recopila nada, véase [Privacidad](#privacidad) arriba y el
+[capítulo de la guía](docs/guide/en/17-privacy-security.md).
+
 ## Contribuir
 
 Las traducciones las mantiene la comunidad: ¿has visto una frase que un hablante nativo diría de

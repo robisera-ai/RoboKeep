@@ -156,6 +156,23 @@ traffico di rete è quello che attivi tu: il controllo aggiornamenti facoltativo
 GitHub) e i report via email (il tuo server SMTP, TLS di default). Tutto ciò che sa vive in file
 JSON leggibili sul tuo PC.
 
+## Code signing policy
+
+Firma del codice gratuita fornita da [SignPath.io](https://about.signpath.io), certificato di
+[SignPath Foundation](https://signpath.org) (*Free code signing provided by SignPath.io,
+certificate by SignPath Foundation*). *Stato: domanda inviata; le versioni fino alla 1.8.2 non
+sono firmate, la prima firmata lo dirà nel changelog.*
+
+- **Autori e revisori**: [Roberto Serafini](https://github.com/robisera-ai)
+- **Approvatori**: [Roberto Serafini](https://github.com/robisera-ai)
+
+Solo il workflow di release ([`.github/workflows/release.yml`](.github/workflows/release.yml))
+invia le build alla firma, da un tag su `main`; una build fatta su un PC di sviluppo non viene
+mai firmata né pubblicata. Ogni richiesta di firma è approvata a mano.
+
+Privacy policy: RoboKeep non raccoglie nulla, vedi [Privacy](#privacy) sopra e il
+[capitolo della guida](docs/guide/it/17-privacy-sicurezza.md).
+
 ## Contribuisci
 
 Le traduzioni sono mantenute dalla community: hai notato un termine che un madrelingua direbbe

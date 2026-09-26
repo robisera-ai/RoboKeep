@@ -146,6 +146,22 @@ RoboKeep collects **nothing**. No telemetry, no analytics, no account. The only 
 what you enable yourself: the optional update check (one request to GitHub) and email reports
 (your SMTP server, TLS by default). Everything it knows lives in readable JSON files on your PC.
 
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by
+[SignPath Foundation](https://signpath.org). *Status: application submitted; releases up to
+1.8.2 are unsigned, and the first signed release will say so in the changelog.*
+
+- **Committers and reviewers**: [Roberto Serafini](https://github.com/robisera-ai)
+- **Approvers**: [Roberto Serafini](https://github.com/robisera-ai)
+
+Only the release workflow ([`.github/workflows/release.yml`](.github/workflows/release.yml))
+submits builds for signing, from a tag on `main`; a build made on a developer machine is never
+signed and never published. Every signing request is approved by hand.
+
+Privacy policy: RoboKeep collects nothing, see [Privacy](#privacy) above and the
+[privacy chapter of the guide](docs/guide/en/17-privacy-security.md).
+
 ## Contributing
 
 Translations are community-maintained: spotted a wording a native speaker would phrase better?
