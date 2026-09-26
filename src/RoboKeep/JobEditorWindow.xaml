@@ -85,6 +85,10 @@
                     <StackPanel>
                         <CheckBox Content="{l:Tr Editor_Mirror}" IsChecked="{Binding Mirror}"/>
                         <TextBlock Style="{StaticResource Hint}" Text="{l:Tr Editor_MirrorHint}"/>
+                        <TextBlock Text="{l:Tr Editor_MirrorDeleteLimit}" Style="{StaticResource Label}"/>
+                        <ui:TextBox Text="{Binding MirrorDeleteLimitPercent, UpdateSourceTrigger=PropertyChanged, FallbackValue=20}"
+                                    IsEnabled="{Binding Mirror}" MaxWidth="180" HorizontalAlignment="Left"/>
+                        <TextBlock Style="{StaticResource Hint}" Text="{l:Tr Editor_MirrorDeleteLimitHint}" Margin="0,4,0,0"/>
                         <CheckBox Content="{l:Tr Editor_ExcludeOlder}" IsChecked="{Binding ExcludeOlder}" Margin="0,6,0,0"/>
                         <CheckBox Content="{l:Tr Editor_CopyAll}" IsChecked="{Binding CopyAll}" Margin="0,6,0,0"/>
 

@@ -235,6 +235,62 @@ public static class CoreLoc
             "[versioning] aucun changement depuis la dernière version ({0}) : pas de nouvel instantané identique. La sauvegarde est déjà à jour.",
             "[Versionierung] keine Änderung seit der letzten Version ({0}): kein identischer neuer Snapshot. Das Backup ist bereits aktuell."),
 
+        ["Guard_Status"] = L(
+            "BLOCCATO: troppe cancellazioni",
+            "BLOCKED: too many deletions",
+            "BLOQUEADO: demasiadas eliminaciones",
+            "BLOQUÉ : trop de suppressions",
+            "BLOCKIERT: zu viele Löschungen"),
+        ["Guard_Preview"] = L(
+            "[controllo] anteprima delle cancellazioni del mirror...",
+            "[check] previewing the mirror's deletions...",
+            "[control] vista previa de las eliminaciones del espejo...",
+            "[contrôle] aperçu des suppressions du miroir...",
+            "[Prüfung] Vorschau der Löschungen der Spiegelung..."),
+        ["Guard_PreviewFailed"] = L(
+            "[controllo] impossibile stimare le cancellazioni (l'anteprima non è riuscita): il mirror parte senza soglia.",
+            "[check] cannot estimate the deletions (the preview failed): the mirror runs without the threshold.",
+            "[control] no se pueden estimar las eliminaciones (la vista previa no funcionó): el espejo arranca sin umbral.",
+            "[contrôle] impossible d'estimer les suppressions (l'aperçu a échoué) : le miroir démarre sans seuil.",
+            "[Prüfung] Löschungen nicht abschätzbar (die Vorschau ist fehlgeschlagen): die Spiegelung läuft ohne Schwelle."),
+        ["Guard_Blocked"] = L(
+            "Mirror fermato: avrebbe cancellato {0:N0} file su {1:N0} ({2} %) in {3}. Se è voluto, avvia il job dalla finestra di RoboKeep e conferma, oppure alza la soglia nell'editor del job.",
+            "Mirror stopped: it would have deleted {0:N0} files out of {1:N0} ({2} %) in {3}. If that is what you want, start the job from the RoboKeep window and confirm, or raise the threshold in the job editor.",
+            "Espejo detenido: habría eliminado {0:N0} archivos de {1:N0} ({2} %) en {3}. Si es lo que quieres, inicia el trabajo desde la ventana de RoboKeep y confirma, o sube el umbral en el editor del trabajo.",
+            "Miroir arrêté : il aurait supprimé {0:N0} fichiers sur {1:N0} ({2} %) dans {3}. Si c'est voulu, lancez la tâche depuis la fenêtre de RoboKeep et confirmez, ou augmentez le seuil dans l'éditeur de la tâche.",
+            "Spiegelung gestoppt: sie hätte {0:N0} von {1:N0} Dateien ({2} %) in {3} gelöscht. Wenn das gewollt ist, starten Sie den Job aus dem RoboKeep-Fenster und bestätigen Sie, oder erhöhen Sie die Schwelle im Job-Editor."),
+        ["Guard_BlockedVersioned"] = L(
+            "Mirror fermato: la nuova versione avrebbe {0:N0} file in meno su {1:N0} ({2} %) rispetto all'ultima ({3}). Se è voluto, avvia il job dalla finestra di RoboKeep e conferma, oppure alza la soglia nell'editor del job.",
+            "Mirror stopped: the new version would have {0:N0} files fewer out of {1:N0} ({2} %) than the last one ({3}). If that is what you want, start the job from the RoboKeep window and confirm, or raise the threshold in the job editor.",
+            "Espejo detenido: la nueva versión tendría {0:N0} archivos menos de {1:N0} ({2} %) respecto a la última ({3}). Si es lo que quieres, inicia el trabajo desde la ventana de RoboKeep y confirma, o sube el umbral en el editor del trabajo.",
+            "Miroir arrêté : la nouvelle version aurait {0:N0} fichiers en moins sur {1:N0} ({2} %) par rapport à la dernière ({3}). Si c'est voulu, lancez la tâche depuis la fenêtre de RoboKeep et confirmez, ou augmentez le seuil dans l'éditeur de la tâche.",
+            "Spiegelung gestoppt: die neue Version hätte {0:N0} von {1:N0} Dateien ({2} %) weniger als die letzte ({3}). Wenn das gewollt ist, starten Sie den Job aus dem RoboKeep-Fenster und bestätigen Sie, oder erhöhen Sie die Schwelle im Job-Editor."),
+        ["Guard_DryRunNote"] = L(
+            "Il mirror cancellerebbe {0:N0} file su {1:N0} ({2} %): sopra la soglia del {3} % del job.",
+            "The mirror would delete {0:N0} files out of {1:N0} ({2} %): above the job's {3} % threshold.",
+            "El espejo eliminaría {0:N0} archivos de {1:N0} ({2} %): por encima del umbral del {3} % del trabajo.",
+            "Le miroir supprimerait {0:N0} fichiers sur {1:N0} ({2} %) : au-dessus du seuil de {3} % de la tâche.",
+            "Die Spiegelung würde {0:N0} von {1:N0} Dateien ({2} %) löschen: über der Schwelle von {3} % des Jobs."),
+        ["Guard_EmailSubject"] = L(
+            "BLOCCATO: troppe cancellazioni",
+            "BLOCKED: too many deletions",
+            "BLOQUEADO: demasiadas eliminaciones",
+            "BLOQUÉ : trop de suppressions",
+            "BLOCKIERT: zu viele Löschungen"),
+
+        ["ConfigCopy_Written"] = L(
+            "[config] copia della configurazione salvata in {0}: job, esclusioni e impostazioni. Se perdi il PC, la riprendi da qui (le password restano cifrate e vanno reinserite).",
+            "[config] configuration copy saved to {0}: jobs, exclusions and settings. If the PC is lost, you get it back from here (passwords stay encrypted and must be re-entered).",
+            "[config] copia de la configuración guardada en {0}: trabajos, exclusiones y ajustes. Si se pierde el PC, la recuperas desde aquí (las contraseñas siguen cifradas y hay que reintroducirlas).",
+            "[config] copie de la configuration enregistrée dans {0} : tâches, exclusions et paramètres. Si le PC est perdu, vous la récupérez ici (les mots de passe restent chiffrés et doivent être ressaisis).",
+            "[config] Konfigurationskopie in {0} gespeichert: Jobs, Ausschlüsse und Einstellungen. Wenn der PC verloren geht, holst du sie von hier zurück (Passwörter bleiben verschlüsselt und müssen neu eingegeben werden)."),
+        ["ConfigCopy_Failed"] = L(
+            "[config] copia della configurazione non salvata ({0}): il backup dei file è comunque riuscito.",
+            "[config] configuration copy not saved ({0}): the file backup succeeded anyway.",
+            "[config] copia de la configuración no guardada ({0}): la copia de los archivos ha funcionado igualmente.",
+            "[config] copie de la configuration non enregistrée ({0}) : la sauvegarde des fichiers a tout de même réussi.",
+            "[config] Konfigurationskopie nicht gespeichert ({0}): das Datei-Backup war dennoch erfolgreich."),
+
         ["Health_Detail"] = L(
             "{0} blocchi danneggiati, {1} errori di I/O, {2} errori del file system (ultimo: {3})",
             "{0} bad blocks, {1} I/O errors, {2} file system errors (latest: {3})",

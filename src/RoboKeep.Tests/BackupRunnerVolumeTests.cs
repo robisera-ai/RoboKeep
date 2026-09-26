@@ -22,6 +22,10 @@ public class BackupRunnerVolumeTests : IDisposable
     {
         config.Settings.LogRoot = Path.Combine(_root, "logs");
         config.Settings.TempRoot = Path.Combine(_root, "temp");
+        // Qui la destinazione e' una cartella temporanea, la cui radice e' il disco di sistema della
+        // macchina che esegue le prove: la copia della configurazione (ConfigMirror) non c'entra con
+        // la rotazione dei dischi e non deve scrivere in C:\.
+        config.Settings.ConfigCopyToDestination = false;
         var creds = new CredentialService(config.Settings.CredentialScope);
         return new BackupRunner(config, new RobocopyRunner(), new LogService(config.Settings),
             new EmailService(creds), creds);

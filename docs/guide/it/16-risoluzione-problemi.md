@@ -38,6 +38,12 @@ Il disco o la share di destinazione **non sono collegati**. Collega il disco est
 
 Non è **corruzione**. Significa che hai **modificato i file dopo averli copiati**: sono più recenti nella sorgente rispetto alla copia. RoboKeep te lo segnala così apposta, per non spaventarti con un falso allarme. Al prossimo backup tornano allineati.
 
+### Il job dice «BLOCCATO: troppe cancellazioni»
+
+RoboKeep ha fermato un mirror **prima di partire**: le cancellazioni che avrebbe fatto in destinazione superano la soglia del job (predefinita 20 %). Quasi sempre vuol dire che **la sorgente non è quella che credi**: cartella spostata o rinominata, unità di rete che non si è montata e appare vuota, oppure file cifrati da un ransomware. Guarda prima la sorgente: se i file ci sono tutti, è un falso allarme e la destinazione è intatta.
+
+Se la cancellazione è voluta (hai davvero svuotato la sorgente), **avvia il job dalla finestra di RoboKeep**: la domanda arriva con i numeri in chiaro e un *Sì* fa procedere quel run. In alternativa alza la soglia nell'editor del job, o mettila a **0** per disattivare il controllo. Un'attività pianificata non ha nessuno a cui chiedere: si ferma e lo scrive nel log e nell'email di esito. Vedi *Mirror o accumulo*.
+
 ### Un job si interrompe con «ERRORE HARDWARE» (CRC, controllo di ridondanza ciclico)
 
 L'errore arriva da Windows, non da RoboKeep, e significa che **un disco — o il suo collegamento — ha segnalato un problema fisico**: errore nei dati (CRC), settore non trovato o errore del dispositivo. Le cause sono due, e vanno distinte: un **disco che sta cedendo** (settori danneggiati) oppure **cavo, box USB o alimentazione** difettosi, che su un disco esterno danno esattamente gli stessi messaggi.

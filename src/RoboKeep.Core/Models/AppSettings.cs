@@ -56,6 +56,13 @@ public sealed class AppSettings
     /// anche a finestra Impostazioni aperta, dove la configurazione non va salvata.</summary>
     public bool? UpdateCheck { get; set; }
 
+    /// <summary>Se true, dopo ogni backup riuscito RoboKeep scrive una copia della configurazione
+    /// nella radice del disco di destinazione (<c>&lt;radice&gt;\RoboKeep-config\</c>, vedi
+    /// <c>ConfigMirror</c>). Un disco che ha i file ma non i job costringe a ricostruire tutto a
+    /// memoria: e' la seconda meta' del backup, e per questo e' attiva di default. Le destinazioni
+    /// di rete sono escluse; le password restano cifrate DPAPI.</summary>
+    public bool ConfigCopyToDestination { get; set; } = true;
+
     /// <summary>Impostazioni di notifica email.</summary>
     public EmailSettings Email { get; set; } = new();
 }

@@ -18,4 +18,10 @@ public sealed class JobLastResult
     /// di controllare il supporto.</summary>
     public bool HardwareError { get; set; }
     public string? HardwareErrorDetail { get; set; }
+
+    /// <summary>true se l'ultimo run non è partito perché il mirror avrebbe cancellato più della
+    /// soglia del job: la UI lo mostra come fallito, con il dettaglio e il modo di sbloccarlo
+    /// (avviare il job dalla finestra e confermare, oppure alzare la soglia nell'editor).</summary>
+    public bool DeletionsBlocked { get; set; }
+    public string? DeletionsBlockedDetail { get; set; }
 }

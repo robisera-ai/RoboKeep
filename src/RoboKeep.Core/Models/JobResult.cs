@@ -46,6 +46,17 @@ public sealed class JobResult
     /// non è nemmeno iniziato, e <see cref="HardwareErrorDetail"/> è già la frase completa.</summary>
     public bool NotStarted { get; set; }
 
+    /// <summary>true se il job NON è partito perché il mirror avrebbe cancellato in destinazione
+    /// più della soglia del job (<see cref="BackupJob.MirrorDeleteLimitPercent"/>): è il caso della
+    /// sorgente svuotata per errore. È sempre anche <see cref="NotStarted"/> e un fallimento
+    /// (<c>Success = false</c>), ma il rimedio non è controllare il disco: è confermare la
+    /// cancellazione avviando il job dalla finestra, o alzare la soglia.</summary>
+    public bool DeletionsBlocked { get; set; }
+
+    /// <summary>Dettaglio del blocco (file cancellati su totali, percentuale, destinazione e come
+    /// sbloccarlo), se <see cref="DeletionsBlocked"/>.</summary>
+    public string? DeletionsBlockedDetail { get; set; }
+
     /// <summary>Avvisi di salute del disco (registro eventi) emessi per questo run: finiscono
     /// anche nell'email, non solo nel log.</summary>
     public List<string> HealthWarnings { get; } = new();

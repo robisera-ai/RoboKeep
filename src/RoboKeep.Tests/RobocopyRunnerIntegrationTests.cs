@@ -121,6 +121,9 @@ public sealed class RobocopyRunnerIntegrationTests : IDisposable
                     LogRoot = Path.Combine(_base, "logs"),
                     TempRoot = Path.Combine(_base, "temp"),
                     CompressLogs = false,
+                    // Run riuscito su una cartella temporanea: senza spegnerla, la copia della
+                    // configurazione (ConfigMirror) scriverebbe nella radice del disco di sistema.
+                    ConfigCopyToDestination = false,
                 },
             };
             var creds = new CredentialService();

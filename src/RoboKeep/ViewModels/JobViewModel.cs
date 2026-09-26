@@ -59,8 +59,12 @@ public sealed class JobViewModel : ObservableObject
     /// <summary>Imposta l'esito a partire dall'ultimo risultato persistito (o "—" se assente).</summary>
     public void ApplyLastResult(JobLastResult? r)
     {
+        // Un job fermato dalla guardia sulle cancellazioni non ha conteggi da raccontare: non e'
+        // partito. Al loro posto va il motivo, che e' l'unica cosa che serve sapere.
         LastStatus = r is null
             ? "—"
+            : r.DeletionsBlocked
+            ? $"{RoboKeep.Core.CoreLoc.S("Guard_Status")}  ({r.FinishedAt:dd/MM HH:mm})"
             : RunStatus.Format(r.Success, r.FilesCopied, r.FilesSkipped, r.FilesExtra, r.FilesFailed + r.DirsFailed, r.FinishedAt);
     }
 

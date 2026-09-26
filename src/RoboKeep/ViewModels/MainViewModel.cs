@@ -433,7 +433,12 @@ public sealed class MainViewModel : ObservableObject
             }
             else if (h == BackupHealth.Failed)
             {
-                jvm.HealthTooltip = Loc.Instance["Health_Failed"];
+                // Mirror fermato dalla guardia: nessun errore di copia, il rimedio e' una decisione
+                // (avviare il job dalla finestra e confermare, o alzare la soglia). Il tooltip lo dice.
+                var blocked = results.TryGetValue(jvm.Name, out var br) && br.DeletionsBlocked ? br : null;
+                jvm.HealthTooltip = blocked is null
+                    ? Loc.Instance["Health_Failed"]
+                    : string.Format(Loc.Instance["Health_DeletionsBlocked"], blocked.DeletionsBlockedDetail ?? "").Trim();
                 nFailed++;
             }
             else if (h == BackupHealth.Stale)
@@ -535,9 +540,14 @@ public sealed class MainViewModel : ObservableObject
                 Enqueue($"--- {jvm.Name} ---");
                 try
                 {
-                    var result = await runner.RunJobAsync(jvm.Model, dryRun, progress, _cts.Token);
+                    // La guardia sulle cancellazioni chiede solo nei run veri: in anteprima non c'e'
+                    // niente da fermare (nessun file viene toccato), il riepilogo lo dice e basta.
+                    var result = await runner.RunJobAsync(jvm.Model, dryRun, progress, _cts.Token,
+                        dryRun ? null : ConfirmDeletionsAsync);
                     if (result.Skipped)
                         jvm.LastStatus = Loc.Instance["Run_SkippedDisk"];
+                    else if (result.DeletionsBlocked)
+                        jvm.LastStatus = result.Status;   // «BLOCCATO: troppe cancellazioni»
                     else if (dryRun)
                         jvm.LastStatus = $"{Loc.Instance["Run_OK"]} · {Loc.Instance["Run_Preview"]}";
                     else
@@ -590,6 +600,50 @@ public sealed class MainViewModel : ObservableObject
             // Ricarica gli esiti e rivaluta la salute: il banner/le righe riflettono l'esito appena ottenuto.
             ReloadLastResults();
         }
+    }
+
+    /// <summary>
+    /// Domanda di conferma quando un mirror sta per cancellare piu' della soglia del job: e' il
+    /// momento in cui si scopre che la sorgente si e' svuotata per errore. La chiama il runner da
+    /// una continuazione su thread di background, percio' la finestra si apre sul thread della UI;
+    /// l'attesa della risposta ferma il job, non l'applicazione. Se il dispatcher e' gia' fermo
+    /// (app in chiusura) l'operazione risulta annullata e il task esce con OperationCanceled: per
+    /// il runner e' un annullamento — il job non parte, che e' l'esito prudente.
+    /// </summary>
+    private Task<bool> ConfirmDeletionsAsync(MirrorDeleteEstimate estimate)
+    {
+        var app = System.Windows.Application.Current;
+        if (app is null) return Task.FromResult(false);
+
+        return app.Dispatcher.InvokeAsync(() =>
+        {
+            // Con le versioni non si cancella niente di esistente: la versione nuova ha meno file
+            // della precedente, che resta dov'e'. Due frasi diverse per due fatti diversi.
+            var body = estimate.PreviousSnapshot is { } previous
+                ? string.Format(Loc.Instance["Guard_ConfirmVersioned"], estimate.JobName, estimate.Extra,
+                    estimate.Total, estimate.Percent, previous)
+                : string.Format(Loc.Instance["Guard_Confirm"], estimate.JobName, estimate.Extra,
+                    estimate.Total, estimate.Percent, estimate.Destination);
+            var title = Loc.Instance["Guard_ConfirmTitle"];
+            var owner = app.MainWindow;
+            // Finestra ridotta a icona nella barra di notifica: una MessageBox modale a una finestra
+            // invisibile non si vede e non si puo' rispondere — il job resterebbe appeso per sempre.
+            // Si riporta a galla la finestra, poi si chiede.
+            if (owner is not null && !owner.IsVisible)
+            {
+                owner.Show();
+                owner.Activate();
+            }
+            // Predefinito No: chi preme Invio per abitudine non cancella il backup.
+            var answer = owner is not null
+                ? System.Windows.MessageBox.Show(owner, body, title,
+                    System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning,
+                    System.Windows.MessageBoxResult.No)
+                : System.Windows.MessageBox.Show(body, title,
+                    System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning,
+                    System.Windows.MessageBoxResult.No);
+            return answer == System.Windows.MessageBoxResult.Yes;
+        }).Task;
     }
 
     /// <summary>Verifica integrità manuale del job selezionato: hash sorgente vs destinazione.</summary>

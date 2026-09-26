@@ -21,6 +21,7 @@ public sealed class BackupRunner
     private readonly RunHistoryStore? _history;
     private readonly Func<string?, DiskEventSummary> _diskEvents;
     private readonly FaultedDiskStore? _faultedDisks;
+    private readonly Func<string?, string?> _configMirrorTarget;
 
     // Dischi (radici, es. "E:\") che in questa sessione hanno segnalato un errore hardware: i job
     // successivi che li toccano non partono. Un --run-all notturno con cinque job sullo stesso
@@ -46,9 +47,15 @@ public sealed class BackupRunner
         string? vssSessionRoot = null,
         RunHistoryStore? history = null,
         Func<string?, DiskEventSummary>? diskEvents = null,
-        FaultedDiskStore? faultedDisks = null)
+        FaultedDiskStore? faultedDisks = null,
+        Func<string?, string?>? configMirrorTarget = null)
     {
         _diskEvents = diskEvents ?? (path => DiskEventLog.Collect(path));
+        // Dove va la copia della configurazione: normalmente la radice del volume di destinazione.
+        // E' un punto di innesto perche' nei test la destinazione e' una cartella temporanea, e la
+        // sua radice e' il disco di sistema della macchina che esegue le prove: una prova non deve
+        // scrivere in C:\. I test lo reindirizzano in una cartella loro.
+        _configMirrorTarget = configMirrorTarget ?? ConfigMirror.TargetFolder;
         _config = config;
         _runner = runner;
         _log = log;
@@ -67,8 +74,13 @@ public sealed class BackupRunner
         _config.Jobs.FirstOrDefault(j => string.Equals(j.Name, name, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>Esegue un singolo job, gestendo credenziali, log ed email.</summary>
+    /// <param name="confirmDeletions">Chiesto solo quando un mirror sta per cancellare piu' della
+    /// soglia del job: true = procedi comunque (una sola conferma, per questo run), false = fermati.
+    /// null (riga di comando, attivita' pianificata) equivale a fermarsi: nessuno e' davanti allo
+    /// schermo per decidere.</param>
     public async Task<JobResult> RunJobAsync(
-        BackupJob job, bool dryRun = false, IProgress<string>? progress = null, CancellationToken ct = default)
+        BackupJob job, bool dryRun = false, IProgress<string>? progress = null, CancellationToken ct = default,
+        Func<MirrorDeleteEstimate, Task<bool>>? confirmDeletions = null)
     {
         // Rotazione dei dischi: due dischi alternati hanno spesso la stessa lettera. Se il
         // volume collegato non e' quello per cui il job e' stato configurato - o se non c'e'
@@ -253,13 +265,31 @@ public sealed class BackupRunner
             var startedAt = DateTime.Now;
             string? faultPath = null;
             RobocopyRunResult run;
+            // Chi fa il lavoro si decide una volta sola: HardLinkSupport.IsSupported scrive un file
+            // di prova nella destinazione, e interrogarlo due volte sarebbe IO buttato.
+            var versioningWanted = job.Versioned && !dryRun && _snapshots is not null;
+            var versionedRun = versioningWanted && HardLinkSupport.IsSupported(job.Destination);
             try
             {
-                if (job.Versioned && !dryRun && _snapshots is not null)
+                // Guardia sulle cancellazioni: solo per i mirror che girano "piatti". Quelli con
+                // versioni la applicano dentro SnapshotService, sui conteggi dell'anteprima che fa
+                // gia' contro l'ultimo snapshot (nessuna seconda enumerazione). Sta dentro questo
+                // try perche' un annullamento durante l'anteprima e' un annullamento del job, con
+                // il suo log e la sua voce di cronologia.
+                if (job.Mirror && !dryRun && !versionedRun
+                    && await CheckDeletionsAsync(job, startedAt, progress, confirmDeletions, sourceOverride, ct)
+                        .ConfigureAwait(false) is { } stopped)
                 {
-                    if (HardLinkSupport.IsSupported(job.Destination))
+                    return await FinishBlockedAsync(job, stopped.Result, stopped.Output, newHealthNotes, progress, ct)
+                        .ConfigureAwait(false);
+                }
+
+                if (versioningWanted)
+                {
+                    if (versionedRun)
                     {
-                        run = await _snapshots.RunVersionedAsync(job, progress, ct, sourceOverride).ConfigureAwait(false);
+                        run = await _snapshots!.RunVersionedAsync(job, progress, ct, sourceOverride, confirmDeletions)
+                            .ConfigureAwait(false);
                     }
                     else
                     {
@@ -313,6 +343,13 @@ public sealed class BackupRunner
                 };
             }
 
+            // Mirror fermato dalla guardia dentro il versioning (l'anteprima contro l'ultimo
+            // snapshot diceva troppe cancellazioni): da qui in poi e' identico al caso senza
+            // versioni, lo chiude la stessa strada.
+            if (run.Result.DeletionsBlocked)
+                return await FinishBlockedAsync(job, run.Result, run.Output, newHealthNotes, progress, ct)
+                    .ConfigureAwait(false);
+
             run.Result.HealthWarnings.AddRange(newHealthNotes);
 
             // Riepilogo nostro, leggibile e in italiano (l'output nativo di robocopy ha le
@@ -321,6 +358,19 @@ public sealed class BackupRunner
             if (run.Result.ThreadCapNote is { } capNote)
                 recap.Add(capNote);
             recap.AddRange(healthNotes);
+            // In anteprima non si blocca niente — non c'e' nulla da fermare, l'anteprima non
+            // cancella — ma se il mirror andrebbe oltre la soglia il riepilogo lo dice: e' proprio
+            // la domanda a cui l'anteprima serve a rispondere. Solo per i mirror SENZA versioni:
+            // l'anteprima di un job versionato gira contro la radice della destinazione, che
+            // contiene le cartelle-data di tutti gli snapshot, e le conterebbe tutte come "extra"
+            // (un 100 % inventato). Il run vero confronta invece con l'ultimo snapshot.
+            if (dryRun && job.Mirror && !job.Versioned)
+            {
+                var previewEstimate = MirrorDeleteGuard.Estimate(job, run.Result);
+                if (MirrorDeleteGuard.ShouldBlock(previewEstimate))
+                    recap.Add(string.Format(CoreLoc.S("Guard_DryRunNote"), previewEstimate.Extra,
+                        previewEstimate.Total, previewEstimate.Percent, previewEstimate.LimitPercent));
+            }
             // Disco messo a riposo da questo run: radice e identita' di volume servono piu' sotto,
             // quando si sapra' se l'email dell'episodio e' partita davvero.
             string? markedRoot = null, markedVolumeId = null;
@@ -334,6 +384,18 @@ public sealed class BackupRunner
                 markedVolumeId = MarkFaulted(faultTarget, run.Result.HardwareErrorDetail ?? "");
                 recap.Add(string.Format(CoreLoc.S("Hw_Stop"), run.Result.HardwareErrorDetail));
                 recap.Add(CoreLoc.S("Hw_Advice"));
+            }
+
+            // Copia della configurazione nella radice del disco di backup: un disco con i file ma
+            // senza i job costringerebbe a rifare tutto a memoria. Solo dopo un run VERO e RIUSCITO
+            // (un'anteprima non ha scritto niente; su un disco che ha appena dato errori non si
+            // insiste; i job saltati e quelli fermati dalla guardia sono gia' tornati al chiamante
+            // molto prima di qui). La riga finisce nel riepilogo, quindi anche nel log del job.
+            if (run.Result.Success && !dryRun && _config.Settings.ConfigCopyToDestination
+                && _configMirrorTarget(job.Destination) is { } configFolder)
+            {
+                ConfigMirror.WriteTo(_config, configFolder, new ListProgress(recap),
+                    Environment.MachineName, DateTime.Now);
             }
 
             // La verifica rilegge per intero sorgente e destinazione: si fa ogni VerifyEveryDays
@@ -476,6 +538,113 @@ public sealed class BackupRunner
             if (connected && cred is not null)
                 _credentials.Disconnect(cred.Host);
         }
+    }
+
+    /// <summary>Raccoglitore di righe: le fa finire nel riepilogo (e quindi nel log del job) invece
+    /// che solo a video, come fa <c>progress</c> da solo.</summary>
+    private sealed class ListProgress : IProgress<string>
+    {
+        private readonly List<string> _lines;
+        public ListProgress(List<string> lines) => _lines = lines;
+        public void Report(string value) => _lines.Add(value);
+    }
+
+    /// <summary>Anteprima delle cancellazioni di un mirror senza versioni: conta, senza toccare
+    /// nulla, i file che il run vero rimuoverebbe dalla destinazione e li confronta con la soglia
+    /// del job. Restituisce l'esito "fermato" da consegnare al chiamante, oppure null se il run
+    /// puo' partire (soglia spenta, cancellazioni sotto soglia, o conferma ricevuta).</summary>
+    private async Task<RobocopyRunResult?> CheckDeletionsAsync(
+        BackupJob job, DateTime startedAt, IProgress<string>? progress,
+        Func<MirrorDeleteEstimate, Task<bool>>? confirmDeletions, string? sourceOverride, CancellationToken ct)
+    {
+        // Soglia a zero: la guardia non bloccherebbe comunque, e l'enumerazione in piu' — decine di
+        // secondi su cartelle enormi — sarebbe solo un costo regalato.
+        if (job.MirrorDeleteLimitPercent <= 0) return null;
+
+        progress?.Report(CoreLoc.S("Guard_Preview"));
+        // Anteprima SENZA multi-thread: con /MT robocopy conta come "copiata" ogni cartella anche
+        // quando non c'e' niente da fare, e i conteggi mentirebbero (lo stesso motivo del
+        // versioning). Progresso nullo: le migliaia di righe dell'anteprima non sono il log del job.
+        var previewJob = job.Clone();
+        previewJob.MultiThread = 0;
+        // Niente passata "forza copia" nell'anteprima: non cancella nulla (gira senza /MIR), quindi
+        // alla guardia non dice niente, ma i suoi conteggi si sommerebbero a quelli della prima
+        // passata gonfiando il totale — e in modalita' smart farebbe pure l'hash di file grandi per
+        // una stima. Una sola enumerazione, quella che conta.
+        previewJob.ForceCopyFiles = new();
+        var preview = await _runner.RunAsync(previewJob, dryRun: true, progress: null, ct,
+            sourceOverride: sourceOverride).ConfigureAwait(false);
+
+        // Anteprima non riuscita (errore hardware, sorgente assente o illeggibile): non e' la
+        // guardia a doverne decidere. Il run vero si fermera' da solo con il suo racconto — e con
+        // la sorgente assente robocopy non cancella nulla, e' cosi' da sempre. Lo si dice comunque
+        // nel log: il mirror che segue parte senza rete di sicurezza, e chi rilegge deve saperlo.
+        if (!preview.Result.Success || preview.Result.HardwareError)
+        {
+            progress?.Report(CoreLoc.S("Guard_PreviewFailed"));
+            return null;
+        }
+
+        var estimate = MirrorDeleteGuard.Estimate(job, preview.Result);
+        if (!MirrorDeleteGuard.ShouldBlock(estimate)) return null;
+
+        // Una sola domanda, valida per questo run: chi ha una finestra davanti decide, chi non c'e'
+        // (callback null) si ferma. Il "sì" non viene ricordato: domani la stima e' un'altra.
+        if (confirmDeletions is not null && await confirmDeletions(estimate).ConfigureAwait(false))
+            return null;
+
+        // L'output dell'anteprima e' l'elenco dei file che sarebbero spariti: nel log del job
+        // vale piu' di qualunque spiegazione.
+        return new RobocopyRunResult
+        {
+            Result = MirrorDeleteGuard.BlockedResult(estimate, startedAt),
+            Output = preview.Output,
+        };
+    }
+
+    /// <summary>Chiude un run fermato dalla guardia: lo racconta a video, scrive il log (cosi' la
+    /// cronologia puo' aprirlo, come per un annullamento), registra il fallimento nell'ultimo esito
+    /// e avvisa per email — chi ha lanciato il backup di notte non e' davanti allo schermo.</summary>
+    private async Task<JobResult> FinishBlockedAsync(
+        BackupJob job, JobResult result, string output, IReadOnlyList<string> newHealthNotes,
+        IProgress<string>? progress, CancellationToken ct)
+    {
+        var detail = result.DeletionsBlockedDetail ?? "";
+        progress?.Report(detail);
+        result.Duration = DateTime.Now - result.StartedAt;
+        // Gli avvisi di salute del disco non si perdono per strada: il backup non e' stato fatto E
+        // il disco dava segnali: due notizie, non una, e l'email deve portarle entrambe.
+        result.HealthWarnings.AddRange(newHealthNotes);
+
+        try
+        {
+            result.LogPath = _log.WriteAndArchive(job.Name,
+                output + Environment.NewLine + detail, result.StartedAt);
+        }
+        catch { /* un log mancato non deve mascherare il blocco */ }
+
+        _history?.Append(new RunHistoryEntry(job.Name, RunHistoryEntry.KindBackup, result.StartedAt,
+            DateTime.Now, false, result.ExitCode, 0, 0, result.FilesExtra, 0, 0, result.LogPath));
+        _results?.Update(new JobLastResult
+        {
+            JobName = job.Name,
+            Success = false,
+            ExitCode = result.ExitCode,
+            FilesExtra = result.FilesExtra,
+            DeletionsBlocked = true,
+            DeletionsBlockedDetail = detail,
+            FinishedAt = DateTime.Now,
+        });
+
+        try
+        {
+            await _email.SendResultAsync(_config.Settings.Email, result, result.LogPath, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            progress?.Report(string.Format(CoreLoc.S("Email_SendFailed"), ex.Message));
+        }
+        return result;
     }
 
     /// <summary>Radice del volume locale di un percorso ("E:\"), o null per percorsi vuoti,

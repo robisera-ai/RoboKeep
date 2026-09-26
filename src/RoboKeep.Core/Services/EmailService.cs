@@ -64,8 +64,12 @@ public sealed class EmailService
         return true;
     }
 
+    // Un mirror fermato dalla guardia viene prima dell'errore hardware: è l'unico caso in cui
+    // NIENTE è andato storto nel disco, e il rimedio è una decisione dell'utente.
     private static string Esito(JobResult r) =>
-        r.HardwareError ? CoreLoc.S("Email_HardwareError") : r.Success ? "OK" : CoreLoc.S("Lbl_Error");
+        r.DeletionsBlocked ? CoreLoc.S("Guard_EmailSubject")
+        : r.HardwareError ? CoreLoc.S("Email_HardwareError")
+        : r.Success ? "OK" : CoreLoc.S("Lbl_Error");
 
     /// <summary>Oggetto: un errore HARDWARE va riconosciuto già dall'anteprima sul telefono.</summary>
     public static string BuildSubject(JobResult result) => $"[RoboKeep] {Esito(result)} - {result.JobName}";
@@ -77,7 +81,13 @@ public sealed class EmailService
         var esito = Esito(result);
         var yesNo = result.DryRun ? CoreLoc.S("Email_Yes") : CoreLoc.S("Email_No");
         var sb = new StringBuilder();
-        if (result.HardwareError)
+        if (result.DeletionsBlocked)
+        {
+            // Il dettaglio è già la frase completa: numeri, destinazione e come sbloccare il job.
+            sb.AppendLine(result.DeletionsBlockedDetail ?? "")
+              .AppendLine();
+        }
+        else if (result.HardwareError)
         {
             // Prima di tutto: cosa è successo e cosa fare. I conteggi qui non interessano a nessuno.
             // Un job che non è nemmeno partito non va annunciato come "INTERROTTO": il suo dettaglio

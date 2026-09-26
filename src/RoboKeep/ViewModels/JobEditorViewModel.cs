@@ -61,6 +61,15 @@ public sealed class JobEditorViewModel : ObservableObject
         set { _job.Mirror = value; OnPropertyChanged(); RaisePreview(); }
     }
 
+    /// <summary>Soglia di sicurezza delle cancellazioni in mirror (0 = nessun controllo). Il valore
+    /// non viene corretto qui: uno fuori intervallo lo intercetta <see cref="Validate"/>, cosi'
+    /// l'utente vede che cosa ha scritto invece di trovarlo cambiato in silenzio.</summary>
+    public int MirrorDeleteLimitPercent
+    {
+        get => _job.MirrorDeleteLimitPercent;
+        set { _job.MirrorDeleteLimitPercent = value; OnPropertyChanged(); }
+    }
+
     public bool ExcludeOlder
     {
         get => _job.ExcludeOlder;
@@ -381,6 +390,8 @@ public sealed class JobEditorViewModel : ObservableObject
             return Loc.Instance["Editor_Val_NameQuotes"];
         if (string.IsNullOrWhiteSpace(Source)) return Loc.Instance["Editor_Val_Source"];
         if (string.IsNullOrWhiteSpace(Destination)) return Loc.Instance["Editor_Val_Dest"];
+        if (_job.MirrorDeleteLimitPercent is < 0 or > 100)
+            return Loc.Instance["Editor_Val_MirrorDeleteLimit"];
         if (_job.Schedule != ScheduleKind.None && !TimeOnly.TryParse(_job.ScheduleTime, out _))
             return Loc.Instance["Editor_Val_ScheduleTime"];
         return null;

@@ -14,9 +14,12 @@ public sealed class SnapshotService
 
     public SnapshotService(RobocopyRunner runner) => _runner = runner;
 
+    /// <param name="confirmDeletions">Guardia sulle cancellazioni: chiesto solo quando l'anteprima
+    /// contro l'ultimo snapshot dice che il mirror rimuoverebbe piu' della soglia del job. null =
+    /// nessuno da interpellare, il job si ferma. Vedi <see cref="MirrorDeleteGuard"/>.</param>
     public async Task<RobocopyRunResult> RunVersionedAsync(
         BackupJob job, IProgress<string>? progress = null, CancellationToken ct = default,
-        string? sourceOverride = null)
+        string? sourceOverride = null, Func<MirrorDeleteEstimate, Task<bool>>? confirmDeletions = null)
     {
         ArgumentNullException.ThrowIfNull(job);
 
@@ -68,6 +71,28 @@ public sealed class SnapshotService
             var preview = await _runner.RunAsync(previewJob, dryRun: true, progress: null, ct,
                 destinationOverride: Path.Combine(dest, prevName), sourceOverride: sourceOverride)
                 .ConfigureAwait(false);
+
+            // Guardia sulle cancellazioni, sui conteggi dell'anteprima appena fatta: nessuna
+            // seconda enumerazione. Una sorgente svuotata per errore si vede proprio qui — quasi
+            // tutti i file dell'ultimo snapshot risultano "extra". Prima di decidere "niente da
+            // fare": un blocco deve arrivare all'utente in ogni caso. Solo in mirror, e solo con
+            // uno snapshot precedente: al primo run (o all'adozione) non c'e' nulla da confrontare.
+            if (job.Mirror && preview.Result.Success && !preview.Result.HardwareError)
+            {
+                var estimate = MirrorDeleteGuard.Estimate(job, preview.Result, previousSnapshot: prevName);
+                if (MirrorDeleteGuard.ShouldBlock(estimate)
+                    && !(confirmDeletions is not null && await confirmDeletions(estimate).ConfigureAwait(false)))
+                {
+                    // Esito "fermato" come quello dei mirror senza versioni: BackupRunner lo
+                    // riconosce e lo chiude allo stesso modo (log, cronologia, email).
+                    return new RobocopyRunResult
+                    {
+                        Result = MirrorDeleteGuard.BlockedResult(estimate, now),
+                        Output = preview.Output,
+                    };
+                }
+            }
+
             if (NothingToDo(preview.Result))
             {
                 var note = string.Format(CoreLoc.S("Versioning_NoChanges"), prevName);

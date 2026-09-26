@@ -268,6 +268,9 @@ public sealed class DiskHealthAndVerifyScheduleTests : IDisposable
         var config = new AppConfig();
         config.Settings.LogRoot = Path.Combine(_root, "logs");
         config.Settings.TempRoot = Path.Combine(_root, "temp");
+        // La destinazione e' una cartella temporanea: la radice del suo volume e' il disco di sistema
+        // della macchina, e una prova su salute e verifiche non deve scrivere in C:\ (vedi ConfigMirror).
+        config.Settings.ConfigCopyToDestination = false;
         var creds = new CredentialService(config.Settings.CredentialScope);
         return new BackupRunner(config, new RobocopyRunner(detectMedia: _ => DiskMedia.Unknown),
             new LogService(config.Settings), new EmailService(creds), creds, results,

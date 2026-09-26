@@ -38,6 +38,12 @@ The destination disk or share **isn't connected**. Plug in the external disk or 
 
 That's not **corruption**. It means you **edited the files after copying them**: they're newer in the source than in the copy. RoboKeep reports it this way on purpose, so it doesn't scare you with a false alarm. The next backup brings them back in sync.
 
+### The job says "BLOCKED: too many deletions"
+
+RoboKeep stopped a mirror **before it started**: the deletions it would have made in the destination are over the job's threshold (20 % by default). Almost always this means **the source isn't what you think it is**: a folder moved or renamed, a network drive that didn't mount and looks empty, or files encrypted by ransomware. Check the source first: if all the files are there, it's a false alarm and the destination is untouched.
+
+If the deletion is what you want (you really did empty the source), **start the job from the RoboKeep window**: the question comes up with the numbers in plain sight, and a *Yes* lets that run go ahead. Alternatively raise the threshold in the job editor, or set it to **0** to switch the check off. A scheduled task has nobody to ask: it stops and writes it in the log and in the result email. See *Mirror or accumulate*.
+
 ### A job stops with "HARDWARE ERROR" (CRC, cyclic redundancy check)
 
 The error comes from Windows, not from RoboKeep, and means **a disk — or its connection — reported a physical problem**: data error (CRC), sector not found, or I/O device error. There are two possible causes, and they need telling apart: a **failing disk** (bad sectors), or a faulty **cable, USB enclosure or power supply**, which on an external disk produce exactly the same messages.

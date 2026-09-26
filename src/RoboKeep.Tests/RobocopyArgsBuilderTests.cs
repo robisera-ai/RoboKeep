@@ -116,6 +116,55 @@ public class RobocopyArgsBuilderTests
         Assert.Equal("tmp", args[i + 2]);
     }
 
+    /// <summary>Percorso della copia della configurazione sulla radice del disco E.</summary>
+    private static readonly string ConfigCopyOnE = Path.Combine(@"E:\", ConfigMirror.FolderName);
+
+    [Theory]
+    [InlineData(@"E:\")]
+    [InlineData("E:")]
+    [InlineData(@"E:\.")]   // la stessa radice scritta in un altro modo
+    [InlineData("E:.")]
+    public void RootDestination_AlsoExcludesTheConfigCopyFolder(string destination)
+    {
+        // Con la destinazione sulla radice del disco, la cartella della copia della configurazione
+        // (ConfigMirror) sta DENTRO la destinazione e un mirror la cancellerebbe: va sempre esclusa,
+        // anche quando il job non ha nessuna esclusione sua. Si esclude il PERCORSO preciso, non il
+        // nome nudo: una cartella con quel nome in SORGENTE va copiata come tutte le altre.
+        var job = NewJob();
+        job.Destination = destination;
+        var args = RobocopyArgsBuilder.Build(job).ToList();
+        var i = args.IndexOf("/XD");
+        Assert.True(i >= 0);
+        Assert.Equal(ConfigCopyOnE, args[i + 1]);
+    }
+
+    [Fact]
+    public void ConfigCopyExclusion_AddsToTheUserOnes_AndFollowsTheOverride()
+    {
+        var job = NewJob();
+        job.Destination = @"E:\";
+        job.ExcludeDirs = new() { "cache" };
+        var withUserDirs = RobocopyArgsBuilder.Build(job);
+        Assert.Contains("cache", withUserDirs);
+        Assert.Contains(ConfigCopyOnE, withUserDirs);
+
+        // La destinazione indicata dal versioning vale come quella del job.
+        Assert.Contains(ConfigCopyOnE, RobocopyArgsBuilder.Build(NewJob(), destinationOverride: @"E:\"));
+    }
+
+    [Theory]
+    [InlineData(@"D:\dst")]
+    [InlineData(@"E:\Backup\Documenti")]
+    [InlineData(@"\\nas01\backup$")]     // share di rete: nessuna copia da difendere
+    public void NonRootDestination_HasNothingToExclude(string destination)
+    {
+        var job = NewJob();
+        job.Destination = destination;
+        var args = RobocopyArgsBuilder.Build(job);
+        Assert.DoesNotContain(args, a => a.Contains(ConfigMirror.FolderName));
+        Assert.DoesNotContain("/XD", args);
+    }
+
     [Fact]
     public void UnbufferedIO_AddsJ()
     {

@@ -22,6 +22,16 @@ public sealed class BackupJob
     /// </summary>
     public bool Mirror { get; set; } = true;
 
+    /// <summary>Soglia di sicurezza del mirror: se il run cancellerebbe più di questa percentuale
+    /// dei file della destinazione, il job non parte e chiede conferma (dalla finestra) o si ferma
+    /// (da riga di comando). 0 = nessun controllo. Vale solo per i job in mirror: l'accumulo non
+    /// cancella mai. Sotto i 20 file (<see cref="Services.MirrorDeleteGuard.MinFiles"/>) non scatta
+    /// comunque.</summary>
+    public int MirrorDeleteLimitPercent { get; set; } = DefaultMirrorDeleteLimitPercent;
+
+    /// <summary>Soglia predefinita delle cancellazioni in mirror, in percentuale.</summary>
+    public const int DefaultMirrorDeleteLimitPercent = 20;
+
     /// <summary>true → aggiunge <c>/XO</c>: non sovrascrive in destinazione i file più recenti.</summary>
     public bool ExcludeOlder { get; set; }
 

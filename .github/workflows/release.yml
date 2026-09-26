@@ -14,6 +14,7 @@ on:
 
 permissions:
   contents: write  # necessario per creare la Release e caricarne gli asset
+  actions: read    # l'azione SignPath legge i dettagli del job e scarica l'artefatto da firmare
 
 jobs:
   release:
@@ -52,6 +53,80 @@ jobs:
 
       - name: Publish self-contained
         run: dotnet publish src/RoboKeep/RoboKeep.csproj -c Release -r win-x64 --self-contained true -o out/sc
+
+      # --- Firma del codice (SignPath Foundation) --------------------------------------
+      # I tre passi qui sotto girano solo se la variabile di repository SIGNPATH_ENABLED
+      # vale 'true', cioe' dopo che la richiesta a SignPath Foundation e' stata approvata
+      # e i dati sono stati messi nel repo (istruzioni in docs/signpath/richiesta.md).
+      # Finche' la variabile non esiste vengono saltati tutti e tre e la release e'
+      # identica a prima: gli zip sono fatti con i file di "dotnet publish".
+      # Segreto:  SIGNPATH_API_TOKEN
+      # Variabili: SIGNPATH_ENABLED, SIGNPATH_ORGANIZATION_ID, SIGNPATH_PROJECT_SLUG,
+      #            SIGNPATH_POLICY_SLUG
+      - name: Carica i pacchetti da firmare
+        id: unsigned
+        if: vars.SIGNPATH_ENABLED == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          # SignPath puo' firmare solo un artefatto che sta sui server di GitHub: va
+          # caricato prima e poi passato per id. Un artefatto unico con le due cartelle
+          # (nello zip diventano "fd/" e "sc/" nella radice, perche' upload-artifact usa
+          # "out" come radice comune) vuol dire una sola richiesta di firma e quindi una
+          # sola approvazione manuale per release.
+          name: robokeep-unsigned
+          path: out
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0  # gli zip finali sono ricompressi comunque: qui conta la velocita'
+
+      - name: Chiedi la firma a SignPath e attendi i file firmati
+        id: signpath
+        if: vars.SIGNPATH_ENABLED == 'true'
+        uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          # La firma richiede un'approvazione manuale sul sito di SignPath: il workflow
+          # resta in attesa. Il limite predefinito e' 600 s, qui 1800 s (30 minuti) per
+          # dare il tempo di aprire la mail e approvare.
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: '1800'
+          # L'artefatto firmato torna qui, estratto, con la stessa struttura fd/ + sc/.
+          output-artifact-directory: signed
+          # L'artifact configuration di SignPath pretende che product-version dei file
+          # firmati sia uguale a questo valore: e' la regola di SignPath Foundation sui
+          # metadati obbligatori, e impedisce di firmare un build con la versione sbagliata.
+          parameters: |
+            version: ${{ toJSON(steps.ver.outputs.v) }}
+
+      - name: Sostituisci i file non firmati con quelli firmati
+        if: vars.SIGNPATH_ENABLED == 'true'
+        shell: pwsh
+        run: |
+          # SignPath restituisce l'intero pacchetto, con i soli file previsti
+          # dall'artifact configuration firmati: rimpiazzare le cartelle in blocco lascia
+          # il passo "Crea gli zip" identico a prima.
+          Remove-Item out/fd -Recurse -Force
+          Remove-Item out/sc -Recurse -Force
+          Move-Item signed/fd out/fd
+          Move-Item signed/sc out/sc
+          # Meglio nessuna release che una release con un eseguibile non firmato: se la
+          # firma manca o non e' valida ci si ferma qui.
+          $attesi = @(
+            'out/fd/RoboKeep.exe', 'out/fd/RoboKeep.dll', 'out/fd/RoboKeep.Core.dll',
+            'out/sc/RoboKeep.exe', 'out/sc/RoboKeep.dll', 'out/sc/RoboKeep.Core.dll'
+          )
+          foreach ($f in $attesi) {
+            $s = Get-AuthenticodeSignature $f
+            if ($s.Status -ne 'Valid') {
+              Write-Output "::error::$f non ha una firma valida (stato: $($s.Status))."
+              exit 1
+            }
+            Write-Output "$f firmato da $($s.SignerCertificate.Subject)"
+          }
 
       - name: Crea gli zip
         shell: pwsh

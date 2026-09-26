@@ -21,6 +21,23 @@ Le password (share di rete, mittente email) sono cifrate con **DPAPI di Windows*
 
 > Se cambi questa opzione, le password già salvate vengono **ricifrate in automatico** con il nuovo ambito. Non devi reinserirle.
 
+## Copia della configurazione sui dischi di backup
+
+La casella **«Salva una copia della configurazione sui dischi di backup»** (attiva di default) fa sì che, dopo ogni backup riuscito, RoboKeep scriva nella **radice del disco di destinazione** una cartella **`RoboKeep-config`** con due file:
+
+- **`config.json`**: la configurazione completa — job, esclusioni, pianificazioni, impostazioni ed email — nello stesso formato di *Esporta configurazione*;
+- **`LEGGIMI.txt`**: in italiano e in inglese, che cos'è quella cartella, da quale PC arriva, quando è stata scritta e come si ripristina.
+
+Serve a un caso solo, ma decisivo: **il PC non c'è più**. Con il disco in mano hai i file *e* i job; installi RoboKeep sul PC nuovo, apri *Impostazioni → Pianificazione → Importa configurazione*, scegli quel `config.json` e ritrovi tutto com'era. Senza la copia, i job andrebbero rifatti a memoria.
+
+Cose da sapere:
+
+- una copia **per disco**, riscritta a ogni backup riuscito: se più job scrivono sullo stesso disco, vince l'ultimo che finisce;
+- le **password** (share di rete, email) restano cifrate con DPAPI e si decifrano solo su quel PC — e solo con il tuo utente Windows, se hai scelto di cifrarle per il tuo utente: su un altro PC vanno reinserite una volta, il resto torna da sé;
+- le destinazioni **di rete** sono escluse: la copia riguarda il disco che stacchi e porti via, non la radice di un server;
+- nessun mirror la cancella, perché sta **fuori** dalle cartelle dei job; e se un job ha come destinazione la radice stessa del disco, RoboKeep esclude `RoboKeep-config` dalla copia per non farla rimuovere;
+- se la copia non riesce (disco in sola lettura, spazio finito, permessi) resta solo una riga nel log: **il backup dei file non fallisce per questo**.
+
 ## Notifiche e area di notifica
 
 Da qui attivi le **notifiche toast** e i comportamenti del **tray** (riduci nel tray, avvio minimizzato, gira in background). I dettagli sono nel capitolo *Notifiche ed email*.

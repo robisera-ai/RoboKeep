@@ -78,11 +78,23 @@ public static class RobocopyArgsBuilder
             args.AddRange(job.ExcludeFiles.Where(f => !string.IsNullOrWhiteSpace(f)));
         }
 
-        // Esclusioni cartelle.
-        if (job.ExcludeDirs is { Count: > 0 })
+        // Esclusioni cartelle. Alla lista dell'utente si aggiunge la copia della configurazione
+        // (vedi ConfigMirror) quando la destinazione E' la radice del volume: in quel caso la
+        // cartella RoboKeep-config sta dentro la destinazione, non esiste in sorgente, e un mirror
+        // la cancellerebbe come file "extra". Con una destinazione in sottocartella il problema non
+        // c'e': la copia sta piu' in alto, fuori dalla portata del job.
+        var excludeDirs = (job.ExcludeDirs ?? new List<string>())
+            .Where(d => !string.IsNullOrWhiteSpace(d)).ToList();
+        // Si esclude il PERCORSO della cartella, non il nome: con il nome nudo robocopy salterebbe
+        // ogni "RoboKeep-config" che incontra, anche quello in SORGENTE — e un disco che e' la
+        // destinazione di un job e la sorgente di un altro ne ha uno, che va copiato come tutto
+        // il resto.
+        if (VolumeRootOf(dest) is { } destRoot)
+            excludeDirs.Add(Path.Combine(destRoot, ConfigMirror.FolderName));
+        if (excludeDirs.Count > 0)
         {
             args.Add("/XD");
-            args.AddRange(job.ExcludeDirs.Where(d => !string.IsNullOrWhiteSpace(d)));
+            args.AddRange(excludeDirs);
         }
 
         // Tentativi e attesa.
@@ -159,6 +171,29 @@ public static class RobocopyArgsBuilder
         }
 
         return args;
+    }
+
+    /// <summary>La radice del volume locale (<c>E:\</c>) quando il percorso E' quella radice
+    /// — <c>E:\</c>, <c>E:</c>, <c>E:\.</c> sono lo stesso posto scritto in tre modi — altrimenti
+    /// null: solo con la destinazione sulla radice la cartella della copia della configurazione
+    /// finisce dentro la destinazione. Le share UNC non contano: la copia non viene mai scritta su
+    /// una destinazione di rete.
+    /// <para>Resta un lavoro di stringhe, senza toccare il disco (<c>GetFullPath</c> normalizza e
+    /// non legge nulla): questa classe deve poter girare su percorsi di dischi non collegati.</para></summary>
+    private static string? VolumeRootOf(string path)
+    {
+        try
+        {
+            var full = Path.GetFullPath(path);
+            var root = Path.GetPathRoot(full);
+            if (string.IsNullOrEmpty(root)) return null;
+            if (root.StartsWith(@"\\", StringComparison.Ordinal)) return null;
+            return string.Equals(full.TrimEnd('\\', '/'), root.TrimEnd('\\', '/'),
+                StringComparison.OrdinalIgnoreCase)
+                ? root
+                : null;
+        }
+        catch { return null; }
     }
 
     /// <summary>

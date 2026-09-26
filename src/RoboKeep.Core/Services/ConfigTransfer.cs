@@ -21,9 +21,16 @@ public static class ConfigTransfer
     };
 
     public static void Export(AppConfig config, string path)
+        => File.WriteAllText(path, Serialize(config));
+
+    /// <summary>La configurazione come testo JSON, senza toccare il disco. Serve a chi deve
+    /// ottenere il contenuto PRIMA di scrivere (vedi <see cref="ConfigMirror"/>): se la GUI
+    /// modifica un job mentre si serializza, l'errore resta in memoria e nessun file viene
+    /// lasciato a metà.</summary>
+    public static string Serialize(AppConfig config)
     {
         ArgumentNullException.ThrowIfNull(config);
-        File.WriteAllText(path, JsonSerializer.Serialize(config, Options));
+        return JsonSerializer.Serialize(config, Options);
     }
 
     /// <summary>Valida e deserializza; lancia se il file non è una configurazione valida.</summary>

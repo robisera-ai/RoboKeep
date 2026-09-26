@@ -13,6 +13,7 @@
     "startMinimized": false,
     "updateCheck": null,
     "credentialScope": "Machine",
+    "configCopyToDestination": true,
     "email": {
       "enabled": false,
       "smtpHost": "smtp.example.com",
@@ -39,6 +40,7 @@
       "source": "D:\\documenti",
       "destination": "E:\\Backup\\Documenti",
       "mirror": true,
+      "mirrorDeleteLimitPercent": 20,
       "excludeOlder": false,
       "copyAll": false,
       "multiThread": 8,

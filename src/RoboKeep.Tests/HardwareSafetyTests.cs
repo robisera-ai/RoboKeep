@@ -284,6 +284,9 @@ public sealed class HardwareSafetyTests : IDisposable
         var config = new AppConfig();
         config.Settings.LogRoot = Path.Combine(_root, "logs");
         config.Settings.TempRoot = Path.Combine(_root, "temp");
+        // Run riuscito su una cartella temporanea: senza spegnerla, la copia della configurazione
+        // (ConfigMirror) finirebbe nella radice del disco di sistema della macchina.
+        config.Settings.ConfigCopyToDestination = false;
         var creds = new CredentialService(config.Settings.CredentialScope);
         var runner = new BackupRunner(config, new RobocopyRunner(detectMedia: _ => DiskMedia.Hdd),
             new LogService(config.Settings), new EmailService(creds), creds);

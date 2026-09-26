@@ -83,6 +83,10 @@
                     <CheckBox Content="{l:Tr Set_CredScopeUser}" IsChecked="{Binding CredentialScopeUser}"/>
                     <TextBlock Opacity="0.7" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0" Text="{l:Tr Set_CredScopeHint}"/>
 
+                    <TextBlock Text="{l:Tr Set_ConfigCopySection}" Style="{StaticResource Label}"/>
+                    <CheckBox Content="{l:Tr Set_ConfigCopy}" IsChecked="{Binding ConfigCopyToDestination}"/>
+                    <TextBlock Opacity="0.7" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0" Text="{l:Tr Set_ConfigCopyHint}"/>
+
                     <TextBlock Text="{l:Tr Set_UpdateSection}" Style="{StaticResource Label}"/>
                     <CheckBox Content="{l:Tr Set_UpdateCheck}" IsChecked="{Binding UpdateCheck}"/>
                 </StackPanel>

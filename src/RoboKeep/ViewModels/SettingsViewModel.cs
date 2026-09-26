@@ -62,6 +62,8 @@ public sealed class SettingsViewModel : ObservableObject
     /// <summary>Controllo aggiornamenti: null (mai chiesto) vale come spento nella casella.</summary>
     public bool UpdateCheck { get => _s.UpdateCheck == true; set { _s.UpdateCheck = value; OnPropertyChanged(); } }
     public bool StartMinimized { get => _s.StartMinimized; set { _s.StartMinimized = value; OnPropertyChanged(); } }
+    /// <summary>Copia della configurazione nella radice dei dischi di backup (vedi ConfigMirror).</summary>
+    public bool ConfigCopyToDestination { get => _s.ConfigCopyToDestination; set { _s.ConfigCopyToDestination = value; OnPropertyChanged(); } }
 
     public bool EmailEnabled { get => _s.Email.Enabled; set { _s.Email.Enabled = value; OnPropertyChanged(); } }
     public string SmtpHost { get => _s.Email.SmtpHost; set { _s.Email.SmtpHost = value; OnPropertyChanged(); } }

@@ -20,6 +20,19 @@ Tutto ciò che l'app sa — impostazioni, esiti, cronologia, log — vive in **f
 
 Le password (share di rete, mittente email) sono cifrate con **DPAPI di Windows**, il meccanismo di cifratura del sistema operativo. **Non vengono mai salvate in chiaro.** L'ambito della cifratura lo regoli nelle *Impostazioni*.
 
+## La copia della configurazione sul disco di backup
+
+Dopo ogni backup riuscito RoboKeep scrive, nella radice del disco di destinazione, la cartella **`RoboKeep-config`** con la tua configurazione (vedi *Impostazioni*). Sapere cosa contiene è giusto, perché quel disco spesso viaggia:
+
+- i **percorsi** di sorgenti e destinazioni, i nomi dei job e le esclusioni;
+- gli **host delle share di rete** e i **nomi utente** delle credenziali salvate: il nome del NAS o del server a cui RoboKeep si collega e l'utente con cui lo fa;
+- gli **indirizzi email** del mittente e del destinatario dei report, con nome utente e server SMTP;
+- le **password** (share di rete, email) cifrate con **DPAPI di Windows**: si decifrano solo su quel PC — e solo con il tuo utente Windows, se nelle *Impostazioni* hai scelto «cifra le password solo per il mio utente Windows». Chi si porta via il file su un altro PC non le legge; per questo, ripristinando su un PC nuovo, vanno reinserite.
+
+Non contiene **nessun tuo file**, nessun log e nessuna cronologia: solo la configurazione.
+
+Se non la vuoi — per esempio perché il disco è condiviso, o lo porti fuori casa — spegni **«Salva una copia della configurazione sui dischi di backup»** nelle *Impostazioni*. Le cartelle `RoboKeep-config` già scritte puoi cancellarle a mano: RoboKeep non le rimette se l'opzione è spenta.
+
 ## I log e la loro pulizia
 
 I log contengono i **percorsi** dei file copiati — utili per capire cosa è successo in un'esecuzione. Per non lasciarli accumulare, vengono **ripuliti automaticamente dopo 30 giorni**, un valore che puoi cambiare nelle *Impostazioni*.

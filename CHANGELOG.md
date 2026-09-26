@@ -6,6 +6,29 @@ All notable changes to RoboKeep are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+- **A mirror that would wipe out the destination now stops and asks first.** Before a mirror job
+  runs, RoboKeep counts — without touching anything — how many files it would delete in the
+  destination; if that reaches the job's threshold (**20 %** by default, in the job editor, 0 to
+  switch it off) the run does not start. Started from the window, it asks for confirmation with
+  the numbers in plain sight ("would delete 1812 files out of 2014, 90 %"); started from a
+  scheduled task or the command line, it stops and reports **"BLOCKED: too many deletions"** in the
+  log, in the result email and on the job's row. This is how data usually gets lost to a mirror —
+  a source folder moved or renamed, a network drive that did not mount and looks empty, ransomware
+  — and now the copy stays where it is. Jobs with versions reuse the check the versioning already
+  does, so they cost nothing extra; below 20 files the threshold never triggers, and Preview never
+  blocks (it just says you would be over).
+- **Your backup disks now carry your configuration too.** After every successful backup RoboKeep
+  writes a **`RoboKeep-config`** folder in the root of the destination disk (`E:\RoboKeep-config`)
+  with `config.json` — jobs, exclusions, schedules, settings and email, the same format as *Export
+  configuration* — and a bilingual `LEGGIMI.txt` saying what it is, which PC it came from, when, and
+  how to restore it. If the PC dies, the disk you have in your hands holds the files **and** the
+  jobs: install RoboKeep, *Settings → Import configuration*, done. One copy per disk, rewritten at
+  every run; network destinations are skipped; no mirror can delete it (it lives outside the job
+  folders, and a job whose destination is the disk root excludes it); passwords stay DPAPI-encrypted,
+  unreadable elsewhere, so you re-enter those once. Best-effort: a failed copy is one line in the
+  log, never a failed backup. New checkbox in **Settings → General**, on by default.
+
 ### Fixed
 - Wizard, step 2: the "very large files" and "keep previous versions" boxes are now aligned with
   the mirror/accumulate choices instead of being indented as if they belonged to "Accumulate".
