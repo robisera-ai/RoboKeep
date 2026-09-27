@@ -46,6 +46,12 @@ From here you turn on **toast notifications** and the **tray** behaviors (minimi
 
 The **"warn if a backup hasn't run in N days"** threshold raises an alert icon on jobs that haven't run in too long. Set it to **0** to never get this warning.
 
+## Free space and version cleanup
+
+In the **Reliability** tab, the **"Minimum free space at destination (MB)"** field (10,240 — that is 10 GB — by default) is the threshold below which RoboKeep considers the backup disk short of space: the pre-run check flags it before starting. The default was 1,024 MB in earlier versions: if you had left it untouched it becomes 10,240 the first time this version reads your configuration, while a value you chose yourself is kept as it is.
+
+Below it sits the checkbox **"When the backup disk is full, delete the oldest versions to make room (never the latest)"**, **off by default**. With it on, before every backup with versions RoboKeep compares the free space with that threshold and, if it is below, deletes that job's oldest version, checks the space again and keeps going until it is back above the threshold or only the most recent version is left — that one is the current backup and is never touched. Every deletion is a line in the log, with the name of the version removed and how much it freed. The *Versions* chapter covers it too, under "When the disk is full".
+
 ## Updates
 
 The **"Check for updates automatically"** checkbox decides whether RoboKeep checks on its own for a newer version: one request to `api.github.com` at startup, at most once a day. If it finds a newer version, the notice appears in the main window with **What's new**, **Download** and **Ignore**. Off, RoboKeep never contacts GitHub on its own.

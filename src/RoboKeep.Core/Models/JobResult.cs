@@ -57,6 +57,15 @@ public sealed class JobResult
     /// sbloccarlo), se <see cref="DeletionsBlocked"/>.</summary>
     public string? DeletionsBlockedDetail { get; set; }
 
+    /// <summary>true se il run è fallito perché il disco di destinazione è PIENO (robocopy: Win32
+    /// 112). È un fallimento (<c>Success = false</c>) ma non un errore hardware: il disco sta bene,
+    /// non c'è niente da controllare e riprovare non serve — bisogna fare posto.</summary>
+    public bool DiskFull { get; set; }
+
+    /// <summary>Dettaglio del disco pieno (radice, quante versioni ci sono e quanto occupano, come
+    /// fare posto), se <see cref="DiskFull"/>.</summary>
+    public string? DiskFullDetail { get; set; }
+
     /// <summary>Avvisi di salute del disco (registro eventi) emessi per questo run: finiscono
     /// anche nell'email, non solo nel log.</summary>
     public List<string> HealthWarnings { get; } = new();

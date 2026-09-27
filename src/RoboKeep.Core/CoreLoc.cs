@@ -278,6 +278,43 @@ public static class CoreLoc
             "BLOQUÉ : trop de suppressions",
             "BLOCKIERT: zu viele Löschungen"),
 
+        ["Space_Status"] = L(
+            "Disco pieno", "Disk full", "Disco lleno", "Disque plein", "Datenträger voll"),
+        ["Space_Detail"] = L(
+            "{0} pieno: il backup non è stato completato. Le {1} versioni del job occupano {2}. Abbassa «Numero massimo di versioni» nell'editor del job — il run successivo cancella le più vecchie — oppure attiva «Quando il disco di backup è pieno, cancella le versioni più vecchie» in Impostazioni → Affidabilità. Per fare posto subito: Versioni... → Apri in Esplora risorse e cancella a mano qualche cartella datata.",
+            "{0} is full: the backup was not completed. The job's {1} versions take up {2}. Lower \"Max number of versions\" in the job editor — the next run deletes the oldest ones — or turn on \"When the backup disk is full, delete the oldest versions\" in Settings → Reliability. To make room right now: Versions... → Open in File Explorer and delete a few dated folders by hand.",
+            "{0} lleno: la copia no se ha completado. Las {1} versiones del trabajo ocupan {2}. Baja «Número máximo de versiones» en el editor del trabajo (la siguiente ejecución elimina las más antiguas) o activa «Cuando el disco de backup está lleno, elimina las versiones más antiguas» en Ajustes → Fiabilidad. Para hacer sitio ahora mismo: Versiones... → Abrir en el Explorador y elimina a mano alguna carpeta con fecha.",
+            "{0} plein : la sauvegarde n'a pas été terminée. Les {1} versions de la tâche occupent {2}. Réduisez « Nombre max de versions » dans l'éditeur de la tâche — la prochaine exécution supprime les plus anciennes — ou activez « Quand le disque de sauvegarde est plein, supprimer les versions les plus anciennes » dans Paramètres → Fiabilité. Pour faire de la place tout de suite : Versions... → Ouvrir dans l'Explorateur et supprimez à la main quelques dossiers datés.",
+            "{0} ist voll: das Backup wurde nicht abgeschlossen. Die {1} Versionen des Jobs belegen {2}. Verringern Sie „Maximale Anzahl Versionen“ im Job-Editor — der nächste Lauf löscht die ältesten — oder aktivieren Sie „Wenn der Backup-Datenträger voll ist, die ältesten Versionen löschen“ in Einstellungen → Zuverlässigkeit. Um sofort Platz zu schaffen: Versionen... → Im Explorer öffnen und einige datierte Ordner von Hand löschen."),
+        ["Space_DetailNoVersions"] = L(
+            "{0} pieno: il backup non è stato completato. Fai posto sul disco o scegli una destinazione più capiente; questo job non tiene versioni, quindi non c'è niente da cancellare qui.",
+            "{0} is full: the backup was not completed. Free up space on the disk or pick a roomier destination; this job keeps no versions, so there is nothing to delete here.",
+            "{0} lleno: la copia no se ha completado. Libera espacio en el disco o elige un destino más amplio; este trabajo no conserva versiones, así que aquí no hay nada que eliminar.",
+            "{0} plein : la sauvegarde n'a pas été terminée. Libérez de l'espace sur le disque ou choisissez une destination plus grande ; cette tâche ne conserve pas de versions, il n'y a donc rien à supprimer ici.",
+            "{0} ist voll: das Backup wurde nicht abgeschlossen. Schaffen Sie Platz auf dem Datenträger oder wählen Sie ein größeres Ziel; dieser Job behält keine Versionen, hier gibt es also nichts zu löschen."),
+        ["Space_Freed"] = L(
+            "[spazio] liberati {0} cancellando la versione {1}",
+            "[space] freed {0} by deleting version {1}",
+            "[espacio] liberados {0} eliminando la versión {1}",
+            "[espace] {0} libérés en supprimant la version {1}",
+            "[Speicher] {0} freigegeben durch Löschen der Version {1}"),
+        ["Space_FreedNothing"] = L(
+            "[spazio] la cancellazione della versione {0} non ha liberato spazio misurabile (era tutta condivisa con le altre versioni).",
+            "[space] deleting version {0} freed no measurable space (it was entirely shared with the other versions).",
+            "[espacio] eliminar la versión {0} no ha liberado espacio apreciable (estaba toda compartida con las demás versiones).",
+            "[espace] la suppression de la version {0} n'a libéré aucun espace mesurable (elle était entièrement partagée avec les autres versions).",
+            "[Speicher] das Löschen der Version {0} hat keinen messbaren Speicher freigegeben (sie war vollständig mit den anderen Versionen geteilt)."),
+        ["Space_NotFreed"] = L(
+            "[spazio] versione {0} non cancellata ({1}): la pulizia si ferma qui.",
+            "[space] version {0} not deleted ({1}): the cleanup stops here.",
+            "[espacio] versión {0} no eliminada ({1}): la limpieza se detiene aquí.",
+            "[espace] version {0} non supprimée ({1}) : le nettoyage s'arrête ici.",
+            "[Speicher] Version {0} nicht gelöscht ({1}): die Bereinigung endet hier."),
+        ["Space_EmailSubject"] = L(
+            "DISCO PIENO: {0}", "DISK FULL: {0}", "DISCO LLENO: {0}",
+            "DISQUE PLEIN : {0}", "DATENTRÄGER VOLL: {0}"),
+        ["Space_Unknown"] = L("n/d", "n/a", "n/d", "n/d", "k. A."),
+
         ["ConfigCopy_Written"] = L(
             "[config] copia della configurazione salvata in {0} (job, esclusioni e impostazioni, senza password).",
             "[config] configuration copy saved to {0} (jobs, exclusions and settings, without passwords).",

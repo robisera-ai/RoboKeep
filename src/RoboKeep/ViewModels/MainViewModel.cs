@@ -435,10 +435,17 @@ public sealed class MainViewModel : ObservableObject
             {
                 // Mirror fermato dalla guardia: nessun errore di copia, il rimedio e' una decisione
                 // (avviare il job dalla finestra e confermare, o alzare la soglia). Il tooltip lo dice.
-                var blocked = results.TryGetValue(jvm.Name, out var br) && br.DeletionsBlocked ? br : null;
-                jvm.HealthTooltip = blocked is null
-                    ? Loc.Instance["Health_Failed"]
-                    : string.Format(Loc.Instance["Health_DeletionsBlocked"], blocked.DeletionsBlockedDetail ?? "").Trim();
+                // Disco pieno: nemmeno quello e' un errore di copia, e il dettaglio e' gia' la frase
+                // completa (dove, quante versioni, quanto occupano, come fare posto).
+                results.TryGetValue(jvm.Name, out var fr);
+                jvm.HealthTooltip = fr switch
+                {
+                    { DeletionsBlocked: true } => string.Format(Loc.Instance["Health_DeletionsBlocked"],
+                        fr.DeletionsBlockedDetail ?? "").Trim(),
+                    { DiskFull: true, DiskFullDetail: { Length: > 0 } detail } =>
+                        string.Format(Loc.Instance["Health_DiskFull"], detail).Trim(),
+                    _ => Loc.Instance["Health_Failed"],
+                };
                 nFailed++;
             }
             else if (h == BackupHealth.Stale)
@@ -546,8 +553,8 @@ public sealed class MainViewModel : ObservableObject
                         dryRun ? null : ConfirmDeletionsAsync);
                     if (result.Skipped)
                         jvm.LastStatus = Loc.Instance["Run_SkippedDisk"];
-                    else if (result.DeletionsBlocked)
-                        jvm.LastStatus = result.Status;   // «BLOCCATO: troppe cancellazioni»
+                    else if (result.DeletionsBlocked || result.DiskFull)
+                        jvm.LastStatus = result.Status;   // «BLOCCATO: troppe cancellazioni», «Disco pieno»
                     else if (dryRun)
                         jvm.LastStatus = $"{Loc.Instance["Run_OK"]} · {Loc.Instance["Run_Preview"]}";
                     else

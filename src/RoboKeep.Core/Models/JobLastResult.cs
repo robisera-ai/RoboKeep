@@ -24,4 +24,9 @@ public sealed class JobLastResult
     /// (avviare il job dalla finestra e confermare, oppure alzare la soglia nell'editor).</summary>
     public bool DeletionsBlocked { get; set; }
     public string? DeletionsBlockedDetail { get; set; }
+
+    /// <summary>true se l'ultimo run è fallito perché il disco di backup era pieno: la UI lo mostra
+    /// come fallito, con il dettaglio (quante versioni, quanto occupano) nel tooltip.</summary>
+    public bool DiskFull { get; set; }
+    public string? DiskFullDetail { get; set; }
 }

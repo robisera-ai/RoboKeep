@@ -178,12 +178,21 @@ public sealed class RobocopyRunner
         var interpreted = ExitCodeInterpreter.Interpret(exitCombined);
         var text = fullText.ToString();
 
+        // Disco pieno: robocopy lo dice con Win32 112 in mezzo a migliaia di righe, e l'exit code
+        // non lo distingue da qualunque altro errore di copia. Lo si riconosce qui, una volta sola,
+        // e solo su un run FALLITO: il rimedio non e' riprovare, e' fare posto. Il dettaglio (quante
+        // versioni, quanto occupano) lo compone BackupRunner, che conosce il job.
+        var diskFull = hardwareError is null && !interpreted.Success && DiskFullDetector.Matches(text);
+
         var result = new JobResult
         {
             JobName = job.Name,
             ExitCode = exitCombined,
             Success = interpreted.Success,
-            Status = hardwareError is null ? interpreted.Summary : CoreLoc.S("Hw_Status"),
+            Status = hardwareError is not null ? CoreLoc.S("Hw_Status")
+                : diskFull ? CoreLoc.S("Space_Status")
+                : interpreted.Summary,
+            DiskFull = diskFull,
             HardwareError = hardwareError is not null,
             HardwareErrorDetail = hardwareError,
             ThreadCapNote = capNote,

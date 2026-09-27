@@ -267,7 +267,13 @@
                         <ui:TextBox Width="140" HorizontalAlignment="Left" Text="{Binding StaleAfterDays, UpdateSourceTrigger=PropertyChanged}"/>
 
                         <TextBlock Text="{l:Tr Set_MinFreeSpace}" Style="{StaticResource Label}"/>
-                        <ui:TextBox Width="140" HorizontalAlignment="Left" Text="{Binding MinFreeSpaceMb, UpdateSourceTrigger=PropertyChanged}"/>
+                        <!-- Il pulsante dice il valore predefinito: senza, chi lo cambia non sa piu' com'era. -->
+                        <StackPanel Orientation="Horizontal">
+                            <ui:TextBox Width="140" HorizontalAlignment="Left" Text="{Binding MinFreeSpaceMb, UpdateSourceTrigger=PropertyChanged}"/>
+                            <ui:Button x:Name="MinFreeSpaceDefaultButton" Margin="8,0,0,0" Click="OnMinFreeSpaceDefault"/>
+                        </StackPanel>
+                        <CheckBox Content="{l:Tr Set_FreeSpaceCleanup}" IsChecked="{Binding FreeSpaceCleanup}" Margin="0,10,0,0"/>
+                        <TextBlock Opacity="0.7" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,0" Text="{l:Tr Set_FreeSpaceCleanupHint}"/>
 
                         <CheckBox Content="{l:Tr Set_PreflightEnabled}" IsChecked="{Binding PreflightEnabled}" Margin="0,16,0,0"/>
                         <CheckBox Content="{l:Tr Set_NotificationsEnabled}" IsChecked="{Binding NotificationsEnabled}" Margin="0,8,0,0"/>

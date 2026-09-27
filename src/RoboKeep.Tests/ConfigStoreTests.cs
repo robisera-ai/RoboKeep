@@ -85,5 +85,39 @@ public class ConfigStoreTests : IDisposable
         Assert.NotNull(cfg);
         Assert.Empty(cfg.Jobs);
         Assert.Empty(cfg.Credentials);
+        // Una configurazione nuova nasce già "migrata": non c'è nessun valore vecchio da alzare, e
+        // il segno impedisce che la migrazione torni a guardarla in futuro.
+        Assert.Equal(10240, cfg.Settings.MinFreeSpaceMb);
+        Assert.True(cfg.Settings.MinFreeSpaceMigrated);
+    }
+
+    // ---- Migrazione del default di MinFreeSpaceMb (1 GB -> 10 GB) ----
+
+    private void WriteSettings(string settingsJson) =>
+        WriteRaw($"{{ \"settings\": {settingsJson}, \"credentials\": [], \"jobs\": [] }}");
+
+    private void WriteRaw(string json)
+    {
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(_path, json);
+    }
+
+    [Fact]
+    public void Load_RaisesTheOldDefaultMinFreeSpace_OnceAndOnlyForTheDefaultValue()
+    {
+        // Configurazione scritta da una versione precedente: 1024 = il default di allora, nessun
+        // segno di migrazione. Il nuovo default non la raggiungerebbe mai da solo.
+        WriteSettings("{ \"minFreeSpaceMb\": 1024 }");
+        var migrated = new ConfigStore(_path).Load().Settings;
+        Assert.Equal(10240, migrated.MinFreeSpaceMb);
+        Assert.True(migrated.MinFreeSpaceMigrated);
+
+        // Un valore scelto dall'utente non si tocca.
+        WriteSettings("{ \"minFreeSpaceMb\": 2048 }");
+        Assert.Equal(2048, new ConfigStore(_path).Load().Settings.MinFreeSpaceMb);
+
+        // Migrazione già avvenuta: 1024 è ormai una scelta dell'utente e resta 1024.
+        WriteSettings("{ \"minFreeSpaceMb\": 1024, \"minFreeSpaceMigrated\": true }");
+        Assert.Equal(1024, new ConfigStore(_path).Load().Settings.MinFreeSpaceMb);
     }
 }

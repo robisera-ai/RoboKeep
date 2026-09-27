@@ -46,6 +46,12 @@ Da qui attivi le **notifiche toast** e i comportamenti del **tray** (riduci nel 
 
 La soglia **«avvisa se un backup è fermo da N giorni»** fa comparire un'icona d'allerta sui job che non girano da troppo tempo. Imposta **0** per non ricevere mai questo avviso.
 
+## Spazio libero e pulizia delle versioni
+
+Nella scheda **Affidabilità**, il campo **«Spazio libero minimo in destinazione (MB)»** (10 240, cioè 10 GB, di default) è la soglia sotto la quale RoboKeep considera il disco di backup a corto di spazio: il controllo pre-avvio lo segnala prima di partire. Il default era 1 024 MB nelle versioni precedenti: se l'avevi lasciato così com'era, diventa 10 240 la prima volta che questa versione legge la tua configurazione; un valore che avevi scelto tu resta invariato.
+
+Sotto c'è la casella **«Quando il disco di backup è pieno, cancella le versioni più vecchie per far posto (mai l'ultima)»**, **spenta di default**. Attiva, prima di ogni backup con versioni RoboKeep confronta lo spazio libero con quella soglia e, se è sotto, cancella la versione più vecchia di quel job, ricontrolla lo spazio e continua finché torna sopra la soglia o resta solo la versione più recente — quella è il backup attuale e non si tocca mai. Ogni cancellazione è una riga nel log, con il nome della versione rimossa e quanto ha liberato. Ne parla anche il capitolo *Le versioni*, alla voce «Quando il disco è pieno».
+
 ## Aggiornamenti
 
 La casella **«Cerca aggiornamenti automaticamente»** decide se RoboKeep controlla da solo l'esistenza di una versione nuova: una richiesta a `api.github.com` all'avvio, al massimo una volta al giorno. Se trova una versione più recente, l'avviso compare nella finestra principale con **Novità**, **Scarica** e **Ignora**. Spenta, RoboKeep non contatta mai GitHub di sua iniziativa.

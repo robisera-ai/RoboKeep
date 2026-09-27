@@ -153,6 +153,27 @@ public class SnapshotServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task StaleDeletingLeftover_FromInterruptedDelete_IsRemovedOnNextRun()
+    {
+        var source = Path.Combine(_root, "src9");
+        var dest = Path.Combine(_root, "dest9");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "f.txt"), "v1");
+
+        // FileSystemDelete rinomina prima di cancellare: una cancellazione interrotta a meta' lascia
+        // una cartella ".deleting-…" che nessuna regola tocca piu' e che occupa disco per sempre.
+        var leftover = Path.Combine(dest, "2026-01-01_000000.deleting-abcd1234");
+        Directory.CreateDirectory(leftover);
+        File.WriteAllText(Path.Combine(leftover, "residuo.bin"), "garbage");
+
+        var job = new BackupJob { Name = "V", Source = source, Destination = dest, Versioned = true };
+        await new SnapshotService(new RobocopyRunner()).RunVersionedAsync(job);
+
+        Assert.False(Directory.Exists(leftover));
+        Assert.Single(SnapshotDirs(dest));
+    }
+
+    [Fact]
     public async Task RunVersioned_SourceOverride_CopiesFromOverridePath()
     {
         var source = Path.Combine(_root, "srcLive");

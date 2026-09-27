@@ -61,10 +61,14 @@ public sealed class JobViewModel : ObservableObject
     {
         // Un job fermato dalla guardia sulle cancellazioni non ha conteggi da raccontare: non e'
         // partito. Al loro posto va il motivo, che e' l'unica cosa che serve sapere.
+        // Stessa logica per un run fermato dallo spazio: i conteggi di robocopy, dopo un disco pieno,
+        // raccontano solo quanto era stato copiato prima di inchiodarsi.
         LastStatus = r is null
             ? "—"
             : r.DeletionsBlocked
             ? $"{RoboKeep.Core.CoreLoc.S("Guard_Status")}  ({r.FinishedAt:dd/MM HH:mm})"
+            : r.DiskFull
+            ? $"{RoboKeep.Core.CoreLoc.S("Space_Status")}  ({r.FinishedAt:dd/MM HH:mm})"
             : RunStatus.Format(r.Success, r.FilesCopied, r.FilesSkipped, r.FilesExtra, r.FilesFailed + r.DirsFailed, r.FinishedAt);
     }
 

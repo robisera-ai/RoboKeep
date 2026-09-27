@@ -36,8 +36,31 @@ public sealed class AppSettings
     /// <summary>Se true, prima di avviare un job esegue i controlli pre-avvio (raggiungibilità, spazio).</summary>
     public bool PreflightEnabled { get; set; } = true;
 
-    /// <summary>Soglia minima di spazio libero in destinazione (MB) sotto la quale il pre-check avvisa.</summary>
-    public int MinFreeSpaceMb { get; set; } = 1024;
+    /// <summary>Soglia minima di spazio libero in destinazione (MB) sotto la quale il pre-check
+    /// avvisa, e sotto la quale scatta la pulizia delle versioni se <see cref="FreeSpaceCleanup"/>
+    /// è attiva. 10 GB di default: con meno spazio di così un backup di dimensioni normali rischia
+    /// di fermarsi a metà, e la pulizia deve partire prima che il disco sia davvero pieno.</summary>
+    public int MinFreeSpaceMb { get; set; } = DefaultMinFreeSpaceMb;
+
+    /// <summary>Default di <see cref="MinFreeSpaceMb"/>: lo usa anche il pulsante «Predefinito»
+    /// delle Impostazioni, così il numero sta scritto in un posto solo.</summary>
+    public const int DefaultMinFreeSpaceMb = 10240;
+
+    /// <summary>Se true, prima di un run con versioni RoboKeep cancella le versioni più vecchie di
+    /// quel job — una alla volta, mai la più recente — finché lo spazio libero torna sopra
+    /// <see cref="MinFreeSpaceMb"/>. Spenta di default: cancellare per far posto è una decisione
+    /// dell'utente, non un'iniziativa del programma. Ogni cancellazione è una riga nel log.</summary>
+    public bool FreeSpaceCleanup { get; set; } = false;
+
+    /// <summary>Segna che questa configurazione ha già visto il passaggio del default di
+    /// <see cref="MinFreeSpaceMb"/> da 1024 a 10240 MB. Le configurazioni esistenti hanno il valore
+    /// vecchio scritto dentro il file, quindi il nuovo default non le raggiungerebbe mai: al
+    /// caricamento <c>ConfigStore</c> alza a 10240 chi era rimasto sull'esatto default di prima
+    /// (1024) e mette questo segno. Parte da false proprio perché un file scritto da una versione
+    /// precedente non ce l'ha; <c>ConfigStore.Load</c> lo mette a true subito dopo (anche per una
+    /// configurazione nuova, dove non c'è nulla da migrare), così la migrazione non si ripete mai e
+    /// un 1024 rimesso a mano dall'utente resta 1024.</summary>
+    public bool MinFreeSpaceMigrated { get; set; }
 
     /// <summary>Se true mostra notifiche toast a fine job.</summary>
     public bool NotificationsEnabled { get; set; } = true;

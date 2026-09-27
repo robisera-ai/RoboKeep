@@ -11,8 +11,21 @@ namespace RoboKeep.Core.Services;
 public sealed class SnapshotService
 {
     private readonly RobocopyRunner _runner;
+    private readonly AppSettings? _settings;
+    private readonly Func<string, long?> _freeSpace;
 
-    public SnapshotService(RobocopyRunner runner) => _runner = runner;
+    /// <param name="settings">Impostazioni globali: servono alla ritenzione per spazio
+    /// (<see cref="AppSettings.FreeSpaceCleanup"/> e <see cref="AppSettings.MinFreeSpaceMb"/>).
+    /// null = nessuna pulizia per spazio (il comportamento di sempre).</param>
+    /// <param name="freeSpace">Lettore dello spazio libero, iniettabile nei test; default
+    /// <see cref="FreeSpaceReader.Read"/>. null dal lettore = non si sa, e la pulizia si salta.</param>
+    public SnapshotService(RobocopyRunner runner, AppSettings? settings = null,
+        Func<string, long?>? freeSpace = null)
+    {
+        _runner = runner;
+        _settings = settings;
+        _freeSpace = freeSpace ?? FreeSpaceReader.Read;
+    }
 
     /// <param name="confirmDeletions">Guardia sulle cancellazioni: chiesto solo quando l'anteprima
     /// contro l'ultimo snapshot dice che il mirror rimuoverebbe piu' della soglia del job. null =
@@ -35,11 +48,14 @@ public sealed class SnapshotService
         // Ripulisci OGNI .inprogress residua, non solo quella con lo stesso nome: un run precedente
         // interrotto (crash, chiusura dell'app, caduta di corrente) lascia una .inprogress con un
         // timestamp diverso che i run successivi non toccherebbero mai (la ritenzione ignora le
-        // .inprogress), accumulandole all'infinito. Best-effort: un residuo bloccato non deve far
-        // fallire il job. Uso la cancellazione POSIX-safe per non intaccare il read-only degli inode
-        // ancora condivisi con lo snapshot precedente.
+        // .inprogress), accumulandole all'infinito. Stesso discorso per i residui ".deleting-…":
+        // FileSystemDelete rinomina prima di cancellare, e una cancellazione interrotta a meta'
+        // lascia una cartella che nessuna regola tocca piu' - occupa disco e non e' una versione.
+        // Best-effort: un residuo bloccato non deve far fallire il job. Uso la cancellazione
+        // POSIX-safe per non intaccare il read-only degli inode ancora condivisi col precedente.
         foreach (var stale in Directory.GetDirectories(dest)
-                     .Where(d => SnapshotName.IsInProgress(Path.GetFileName(d) ?? "")))
+                     .Where(d => Path.GetFileName(d) is { } n
+                         && (SnapshotName.IsInProgress(n) || n.Contains(".deleting-", StringComparison.Ordinal))))
         {
             try
             {
@@ -47,12 +63,22 @@ public sealed class SnapshotService
                 await Task.Run(() => FileSystemDelete.DeleteDirectory(stale), ct).ConfigureAwait(false);
                 progress?.Report($"[versioning] rimosso snapshot incompleto di un run interrotto: {Path.GetFileName(stale)}");
             }
+            // L'annullamento dell'utente non e' un residuo che resiste: ferma il job, e va riproposto
+            // a chi chiama invece di finire in una riga di log.
+            catch (OperationCanceledException) { throw; }
             // Best-effort vale per lock e permessi, NON per un errore hardware: quello ferma il job.
             catch (Exception ex) when (!DiskError.IsUnreadable(ex))
             {
                 progress?.Report($"[versioning] residuo {Path.GetFileName(stale)} non rimosso: {ex.Message}");
             }
         }
+
+        // Ritenzione per SPAZIO, prima di scrivere qualunque cosa (anteprima, clone, copia): se il
+        // disco e' sotto la soglia di spazio libero e l'utente ha acceso la pulizia, si fa posto
+        // cancellando le versioni piu' vecchie di QUESTO job, una alla volta, ricontrollando lo
+        // spazio dopo ciascuna. Mai la piu' recente: quella E' il backup. Se non basta, il run
+        // prosegue e fallira' come prima - con un messaggio chiaro, non con un exit code.
+        await FreeUpSpaceAsync(dest, progress, ct).ConfigureAwait(false);
 
         // Niente di cambiato = niente snapshot nuovo. Clonare lo snapshot precedente costa una
         // scrittura di metadati (MFT, indice, journal) per OGNI file, e altrettante cancellazioni
@@ -179,6 +205,56 @@ public sealed class SnapshotService
         }
 
         return run;
+    }
+
+    /// <summary>
+    /// Fa posto sul disco di backup cancellando le versioni piu' vecchie di questo job, finche' lo
+    /// spazio libero torna sopra la soglia o resta solo la piu' recente. Attiva solo se l'utente lo
+    /// ha chiesto (<see cref="AppSettings.FreeSpaceCleanup"/>): cancellare per far posto e' una sua
+    /// decisione. Lo spazio si rilegge dopo OGNI cancellazione - quanto liberi una versione non si
+    /// sa prima, con gli hard-link spariscono solo i file che non condivide con le altre - e ogni
+    /// cancellazione e' una riga nel log. Una cancellazione che non riesce ferma il ciclo: insistere
+    /// sulle altre versioni non risolverebbe il motivo del rifiuto.
+    /// </summary>
+    private async Task FreeUpSpaceAsync(string dest, IProgress<string>? progress, CancellationToken ct)
+    {
+        if (_settings is not { FreeSpaceCleanup: true }) return;
+        var threshold = (long)_settings.MinFreeSpaceMb * 1024 * 1024;
+        if (threshold <= 0) return;
+
+        // Spazio non determinabile (share strana, disco appena scomparso): non si cancella niente
+        // al buio. Il run prosegue e sara' robocopy a dire come e' andata.
+        var free = _freeSpace(dest);
+        while (free is { } now && now < threshold)
+        {
+            var names = Directory.GetDirectories(dest).Select(Path.GetFileName).OfType<string>();
+            if (SpaceCleanupPlanner.NextToDelete(names, now, threshold) is not { } victim) break;
+
+            try
+            {
+                // Su thread di background: cancellare migliaia di hard-link non deve congelare la UI.
+                await Task.Run(() => FileSystemDelete.DeleteDirectory(Path.Combine(dest, victim)), ct)
+                    .ConfigureAwait(false);
+            }
+            // L'annullamento dell'utente ferma il job: va riproposto a chi chiama, non raccontato
+            // come "cancellazione non riuscita".
+            catch (OperationCanceledException) { throw; }
+            // L'errore hardware non e' un "non ce l'ho fatta": interrompe il job, come altrove.
+            catch (Exception ex) when (!DiskError.IsUnreadable(ex))
+            {
+                progress?.Report(string.Format(CoreLoc.S("Space_NotFreed"), victim, ex.Message));
+                return;
+            }
+
+            var after = _freeSpace(dest);
+            // Una versione i cui file erano tutti condivisi con le altre non libera nulla: dirlo con
+            // «liberati n/d» sembrerebbe un errore di misura, mentre e' proprio come funzionano gli
+            // hard-link. Frase sua, che spiega anche perche' il ciclo continua con la successiva.
+            progress?.Report(after is { } a && a > now
+                ? string.Format(CoreLoc.S("Space_Freed"), VersionsUsage.Describe(a - now), victim)
+                : string.Format(CoreLoc.S("Space_FreedNothing"), victim));
+            free = after;
+        }
     }
 
     /// <summary>

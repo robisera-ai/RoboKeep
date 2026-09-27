@@ -56,6 +56,8 @@ public sealed class SettingsViewModel : ObservableObject
 
     public int StaleAfterDays { get => _s.StaleAfterDays; set { _s.StaleAfterDays = System.Math.Max(0, value); OnPropertyChanged(); } }
     public int MinFreeSpaceMb { get => _s.MinFreeSpaceMb; set { _s.MinFreeSpaceMb = System.Math.Max(0, value); OnPropertyChanged(); } }
+    /// <summary>Pulizia delle versioni vecchie quando il disco di backup va sotto la soglia (vedi SpaceCleanupPlanner).</summary>
+    public bool FreeSpaceCleanup { get => _s.FreeSpaceCleanup; set { _s.FreeSpaceCleanup = value; OnPropertyChanged(); } }
     public bool PreflightEnabled { get => _s.PreflightEnabled; set { _s.PreflightEnabled = value; OnPropertyChanged(); } }
     public bool NotificationsEnabled { get => _s.NotificationsEnabled; set { _s.NotificationsEnabled = value; OnPropertyChanged(); } }
     public bool MinimizeToTray { get => _s.MinimizeToTray; set { _s.MinimizeToTray = value; OnPropertyChanged(); } }

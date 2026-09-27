@@ -32,6 +32,29 @@ with **10 versions**; you can change the number, or set **0** for no limit (not 
 disk fills up with entries and slows down). The age limit never touches the most recent version:
 that one is your current backup, even if the files haven't changed for months.
 
+## When the disk is full
+
+Sooner or later the backup disk fills up. RoboKeep doesn't leave you guessing: if a backup stops for
+lack of space, the job doesn't show an error code but **"Disk full"**, and the log, the warning
+tooltip and the email say which disk, **how many versions** there are and **how much they really
+take up** — each physical file counted once, because adding up the sizes of the dated folders would,
+with hard-links, give a number far larger than the truth. From there you decide: lower **"Max number
+of versions"** in the job editor — the next run deletes the oldest ones — or move to a roomier disk.
+If you need space right now, **Versions...** → **Open in File Explorer** and delete a few dated
+folders by hand (the Versions window itself deletes nothing: it shows and opens).
+
+If you'd rather not think about it, **Settings → Reliability** has the checkbox **"When the backup
+disk is full, delete the oldest versions to make room (never the latest)"**. With it on, before every
+backup with versions RoboKeep looks at the free space: if it is below the **"Minimum free space at
+destination"** threshold (10 GB by default, in the same tab), it deletes that job's oldest version,
+checks the space again, and keeps going until it is back above the threshold or **only the most
+recent one is left** — that one is your current backup and is never touched. Every deletion is a line
+in the log, with the name of the version removed and how much space it freed.
+
+The checkbox is **off by default**: deleting to make room is your decision, not the program's
+initiative. And if even after the cleanup there still isn't enough space, the backup runs anyway and,
+if it fails, tells you about it as above.
+
 ## Turning versions on for an existing job
 
 If a job has been making a plain copy so far and you turn versions on, the backup you already have

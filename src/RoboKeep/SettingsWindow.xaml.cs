@@ -26,6 +26,7 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
         _host = host;
         _main = main;
         _credentials = host.Credentials;
+        MinFreeSpaceDefaultButton.Content = string.Format(Loc.Instance["Set_MinFreeSpaceDefault"], AppSettings.DefaultMinFreeSpaceMb);
         _vm = new SettingsViewModel(host.Config.Settings, host.Config.Credentials, host.Credentials);
         DataContext = _vm;
 
@@ -163,6 +164,10 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
             ScheduleStatus.Text = string.Format(Loc.Instance["Sched_Error"], ex.Message);
         }
     }
+
+    // Riporta la soglia di spazio libero al valore predefinito (il pulsante lo mostra nel testo).
+    private void OnMinFreeSpaceDefault(object sender, RoutedEventArgs e)
+        => _vm.MinFreeSpaceMb = AppSettings.DefaultMinFreeSpaceMb;
 
     private void OnRemoveSchedule(object sender, RoutedEventArgs e)
     {

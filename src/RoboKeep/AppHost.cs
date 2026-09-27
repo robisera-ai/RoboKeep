@@ -55,7 +55,9 @@ public sealed class AppHost
         var runner = new RobocopyRunner(forceCopyPlanner: planner);
         var log = new LogService(Config.Settings);
         var email = new EmailService(Credentials);
-        var snapshots = new SnapshotService(runner);
+        // Le impostazioni servono alla ritenzione per spazio: la soglia e l'interruttore della
+        // pulizia automatica delle versioni vecchie.
+        var snapshots = new SnapshotService(runner, Config.Settings);
         return new BackupRunner(Config, runner, log, email, Credentials, Results, snapshots, LockFolder,
             Path.Combine(Store.DirectoryPath, "vss"), History, faultedDisks: FaultedDisks);
     }

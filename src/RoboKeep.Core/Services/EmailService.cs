@@ -71,8 +71,12 @@ public sealed class EmailService
         : r.HardwareError ? CoreLoc.S("Email_HardwareError")
         : r.Success ? "OK" : CoreLoc.S("Lbl_Error");
 
-    /// <summary>Oggetto: un errore HARDWARE va riconosciuto già dall'anteprima sul telefono.</summary>
-    public static string BuildSubject(JobResult result) => $"[RoboKeep] {Esito(result)} - {result.JobName}";
+    /// <summary>Oggetto: un errore HARDWARE va riconosciuto già dall'anteprima sul telefono. Il disco
+    /// pieno ha un oggetto suo, che porta il nome del job dentro la frase: è il caso in cui si sa
+    /// già cosa fare, e leggerlo dalla notifica basta.</summary>
+    public static string BuildSubject(JobResult result) => result.DiskFull
+        ? "[RoboKeep] " + string.Format(CoreLoc.S("Space_EmailSubject"), result.JobName)
+        : $"[RoboKeep] {Esito(result)} - {result.JobName}";
 
     /// <summary>Corpo: per un errore hardware prima cosa è successo e cosa fare, poi i conteggi;
     /// in coda gli avvisi di salute del disco.</summary>
@@ -85,6 +89,13 @@ public sealed class EmailService
         {
             // Il dettaglio è già la frase completa: numeri, destinazione e come sbloccare il job.
             sb.AppendLine(result.DeletionsBlockedDetail ?? "")
+              .AppendLine();
+        }
+        else if (result.DiskFull)
+        {
+            // Il dettaglio è già la frase completa: dove, quante versioni, quanto occupano e come
+            // fare posto. I conteggi di robocopy, dopo un run fermato dallo spazio, non dicono nulla.
+            sb.AppendLine(result.DiskFullDetail ?? "")
               .AppendLine();
         }
         else if (result.HardwareError)

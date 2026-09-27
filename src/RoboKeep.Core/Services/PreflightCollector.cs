@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using RoboKeep.Core.Models;
 
 namespace RoboKeep.Core.Services;
@@ -38,18 +37,9 @@ public static class PreflightCollector
         catch { return false; }
     }
 
-    private static long GetFreeBytes(string dest)
-    {
-        try
-        {
-            var root = Path.GetPathRoot(dest);
-            if (string.IsNullOrEmpty(root)) return long.MaxValue;
-            if (GetDiskFreeSpaceEx(root, out var freeForCaller, out _, out _))
-                return (long)freeForCaller;
-            return long.MaxValue; // non determinabile: non far scattare il warning spazio.
-        }
-        catch { return long.MaxValue; }
-    }
+    // Spazio non determinabile: long.MaxValue, cosi' il warning sullo spazio non scatta su un dato
+    // che non c'e'. Il "come si legge" vive in FreeSpaceReader, condiviso con la ritenzione per spazio.
+    private static long GetFreeBytes(string dest) => FreeSpaceReader.Read(dest) ?? long.MaxValue;
 
     private static long? TryGetSize(string source, TimeSpan budget)
     {
@@ -67,12 +57,4 @@ public static class PreflightCollector
         }
         catch { return null; }
     }
-
-    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool GetDiskFreeSpaceEx(
-        string lpDirectoryName,
-        out ulong lpFreeBytesAvailableToCaller,
-        out ulong lpTotalNumberOfBytes,
-        out ulong lpTotalNumberOfFreeBytes);
 }

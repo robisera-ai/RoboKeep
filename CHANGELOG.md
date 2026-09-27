@@ -30,6 +30,22 @@ All notable changes to RoboKeep are documented here. The format is based on
   copy is one line in the log, never a failed backup. New checkbox in **Settings → General**, on by
   default, next to *Export/Import configuration*, which moved here from the Scheduling tab.
 
+- **A full backup disk now says so, and can make room by itself.** When a backup stops for lack of
+  space, the job no longer reports a bare error code: it says **"Disk full"**, and the log, the
+  warning tooltip and the email name the disk, how many versions the job has and **how much they
+  really take up** — each physical file counted once, because with hard-links adding up the dated
+  folders would give a number far larger than the truth (it says *n/a* rather than guess, if the
+  count cannot be finished). And a new checkbox in **Settings → Reliability**, *"When the backup disk
+  is full, delete the oldest versions to make room (never the latest)"*, lets RoboKeep free space on
+  its own: before a backup with versions, if free space is below the **Minimum free space** threshold
+  it deletes that job's oldest version, rechecks the space and keeps going until it is back above the
+  threshold or only the most recent version is left — that one is the current backup and is never
+  touched. Every deletion is one line in the log, with the version removed and how much it freed. The
+  checkbox is **off by default**: deleting to make room is your decision. The threshold's default
+  rises from 1 GB to **10 GB**, so both the warning and the cleanup act before the disk is truly
+  full: if you had left the old 1 GB default untouched it becomes 10 GB the first time this version
+  reads your configuration, while a value you set yourself is kept as it is.
+
 ### Fixed
 - Wizard, step 2: the "very large files" and "keep previous versions" boxes are now aligned with
   the mirror/accumulate choices instead of being indented as if they belonged to "Accumulate".

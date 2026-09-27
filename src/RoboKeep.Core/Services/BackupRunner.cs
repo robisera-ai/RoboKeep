@@ -386,6 +386,16 @@ public sealed class BackupRunner
                 recap.Add(CoreLoc.S("Hw_Advice"));
             }
 
+            // Disco di backup pieno: il rimedio non e' "riprova" ma fare posto, e per deciderlo
+            // serve sapere quante versioni ci sono e quanto occupano. Il conto costa
+            // un'enumerazione dell'intera destinazione, quindi si fa SOLO qui, quando il run e'
+            // davvero fallito per spazio.
+            if (run.Result.DiskFull)
+            {
+                run.Result.DiskFullDetail = DescribeDiskFull(job);
+                recap.Add(run.Result.DiskFullDetail);
+            }
+
             // Copia della configurazione nella radice del disco di backup: un disco con i file ma
             // senza i job costringerebbe a rifare tutto a memoria. Solo dopo un run VERO e RIUSCITO
             // (un'anteprima non ha scritto niente; su un disco che ha appena dato errori non si
@@ -433,6 +443,8 @@ public sealed class BackupRunner
                     DirsFailed = run.Result.DirsFailed,
                     HardwareError = run.Result.HardwareError,
                     HardwareErrorDetail = run.Result.HardwareErrorDetail,
+                    DiskFull = run.Result.DiskFull,
+                    DiskFullDetail = run.Result.DiskFullDetail,
                     FinishedAt = DateTime.Now,
                 });
 
@@ -645,6 +657,20 @@ public sealed class BackupRunner
             progress?.Report(string.Format(CoreLoc.S("Email_SendFailed"), ex.Message));
         }
         return result;
+    }
+
+    /// <summary>Frase da mostrare quando un run e' fallito per disco pieno: dove, quante versioni
+    /// ci sono, quanto occupano davvero (ogni file fisico contato una volta) e le due strade per
+    /// fare posto. Senza versioni non c'e' niente da cancellare dall'editor e il consiglio cambia.
+    /// L'occupazione e' best-effort: se il conteggio non ce la fa, dice «n/d» invece di inventare.</summary>
+    private static string DescribeDiskFull(BackupJob job)
+    {
+        var root = RootOf(job.Destination) ?? job.Destination;
+        var versions = SnapshotName.ListValid(job.Destination).Count;
+        return versions == 0
+            ? string.Format(CoreLoc.S("Space_DetailNoVersions"), root)
+            : string.Format(CoreLoc.S("Space_Detail"), root, versions,
+                VersionsUsage.Describe(VersionsUsage.Measure(job.Destination)));
     }
 
     /// <summary>Radice del volume locale di un percorso ("E:\"), o null per percorsi vuoti,
