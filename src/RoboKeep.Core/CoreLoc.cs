@@ -279,11 +279,11 @@ public static class CoreLoc
             "BLOCKIERT: zu viele Löschungen"),
 
         ["ConfigCopy_Written"] = L(
-            "[config] copia della configurazione salvata in {0}: job, esclusioni e impostazioni. Se perdi il PC, la riprendi da qui (le password restano cifrate e vanno reinserite).",
-            "[config] configuration copy saved to {0}: jobs, exclusions and settings. If the PC is lost, you get it back from here (passwords stay encrypted and must be re-entered).",
-            "[config] copia de la configuración guardada en {0}: trabajos, exclusiones y ajustes. Si se pierde el PC, la recuperas desde aquí (las contraseñas siguen cifradas y hay que reintroducirlas).",
-            "[config] copie de la configuration enregistrée dans {0} : tâches, exclusions et paramètres. Si le PC est perdu, vous la récupérez ici (les mots de passe restent chiffrés et doivent être ressaisis).",
-            "[config] Konfigurationskopie in {0} gespeichert: Jobs, Ausschlüsse und Einstellungen. Wenn der PC verloren geht, holst du sie von hier zurück (Passwörter bleiben verschlüsselt und müssen neu eingegeben werden)."),
+            "[config] copia della configurazione salvata in {0} (job, esclusioni e impostazioni, senza password).",
+            "[config] configuration copy saved to {0} (jobs, exclusions and settings, without passwords).",
+            "[config] copia de la configuración guardada en {0} (trabajos, exclusiones y ajustes, sin contraseñas).",
+            "[config] copie de la configuration enregistrée dans {0} (tâches, exclusions et paramètres, sans mots de passe).",
+            "[config] Konfigurationskopie in {0} gespeichert (Jobs, Ausschlüsse und Einstellungen, ohne Passwörter)."),
         ["ConfigCopy_Failed"] = L(
             "[config] copia della configurazione non salvata ({0}): il backup dei file è comunque riuscito.",
             "[config] configuration copy not saved ({0}): the file backup succeeded anyway.",

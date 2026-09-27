@@ -34,10 +34,10 @@ public static class ConfigTransfer
     }
 
     /// <summary>Valida e deserializza; lancia se il file non è una configurazione valida.</summary>
-    public static AppConfig Import(string path)
-    {
-        var json = File.ReadAllText(path);
-        return JsonSerializer.Deserialize<AppConfig>(json, Options)
+    public static AppConfig Import(string path) => Deserialize(File.ReadAllText(path));
+
+    /// <summary>Il rovescio di <see cref="Serialize"/>; lancia se il testo non è una configurazione valida.</summary>
+    public static AppConfig Deserialize(string json)
+        => JsonSerializer.Deserialize<AppConfig>(json, Options)
             ?? throw new InvalidDataException("Il file non contiene una configurazione valida.");
-    }
 }

@@ -77,7 +77,7 @@ public static class ConfigMirror
             // fallire: succedendo qui, l'errore resta in memoria, la copia precedente sul disco
             // resta valida e l'utente legge una riga nel log. Serializzare direttamente sul file
             // lascerebbe invece un config.json troncato — peggio che non averlo.
-            var json = ConfigTransfer.Serialize(config);
+            var json = ConfigTransfer.Serialize(WithoutSecrets(config));
 
             Directory.CreateDirectory(targetFolder);
             WriteIfChanged(Path.Combine(targetFolder, ConfigFileName), json, Utf8NoBom);
@@ -90,6 +90,22 @@ public static class ConfigMirror
         {
             progress?.Report(string.Format(CoreLoc.S("ConfigCopy_Failed"), ex.Message));
         }
+    }
+
+    /// <summary>
+    /// Una copia della configurazione senza password (credenziali di rete ed email). La copia
+    /// serve quando il PC non c'e' piu', e li' una password cifrata DPAPI e' un blob che nessuno
+    /// puo' decifrare: portarlo in giro su un disco USB non aiuta a ripristinare e aggiunge un
+    /// segreto in piu' fuori dal PC. Le password si reinseriscono; tutto il resto torna com'era.
+    /// L'originale non viene toccato: si lavora su un clone (serializza e rileggi).
+    /// </summary>
+    public static AppConfig WithoutSecrets(AppConfig config)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        var copy = ConfigTransfer.Deserialize(ConfigTransfer.Serialize(config));
+        foreach (var c in copy.Credentials) c.PasswordProtected = "";
+        copy.Settings.Email.PasswordProtected = null;
+        return copy;
     }
 
     // Lo stesso config.json dell'app: UTF-8 senza BOM. Il LEGGIMI invece lo legge un essere umano
@@ -139,13 +155,11 @@ public static class ConfigMirror
         sb.AppendLine();
         sb.AppendLine("Come si ripristina:");
         sb.AppendLine("  1. installa RoboKeep sul PC (https://github.com/robisera-ai/RoboKeep);");
-        sb.AppendLine("  2. apri RoboKeep → Impostazioni → Pianificazione → «Importa configurazione»;");
+        sb.AppendLine("  2. apri RoboKeep → Impostazioni → Generale → «Importa configurazione»;");
         sb.AppendLine($"  3. scegli il file {ConfigFileName} che si trova in questa cartella.");
         sb.AppendLine();
-        sb.AppendLine("Le password (share di rete, email) sono cifrate con DPAPI di Windows: si decifrano");
-        sb.AppendLine("solo su quel PC (e solo con il tuo utente se nelle Impostazioni hai scelto «cifra le");
-        sb.AppendLine("password solo per il mio utente Windows»). Su un altro PC vanno reinserite a mano una");
-        sb.AppendLine("volta; tutto il resto torna com'era.");
+        sb.AppendLine("Le password (share di rete, email) NON sono incluse: dopo l'importazione vanno");
+        sb.AppendLine("reinserite una volta; tutto il resto torna com'era.");
         sb.AppendLine();
         sb.AppendLine("Questa copia viene riscritta a ogni backup riuscito. Se non la vuoi, spegni");
         sb.AppendLine("«Salva una copia della configurazione sui dischi di backup» nelle Impostazioni.");
@@ -161,13 +175,11 @@ public static class ConfigMirror
         sb.AppendLine();
         sb.AppendLine("How to restore it:");
         sb.AppendLine("  1. install RoboKeep on the PC (https://github.com/robisera-ai/RoboKeep);");
-        sb.AppendLine("  2. open RoboKeep → Settings → Scheduling → \"Import configuration\";");
+        sb.AppendLine("  2. open RoboKeep → Settings → General → \"Import configuration\";");
         sb.AppendLine($"  3. pick the {ConfigFileName} file in this folder.");
         sb.AppendLine();
-        sb.AppendLine("Passwords (network shares, email) are encrypted with Windows DPAPI: they can only be");
-        sb.AppendLine("decrypted on that PC (and only by your Windows user if you chose \"encrypt passwords");
-        sb.AppendLine("only for my Windows user\" in Settings). On another PC you have to type them in once;");
-        sb.AppendLine("everything else comes back as it was.");
+        sb.AppendLine("Passwords (network shares, email) are NOT included: after importing, type them in");
+        sb.AppendLine("once; everything else comes back as it was.");
         sb.AppendLine();
         sb.AppendLine("This copy is rewritten after every successful backup. If you do not want it, turn off");
         sb.AppendLine("\"Save a copy of the configuration on the backup disks\" in Settings.");

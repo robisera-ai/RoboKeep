@@ -102,10 +102,33 @@ public sealed class ConfigMirrorTests : IDisposable
         Assert.Contains("26/09/2026", readme);
         Assert.Contains("Importa configurazione", readme);
         Assert.Contains("Import configuration", readme);
-        Assert.Contains("DPAPI", readme);
+        Assert.Contains("NON sono incluse", readme);
+        Assert.Contains("NOT included", readme);
         Assert.Contains(ConfigMirror.ConfigFileName, readme);
 
         Assert.Contains(lines, l => l.Contains(folder));
+    }
+
+    [Fact]
+    public void Write_LeavesPasswordsOut_AndDoesNotTouchTheOriginal()
+    {
+        // Sul disco che viaggia non deve esserci nessun segreto, nemmeno cifrato: quando serve la
+        // copia (PC perso) DPAPI non lo decifrerebbe comunque. L'originale in memoria resta intero.
+        var folder = Path.Combine(_root, "copia");
+        var config = SampleConfig();
+        config.Credentials.Add(new CredentialEntry { Id = "nas", Host = "nas", User = "robi", PasswordProtected = "CIFRATA" });
+        config.Settings.Email.PasswordProtected = "CIFRATA-SMTP";
+
+        ConfigMirror.WriteTo(config, folder, null, "PC", new DateTime(2026, 9, 27));
+
+        var reloaded = ConfigTransfer.Import(Path.Combine(folder, ConfigMirror.ConfigFileName));
+        var cred = Assert.Single(reloaded.Credentials);
+        Assert.Equal("nas", cred.Host);
+        Assert.Equal("robi", cred.User);
+        Assert.Equal("", cred.PasswordProtected);
+        Assert.Null(reloaded.Settings.Email.PasswordProtected);
+        Assert.Equal("CIFRATA", config.Credentials[0].PasswordProtected);
+        Assert.Equal("CIFRATA-SMTP", config.Settings.Email.PasswordProtected);
     }
 
     [Fact]

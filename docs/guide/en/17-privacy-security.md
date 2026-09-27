@@ -26,8 +26,9 @@ After every successful backup RoboKeep writes a **`RoboKeep-config`** folder, ho
 
 - the **paths** of sources and destinations, the job names and the exclusions;
 - the **hosts of the network shares** and the **user names** of the saved credentials: the name of the NAS or server RoboKeep connects to, and the user it connects as;
-- the **email addresses** of the sender and the recipient of the reports, with the user name and the SMTP server;
-- the **passwords** (network shares, email) encrypted with **Windows DPAPI**: they can only be decrypted on that PC — and only by your Windows user, if you chose "encrypt passwords only for my Windows user" in *Settings*. Whoever takes the file to another PC cannot read them; that is why you have to type them in again when you restore on a new PC.
+- the **email addresses** of the sender and the recipient of the reports, with the user name and the SMTP server.
+
+It does not contain the **passwords** (network shares, email): they are stripped from the copy, because on another PC they could not be decrypted anyway, and one secret less on a disk that travels is better. When you restore, you type them in once.
 
 It contains **none of your files**, no logs and no history: the configuration only.
 

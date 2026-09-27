@@ -348,7 +348,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Set_CredScopeHint"] = "Attivo: password (credenziali ed email) decifrabili solo dal tuo utente; in compenso l'esecuzione pianificata deve girare con il tuo stesso utente. Disattivo: legate al PC, funzionano con qualsiasi utente (comodo per la schedulazione). Cambiando l'opzione, le password già salvate vengono ri-cifrate in automatico.",
         ["Set_ConfigCopySection"] = "Copia della configurazione sui dischi di backup",
         ["Set_ConfigCopy"] = "Salva una copia della configurazione sui dischi di backup",
-        ["Set_ConfigCopyHint"] = "La copia va nella radice del disco di backup (per esempio E:\\RoboKeep-config) e contiene job, esclusioni e impostazioni: se il PC muore, li reimporti da lì. Le password restano cifrate e vanno reinserite.",
+        ["Set_ConfigCopyHint"] = "La copia va nella radice del disco di backup (per esempio E:\\RoboKeep-config) e contiene job, esclusioni e impostazioni, senza password.",
 
         ["Email_Enable"] = "Abilita notifiche email",
         ["Email_OnlyError"] = "Invia solo in caso di errore",
@@ -398,7 +398,6 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Removed"] = "Attività pianificata rimossa.",
         ["Sched_Error"] = "Errore: {0}",
 
-        ["Cfg_Title"] = "Backup della configurazione",
         ["Cfg_Export"] = "Esporta configurazione...",
         ["Cfg_Import"] = "Importa configurazione...",
         ["Cfg_ImportConfirm"] = "L'importazione sostituirà tutti i job e le impostazioni attuali (ne viene salvata una copia di sicurezza). Le password importate da un altro PC andranno reinserite. Continuare?",
@@ -768,7 +767,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Set_CredScopeHint"] = "On: passwords (credentials and email) decryptable only by your user; in exchange the scheduled task must run as your same user. Off: bound to the PC, work with any user (handy for scheduling). When you change the option, already-saved passwords are re-encrypted automatically.",
         ["Set_ConfigCopySection"] = "Configuration copy on the backup disks",
         ["Set_ConfigCopy"] = "Save a copy of the configuration on the backup disks",
-        ["Set_ConfigCopyHint"] = "The copy goes to the root of the backup disk (for example E:\\RoboKeep-config) and holds jobs, exclusions and settings: if the PC dies, you import them back from there. Passwords stay encrypted and must be re-entered.",
+        ["Set_ConfigCopyHint"] = "The copy goes to the root of the backup disk (for example E:\\RoboKeep-config) and holds jobs, exclusions and settings, without passwords.",
 
         ["Email_Enable"] = "Enable email notifications",
         ["Email_OnlyError"] = "Send only on error",
@@ -818,7 +817,6 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Removed"] = "Scheduled task removed.",
         ["Sched_Error"] = "Error: {0}",
 
-        ["Cfg_Title"] = "Configuration backup",
         ["Cfg_Export"] = "Export configuration...",
         ["Cfg_Import"] = "Import configuration...",
         ["Cfg_ImportConfirm"] = "Importing will replace all current jobs and settings (a backup copy is saved). Passwords imported from another PC must be re-entered. Continue?",
@@ -1188,7 +1186,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Set_CredScopeHint"] = "Activo: contraseñas (credenciales y correo) descifrables solo por tu usuario; a cambio la tarea programada debe ejecutarse con tu mismo usuario. Inactivo: ligadas al PC, funcionan con cualquier usuario (cómodo para la programación). Al cambiar la opción, las contraseñas ya guardadas se vuelven a cifrar automáticamente.",
         ["Set_ConfigCopySection"] = "Copia de la configuración en los discos de copia de seguridad",
         ["Set_ConfigCopy"] = "Guardar una copia de la configuración en los discos de copia de seguridad",
-        ["Set_ConfigCopyHint"] = "La copia va a la raíz del disco de copia de seguridad (por ejemplo E:\\RoboKeep-config) y contiene los trabajos, las exclusiones y los ajustes: si el PC muere, los vuelves a importar desde ahí. Las contraseñas siguen cifradas y hay que reintroducirlas.",
+        ["Set_ConfigCopyHint"] = "La copia va a la raíz del disco de copia de seguridad (por ejemplo E:\\RoboKeep-config) y contiene los trabajos, las exclusiones y los ajustes, sin contraseñas.",
 
         ["Email_Enable"] = "Activar notificaciones por correo",
         ["Email_OnlyError"] = "Enviar solo en caso de error",
@@ -1238,7 +1236,6 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Removed"] = "Tarea programada eliminada.",
         ["Sched_Error"] = "Error: {0}",
 
-        ["Cfg_Title"] = "Copia de la configuración",
         ["Cfg_Export"] = "Exportar configuración...",
         ["Cfg_Import"] = "Importar configuración...",
         ["Cfg_ImportConfirm"] = "La importación sustituirá todos los trabajos y ajustes actuales (se guarda una copia de seguridad). Las contraseñas importadas de otro PC deberán reintroducirse. ¿Continuar?",
@@ -1608,7 +1605,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Set_CredScopeHint"] = "Activé : mots de passe (identifiants et e-mail) déchiffrables uniquement par votre utilisateur ; en contrepartie la tâche planifiée doit s'exécuter avec votre même utilisateur. Désactivé : liés au PC, fonctionnent avec n'importe quel utilisateur (pratique pour la planification). En changeant l'option, les mots de passe déjà enregistrés sont re-chiffrés automatiquement.",
         ["Set_ConfigCopySection"] = "Copie de la configuration sur les disques de sauvegarde",
         ["Set_ConfigCopy"] = "Enregistrer une copie de la configuration sur les disques de sauvegarde",
-        ["Set_ConfigCopyHint"] = "La copie va à la racine du disque de sauvegarde (par exemple E:\\RoboKeep-config) et contient les tâches, les exclusions et les paramètres : si le PC meurt, vous les réimportez depuis là. Les mots de passe restent chiffrés et doivent être ressaisis.",
+        ["Set_ConfigCopyHint"] = "La copie va à la racine du disque de sauvegarde (par exemple E:\\RoboKeep-config) et contient les tâches, les exclusions et les paramètres, sans mots de passe.",
 
         ["Email_Enable"] = "Activer les notifications par e-mail",
         ["Email_OnlyError"] = "Envoyer uniquement en cas d'erreur",
@@ -1658,7 +1655,6 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Removed"] = "Tâche planifiée supprimée.",
         ["Sched_Error"] = "Erreur : {0}",
 
-        ["Cfg_Title"] = "Sauvegarde de la configuration",
         ["Cfg_Export"] = "Exporter la configuration...",
         ["Cfg_Import"] = "Importer la configuration...",
         ["Cfg_ImportConfirm"] = "L'importation remplacera toutes les tâches et tous les réglages actuels (une copie de sécurité est enregistrée). Les mots de passe importés d'un autre PC devront être ressaisis. Continuer ?",
@@ -2028,7 +2024,7 @@ public sealed class Loc : INotifyPropertyChanged
         ["Set_CredScopeHint"] = "Aktiv: Passwörter (Anmeldedaten und E-Mail) nur von deinem Benutzer entschlüsselbar; dafür muss die geplante Aufgabe mit deinem Benutzer laufen. Inaktiv: an den PC gebunden, funktionieren mit jedem Benutzer (praktisch für die Planung). Beim Ändern der Option werden bereits gespeicherte Passwörter automatisch neu verschlüsselt.",
         ["Set_ConfigCopySection"] = "Konfigurationskopie auf den Backup-Datenträgern",
         ["Set_ConfigCopy"] = "Eine Kopie der Konfiguration auf den Backup-Datenträgern speichern",
-        ["Set_ConfigCopyHint"] = "Die Kopie landet im Wurzelverzeichnis des Backup-Datenträgers (zum Beispiel E:\\RoboKeep-config) und enthält Jobs, Ausschlüsse und Einstellungen: wenn der PC stirbt, importierst du sie von dort zurück. Passwörter bleiben verschlüsselt und müssen neu eingegeben werden.",
+        ["Set_ConfigCopyHint"] = "Die Kopie landet im Wurzelverzeichnis des Backup-Datenträgers (zum Beispiel E:\\RoboKeep-config) und enthält Jobs, Ausschlüsse und Einstellungen, ohne Passwörter.",
 
         ["Email_Enable"] = "E-Mail-Benachrichtigungen aktivieren",
         ["Email_OnlyError"] = "Nur bei Fehler senden",
@@ -2078,7 +2074,6 @@ public sealed class Loc : INotifyPropertyChanged
         ["Sched_Removed"] = "Geplante Aufgabe entfernt.",
         ["Sched_Error"] = "Fehler: {0}",
 
-        ["Cfg_Title"] = "Konfigurationssicherung",
         ["Cfg_Export"] = "Konfiguration exportieren...",
         ["Cfg_Import"] = "Konfiguration importieren...",
         ["Cfg_ImportConfirm"] = "Der Import ersetzt alle aktuellen Jobs und Einstellungen (eine Sicherungskopie wird gespeichert). Von einem anderen PC importierte Passwörter müssen neu eingegeben werden. Fortfahren?",

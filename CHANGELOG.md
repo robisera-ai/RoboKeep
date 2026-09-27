@@ -25,9 +25,10 @@ All notable changes to RoboKeep are documented here. The format is based on
   how to restore it. If the PC dies, the disk you have in your hands holds the files **and** the
   jobs: install RoboKeep, *Settings → Import configuration*, done. One copy per disk, rewritten at
   every run; network destinations are skipped; no mirror can delete it (it lives outside the job
-  folders, and a job whose destination is the disk root excludes it); passwords stay DPAPI-encrypted,
-  unreadable elsewhere, so you re-enter those once. Best-effort: a failed copy is one line in the
-  log, never a failed backup. New checkbox in **Settings → General**, on by default.
+  folders, and a job whose destination is the disk root excludes it); passwords are left out (they
+  could not be decrypted on another PC anyway), so you re-enter those once. Best-effort: a failed
+  copy is one line in the log, never a failed backup. New checkbox in **Settings → General**, on by
+  default, next to *Export/Import configuration*, which moved here from the Scheduling tab.
 
 ### Fixed
 - Wizard, step 2: the "very large files" and "keep previous versions" boxes are now aligned with

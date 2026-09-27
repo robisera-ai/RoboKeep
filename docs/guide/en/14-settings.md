@@ -28,12 +28,12 @@ The **"Save a copy of the configuration on the backup disks"** checkbox (on by d
 - **`config.json`**: the whole configuration — jobs, exclusions, schedules, settings and email — in the same format as *Export configuration*;
 - **`LEGGIMI.txt`**: in Italian and English, what that folder is, which PC it came from, when it was written and how to restore it.
 
-It covers one case only, but a decisive one: **the PC is gone**. With the disk in your hands you have the files *and* the jobs; you install RoboKeep on the new PC, open *Settings → Scheduling → Import configuration*, pick that `config.json` and everything is back as it was. Without the copy, the jobs would have to be rebuilt from memory.
+It covers one case only, but a decisive one: **the PC is gone**. With the disk in your hands you have the files *and* the jobs; you install RoboKeep on the new PC, open *Settings → General → Import configuration* (next to this checkbox, together with *Export configuration* for a manual copy whenever you want one), pick that `config.json` and everything is back as it was. Without the copy, the jobs would have to be rebuilt from memory.
 
 Things to know:
 
 - one copy **per disk**, rewritten after every successful backup: if several jobs write to the same disk, the last one to finish wins;
-- **passwords** (network shares, email) stay encrypted with DPAPI and can only be decrypted on that PC — and only by your Windows user, if you chose to encrypt them for your user: on another PC you type them in once, the rest comes back on its own;
+- **passwords** (network shares, email) are **not copied**: on another PC they would be unreadable anyway (they are encrypted for that PC), so there is no point carrying them around. After importing you type them in once, the rest comes back on its own;
 - **network** destinations are excluded: the copy is about the disk you unplug and carry away, not a server's root;
 - no mirror deletes it, because it lives **outside** the job folders; and if a job's destination is the root of the disk itself, RoboKeep excludes `RoboKeep-config` from the copy so it is not removed;
 - if the copy fails (read-only disk, no space, permissions) all you get is a line in the log: **the file backup does not fail because of it**.
