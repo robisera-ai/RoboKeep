@@ -278,6 +278,56 @@ public class RobocopyArgsBuilderTests
     }
 
     [Fact]
+    public void ForceCopyPass_HonoursTheJobsExclusions_WhichBeatTheForceCopyPatterns()
+    {
+        // «non toccare questo» e' una richiesta piu' forte di «ricopia sempre questo»: la passata
+        // forzata deve portare /XF e /XD come quella normale. Ci conta anche il modello di versioni
+        // per differenza, che a ogni run esclude i file che non ha potuto mettere da parte.
+        var job = NewJob();
+        job.ExcludeFiles = new List<string> { "*.tmp", @"D:\dst\in-uso.pst" };
+        job.ExcludeDirs = new List<string> { "cache" };
+
+        var args = RobocopyArgsBuilder.BuildForceCopyPass(job, new[] { "*.pst" });
+
+        Assert.Contains("/XF", args);
+        Assert.Contains("*.tmp", args);
+        Assert.Contains(@"D:\dst\in-uso.pst", args);
+        Assert.Contains("/XD", args);
+        Assert.Contains("cache", args);
+        // I filtri restano dove stavano: subito dopo sorgente e destinazione.
+        Assert.Equal("*.pst", args[2]);
+    }
+
+    [Fact]
+    public void ForceCopyPass_WithoutExclusions_EmitsNeitherSwitch()
+    {
+        var args = RobocopyArgsBuilder.BuildForceCopyPass(NewJob(), new[] { "*.pst" });
+        Assert.DoesNotContain("/XF", args);
+        Assert.DoesNotContain("/XD", args);
+    }
+
+    [Fact]
+    public void BlankOnlyExclusions_DoNotEmitABareSwitch()
+    {
+        // Una lista di sole righe vuote non deve produrre un "/XF" senza operandi: robocopy
+        // prenderebbe l'opzione successiva come nome di file da escludere.
+        var job = NewJob();
+        job.ExcludeFiles = new List<string> { "  ", "" };
+        job.ExcludeDirs = new List<string> { "cache" };
+
+        foreach (var args in new[]
+                 {
+                     RobocopyArgsBuilder.Build(job).ToList(),
+                     RobocopyArgsBuilder.BuildForceCopyPass(job, new[] { "*.pst" }).ToList(),
+                 })
+        {
+            Assert.DoesNotContain("/XF", args);
+            // Subito dopo /XD c'e' la cartella, non un'altra opzione.
+            Assert.Equal("cache", args[args.IndexOf("/XD") + 1]);
+        }
+    }
+
+    [Fact]
     public void ForceCopyPass_DryRunAddsListOnly()
     {
         Assert.Contains("/L", RobocopyArgsBuilder.BuildForceCopyPass(NewJob(), new[] { "*.pst" }, dryRun: true));

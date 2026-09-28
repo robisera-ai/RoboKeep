@@ -16,6 +16,7 @@ public sealed class BackupRunner
     private readonly CredentialService _credentials;
     private readonly LastResultStore? _results;
     private readonly SnapshotService? _snapshots;
+    private readonly DifferentialSnapshotService? _differential;
     private readonly string? _lockFolder;
     private readonly string? _vssSessionRoot;
     private readonly RunHistoryStore? _history;
@@ -48,7 +49,8 @@ public sealed class BackupRunner
         RunHistoryStore? history = null,
         Func<string?, DiskEventSummary>? diskEvents = null,
         FaultedDiskStore? faultedDisks = null,
-        Func<string?, string?>? configMirrorTarget = null)
+        Func<string?, string?>? configMirrorTarget = null,
+        DifferentialSnapshotService? differentialSnapshots = null)
     {
         _diskEvents = diskEvents ?? (path => DiskEventLog.Collect(path));
         // Dove va la copia della configurazione: normalmente la radice del volume di destinazione.
@@ -63,6 +65,7 @@ public sealed class BackupRunner
         _credentials = credentials;
         _results = results;
         _snapshots = snapshots;
+        _differential = differentialSnapshots;
         _lockFolder = lockFolder;
         _vssSessionRoot = vssSessionRoot;
         _history = history;
@@ -265,18 +268,44 @@ public sealed class BackupRunner
             var startedAt = DateTime.Now;
             string? faultPath = null;
             RobocopyRunResult run;
-            // Chi fa il lavoro si decide una volta sola: HardLinkSupport.IsSupported scrive un file
-            // di prova nella destinazione, e interrogarlo due volte sarebbe IO buttato.
-            var versioningWanted = job.Versioned && !dryRun && _snapshots is not null;
-            var versionedRun = versioningWanted && HardLinkSupport.IsSupported(job.Destination);
+            // Quale modello di versioni usa questo job. Il layout che c'e' gia' in destinazione
+            // vince (vedi VersioningLayout): un backup avviato non cambia modello sotto i piedi
+            // dell'utente. Solo su una destinazione vergine si interroga il disco — e una volta
+            // sola: HardLinkSupport.IsSupported ci scrive un file di prova, e chiederglielo due
+            // volte sarebbe IO buttato.
+            bool? probed = null;
+            bool Probe(string? d) => probed ??= HardLinkSupport.IsSupported(d ?? "");
+
+            var versioningWanted = job.Versioned && !dryRun;
+            var mode = versioningWanted ? VersioningLayout.Detect(job.Destination, Probe) : VersioningMode.HardLinks;
+            var service = mode == VersioningMode.Differential ? (object?)_differential : _snapshots;
+            // Un layout di versioni GIA' presente e nessuno che sappia gestirlo: il job si FERMA.
+            // Degradare a mirror piatto scriverebbe nella radice della destinazione, dove le
+            // cartelle-data (o «current» e «versions») sono tutte "extra" — e un /MIR le
+            // cancellerebbe, buttando via l'intera storia delle versioni.
+            var noService = versioningWanted && service is null && VersioningLayout.HasLayout(job.Destination);
+            // Unico caso di degrado rimasto: la destinazione HA gia' snapshot a hard-link ma il
+            // disco non li regge piu' (versioni copiate a mano su exFAT, share al posto del disco).
+            // Non si passa all'altro modello di nascosto: mirror semplice con avviso, come prima.
+            var versionedRun = versioningWanted && service is not null
+                && (mode == VersioningMode.Differential || Probe(job.Destination));
+
+            // Anteprima di un job versionato: senza bersaglio esplicito il /L girerebbe contro la
+            // RADICE della destinazione, dove stanno le cartelle del layout, e le conterebbe tutte
+            // come file "extra" — una cancellazione in massa inventata, che il run vero non fa mai.
+            // Si punta invece dove scrive il run vero: «current», o l'ultima cartella-data.
+            var previewTarget = dryRun && job.Versioned ? VerifyTargetResolver.Resolve(job) : null;
+            if (previewTarget is not null)
+                progress?.Report(string.Format(CoreLoc.S("Versioning_PreviewAgainst"), previewTarget));
             try
             {
                 // Guardia sulle cancellazioni: solo per i mirror che girano "piatti". Quelli con
-                // versioni la applicano dentro SnapshotService, sui conteggi dell'anteprima che fa
-                // gia' contro l'ultimo snapshot (nessuna seconda enumerazione). Sta dentro questo
+                // versioni la applicano dentro il loro servizio (contro l'ultimo snapshot nel
+                // modello a hard-link, contro «current» in quello per differenza), sui conteggi
+                // dell'anteprima che fanno gia': nessuna seconda enumerazione. Sta dentro questo
                 // try perche' un annullamento durante l'anteprima e' un annullamento del job, con
                 // il suo log e la sua voce di cronologia.
-                if (job.Mirror && !dryRun && !versionedRun
+                if (job.Mirror && !dryRun && !versionedRun && !noService
                     && await CheckDeletionsAsync(job, startedAt, progress, confirmDeletions, sourceOverride, ct)
                         .ConfigureAwait(false) is { } stopped)
                 {
@@ -284,9 +313,36 @@ public sealed class BackupRunner
                         .ConfigureAwait(false);
                 }
 
-                if (versioningWanted)
+                if (noService)
                 {
-                    if (versionedRun)
+                    // Non si tocca niente: nessun robocopy, nessuna cancellazione. Il job risulta
+                    // fallito e non eseguito, con una frase che dice che cosa manca.
+                    var detail = string.Format(CoreLoc.S("Versioning_NoService"), job.Destination);
+                    progress?.Report(detail);
+                    run = new RobocopyRunResult
+                    {
+                        Output = detail,
+                        Result = new JobResult
+                        {
+                            JobName = job.Name,
+                            Success = false,
+                            NotStarted = true,
+                            ExitCode = MirrorDeleteGuard.BlockedExitCode,
+                            Status = CoreLoc.S("Versioning_NoServiceStatus"),
+                            StartedAt = startedAt,
+                            Duration = DateTime.Now - startedAt,
+                            DryRun = dryRun,
+                        },
+                    };
+                }
+                else if (versioningWanted)
+                {
+                    if (versionedRun && mode == VersioningMode.Differential)
+                    {
+                        run = await _differential!.RunAsync(job, progress, ct, sourceOverride, confirmDeletions)
+                            .ConfigureAwait(false);
+                    }
+                    else if (versionedRun)
                     {
                         run = await _snapshots!.RunVersionedAsync(job, progress, ct, sourceOverride, confirmDeletions)
                             .ConfigureAwait(false);
@@ -299,7 +355,8 @@ public sealed class BackupRunner
                 }
                 else
                 {
-                    run = await _runner.RunAsync(job, dryRun, progress, ct, sourceOverride: sourceOverride).ConfigureAwait(false);
+                    run = await _runner.RunAsync(job, dryRun, progress, ct,
+                        destinationOverride: previewTarget, sourceOverride: sourceOverride).ConfigureAwait(false);
                 }
             }
             catch (OperationCanceledException ex)
@@ -357,6 +414,9 @@ public sealed class BackupRunner
             var recap = BuildRecap(run.Result, dryRun).ToList();
             if (run.Result.ThreadCapNote is { } capNote)
                 recap.Add(capNote);
+            // I file che il versioning non ha potuto mettere da parte: notizia che riguarda dei
+            // dati, quindi va nel riepilogo (e quindi nel log) anche a backup riuscito.
+            recap.AddRange(run.Result.VersionNotes);
             recap.AddRange(healthNotes);
             // In anteprima non si blocca niente — non c'e' nulla da fermare, l'anteprima non
             // cancella — ma se il mirror andrebbe oltre la soglia il riepilogo lo dice: e' proprio
@@ -666,11 +726,16 @@ public sealed class BackupRunner
     private static string DescribeDiskFull(BackupJob job)
     {
         var root = RootOf(job.Destination) ?? job.Destination;
-        var versions = SnapshotName.ListValid(job.Destination).Count;
+        // Le versioni stanno nella radice della destinazione (modello a hard-link) o in «versions»
+        // (modello per differenza): guardare solo la radice farebbe dire «questo job non tiene
+        // versioni» a un job che ne ha decine.
+        var diffVersions = VersioningLayout.VersionsDir(job.Destination);
+        var folder = Directory.Exists(diffVersions) ? diffVersions : job.Destination;
+        var versions = SnapshotName.ListValid(folder).Count;
         return versions == 0
             ? string.Format(CoreLoc.S("Space_DetailNoVersions"), root)
             : string.Format(CoreLoc.S("Space_Detail"), root, versions,
-                VersionsUsage.Describe(VersionsUsage.Measure(job.Destination)));
+                VersionsUsage.Describe(VersionsUsage.Measure(folder)));
     }
 
     /// <summary>Radice del volume locale di un percorso ("E:\"), o null per percorsi vuoti,

@@ -32,7 +32,9 @@ creazione guidata o, se la salti, un editor vuoto — oppure da **Modifica** su 
 - **Esclusioni file** e **cartelle** — cosa saltare, una voce per riga.
 - **Forza copia** — ricopia sempre i file la cui data e dimensione non cambiano mai (container
   cifrati, certi database), che altrimenti verrebbero saltati. C'è una modalità opzionale a
-  **confronto di contenuto**, che decide in base a ciò che c'è davvero dentro il file.
+  **confronto di contenuto**, che decide in base a ciò che c'è davvero dentro il file. Se un file
+  finisce sia qui sia nelle **esclusioni**, vince l'esclusione: «non toccare questo» è una richiesta
+  più forte di «ricopia sempre questo».
 - **Rallentamento della copia** — limita la velocità: comodo per non saturare la rete durante un
   backup su una share.
 

@@ -222,6 +222,24 @@ public static class CoreLoc
             "[versionado] el destino contiene elementos que no existen en el origen (p. ej. {0}; {1} en total): no es una copia de este trabajo, así que no se adopta como primera versión. Se quedan donde están; la primera versión empieza desde cero.",
             "[versioning] la destination contient des éléments absents de la source (ex. {0} ; {1} au total) : ce n'est pas une copie faite par cette tâche, elle n'est donc pas adoptée comme première version. Ils restent en place ; la première version part de zéro.",
             "[Versionierung] das Ziel enthält Elemente, die es in der Quelle nicht gibt (z. B. {0}; {1} insgesamt): es ist keine Kopie dieses Jobs und wird daher nicht als erste Version übernommen. Sie bleiben, wo sie sind; die erste Version beginnt von vorn."),
+        ["Versioning_NoService"] = L(
+            "[versioni] job NON eseguito: in {0} ci sono già versioni, ma questa esecuzione di RoboKeep non è in grado di gestirle. Un mirror semplice le cancellerebbe come file extra, quindi non è stato toccato niente. Aggiorna RoboKeep o avvialo dalla finestra principale.",
+            "[versions] job NOT run: {0} already holds versions, but this run of RoboKeep cannot handle them. A plain mirror would delete them as extra files, so nothing was touched. Update RoboKeep or start it from the main window.",
+            "[versiones] trabajo NO ejecutado: en {0} ya hay versiones, pero esta ejecución de RoboKeep no puede gestionarlas. Un espejo simple las eliminaría como archivos extra, así que no se ha tocado nada. Actualiza RoboKeep o inícialo desde la ventana principal.",
+            "[versions] tâche NON exécutée : {0} contient déjà des versions, mais cette exécution de RoboKeep ne sait pas les gérer. Un miroir simple les supprimerait comme fichiers en trop, rien n'a donc été touché. Mettez RoboKeep à jour ou lancez-le depuis la fenêtre principale.",
+            "[Versionen] Job NICHT ausgeführt: in {0} liegen bereits Versionen, aber dieser RoboKeep-Lauf kann sie nicht verwalten. Eine einfache Spiegelung würde sie als zusätzliche Dateien löschen, daher wurde nichts angetastet. Aktualisieren Sie RoboKeep oder starten Sie es aus dem Hauptfenster."),
+        ["Versioning_NoServiceStatus"] = L(
+            "Non eseguito: versioni presenti ma non gestibili.",
+            "Not run: versions present but not manageable.",
+            "No ejecutado: hay versiones pero no se pueden gestionar.",
+            "Non exécutée : versions présentes mais non gérables.",
+            "Nicht ausgeführt: Versionen vorhanden, aber nicht verwaltbar."),
+        ["Versioning_PreviewAgainst"] = L(
+            "[versioni] anteprima confrontata con {0}, che è la cartella su cui scrive il run vero. Le cartelle delle versioni non vengono toccate né conteggiate.",
+            "[versions] preview compared against {0}, the folder the real run writes to. The version folders are neither touched nor counted.",
+            "[versiones] vista previa comparada con {0}, la carpeta en la que escribe la ejecución real. Las carpetas de versiones no se tocan ni se cuentan.",
+            "[versions] aperçu comparé à {0}, le dossier dans lequel écrit l'exécution réelle. Les dossiers de versions ne sont ni touchés ni comptés.",
+            "[Versionen] Vorschau verglichen mit {0}, dem Ordner, in den der echte Lauf schreibt. Die Versionsordner werden weder angetastet noch gezählt."),
         ["Versioning_Checking"] = L(
             "[versioning] controllo se è cambiato qualcosa rispetto all'ultima versione...",
             "[versioning] checking whether anything changed since the last version...",
@@ -234,6 +252,110 @@ public static class CoreLoc
             "[versionado] ningún cambio desde la última versión ({0}): no creo una nueva instantánea idéntica. La copia ya está al día.",
             "[versioning] aucun changement depuis la dernière version ({0}) : pas de nouvel instantané identique. La sauvegarde est déjà à jour.",
             "[Versionierung] keine Änderung seit der letzten Version ({0}): kein identischer neuer Snapshot. Das Backup ist bereits aktuell."),
+
+        // --- Modello di versioni PER DIFFERENZA (destinazioni senza hard-link) ---
+        ["Diff_Adopted"] = L(
+            "[versioni] trovata una copia semplice già presente nella destinazione: diventa il backup corrente, spostata in «current» ({0} elementi, nessuna ricopia). Da ora ogni backup mette da parte in «versions» solo i file che sostituisce o cancella.",
+            "[versions] found an existing plain copy in the destination: it becomes the current backup, moved into \"current\" ({0} items, nothing recopied). From now on every backup sets aside in \"versions\" only the files it replaces or deletes.",
+            "[versiones] se encontró una copia simple ya presente en el destino: pasa a ser la copia actual, movida a «current» ({0} elementos, nada recopiado). Desde ahora cada copia aparta en «versions» solo los archivos que sustituye o elimina.",
+            "[versions] copie simple déjà présente dans la destination : elle devient la sauvegarde courante, déplacée dans « current » ({0} éléments, rien recopié). Désormais chaque sauvegarde met de côté dans « versions » uniquement les fichiers qu'elle remplace ou supprime.",
+            "[Versionen] vorhandene einfache Kopie im Ziel gefunden: sie wird zum aktuellen Backup und nach „current“ verschoben ({0} Elemente, nichts neu kopiert). Ab jetzt legt jedes Backup in „versions“ nur die Dateien beiseite, die es ersetzt oder löscht."),
+        ["Diff_Moved"] = L(
+            "[versioni] {0} file e {1} cartelle messi da parte nella versione {2}",
+            "[versions] {0} files and {1} folders set aside in version {2}",
+            "[versiones] {0} archivos y {1} carpetas apartados en la versión {2}",
+            "[versions] {0} fichiers et {1} dossiers mis de côté dans la version {2}",
+            "[Versionen] {0} Dateien und {1} Ordner in Version {2} beiseitegelegt"),
+        ["Diff_MoveFailed"] = L(
+            "[versioni] {0} non messo da parte ({1}): il backup lo sovrascrive lo stesso, ma questa versione non ne conterrà la copia precedente.",
+            "[versions] {0} not set aside ({1}): the backup overwrites it anyway, but this version will not hold its previous copy.",
+            "[versiones] {0} no apartado ({1}): la copia lo sobrescribe igualmente, pero esta versión no contendrá su copia anterior.",
+            "[versions] {0} non mis de côté ({1}) : la sauvegarde l'écrase quand même, mais cette version ne contiendra pas sa copie précédente.",
+            "[Versionen] {0} nicht beiseitegelegt ({1}): das Backup überschreibt sie trotzdem, aber diese Version enthält ihre vorherige Kopie nicht."),
+        ["Diff_Created"] = L(
+            "[versioni] versione {0} creata: contiene i file sostituiti o cancellati da questo backup.",
+            "[versions] version {0} created: it holds the files this backup replaced or deleted.",
+            "[versiones] versión {0} creada: contiene los archivos que esta copia ha sustituido o eliminado.",
+            "[versions] version {0} créée : elle contient les fichiers que cette sauvegarde a remplacés ou supprimés.",
+            "[Versionen] Version {0} erstellt: sie enthält die Dateien, die dieses Backup ersetzt oder gelöscht hat."),
+        ["Diff_PromotedPartial"] = L(
+            "[versioni] backup non riuscito, ma la versione {0} resta: è incompleta e utilizzabile, contiene gli stati precedenti dei file che erano già stati messi da parte (per quelli cancellati dalla sorgente è l'unica copia rimasta). Non viene cancellata.",
+            "[versions] the backup failed, but version {0} stays: it is incomplete and usable, holding the previous states of the files already set aside (for those deleted from the source it is the only copy left). It is not deleted.",
+            "[versiones] la copia ha fallado, pero la versión {0} se queda: está incompleta y es utilizable, contiene los estados anteriores de los archivos ya apartados (para los eliminados del origen es la única copia que queda). No se elimina.",
+            "[versions] la sauvegarde a échoué, mais la version {0} reste : elle est incomplète et utilisable, elle contient les états précédents des fichiers déjà mis de côté (pour ceux supprimés de la source, c'est la seule copie restante). Elle n'est pas supprimée.",
+            "[Versionen] das Backup ist fehlgeschlagen, aber Version {0} bleibt: sie ist unvollständig und nutzbar und enthält die früheren Zustände der bereits beiseitegelegten Dateien (für die aus der Quelle gelöschten ist sie die einzige verbliebene Kopie). Sie wird nicht gelöscht."),
+        ["Diff_Recovered"] = L(
+            "[versioni] recuperata la versione {0} lasciata da un run interrotto: conteneva file già messi da parte, quindi diventa una versione vera invece di essere cancellata.",
+            "[versions] recovered version {0}, left behind by an interrupted run: it held files already set aside, so it becomes a real version instead of being deleted.",
+            "[versiones] recuperada la versión {0}, dejada por una ejecución interrumpida: contenía archivos ya apartados, así que pasa a ser una versión real en vez de eliminarse.",
+            "[versions] version {0} récupérée, laissée par une exécution interrompue : elle contenait des fichiers déjà mis de côté, elle devient donc une vraie version au lieu d'être supprimée.",
+            "[Versionen] Version {0} wiederhergestellt, von einem abgebrochenen Lauf zurückgelassen: sie enthielt bereits beiseitegelegte Dateien und wird daher zu einer echten Version, statt gelöscht zu werden."),
+        ["Diff_RenameFailed"] = L(
+            "[versioni] la versione {0} non si è potuta rinominare al nome definitivo ({1}): resta com'è, con i suoi file, e il prossimo run la recupera. Niente è andato perso.",
+            "[versions] version {0} could not be renamed to its final name ({1}): it stays as it is, with its files, and the next run recovers it. Nothing was lost.",
+            "[versiones] la versión {0} no se ha podido renombrar a su nombre definitivo ({1}): se queda como está, con sus archivos, y la próxima ejecución la recupera. No se ha perdido nada.",
+            "[versions] la version {0} n'a pas pu être renommée avec son nom définitif ({1}) : elle reste telle quelle, avec ses fichiers, et la prochaine exécution la récupère. Rien n'a été perdu.",
+            "[Versionen] Version {0} konnte nicht auf den endgültigen Namen umbenannt werden ({1}): sie bleibt mit ihren Dateien wie sie ist, und der nächste Lauf holt sie zurück. Nichts ist verloren."),
+        ["Diff_StaleRemoved"] = L(
+            "[versioni] rimossa la cartella vuota {0} lasciata da un run interrotto.",
+            "[versions] removed the empty folder {0} left behind by an interrupted run.",
+            "[versiones] eliminada la carpeta vacía {0} dejada por una ejecución interrumpida.",
+            "[versions] dossier vide {0} laissé par une exécution interrompue supprimé.",
+            "[Versionen] leerer Ordner {0} aus einem abgebrochenen Lauf entfernt."),
+        ["Diff_LeftoverKept"] = L(
+            "[versioni] residuo {0} non rimosso ({1}): resta dov'è, si riprova al prossimo backup.",
+            "[versions] leftover {0} not removed ({1}): it stays where it is, to be retried at the next backup.",
+            "[versiones] resto {0} no eliminado ({1}): se queda donde está, se reintenta en la próxima copia.",
+            "[versions] reste {0} non supprimé ({1}) : il reste en place, nouvelle tentative à la prochaine sauvegarde.",
+            "[Versionen] Rest {0} nicht entfernt ({1}): er bleibt, wo er ist, und wird beim nächsten Backup erneut versucht."),
+        ["Diff_Removed"] = L(
+            "[versioni] rimossa la versione vecchia {0} (ritenzione del job).",
+            "[versions] removed old version {0} (the job's retention).",
+            "[versiones] eliminada la versión antigua {0} (retención del trabajo).",
+            "[versions] ancienne version {0} supprimée (rétention de la tâche).",
+            "[Versionen] alte Version {0} entfernt (Aufbewahrung des Jobs)."),
+        ["Diff_RemoveFailed"] = L(
+            "[versioni] la versione vecchia {0} non si è potuta rimuovere ({1}): il backup è comunque riuscito.",
+            "[versions] old version {0} could not be removed ({1}): the backup succeeded anyway.",
+            "[versiones] la versión antigua {0} no se ha podido eliminar ({1}): la copia ha funcionado igualmente.",
+            "[versions] l'ancienne version {0} n'a pas pu être supprimée ({1}) : la sauvegarde a tout de même réussi.",
+            "[Versionen] die alte Version {0} konnte nicht entfernt werden ({1}): das Backup war dennoch erfolgreich."),
+        ["Diff_AdoptSkipped"] = L(
+            "[versioni] {0} non spostato in «current» ({1}): resta nella destinazione, fuori dalla portata del mirror, e verrà ricopiato dalla sorgente.",
+            "[versions] {0} not moved into \"current\" ({1}): it stays in the destination, out of the mirror's reach, and will be recopied from the source.",
+            "[versiones] {0} no movido a «current» ({1}): se queda en el destino, fuera del alcance del espejo, y se volverá a copiar desde el origen.",
+            "[versions] {0} non déplacé dans « current » ({1}) : il reste dans la destination, hors de portée du miroir, et sera recopié depuis la source.",
+            "[Versionen] {0} nicht nach „current“ verschoben ({1}): es bleibt im Ziel, außerhalb der Reichweite der Spiegelung, und wird aus der Quelle neu kopiert."),
+        ["Diff_TargetExists"] = L(
+            "nella versione c'è già un file con quel nome",
+            "the version already holds a file with that name",
+            "la versión ya contiene un archivo con ese nombre",
+            "la version contient déjà un fichier de ce nom",
+            "die Version enthält bereits eine Datei mit diesem Namen"),
+        ["Diff_AddedOnly"] = L(
+            "[versioni] questo backup ha solo aggiunto file: niente da mettere da parte, quindi nessuna cartella-versione (una vuota occuperebbe un posto nel conto delle versioni da tenere). Resta annotato {0} con l'elenco di ciò che è stato aggiunto.",
+            "[versions] this backup only added files: nothing to set aside, so no version folder (an empty one would take up a slot in the count of versions to keep). The note {0} records what was added.",
+            "[versiones] esta copia solo ha añadido archivos: nada que apartar, así que ninguna carpeta de versión (una vacía ocuparía un puesto en el recuento de versiones a conservar). Queda anotado {0} con la lista de lo añadido.",
+            "[versions] cette sauvegarde n'a fait qu'ajouter des fichiers : rien à mettre de côté, donc aucun dossier de version (un dossier vide occuperait une place dans le nombre de versions à conserver). La note {0} enregistre ce qui a été ajouté.",
+            "[Versionen] dieses Backup hat nur Dateien hinzugefügt: nichts beiseitezulegen, also kein Versionsordner (ein leerer würde einen Platz in der Zahl der aufzubewahrenden Versionen belegen). Der Vermerk {0} hält fest, was hinzugekommen ist."),
+        ["Diff_SkippedLocked"] = L(
+            "[versioni] {0} file non messi da parte perché in uso: lasciati com'erano, si riprova al prossimo backup: {1}",
+            "[versions] {0} files not set aside because they are in use: left as they were, to be retried at the next backup: {1}",
+            "[versiones] {0} archivos no apartados porque están en uso: se dejan como estaban, se reintenta en la próxima copia: {1}",
+            "[versions] {0} fichiers non mis de côté car en cours d'utilisation : laissés tels quels, nouvelle tentative à la prochaine sauvegarde : {1}",
+            "[Versionen] {0} Dateien nicht beiseitegelegt, weil sie in Benutzung sind: unverändert gelassen, erneuter Versuch beim nächsten Backup: {1}"),
+        ["Diff_AdoptAmbiguous"] = L(
+            "[versioni] nella destinazione c'è già una cartella «{0}» e accanto a lei altro contenuto ({1} voci): potrebbe essere la cartella del backup oppure una cartella tua arrivata dalla sorgente. Non viene spostato niente. I nomi «current» e «versions» nella radice di una destinazione con versioni sono riservati a RoboKeep: se sono tuoi, scegli una sottocartella di destinazione diversa.",
+            "[versions] the destination already has a \"{0}\" folder with other content beside it ({1} entries): it could be the backup's folder, or a folder of yours that came from the source. Nothing is moved. The names \"current\" and \"versions\" at the root of a versioned destination are reserved by RoboKeep: if they are yours, pick a different destination subfolder.",
+            "[versiones] el destino ya tiene una carpeta «{0}» y junto a ella otro contenido ({1} entradas): podría ser la carpeta de la copia o una carpeta tuya llegada desde el origen. No se mueve nada. Los nombres «current» y «versions» en la raíz de un destino con versiones están reservados a RoboKeep: si son tuyos, elige otra subcarpeta de destino.",
+            "[versions] la destination contient déjà un dossier « {0} » et, à côté, d'autres éléments ({1} entrées) : ce peut être le dossier de la sauvegarde ou un dossier à vous venu de la source. Rien n'est déplacé. Les noms « current » et « versions » à la racine d'une destination versionnée sont réservés à RoboKeep : s'ils sont à vous, choisissez un autre sous-dossier de destination.",
+            "[Versionen] das Ziel enthält bereits einen Ordner „{0}“ und daneben weiteren Inhalt ({1} Einträge): das kann der Ordner des Backups sein oder ein eigener Ordner, der aus der Quelle stammt. Es wird nichts verschoben. Die Namen „current“ und „versions“ im Stammverzeichnis eines versionierten Ziels sind für RoboKeep reserviert: wenn sie Ihnen gehören, wählen Sie einen anderen Zielunterordner."),
+        ["Diff_NoChanges"] = L(
+            "[versioni] niente di cambiato dall'ultimo backup: la copia in «current» è già aggiornata, nessuna versione nuova.",
+            "[versions] nothing changed since the last backup: the copy in \"current\" is already up to date, no new version.",
+            "[versiones] ningún cambio desde la última copia: lo que hay en «current» ya está al día, ninguna versión nueva.",
+            "[versions] aucun changement depuis la dernière sauvegarde : la copie dans « current » est déjà à jour, pas de nouvelle version.",
+            "[Versionen] keine Änderung seit dem letzten Backup: die Kopie in „current“ ist bereits aktuell, keine neue Version."),
 
         ["Guard_Status"] = L(
             "BLOCCATO: troppe cancellazioni",

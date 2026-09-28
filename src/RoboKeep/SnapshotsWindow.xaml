@@ -15,6 +15,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -25,7 +26,12 @@
             </ui:TitleBar.Icon>
         </ui:TitleBar>
 
-        <Border Grid.Row="1" Margin="16,8,16,8" CornerRadius="8" BorderThickness="1"
+        <!-- Versioni per differenza: una cartella-data non è l'albero intero di quel giorno. -->
+        <TextBlock Grid.Row="1" Text="{l:Tr Ver_DiffIntro}" TextWrapping="Wrap" Opacity="0.75"
+                   FontSize="12" Margin="16,4,16,0"
+                   Visibility="{Binding IsDifferential, Converter={StaticResource BoolToVis}}"/>
+
+        <Border Grid.Row="2" Margin="16,8,16,8" CornerRadius="8" BorderThickness="1"
                 Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
             <Grid>
@@ -53,7 +59,7 @@
             </Grid>
         </Border>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="16,0,16,16">
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="16,0,16,16">
             <ui:Button Icon="{ui:SymbolIcon FolderOpen24}" Content="{l:Tr Ver_OpenInExplorer}"
                        Appearance="Primary" Margin="0,0,8,0"
                        Click="OnOpenInExplorer"/>

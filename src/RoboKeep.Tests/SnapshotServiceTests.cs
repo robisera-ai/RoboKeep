@@ -196,6 +196,45 @@ public class SnapshotServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Adoption_NeverMovesRoboKeepsOwnFolders_IntoTheFirstSnapshot()
+    {
+        var source = Path.Combine(_root, "src10");
+        var dest = Path.Combine(_root, "dest10");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "f.txt"), "v1");
+
+        // Copia semplice gia' presente, piu' le cartelle che appartengono a RoboKeep: la copia
+        // della configurazione (che nella radice del disco ci deve restare) e i resti di un layout
+        // per differenza. Nessuna delle tre esiste nella sorgente: finendo nel conto degli
+        // "estranei" impedirebbero l'adozione, e finendo dentro la cartella-data sparirebbero
+        // dalla radice — la copia della configurazione e' proprio li' che si va a cercarla.
+        Directory.CreateDirectory(dest);
+        File.WriteAllText(Path.Combine(dest, "f.txt"), "vecchio");
+        Directory.CreateDirectory(Path.Combine(dest, ConfigMirror.FolderName));
+        File.WriteAllText(Path.Combine(dest, ConfigMirror.FolderName, "config.json"), "{}");
+        Directory.CreateDirectory(Path.Combine(dest, VersioningLayout.VersionsFolderName));
+        File.WriteAllText(Path.Combine(dest, VersioningLayout.VersionsFolderName, "residuo.txt"), "x");
+
+        var job = new BackupJob { Name = "V", Source = source, Destination = dest, Versioned = true };
+        var lines = new List<string>();
+        await new SnapshotService(new RobocopyRunner())
+            .RunVersionedAsync(job, new Progress<string>(lines.Add));
+
+        // L'adozione e' avvenuta lo stesso (le cartelle di RoboKeep non contano come estranee):
+        // la copia vecchia e' diventata la prima versione, il run ne ha prodotta una seconda.
+        var snaps = SnapshotDirs(dest);
+        Assert.Equal(2, snaps.Length);
+        Assert.Equal("vecchio", File.ReadAllText(Path.Combine(dest, snaps[0], "f.txt")));
+        var snap = snaps[1];
+        Assert.Equal("v1", File.ReadAllText(Path.Combine(dest, snap, "f.txt")));
+        // ...e le cartelle di RoboKeep sono rimaste dove dovevano stare.
+        Assert.True(File.Exists(Path.Combine(dest, ConfigMirror.FolderName, "config.json")));
+        Assert.True(File.Exists(Path.Combine(dest, VersioningLayout.VersionsFolderName, "residuo.txt")));
+        Assert.False(Directory.Exists(Path.Combine(dest, snap, ConfigMirror.FolderName)));
+        Assert.False(Directory.Exists(Path.Combine(dest, snap, VersioningLayout.VersionsFolderName)));
+    }
+
+    [Fact]
     public async Task Retention_PreservesReadOnlyAttribute_OnSurvivingSnapshot()
     {
         var source = Path.Combine(_root, "src6");

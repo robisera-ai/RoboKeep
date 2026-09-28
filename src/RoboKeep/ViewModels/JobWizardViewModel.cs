@@ -1,3 +1,4 @@
+using System.Threading;
 using RoboKeep.Core.Models;
 using RoboKeep.Core.Services;
 using RoboKeep.Infra;
@@ -49,7 +50,7 @@ public sealed class JobWizardViewModel : ObservableObject
             OnPropertyChanged();
             OnPropertyChanged(nameof(CanGoNext));
             RaiseNetCred();
-            OnPropertyChanged(nameof(ShowVersionsNote));
+            RefreshVersioningMode();
             RaisePreview();
         }
     }
@@ -76,7 +77,14 @@ public sealed class JobWizardViewModel : ObservableObject
     public bool KeepVersions
     {
         get => _a.KeepVersions;
-        set { _a.KeepVersions = value; OnPropertyChanged(); OnPropertyChanged(nameof(ShowVersionsNote)); RaisePreview(); }
+        set
+        {
+            _a.KeepVersions = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ShowVersioningMode));
+            RefreshVersioningMode();
+            RaisePreview();
+        }
     }
 
     public int VersionsToKeep
@@ -200,10 +208,42 @@ public sealed class JobWizardViewModel : ObservableObject
         OnPropertyChanged(nameof(NetCredIntro));
     }
 
-    /// <summary>Avviso: le versioni datate servono hard-link, che la destinazione scelta non offre.
-    /// <see cref="HardLinkSupport.IsSupported"/> non lancia e risale al primo antenato esistente.</summary>
-    public bool ShowVersionsNote =>
-        KeepVersions && !string.IsNullOrWhiteSpace(Destination) && !HardLinkSupport.IsSupported(Destination);
+    private CancellationTokenSource? _versioningModeCts;
+    private string _versioningModeText = Loc.Instance["Ver_ModeUnknown"];
+
+    /// <summary>Quale modello di versioni userà il job con la destinazione scelta al passo 1. Non è
+    /// un avviso: le versioni funzionano su qualunque destinazione, cambia solo come sono fatte.</summary>
+    public string VersioningModeText
+    {
+        get => _versioningModeText;
+        private set { _versioningModeText = value; OnPropertyChanged(); }
+    }
+
+    /// <summary>La riga si mostra solo a versioni accese: a chi non le vuole non dice niente.</summary>
+    public bool ShowVersioningMode => KeepVersions;
+
+    /// <summary>Ricalcola la riga fuori dal thread della UI e con un'attesa: la destinazione si
+    /// digita un carattere alla volta e la risposta costa un accesso al disco.
+    /// <para>A versioni spente non si interroga affatto il disco: la riga è nascosta, e il
+    /// controllo degli hard-link scriverebbe un file di prova nella cartella che l'utente sta
+    /// ancora digitando per una domanda che non si è posto.</para></summary>
+    private void RefreshVersioningMode()
+    {
+        var previous = _versioningModeCts;
+        _versioningModeCts = null;
+        previous?.Cancel();
+        previous?.Dispose();
+
+        if (!KeepVersions)
+        {
+            VersioningModeText = Loc.Instance["Ver_ModeUnknown"];
+            return;
+        }
+
+        var cts = new CancellationTokenSource();
+        _versioningModeCts = cts;
+        _ = VersioningModeLabel.RefreshAsync(_a.Destination, t => VersioningModeText = t, cts.Token);
+    }
 
     // --- Navigazione ---
     public int CurrentStep

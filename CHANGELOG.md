@@ -7,6 +7,31 @@ All notable changes to RoboKeep are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **Versions now work on every disk, not just NTFS.** Dated versions used to need hard links, so on
+  an exFAT or FAT32 stick — how most external drives come from the factory — or on a network share
+  you simply got none. Now RoboKeep keeps versions there too, with a second model it picks by
+  itself: the backup lives in a **`current`** folder and each **`versions\<date>\`** folder holds
+  **only the files that backup replaced or deleted**, beside a small `<date>.manifest.json`
+  recording what changed, was deleted and was added. It is the model of Windows File History and
+  `rsync --backup-dir`: still ordinary files you can open in File Explorer, no archive to extract,
+  and one write per changed file instead of the thousands of metadata writes it takes to clone a
+  hard-link tree — much gentler on a mechanical disk. Nothing to configure: on NTFS you keep the
+  complete hard-linked folders as before, and an existing backup never switches model underneath
+  (the layout already on the disk wins). The job editor now says which of the two a destination will
+  use, right under *Keep dated versions*, and the pre-run check no longer warns "no versions here" —
+  because there are. An existing plain copy is adopted into `current` with an instant same-disk move;
+  retention, the deletion threshold, integrity verification and *Versions...* all work the same, and
+  **"keep N versions" counts N real versions**: a backup that only added files has no earlier state
+  to keep, so it leaves a note rather than an empty folder — otherwise a few days of pure additions
+  would push out the one version that still held the only copy of a deleted file. A run that fails
+  or is cancelled halfway loses nothing either: the files already set aside are the only copy of
+  anything deleted from the source, so that version is kept as a real — if incomplete — version
+  instead of being discarded, and a folder left behind by an interrupted run is recovered by the
+  next one rather than swept away. A file that is open in another program cannot be moved aside, so
+  it is **left exactly as it was** and skipped by this run rather than overwritten with no previous
+  copy kept; the log, the summary and the email name it, and the next backup retries — including
+  files on the *Force copy* list, because a job's exclusions now apply to the force-copy pass too,
+  where "don't touch this" rightly beats "always recopy this".
 - **A mirror that would wipe out the destination now stops and asks first.** Before a mirror job
   runs, RoboKeep counts — without touching anything — how many files it would delete in the
   destination; if that reaches the job's threshold (**20 %** by default, in the job editor, 0 to

@@ -21,9 +21,13 @@ public static class RobocopyArgsBuilder
     /// <param name="destinationOverride">Destinazione alternativa (usata dal versioning per scrivere nello snapshot corrente).</param>
     /// <param name="sourceOverride">Sorgente alternativa (usata da VSS per leggere dallo snapshot congelato).</param>
     /// <param name="maxThreads">Tetto ai thread <c>/MT</c> deciso a runtime dal tipo di disco (vedi <see cref="StorageProbe"/>). null = nessun tetto.</param>
+    /// <param name="listDetails">Aggiunge <c>/FP /BYTES</c>: percorso completo e dimensione in byte
+    /// su ogni riga dell'elenco. Serve all'anteprima del modello di versioni per differenza, che
+    /// dalle righe deve ricavare i percorsi (vedi <see cref="RobocopyListParser"/>); per un run
+    /// normale sarebbe solo un log piu' largo, quindi non si aggiunge da solo.</param>
     public static IReadOnlyList<string> Build(
         BackupJob job, bool dryRun = false, string? logFile = null, string? destinationOverride = null,
-        string? sourceOverride = null, int? maxThreads = null)
+        string? sourceOverride = null, int? maxThreads = null, bool listDetails = false)
     {
         ArgumentNullException.ThrowIfNull(job);
 
@@ -71,35 +75,18 @@ public static class RobocopyArgsBuilder
         if (job.LogAllFiles)
             args.Add("/V");
 
-        // Esclusioni file.
-        if (job.ExcludeFiles is { Count: > 0 })
-        {
-            args.Add("/XF");
-            args.AddRange(job.ExcludeFiles.Where(f => !string.IsNullOrWhiteSpace(f)));
-        }
-
-        // Esclusioni cartelle. Alla lista dell'utente si aggiunge la copia della configurazione
-        // (vedi ConfigMirror) quando la destinazione E' la radice del volume: in quel caso la
-        // cartella RoboKeep-config sta dentro la destinazione, non esiste in sorgente, e un mirror
-        // la cancellerebbe come file "extra". Con una destinazione in sottocartella il problema non
-        // c'e': la copia sta piu' in alto, fuori dalla portata del job.
-        var excludeDirs = (job.ExcludeDirs ?? new List<string>())
-            .Where(d => !string.IsNullOrWhiteSpace(d)).ToList();
-        // Si esclude il PERCORSO della cartella, non il nome: con il nome nudo robocopy salterebbe
-        // ogni "RoboKeep-config" che incontra, anche quello in SORGENTE — e un disco che e' la
-        // destinazione di un job e la sorgente di un altro ne ha uno, che va copiato come tutto
-        // il resto.
-        if (VolumeRootOf(dest) is { } destRoot)
-            excludeDirs.Add(Path.Combine(destRoot, ConfigMirror.FolderName));
-        if (excludeDirs.Count > 0)
-        {
-            args.Add("/XD");
-            args.AddRange(excludeDirs);
-        }
+        AddExclusions(args, job, dest);
 
         // Tentativi e attesa.
         args.Add($"/R:{Math.Max(0, job.Retries)}");
         args.Add($"/W:{Math.Max(0, job.Wait)}");
+
+        // Elenco leggibile da un programma: percorso completo e dimensioni in byte secchi.
+        if (listDetails)
+        {
+            args.Add("/FP");
+            args.Add("/BYTES");
+        }
 
         // Anteprima: elenca soltanto, non modifica nulla.
         if (dryRun)
@@ -119,6 +106,8 @@ public static class RobocopyArgsBuilder
     /// Costruisce gli argomenti della passata "forza copia": copia i file indicati da
     /// <paramref name="filters"/> anche se identici (<c>/IS /IT</c>), senza mai cancellare
     /// (niente <c>/MIR</c>) e senza saltare i più vecchi (niente <c>/XO</c>).
+    /// <para>Le esclusioni del job (<c>/XF</c>, <c>/XD</c>) valgono anche in questa passata e
+    /// battono i pattern della forza copia: vedi <c>AddExclusions</c>.</para>
     /// </summary>
     public static IReadOnlyList<string> BuildForceCopyPass(
         BackupJob job, IReadOnlyList<string> filters, bool dryRun = false, string? logFile = null,
@@ -148,6 +137,9 @@ public static class RobocopyArgsBuilder
         args.Add(job.CopyAll ? "/COPYALL" : "/COPY:DAT");
         args.Add("/XJ");
 
+        // Le esclusioni valgono anche qui: vedi AddExclusions per il perche' della precedenza.
+        AddExclusions(args, job, dest);
+
         if (job.InterPacketGapMs > 0)
             args.Add($"/IPG:{job.InterPacketGapMs}");
         else if (job.MultiThread > 0)
@@ -171,6 +163,47 @@ public static class RobocopyArgsBuilder
         }
 
         return args;
+    }
+
+    /// <summary>
+    /// Aggiunge <c>/XF</c> e <c>/XD</c> con le esclusioni del job. Usato da ENTRAMBE le passate
+    /// (normale e "forza copia"): un'esclusione vale sempre, anche contro un pattern della forza
+    /// copia. E' la precedenza giusta — «non toccare questo» e' una richiesta piu' forte di
+    /// «ricopia sempre questo», e chi scrive lo stesso file in tutte due le liste intende la prima.
+    /// Serve anche al modello di versioni per differenza, che a ogni run esclude i file che non ha
+    /// potuto mettere da parte: senza queste righe la passata forzata li sovrascriverebbe sul posto,
+    /// cancellando l'unica copia precedente che esisteva.
+    /// <para>Alla lista dell'utente si aggiunge la copia della configurazione (vedi
+    /// <see cref="ConfigMirror"/>) quando la destinazione E' la radice del volume: in quel caso la
+    /// cartella RoboKeep-config sta dentro la destinazione, non esiste in sorgente, e un mirror la
+    /// cancellerebbe come file "extra". Con una destinazione in sottocartella il problema non c'e':
+    /// la copia sta piu' in alto, fuori dalla portata del job.</para>
+    /// </summary>
+    private static void AddExclusions(List<string> args, BackupJob job, string dest)
+    {
+        if (job.ExcludeFiles is { Count: > 0 })
+        {
+            var files = job.ExcludeFiles.Where(f => !string.IsNullOrWhiteSpace(f)).ToList();
+            if (files.Count > 0)
+            {
+                args.Add("/XF");
+                args.AddRange(files);
+            }
+        }
+
+        var excludeDirs = (job.ExcludeDirs ?? new List<string>())
+            .Where(d => !string.IsNullOrWhiteSpace(d)).ToList();
+        // Si esclude il PERCORSO della cartella, non il nome: con il nome nudo robocopy salterebbe
+        // ogni "RoboKeep-config" che incontra, anche quello in SORGENTE — e un disco che e' la
+        // destinazione di un job e la sorgente di un altro ne ha uno, che va copiato come tutto
+        // il resto.
+        if (VolumeRootOf(dest) is { } destRoot)
+            excludeDirs.Add(Path.Combine(destRoot, ConfigMirror.FolderName));
+        if (excludeDirs.Count > 0)
+        {
+            args.Add("/XD");
+            args.AddRange(excludeDirs);
+        }
     }
 
     /// <summary>La radice del volume locale (<c>E:\</c>) quando il percorso E' quella radice

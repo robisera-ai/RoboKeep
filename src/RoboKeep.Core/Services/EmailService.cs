@@ -59,7 +59,11 @@ public sealed class EmailService
     {
         if (!settings.Enabled)
             return false;
-        if (settings.OnlyOnError && result.Success && (result.DryRun || result.HealthWarnings.Count == 0))
+        // "Solo in caso di errore" non deve zittire un run riuscito che ha comunque una notizia da
+        // dare: un disco che dava segnali, o dei file che il versioning non ha potuto mettere da
+        // parte perché in uso (quelli restano da ricopiare, e nessuno lo saprebbe).
+        if (settings.OnlyOnError && result.Success
+            && (result.DryRun || (result.HealthWarnings.Count == 0 && result.VersionNotes.Count == 0)))
             return false;
         return true;
     }
@@ -120,6 +124,13 @@ public sealed class EmailService
           .AppendLine($"{CoreLoc.S("Lbl_FilesExtra"),-16}: {result.FilesExtra}")
           .AppendLine($"{CoreLoc.S("Lbl_FilesFailed"),-16}: {result.FilesFailed}")
           .AppendLine($"{CoreLoc.S("Lbl_DirsFailed"),-16}: {result.DirsFailed}");
+        // Avvisi del versioning (file in uso non messi da parte): riguardano dei dati, quindi
+        // vanno nell'email anche quando l'esito e' "OK".
+        if (result.VersionNotes.Count > 0)
+        {
+            sb.AppendLine();
+            foreach (var n in result.VersionNotes) sb.AppendLine(n);
+        }
         if (result.HealthWarnings.Count > 0)
         {
             sb.AppendLine();

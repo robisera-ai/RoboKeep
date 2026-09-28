@@ -1,4 +1,5 @@
 using RoboKeep.Core.Models;
+using RoboKeep.Localization;
 using RoboKeep.ViewModels;
 
 namespace RoboKeep.Tests;
@@ -144,5 +145,51 @@ public class JobEditorViewModelTests
         Assert.True(vm.ShowVolumeRow);        // la riga resta visibile...
         Assert.True(vm.ShowConnectDiskHint);  // ...con l'avviso "disco non collegato"
         Assert.False(vm.VolumeActionVisible); // nessun disco presente: niente da associare ora
+    }
+
+    [Fact]
+    public async Task VersioningModeLabel_WithVersionsOff_NeverProbesTheDestination()
+    {
+        // Il controllo degli hard-link SCRIVE un file di prova nella destinazione. A versioni
+        // spente la riga non si vede nemmeno: interrogare il disco (per giunta in una cartella che
+        // l'utente sta ancora digitando) sarebbe solo un file di prova regalato.
+        var dest = Path.Combine(Path.GetTempPath(), "RbcVmOff_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dest);
+        try
+        {
+            var vm = Vm(new BackupJob { Name = "j", Source = @"C:\s", Versioned = false });
+            vm.Destination = dest;
+
+            await Task.Delay(VersioningModeLabel.Debounce + TimeSpan.FromMilliseconds(700));
+
+            Assert.Empty(Directory.GetFiles(dest));
+            Assert.Equal(Loc.Instance["Ver_ModeUnknown"], vm.VersioningModeText);
+        }
+        finally { Directory.Delete(dest, recursive: true); }
+    }
+
+    [Fact]
+    public async Task VersioningModeLabel_WithVersionsOn_TellsWhichModelTheDestinationWillUse()
+    {
+        var dest = Path.Combine(Path.GetTempPath(), "RbcVmOn_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dest);
+        try
+        {
+            // Layout per differenza gia' presente: la risposta non dipende dal tipo di disco.
+            Directory.CreateDirectory(RoboKeep.Core.Services.VersioningLayout.CurrentDir(dest));
+            var vm = Vm(new BackupJob { Name = "j", Source = @"C:\s", Destination = dest, Versioned = false });
+
+            vm.Versioned = true; // accendere la casella fa ripartire il calcolo
+
+            // Il calcolo è volutamente ritardato e fuori dal thread chiamante: si aspetta il
+            // risultato invece di scommettere su un tempo fisso, che sotto carico non basta.
+            var expected = Loc.Instance["Ver_ModeDifferential"];
+            var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(15);
+            while (vm.VersioningModeText != expected && DateTime.UtcNow < deadline)
+                await Task.Delay(100);
+
+            Assert.Equal(expected, vm.VersioningModeText);
+        }
+        finally { Directory.Delete(dest, recursive: true); }
     }
 }

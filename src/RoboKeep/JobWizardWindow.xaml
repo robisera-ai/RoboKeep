@@ -105,8 +105,11 @@
                             <ui:TextBox Text="{Binding VersionsToKeep, UpdateSourceTrigger=PropertyChanged, FallbackValue=10}"
                                         IsEnabled="{Binding KeepVersions}" Width="90"/>
                         </StackPanel>
-                        <ui:InfoBar Margin="0,6,0,0" Severity="Warning" IsClosable="False"
-                                    IsOpen="{Binding ShowVersionsNote, Mode=OneWay}" Message="{l:Tr Preflight_NoHardLink}"/>
+                        <!-- Quale modello di versioni userà la destinazione scelta al passo 1:
+                             informativo, non un avviso (le versioni ci sono comunque). -->
+                        <TextBlock Style="{StaticResource Hint}" Margin="24,6,0,0"
+                                   Text="{Binding VersioningModeText}"
+                                   Visibility="{Binding ShowVersioningMode, Converter={StaticResource BoolToVis}}"/>
                         <!-- Pianificazione: stessi controlli dell'editor (frequenza, giorno, orario). -->
                         <TextBlock Text="{l:Tr Wiz_Schedule}" Style="{StaticResource Label}" Margin="0,18,8,4"/>
                         <Grid>

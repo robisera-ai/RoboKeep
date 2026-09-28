@@ -198,9 +198,13 @@ public sealed class SpaceCleanupTests : IDisposable
             File.WriteAllText(Path.Combine(dest, name, "f.txt"), new string('x', 4096));
         }
 
-        var runner = new BackupRunner(config,
-            new RobocopyRunner(FakeRobocopyDiskFull(), detectMedia: _ => DiskMedia.Unknown),
-            new LogService(config.Settings), new EmailService(creds), creds, results);
+        // Il job e' versionato e la destinazione HA gia' due cartelle-data: senza un servizio che
+        // sappia gestirle BackupRunner si rifiuta di partire (un mirror piatto sulla radice le
+        // cancellerebbe come file extra). Qui serve il run vero, quindi il servizio si passa.
+        var fake = new RobocopyRunner(FakeRobocopyDiskFull(), detectMedia: _ => DiskMedia.Unknown);
+        var runner = new BackupRunner(config, fake,
+            new LogService(config.Settings), new EmailService(creds), creds, results,
+            new SnapshotService(fake));
 
         var lines = new List<string>();
         var job = new BackupJob { Name = "V", Source = source, Destination = dest, Versioned = true, Retries = 0, Wait = 0 };

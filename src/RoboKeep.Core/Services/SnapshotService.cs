@@ -171,9 +171,11 @@ public sealed class SnapshotService
 
         if (run.Result.Success)
         {
-            var final = Path.Combine(dest, newName);
-            if (Directory.Exists(final))
-                final = Path.Combine(dest, newName + "_" + Guid.NewGuid().ToString("N")[..8]);
+            // Nome gia' occupato (due run nello stesso secondo): si avanza di un secondo invece di
+            // appiccicare un suffisso casuale, che renderebbe la cartella invisibile alla
+            // ritenzione e all'elenco delle versioni.
+            var final = Path.Combine(dest, SnapshotName.FreeName(newName,
+                n => Directory.Exists(Path.Combine(dest, n))));
             try
             {
                 Directory.Move(curr, final);
@@ -207,55 +209,11 @@ public sealed class SnapshotService
         return run;
     }
 
-    /// <summary>
-    /// Fa posto sul disco di backup cancellando le versioni piu' vecchie di questo job, finche' lo
-    /// spazio libero torna sopra la soglia o resta solo la piu' recente. Attiva solo se l'utente lo
-    /// ha chiesto (<see cref="AppSettings.FreeSpaceCleanup"/>): cancellare per far posto e' una sua
-    /// decisione. Lo spazio si rilegge dopo OGNI cancellazione - quanto liberi una versione non si
-    /// sa prima, con gli hard-link spariscono solo i file che non condivide con le altre - e ogni
-    /// cancellazione e' una riga nel log. Una cancellazione che non riesce ferma il ciclo: insistere
-    /// sulle altre versioni non risolverebbe il motivo del rifiuto.
-    /// </summary>
-    private async Task FreeUpSpaceAsync(string dest, IProgress<string>? progress, CancellationToken ct)
-    {
-        if (_settings is not { FreeSpaceCleanup: true }) return;
-        var threshold = (long)_settings.MinFreeSpaceMb * 1024 * 1024;
-        if (threshold <= 0) return;
-
-        // Spazio non determinabile (share strana, disco appena scomparso): non si cancella niente
-        // al buio. Il run prosegue e sara' robocopy a dire come e' andata.
-        var free = _freeSpace(dest);
-        while (free is { } now && now < threshold)
-        {
-            var names = Directory.GetDirectories(dest).Select(Path.GetFileName).OfType<string>();
-            if (SpaceCleanupPlanner.NextToDelete(names, now, threshold) is not { } victim) break;
-
-            try
-            {
-                // Su thread di background: cancellare migliaia di hard-link non deve congelare la UI.
-                await Task.Run(() => FileSystemDelete.DeleteDirectory(Path.Combine(dest, victim)), ct)
-                    .ConfigureAwait(false);
-            }
-            // L'annullamento dell'utente ferma il job: va riproposto a chi chiama, non raccontato
-            // come "cancellazione non riuscita".
-            catch (OperationCanceledException) { throw; }
-            // L'errore hardware non e' un "non ce l'ho fatta": interrompe il job, come altrove.
-            catch (Exception ex) when (!DiskError.IsUnreadable(ex))
-            {
-                progress?.Report(string.Format(CoreLoc.S("Space_NotFreed"), victim, ex.Message));
-                return;
-            }
-
-            var after = _freeSpace(dest);
-            // Una versione i cui file erano tutti condivisi con le altre non libera nulla: dirlo con
-            // «liberati n/d» sembrerebbe un errore di misura, mentre e' proprio come funzionano gli
-            // hard-link. Frase sua, che spiega anche perche' il ciclo continua con la successiva.
-            progress?.Report(after is { } a && a > now
-                ? string.Format(CoreLoc.S("Space_Freed"), VersionsUsage.Describe(a - now), victim)
-                : string.Format(CoreLoc.S("Space_FreedNothing"), victim));
-            free = after;
-        }
-    }
+    /// <summary>Ritenzione per spazio sulle cartelle-data della destinazione: la regola e' condivisa
+    /// con il modello per differenza (vedi <see cref="VersionSpaceCleanup"/>), qui le versioni
+    /// stanno nella radice della destinazione.</summary>
+    private Task FreeUpSpaceAsync(string dest, IProgress<string>? progress, CancellationToken ct)
+        => VersionSpaceCleanup.FreeUpSpaceAsync(dest, _settings, _freeSpace, progress, ct);
 
     /// <summary>
     /// Un job che passa da "copia semplice" a "con versioni" ha gia' un backup completo: i file
@@ -274,9 +232,13 @@ public sealed class SnapshotService
     /// </summary>
     private static string? AdoptPlainMirror(string dest, string source, DateTime now, IProgress<string>? progress)
     {
+        // Le cartelle di RoboKeep non sono contenuto da adottare: i residui dei run interrotti, la
+        // copia della configurazione (che finita in una cartella-data sparirebbe dalla radice del
+        // disco, dove serve) e le due cartelle del modello per differenza, se una destinazione ha
+        // avuto entrambi i layout. Elenco condiviso con l'adozione per differenza.
         var entries = new DirectoryInfo(dest).EnumerateFileSystemInfos()
             .Where(e => (e.Attributes & (FileAttributes.Hidden | FileAttributes.System)) == 0)
-            .Where(e => !SnapshotName.IsInProgress(e.Name) && !e.Name.Contains(".deleting-", StringComparison.Ordinal))
+            .Where(e => !MirrorAdoption.IsLayoutEntry(e.Name))
             .ToList();
         if (entries.Count == 0) return null;
 
@@ -287,7 +249,7 @@ public sealed class SnapshotService
         // Costa un'enumerazione della destinazione, una volta sola nella vita del job. Se la
         // sorgente non e' leggibile non si puo' dire, quindi non si adotta.
         if (!Directory.Exists(source)) return null;
-        var foreign = ForeignPaths(dest, source, entries, max: 3, out var foreignCount);
+        var foreign = MirrorAdoption.ForeignPaths(dest, source, entries, max: 3, out var foreignCount);
         if (foreignCount > 0)
         {
             progress?.Report(string.Format(CoreLoc.S("Versioning_NotAdopted"),
@@ -328,34 +290,6 @@ public sealed class SnapshotService
 
         progress?.Report(string.Format(CoreLoc.S("Versioning_Adopted"), adoptedName, moved));
         return adoptedName;
-    }
-
-    /// <summary>Percorsi relativi presenti sotto <paramref name="entries"/> (in destinazione) ma
-    /// assenti nella sorgente. Restituisce i primi <paramref name="max"/> per il messaggio e in
-    /// <paramref name="count"/> il totale; si ferma presto se ne trova piu' di quanti servono per
-    /// decidere (bastano pochi esempi per dire "non e' una copia").</summary>
-    private static List<string> ForeignPaths(string dest, string source, IEnumerable<FileSystemInfo> entries, int max, out int count)
-    {
-        var examples = new List<string>();
-        count = 0;
-        var options = new EnumerationOptions { RecurseSubdirectories = true, AttributesToSkip = FileAttributes.ReparsePoint };
-        foreach (var entry in entries)
-        {
-            var toCheck = entry is DirectoryInfo dir
-                ? new[] { dir.FullName }.Concat(Directory.EnumerateFileSystemEntries(dir.FullName, "*", options))
-                : new[] { entry.FullName };
-            foreach (var path in toCheck)
-            {
-                var rel = Path.GetRelativePath(dest, path);
-                var inSource = Path.Combine(source, rel);
-                var isDir = Directory.Exists(path);
-                if (isDir ? Directory.Exists(inSource) : File.Exists(inSource)) continue;
-                count++;
-                if (examples.Count < max) examples.Add(rel);
-                if (count >= 1000) return examples; // abbastanza: non e' una copia, inutile contare oltre
-            }
-        }
-        return examples;
     }
 
     /// <summary>true se l'anteprima dice che sorgente e ultimo snapshot sono gia' allineati: nessun

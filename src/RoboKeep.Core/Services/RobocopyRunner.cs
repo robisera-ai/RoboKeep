@@ -90,10 +90,13 @@ public sealed class RobocopyRunner
     /// "forza copia", con i filtri che robocopy ricevera'. Serve al versioning: la passata
     /// sovrascrive SUL POSTO, e su un file ancora hard-linkato agli snapshot precedenti ne
     /// riscriverebbe la storia; chi versiona deve prima scollegarli.</param>
+    /// <param name="listDetails">Chiede a robocopy un elenco con percorso completo e byte
+    /// (<c>/FP /BYTES</c>): serve solo all'anteprima delle versioni per differenza, che quelle
+    /// righe deve leggerle (vedi <see cref="RobocopyListParser"/>).</param>
     public async Task<RobocopyRunResult> RunAsync(
         BackupJob job, bool dryRun = false, IProgress<string>? progress = null, CancellationToken ct = default,
         string? destinationOverride = null, string? sourceOverride = null,
-        Func<IReadOnlyList<string>, Task>? beforeForceCopyPass = null)
+        Func<IReadOnlyList<string>, Task>? beforeForceCopyPass = null, bool listDetails = false)
     {
         var started = DateTime.Now;
 
@@ -122,7 +125,8 @@ public sealed class RobocopyRunner
         {
             pass1 = await RunPassAsync(
                 RobocopyArgsBuilder.Build(job, dryRun, destinationOverride: destinationOverride,
-                    sourceOverride: sourceOverride, maxThreads: maxThreads), progress, ct)
+                    sourceOverride: sourceOverride, maxThreads: maxThreads, listDetails: listDetails),
+                progress, ct)
                 .ConfigureAwait(false);
         }
         catch (JobCancelledException ex)

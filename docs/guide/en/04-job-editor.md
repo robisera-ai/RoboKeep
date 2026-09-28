@@ -31,7 +31,9 @@ guided setup or, if you skip it, an empty editor — or from **Edit** on an exis
 - **File** and **folder exclusions** — what to skip, one entry per line.
 - **Force copy** — always recopies files whose date and size never change (encrypted containers,
   some databases), which would otherwise be skipped. There's an optional **content-comparison**
-  mode that decides based on what's actually inside the file.
+  mode that decides based on what's actually inside the file. If a file appears both here and in the
+  **exclusions**, the exclusion wins: "don't touch this" is a stronger request than "always recopy
+  this".
 - **Copy throttling** — caps the speed: handy to avoid saturating the network during a backup to
   a share.
 

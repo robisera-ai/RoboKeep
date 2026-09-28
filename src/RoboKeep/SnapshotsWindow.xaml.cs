@@ -9,12 +9,20 @@ namespace RoboKeep;
 
 public partial class SnapshotsWindow : Wpf.Ui.Controls.FluentWindow
 {
-    private readonly string _destination;
+    // La cartella che contiene le versioni: la destinazione stessa nel modello a hard-link,
+    // «versions» in quello per differenza.
+    private readonly string _versionsFolder;
 
     public SnapshotsWindow(string jobName, string destination)
     {
-        _destination = destination;
-        Snapshots = LoadSnapshots(destination);
+        // Quale layout ha questa destinazione si legge dalle cartelle che ci sono, senza mai
+        // scrivere il file di prova degli hard-link: questa finestra guarda e apre, non decide.
+        var differentialVersions = VersioningLayout.VersionsDir(destination);
+        IsDifferential = SnapshotName.ListValid(destination).Count == 0
+            && Directory.Exists(differentialVersions);
+        _versionsFolder = IsDifferential ? differentialVersions : destination;
+        Snapshots = SnapshotName.ListValid(_versionsFolder).ToList();
+
         InitializeComponent();
         DataContext = this;
         Title = jobName;
@@ -29,8 +37,10 @@ public partial class SnapshotsWindow : Wpf.Ui.Controls.FluentWindow
     public bool HasSnapshots => Snapshots.Count > 0;
     public bool IsEmpty => Snapshots.Count == 0;
 
-    private static List<string> LoadSnapshots(string dest)
-        => SnapshotName.ListValid(dest).ToList();
+    /// <summary>true se il job usa le versioni per differenza: una cartella-data non è l'albero
+    /// intero di quel giorno ma i soli file che quel backup ha sostituito o cancellato, e va detto
+    /// prima che l'utente ci guardi dentro e si spaventi di non trovarci tutto.</summary>
+    public bool IsDifferential { get; }
 
     private void OpenSelected()
     {
@@ -40,7 +50,7 @@ public partial class SnapshotsWindow : Wpf.Ui.Controls.FluentWindow
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
         {
             FileName = "explorer.exe",
-            Arguments = Path.Combine(_destination, snap),
+            Arguments = Path.Combine(_versionsFolder, snap),
             UseShellExecute = true,
         });
     }

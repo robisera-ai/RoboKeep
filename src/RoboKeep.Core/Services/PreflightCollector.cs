@@ -14,14 +14,14 @@ public static class PreflightCollector
         var reachable = IsReachable(job.Destination);
         var free = reachable ? GetFreeBytes(job.Destination) : 0L;
         var size = reachable ? TryGetSize(job.Source, sizeBudget) : null;
-        // Solo per i job versionati: la destinazione deve supportare gli hard-link, altrimenti
-        // il versioning degrada a mirror semplice (stesso controllo del runtime in BackupRunner).
-        bool? hardLinks = reachable && job.Versioned ? HardLinkSupport.IsSupported(job.Destination) : null;
+        // Niente prova degli hard-link: le versioni funzionano su ogni destinazione (per differenza
+        // dove gli hard-link non esistono), quindi non c'e' piu' niente da avvisare — e il file di
+        // prova che quella verifica scrive nella destinazione se lo risparmia a ogni avvio.
         // Solo per i job VSS: la sorgente deve stare su un volume NTFS locale.
         bool? vssEligible = job.UseVss ? VssEligibility.IsEligible(job.Source) : null;
         // "Salute" di sorgente e destinazione dal registro eventi (lo SMART di un disco USB non si
         // legge senza privilegi di amministratore).
-        return new PreflightInputs(reachable, free, minFreeBytes, size, hardLinks, vssEligible,
+        return new PreflightInputs(reachable, free, minFreeBytes, size, vssEligible,
             DiskEventLog.Collect(job.Destination), DiskEventLog.Collect(job.Source));
     }
 

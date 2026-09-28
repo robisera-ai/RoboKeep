@@ -49,30 +49,14 @@ public class PreflightCheckerTests
     }
 
     [Fact]
-    public void VersionedDestWithoutHardLinks_Warns()
+    public void VersionedJob_NoHardLinkWarningAnyMore()
     {
+        // Una destinazione senza hard-link non e' un problema: le versioni ci sono comunque, per
+        // differenza. Il pre-avvio non ha piu' niente da dire, e nemmeno il controllo da fare
+        // (scriveva un file di prova nella destinazione a ogni avvio).
         var w = PreflightChecker.Evaluate(new PreflightInputs(
-            DestinationReachable: true, FreeBytes: 10_000 * Mb, MinFreeBytes: 1024 * Mb, SourceSizeBytes: 100 * Mb,
-            VersionedDestSupportsHardLinks: false));
-        Assert.Contains(w, x => x.MessageKey == "Preflight_NoHardLink");
-    }
-
-    [Fact]
-    public void VersionedDestWithHardLinks_NoWarning()
-    {
-        var w = PreflightChecker.Evaluate(new PreflightInputs(
-            DestinationReachable: true, FreeBytes: 10_000 * Mb, MinFreeBytes: 1024 * Mb, SourceSizeBytes: 100 * Mb,
-            VersionedDestSupportsHardLinks: true));
+            DestinationReachable: true, FreeBytes: 10_000 * Mb, MinFreeBytes: 1024 * Mb, SourceSizeBytes: 100 * Mb));
         Assert.Empty(w);
-    }
-
-    [Fact]
-    public void NonVersionedJob_NoHardLinkWarning()
-    {
-        // null = controllo non pertinente (job non versionato): nessun avviso hard-link.
-        var w = PreflightChecker.Evaluate(new PreflightInputs(
-            DestinationReachable: true, FreeBytes: 10_000 * Mb, MinFreeBytes: 1024 * Mb, SourceSizeBytes: 100 * Mb,
-            VersionedDestSupportsHardLinks: null));
         Assert.DoesNotContain(w, x => x.MessageKey == "Preflight_NoHardLink");
     }
 

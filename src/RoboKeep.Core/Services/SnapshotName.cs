@@ -31,4 +31,38 @@ public static class SnapshotName
 
     /// <summary>Nome dello snapshot più recente, o null se non ce ne sono.</summary>
     public static string? Latest(string destinationDir) => ListValid(destinationDir).FirstOrDefault();
+
+    /// <summary>
+    /// Il nome desiderato se è libero, altrimenti il primo libero avanzando di un secondo alla
+    /// volta. Serve quando due run cadono nello stesso secondo (o quando si recupera una versione
+    /// interrotta il cui nome è nel frattempo stato preso).
+    /// <para>Avanzare di un secondo, invece di appiccicare un suffisso casuale, tiene il nome
+    /// <b>interpretabile come data</b>: <see cref="TryParse"/>, <see cref="ListValid"/>, la
+    /// ritenzione e l'ordinamento cronologico continuano a funzionare, mentre un
+    /// <c>2026-09-27_213000_a1b2c3d4</c> sarebbe una cartella che nessuna di quelle regole vede
+    /// più — invisibile alla ritenzione, quindi eterna, e invisibile all'elenco delle versioni,
+    /// quindi irraggiungibile dall'utente.</para>
+    /// </summary>
+    /// <param name="preferred">Nome desiderato (deve essere un nome-data).</param>
+    /// <param name="isTaken">true se quel nome è già occupato. Il modello per differenza considera
+    /// occupato anche un nome che ha solo il manifest gemello.</param>
+    /// <param name="maxTries">Quanti secondi provare prima di arrendersi a un suffisso univoco.</param>
+    public static string FreeName(string preferred, Func<string, bool> isTaken, int maxTries = 120)
+    {
+        ArgumentNullException.ThrowIfNull(isTaken);
+        if (!isTaken(preferred)) return preferred;
+
+        if (TryParse(preferred, out var date))
+        {
+            for (var k = 1; k <= maxTries; k++)
+            {
+                var candidate = For(date.AddSeconds(k));
+                if (!isTaken(candidate)) return candidate;
+            }
+        }
+
+        // Due minuti di nomi tutti occupati (o un nome che non è una data): non si sovrascrive
+        // niente, si ripiega su un suffisso univoco e la cartella resterà da guardare a mano.
+        return preferred + "_" + Guid.NewGuid().ToString("N")[..8];
+    }
 }

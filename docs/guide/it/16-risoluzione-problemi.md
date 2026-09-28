@@ -10,9 +10,9 @@ Le situazioni più comuni, con la risposta breve. Se non trovi la tua, quasi sem
 
 È il **VSS**: la copia dei file aperti fotografa il disco per un istante e chiede **una conferma di amministratore** per esecuzione. Confermi e il backup prosegue. Vedi *Copiare i file aperti (VSS)*.
 
-### Le versioni non funzionano
+### In una cartella-versione ci sono pochi file
 
-Le versioni datate usano gli hard-link, che esistono solo su **NTFS locale**. Servono una destinazione **NTFS** e **su disco locale**: su exFAT o su una share di rete non sono possibili. Vedi *Le versioni*.
+Se nella destinazione trovi `current` e `versions`, il job usa le versioni **per differenza**: ogni cartella datata contiene **soltanto i file che quel backup ha sostituito o cancellato**, non l'albero intero. Il backup completo e aggiornato è in `current`; gli altri file non erano cambiati, quindi non c'era niente da mettere da parte. È il modello che RoboKeep sceglie da sé quando la destinazione non supporta gli hard-link (exFAT, FAT32, rete). Vedi *Le versioni*.
 
 ### SmartScreen dice «editore sconosciuto»
 

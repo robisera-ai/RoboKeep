@@ -10,9 +10,9 @@ That's **normal** with disk rotation, not an error. The job writes to a specific
 
 That's **VSS**: copying open files photographs the disk for an instant and asks for **one administrator confirmation** per run. Confirm and the backup continues. See *Copying open files (VSS)*.
 
-### Versions aren't working
+### A version folder holds only a few files
 
-Dated versions use hard-links, which exist only on **local NTFS**. You need an **NTFS** destination on a **local disk**: on exFAT or a network share they aren't possible. See *Versions*.
+If the destination has `current` and `versions`, the job is using **differential** versions: every dated folder holds **only the files that backup replaced or deleted**, not the whole tree. The complete, up-to-date backup is in `current`; the other files hadn't changed, so there was nothing to set aside. This is the model RoboKeep picks by itself when the destination doesn't support hard links (exFAT, FAT32, network). See *Versions*.
 
 ### SmartScreen says "unknown publisher"
 
