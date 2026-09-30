@@ -4,7 +4,15 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.9.0] - 2026-09-30 — Restore, versions on every disk, safer mirrors
+
+This release closes the two most likely ways of losing data with RoboKeep and makes getting data
+back as easy as backing it up. A mirror that would empty the destination now stops and asks; your
+backup disks carry a copy of the configuration; versions work the same way on every disk (NTFS,
+exFAT, FAT32, network) and show at a glance what each backup changed; and a guided **Restore**
+puts a file, a folder or the whole job back as it was on a date. Backups made by earlier versions
+with dated folders at the destination root are left untouched but are no longer managed: start the
+versioned jobs on an empty destination.
 
 ### Added
 - **Restore: put a file, a folder or the whole job back as it was on a date.** Until now getting
@@ -104,6 +112,11 @@ All notable changes to RoboKeep are documented here. The format is based on
   explanation, and a job saved that way before (or edited by hand in `config.json`) does not run.
 - Wizard, step 2: the "very large files" and "keep previous versions" boxes are now aligned with
   the mirror/accumulate choices instead of being indented as if they belonged to "Accumulate".
+
+### Downloads
+- **`RoboKeep-1.9.0-win-x64-selfcontained.zip`** — bundles .NET 10: extract and run, nothing to install.
+- **`RoboKeep-1.9.0-win-x64-framework-dependent.zip`** — smaller; requires the
+  [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
 
 ## [1.8.2] - 2026-09-24 — Scheduled tasks window, responsive start
 
