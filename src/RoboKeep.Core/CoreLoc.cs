@@ -437,6 +437,31 @@ public static class CoreLoc
             "DISQUE PLEIN : {0}", "DATENTRÄGER VOLL: {0}"),
         ["Space_Unknown"] = L("n/d", "n/a", "n/d", "n/d", "k. A."),
 
+        ["Restore_NoTarget"] = L(
+            "Nessuna cartella di destinazione per il ripristino.",
+            "No destination folder for the restore.",
+            "No hay carpeta de destino para la restauración.",
+            "Aucun dossier de destination pour la restauration.",
+            "Kein Zielordner für die Wiederherstellung."),
+        ["Restore_TargetInsideSource"] = L(
+            "La cartella scelta è la sorgente del job (o è dentro di essa): un ripristino lì sovrascriverebbe i file di oggi con quelli della data scelta. Scegli un'altra cartella.",
+            "The chosen folder is the job's source (or inside it): restoring there would overwrite today's files with those of the chosen date. Pick another folder.",
+            "La carpeta elegida es el origen del trabajo (o está dentro de él): restaurar ahí sobrescribiría los archivos de hoy con los de la fecha elegida. Elige otra carpeta.",
+            "Le dossier choisi est la source de la tâche (ou se trouve à l'intérieur) : une restauration là écraserait les fichiers d'aujourd'hui par ceux de la date choisie. Choisissez un autre dossier.",
+            "Der gewählte Ordner ist die Quelle des Jobs (oder liegt darin): eine Wiederherstellung dorthin würde die heutigen Dateien mit denen des gewählten Datums überschreiben. Wählen Sie einen anderen Ordner."),
+        ["Restore_TargetInsideBackup"] = L(
+            "La cartella scelta è il backup del job (o è dentro di esso, come current o una versione): un ripristino lì mescolerebbe file vecchi con il backup. Scegli un'altra cartella.",
+            "The chosen folder is the job's backup (or inside it, such as current or a version): restoring there would mix old files into the backup. Pick another folder.",
+            "La carpeta elegida es la copia de seguridad del trabajo (o está dentro de ella, como current o una versión): restaurar ahí mezclaría archivos antiguos con la copia. Elige otra carpeta.",
+            "Le dossier choisi est la sauvegarde de la tâche (ou se trouve à l'intérieur, comme current ou une version) : une restauration là mélangerait d'anciens fichiers à la sauvegarde. Choisissez un autre dossier.",
+            "Der gewählte Ordner ist das Backup des Jobs (oder liegt darin, etwa current oder eine Version): eine Wiederherstellung dorthin würde alte Dateien mit dem Backup vermischen. Wählen Sie einen anderen Ordner."),
+        ["Restore_UnsafePath"] = L(
+            "percorso rifiutato: uscirebbe dalla cartella di destinazione",
+            "path refused: it would lead outside the destination folder",
+            "ruta rechazada: saldría de la carpeta de destino",
+            "chemin refusé : il sortirait du dossier de destination",
+            "Pfad abgelehnt: er würde aus dem Zielordner herausführen"),
+
         ["ConfigCopy_Written"] = L(
             "[config] copia della configurazione salvata in {0} (job, esclusioni e impostazioni, senza password).",
             "[config] configuration copy saved to {0} (jobs, exclusions and settings, without passwords).",
@@ -550,6 +575,12 @@ public static class CoreLoc
             "[disco] trabajo omitido: este trabajo escribe en el disco {0}, que no está conectado.",
             "[disque] tâche ignorée : cette tâche écrit sur le disque {0}, qui n'est pas connecté.",
             "[Datenträger] Job übersprungen: dieser Job schreibt auf {0}, der nicht angeschlossen ist."),
+        ["Paths_Overlap"] = L(
+            "Non eseguito: sorgente e destinazione coincidono o una sta dentro l'altra. Correggi la destinazione nell'editor del job.",
+            "Not run: source and destination are the same folder or one is inside the other. Fix the destination in the job editor.",
+            "No ejecutado: origen y destino coinciden o uno está dentro del otro. Corrige el destino en el editor del trabajo.",
+            "Non exécuté : la source et la destination coïncident ou l'une est dans l'autre. Corrigez la destination dans l'éditeur du travail.",
+            "Nicht ausgeführt: Quelle und Ziel sind identisch oder eines liegt im anderen. Korrigieren Sie das Ziel im Auftragseditor."),
         ["Volume_SkippedStatus"] = L(
             "Saltato: il disco atteso non è collegato.",
             "Skipped: the expected disk is not connected.",

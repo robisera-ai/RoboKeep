@@ -21,7 +21,7 @@ versioni datate a cui tornare quando serve. **Niente cloud, niente account, ness
 | | |
 |---|---|
 | 🧙 **Configurazione semplice** | La creazione guidata chiede dei tuoi dati in linguaggio semplice e sceglie le impostazioni giuste. Chi è esperto può comunque regolare tutto a mano. |
-| 🕰️ **Torna indietro nel tempo** | Ogni esecuzione può salvare una versione datata. I file invariati sono condivisi tra le versioni, quindi dieci versioni non costano dieci volte lo spazio. |
+| 🕰️ **Torna indietro nel tempo** | Ogni esecuzione può salvare una versione datata. I file invariati sono condivisi tra le versioni, quindi dieci versioni non costano dieci volte lo spazio. E *Ripristina* rimette a posto un file, una cartella o tutto il job **com'era a una data**, in una cartella a tua scelta. |
 | 💿 **Rispetta i tuoi dischi** | Si ferma al primo errore hardware invece di insistere per ore, tiene il PC sveglio durante il backup, va piano sui dischi meccanici. |
 | 🩺 **Salute dischi a colpo d'occhio** | Un clic legge lo SMART di ogni disco e dà un verdetto semplice: Buono, Attenzione, Pericolo — con ogni valore spiegato. *Novità della 1.8.* |
 | 🛡️ **Mai il disco sbagliato** | Alterni due dischi esterni che Windows chiama entrambi `E:`? Ogni job riconosce il proprio disco dall'identità e semplicemente lo aspetta. |
@@ -158,10 +158,11 @@ JSON leggibili sul tuo PC.
 
 ## Code signing policy
 
-Firma del codice gratuita fornita da [SignPath.io](https://about.signpath.io), certificato di
-[SignPath Foundation](https://signpath.org) (*Free code signing provided by SignPath.io,
-certificate by SignPath Foundation*). *Stato: domanda inviata; le versioni fino alla 1.8.2 non
-sono firmate, la prima firmata lo dirà nel changelog.*
+Le release oggi **non sono firmate**: Windows SmartScreen mostra «editore sconosciuto» al primo
+avvio di una nuova versione (vedi *Parti in due minuti*). L'intenzione è firmarle tramite
+[SignPath Foundation](https://signpath.org) (firma gratuita per l'open source, certificato a
+nome della Foundation), che richiede una visibilità pubblica che il progetto non ha ancora: la
+domanda verrà fatta quando l'avrà. La prima release firmata lo dirà nel changelog.
 
 - **Autori e revisori**: [Roberto Serafini](https://github.com/robisera-ai)
 - **Approvatori**: [Roberto Serafini](https://github.com/robisera-ai)

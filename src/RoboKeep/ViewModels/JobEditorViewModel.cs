@@ -428,6 +428,8 @@ public sealed class JobEditorViewModel : ObservableObject
             return Loc.Instance["Editor_Val_NameQuotes"];
         if (string.IsNullOrWhiteSpace(Source)) return Loc.Instance["Editor_Val_Source"];
         if (string.IsNullOrWhiteSpace(Destination)) return Loc.Instance["Editor_Val_Dest"];
+        if (RoboKeep.Core.Services.JobPaths.Overlap(Source, Destination))
+            return Loc.Instance["Editor_Val_Overlap"];
         if (_job.MirrorDeleteLimitPercent is < 0 or > 100)
             return Loc.Instance["Editor_Val_MirrorDeleteLimit"];
         if (_job.Schedule != ScheduleKind.None && !TimeOnly.TryParse(_job.ScheduleTime, out _))

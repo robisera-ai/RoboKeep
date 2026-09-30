@@ -54,6 +54,24 @@ public static class VersioningLayout
             : VersioningMode.Differential;
     }
 
+    /// <summary>
+    /// Il modello che la destinazione HA GIA', letto dalle sole cartelle presenti, oppure null se
+    /// non ne ha ancora nessuno. A differenza di <see cref="Detect"/> non interroga mai il disco
+    /// con il file di prova degli hard-link: e' la domanda che fanno le finestre che guardano —
+    /// «Versioni...», il ripristino — e che devono poter rispondere anche su un disco in sola
+    /// lettura, senza scriverci sopra un byte.
+    /// <para>Stessa precedenza di <see cref="Detect"/>: cartelle datate nella radice → hard-link;
+    /// altrimenti <c>current\</c> o versioni datate in <c>versions\</c> → differenza.</para>
+    /// </summary>
+    public static VersioningMode? DetectReadOnly(string destination)
+    {
+        var dest = (destination ?? "").Trim();
+        if (dest.Length == 0 || !Directory.Exists(dest)) return null;
+        if (HasDatedFolders(dest)) return VersioningMode.HardLinks;
+        if (HasDifferentialLayout(dest)) return VersioningMode.Differential;
+        return null;
+    }
+
     /// <summary>true se la destinazione ha GIA' uno dei due layout: ci sono versioni da rispettare,
     /// e un mirror piatto nella radice le cancellerebbe come file extra. Non tocca il disco piu' del
     /// necessario e non scrive nulla (nessuna prova degli hard-link).</summary>

@@ -22,7 +22,7 @@ nube, sin cuenta, sin suscripción.**
 | | |
 |---|---|
 | 🧙 **Configuración sencilla** | El asistente pregunta sobre tus datos en lenguaje sencillo y elige los ajustes adecuados. Quien lo prefiera puede ajustarlo todo a mano. |
-| 🕰️ **Vuelve atrás en el tiempo** | Cada ejecución puede guardar una versión fechada. Los archivos sin cambios se comparten entre versiones, así que diez versiones no cuestan diez veces el espacio. |
+| 🕰️ **Vuelve atrás en el tiempo** | Cada ejecución puede guardar una versión fechada. Los archivos sin cambios se comparten entre versiones, así que diez versiones no cuestan diez veces el espacio. Y *Restaurar* devuelve un archivo, una carpeta o todo el trabajo **como estaba en una fecha**, en la carpeta que elijas. |
 | 💿 **Cuida tus discos** | Se detiene al primer error de hardware en vez de insistir durante horas, mantiene el PC despierto durante la copia y va con cuidado en los discos mecánicos. |
 | 🩺 **Salud de discos de un vistazo** | Un clic lee el SMART de cada disco y da un veredicto claro: Bien, Precaución, Peligro — con cada valor explicado. *Novedad en 1.8.* |
 | 🛡️ **Nunca el disco equivocado** | ¿Alternas dos discos externos que Windows llama a ambos `E:`? Cada tarea reconoce su disco por identidad y simplemente espera a que esté conectado. |
@@ -161,10 +161,12 @@ sabe vive en archivos JSON legibles en tu PC.
 
 ## Code signing policy
 
-Firma de código gratuita proporcionada por [SignPath.io](https://about.signpath.io),
-certificado de [SignPath Foundation](https://signpath.org) (*Free code signing provided by
-SignPath.io, certificate by SignPath Foundation*). *Estado: solicitud enviada; las versiones
-hasta la 1.8.2 no están firmadas y la primera firmada lo indicará en el changelog.*
+Las versiones publicadas actualmente **no están firmadas**: Windows SmartScreen muestra «editor
+desconocido» la primera vez que ejecutas una versión nueva (véase *Empieza en dos minutos*). La
+intención es firmarlas mediante [SignPath Foundation](https://signpath.org) (firma gratuita
+para código abierto, certificado a nombre de la Fundación), que exige una visibilidad pública que
+el proyecto todavía no tiene: la solicitud se presentará cuando la tenga. La primera versión
+firmada lo indicará en el changelog.
 
 - **Autores y revisores**: [Roberto Serafini](https://github.com/robisera-ai)
 - **Aprobadores**: [Roberto Serafini](https://github.com/robisera-ai)

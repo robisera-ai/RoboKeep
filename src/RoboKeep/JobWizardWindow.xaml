@@ -87,6 +87,10 @@
                             <ui:TextBox Grid.Column="0" Text="{Binding Destination, UpdateSourceTrigger=PropertyChanged}"/>
                             <ui:Button Grid.Column="1" Content="{l:Tr Common_Browse}" Icon="{ui:SymbolIcon FolderOpen24}" Margin="8,0,0,0" Click="OnBrowseDest"/>
                         </Grid>
+                        <!-- Avanti resta spento: qui si dice perche'. -->
+                        <TextBlock Text="{l:Tr Editor_Val_Overlap}" TextWrapping="Wrap" Margin="0,8,0,0"
+                                   Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                                   Visibility="{Binding PathsOverlap, Converter={StaticResource BoolToVis}}"/>
                     </StackPanel>
                 </TabItem>
 

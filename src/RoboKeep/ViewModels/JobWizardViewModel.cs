@@ -36,6 +36,7 @@ public sealed class JobWizardViewModel : ObservableObject
             _a.Source = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(CanGoNext));
+            OnPropertyChanged(nameof(PathsOverlap));
             RaiseNetCred();
             RaisePreview();
         }
@@ -49,6 +50,7 @@ public sealed class JobWizardViewModel : ObservableObject
             _a.Destination = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(CanGoNext));
+            OnPropertyChanged(nameof(PathsOverlap));
             RaiseNetCred();
             RefreshVersioningMode();
             RaisePreview();
@@ -255,6 +257,7 @@ public sealed class JobWizardViewModel : ObservableObject
             OnPropertyChanged();
             OnPropertyChanged(nameof(CanGoBack));
             OnPropertyChanged(nameof(CanGoNext));
+            OnPropertyChanged(nameof(PathsOverlap));
             OnPropertyChanged(nameof(ShowNext));
             OnPropertyChanged(nameof(ShowOpen));
             OnPropertyChanged(nameof(StepLabel));
@@ -269,7 +272,12 @@ public sealed class JobWizardViewModel : ObservableObject
     public bool CanGoNext => CurrentStep != 0
         || (!string.IsNullOrWhiteSpace(Name)
             && !string.IsNullOrWhiteSpace(Source)
-            && !string.IsNullOrWhiteSpace(Destination));
+            && !string.IsNullOrWhiteSpace(Destination)
+            && !PathsOverlap);
+
+    /// <summary>Sorgente e destinazione coincidono o una sta dentro l'altra: il passo 1 non va
+    /// avanti e lo dice (vedi <see cref="RoboKeep.Core.Services.JobPaths"/>).</summary>
+    public bool PathsOverlap => RoboKeep.Core.Services.JobPaths.Overlap(Source, Destination);
 
     public string StepLabel => string.Format(Loc.Instance["Wiz_Step"], CurrentStep + 1, StepCount);
 

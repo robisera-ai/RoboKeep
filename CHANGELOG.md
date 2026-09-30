@@ -7,6 +7,27 @@ All notable changes to RoboKeep are documented here. The format is based on
 ## [Unreleased]
 
 ### Added
+- **Restore: put a file, a folder or the whole job back as it was on a date.** Until now getting
+  something back meant opening a dated folder in File Explorer and copying by hand — and with the
+  new differential model that folder holds only *what changed that day*, which is not the same
+  thing as *how it was that day*. The new **Restore...** window (toolbar, and from *Versions...*
+  with the chosen date already selected) does the reconstruction for you: pick a point in time — or
+  **Now** — and it rebuilds the whole tree, taking changed and deleted files from the version
+  folders, everything untouched from `current`, and leaving out what did not exist yet. Each entry
+  says plainly what it rebuilds, because the two version models keep different things: with
+  differential versions a point reads **"Before the backup of …"** (a version folder holds what that
+  backup replaced or deleted — the state before it — so every folder, including the oldest, is
+  reachable and a file deleted from the source can always be got back); with hard links it reads
+  **"After the backup of …"** (a dated folder is the tree that backup left). Tick a file,
+  a folder (everything beneath it comes along, including branches you never opened, and you can
+  untick an exception inside), or everything with the box at the top of the list; a search box filters
+  by name. Files land in a folder **you** choose, keeping their last-modified date, with the empty
+  folders of that date recreated. Nothing is ever overwritten and the job's source is refused as a
+  target — restoring over today's files in one click, with no way back, is exactly the accident a
+  backup program should not make easy; a file already there, or one that cannot be read, is listed
+  at the end with its reason instead of stopping the rest. Progress bar, cancel, and **Open folder**
+  when it is done. Works with both version models: with hard links a date is simply its dated folder.
+  New guide chapter *Restoring*.
 - **Versions now work on every disk, not just NTFS.** Dated versions used to need hard links, so on
   an exFAT or FAT32 stick — how most external drives come from the factory — or on a network share
   you simply got none. Now RoboKeep keeps versions there too, with a second model it picks by
@@ -72,6 +93,10 @@ All notable changes to RoboKeep are documented here. The format is based on
   reads your configuration, while a value you set yourself is kept as it is.
 
 ### Fixed
+- **A job can no longer have the source as its destination.** The editor and the wizard accepted
+  a destination equal to the source or inside it (or a source inside the destination); only the
+  mirror deletion threshold stopped the first run. Now Save and the wizard's Next refuse it with an
+  explanation, and a job saved that way before (or edited by hand in `config.json`) does not run.
 - Wizard, step 2: the "very large files" and "keep previous versions" boxes are now aligned with
   the mirror/accumulate choices instead of being indented as if they belonged to "Accumulate".
 

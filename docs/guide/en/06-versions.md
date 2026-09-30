@@ -166,5 +166,9 @@ No special format, no extraction: they're ordinary files, exactly as they were t
 differential model the window reminds you: the dated folder holds the files that backup **replaced
 or deleted**, and everything else is in `current`.
 
+To get the **whole tree back as it was on a date**, rather than just looking at what changed that
+day, use **Restore...** — from the toolbar or from the *Versions...* window. The *Restoring*
+chapter covers it.
+
 > Versions pair nicely with *integrity verification*: jobs with versions verify the latest snapshot
 > (hard-link model) or the `current` folder (differential model). See the dedicated chapter.

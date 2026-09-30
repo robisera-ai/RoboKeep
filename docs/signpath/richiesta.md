@@ -1,5 +1,13 @@
 # Firma del codice: richiesta a SignPath Foundation
 
+> **Stato (28 settembre 2026):** prima domanda inviata il 26/09 e **respinta** il 28/09: la
+> Foundation chiede segnali pubblici di adozione (stelle e fork su GitHub, articoli, discussioni
+> esterne, attività continuativa) che il progetto, pubblico da pochi giorni, non ha ancora.
+> Decisione: aspettare e rifare la domanda quando ci sarà visibilità; niente abbonamento a
+> pagamento per ora. Il resto del documento resta valido per la seconda domanda; il README
+> dice che le release non sono firmate. Alternativa se servisse prima: Azure Trusted Signing
+> (~10 $/mese, certificato a nome del maintainer).
+
 Questo documento serve al maintainer per chiedere la firma gratuita del codice a
 **SignPath Foundation** e per collegarla al workflow di release che è già nel repo.
 

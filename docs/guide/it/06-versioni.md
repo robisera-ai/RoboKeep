@@ -171,6 +171,10 @@ Nessun formato speciale, nessuna estrazione: sono file normali, esattamente com'
 giorno. Con il modello per differenza la finestra te lo ricorda: nella cartella datata trovi i
 file **sostituiti o cancellati** da quel backup, e tutto il resto è in `current`.
 
+Per riavere **l'albero intero com'era a una data**, invece di guardare solo che cosa è cambiato quel
+giorno, c'è **Ripristina...** — dalla barra principale o dalla finestra *Versioni...*. Ne parla il
+capitolo *Ripristinare*.
+
 > Le versioni si sposano bene con la *verifica dell'integrità*: i job con versioni verificano
 > l'ultimo snapshot (modello a hard-link) o la cartella `current` (modello per differenza). Ne
 > parla il capitolo dedicato.

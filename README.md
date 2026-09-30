@@ -21,7 +21,7 @@ versions you can go back to. **No cloud, no account, no subscription.**
 | | |
 |---|---|
 | 🧙 **Simple setup** | The wizard asks about your data in plain language and picks the right settings. Experts can tweak everything by hand. |
-| 🕰️ **Go back in time** | Every run can keep a dated version. Unchanged files are shared between versions, so ten versions don't cost ten times the space. |
+| 🕰️ **Go back in time** | Every run can keep a dated version. Unchanged files are shared between versions, so ten versions don't cost ten times the space. And *Restore* puts a file, a folder or the whole job back **as it was on a date**, into a folder you choose. |
 | 💿 **Kind to your disks** | Stops at the first hardware error instead of grinding for hours, keeps the PC awake mid-backup, goes easy on mechanical disks. |
 | 🩺 **Disk health at a glance** | One click reads every disk's SMART and gives a plain verdict: Good, Caution, Danger — with each value explained. *New in 1.8.* |
 | 🛡️ **Never the wrong disk** | Rotating two external drives that Windows both calls `E:`? Each job knows its own disk by identity and simply waits for it. |
@@ -148,9 +148,11 @@ what you enable yourself: the optional update check (one request to GitHub) and 
 
 ## Code signing policy
 
-Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by
-[SignPath Foundation](https://signpath.org). *Status: application submitted; releases up to
-1.8.2 are unsigned, and the first signed release will say so in the changelog.*
+Releases are currently **unsigned**: Windows SmartScreen shows "unknown publisher" the first time
+you run a new version (see *Get started*). We intend to sign them through
+[SignPath Foundation](https://signpath.org) (free code signing for open source, certificate in
+the Foundation's name), which asks for a level of public visibility the project does not have
+yet; we will apply once it does. The first signed release will say so in the changelog.
 
 - **Committers and reviewers**: [Roberto Serafini](https://github.com/robisera-ai)
 - **Approvers**: [Roberto Serafini](https://github.com/robisera-ai)

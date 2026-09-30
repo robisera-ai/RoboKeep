@@ -583,8 +583,18 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         var job = selected.Model;
         if (!job.Versioned) return;
 
-        var win = new SnapshotsWindow(job.Name, job.Destination) { Owner = this };
+        var win = new SnapshotsWindow(job) { Owner = this };
         win.ShowDialog();
+    }
+
+    private void OnRestore(object sender, RoutedEventArgs e)
+    {
+        var selected = _vm.SelectedJob;
+        if (selected is null) return;
+        var job = selected.Model;
+        if (!job.Versioned) return;
+
+        new RestoreWindow(job) { Owner = this }.ShowDialog();
     }
 
     private void OnSettings(object sender, RoutedEventArgs e)

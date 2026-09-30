@@ -59,6 +59,9 @@
                 <ui:Button Icon="{ui:SymbolIcon Delete24}" Content="{l:Tr Main_Delete}" Click="OnDeleteJob" Margin="0,0,8,0"/>
                 <ui:Button Icon="{ui:SymbolIcon History24}" Content="{l:Tr Ver_Browse}" Click="OnBrowseVersions" Margin="0,0,8,0"
                            IsEnabled="{Binding IsVersionedJobSelected}"/>
+                <!-- Sfogliare le versioni serve a guardare; questo serve a rimettere a posto. -->
+                <ui:Button Icon="{ui:SymbolIcon ArrowUndo24}" Content="{l:Tr Main_Restore}" Click="OnRestore" Margin="0,0,8,0"
+                           IsEnabled="{Binding IsVersionedJobSelected}"/>
                 <Separator Margin="6,4" Background="#33888888"/>
                 <ui:Button Icon="{ui:SymbolIcon Eye24}" Content="{Binding PreviewLabel}" Command="{Binding PreviewSelectedCommand}"
                            Appearance="{Binding PreviewCancel, Converter={StaticResource CancelAppearance}, ConverterParameter=Secondary}" Margin="0,0,8,0"/>

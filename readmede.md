@@ -22,7 +22,7 @@ Cloud, kein Konto, kein Abo.**
 | | |
 |---|---|
 | 🧙 **Einfache Einrichtung** | Der Assistent fragt in klarer Sprache nach Ihren Daten und wählt die passenden Einstellungen. Wer möchte, kann alles von Hand anpassen. |
-| 🕰️ **Zurück in der Zeit** | Jeder Lauf kann eine datierte Version speichern. Unveränderte Dateien werden zwischen den Versionen geteilt, sodass zehn Versionen nicht das Zehnfache an Platz kosten. |
+| 🕰️ **Zurück in der Zeit** | Jeder Lauf kann eine datierte Version speichern. Unveränderte Dateien werden zwischen den Versionen geteilt, sodass zehn Versionen nicht das Zehnfache an Platz kosten. Und *Wiederherstellen* holt eine Datei, einen Ordner oder den ganzen Job **so zurück, wie er an einem Datum war**, in einen Ordner Ihrer Wahl. |
 | 💿 **Schont Ihre Datenträger** | Stoppt beim ersten Hardwarefehler, statt stundenlang weiterzukopieren, hält den PC während des Backups wach und geht behutsam mit mechanischen Festplatten um. |
 | 🩺 **Datenträgerzustand auf einen Blick** | Ein Klick liest den SMART-Zustand jedes Datenträgers aus und liefert ein klares Urteil: Gut, Achtung, Gefahr — mit jedem Wert erklärt. *Neu in 1.8.* |
 | 🛡️ **Nie der falsche Datenträger** | Wechseln Sie zwischen zwei externen Datenträgern, die Windows beide `E:` nennt? Jeder Auftrag erkennt seinen eigenen Datenträger an der Identität und wartet einfach auf ihn. |
@@ -162,10 +162,12 @@ in lesbaren JSON-Dateien auf Ihrem PC.
 
 ## Code signing policy
 
-Kostenlose Code-Signierung bereitgestellt von [SignPath.io](https://about.signpath.io),
-Zertifikat der [SignPath Foundation](https://signpath.org) (*Free code signing provided by
-SignPath.io, certificate by SignPath Foundation*). *Stand: Antrag eingereicht; Versionen bis
-1.8.2 sind unsigniert, die erste signierte Version wird im Changelog genannt.*
+Die Releases sind derzeit **nicht signiert**: Windows SmartScreen zeigt beim ersten Start einer
+neuen Version „unbekannter Herausgeber“ (siehe *In zwei Minuten loslegen*). Geplant ist die
+Signierung über die [SignPath Foundation](https://signpath.org) (kostenlose Code-Signierung für
+Open Source, Zertifikat im Namen der Foundation), die eine öffentliche Sichtbarkeit verlangt, die
+das Projekt noch nicht hat: der Antrag wird gestellt, sobald es sie hat. Die erste signierte
+Version wird im Changelog genannt.
 
 - **Autoren und Reviewer**: [Roberto Serafini](https://github.com/robisera-ai)
 - **Freigeber**: [Roberto Serafini](https://github.com/robisera-ai)

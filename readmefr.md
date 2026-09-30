@@ -22,7 +22,7 @@ d'abonnement.**
 | | |
 |---|---|
 | 🧙 **Configuration simple** | L'assistant pose des questions sur vos données en langage clair et choisit les bons réglages. Les experts peuvent tout ajuster à la main. |
-| 🕰️ **Remontez le temps** | Chaque exécution peut conserver une version datée. Les fichiers inchangés sont partagés entre les versions, donc dix versions ne coûtent pas dix fois l'espace. |
+| 🕰️ **Remontez le temps** | Chaque exécution peut conserver une version datée. Les fichiers inchangés sont partagés entre les versions, donc dix versions ne coûtent pas dix fois l'espace. Et *Restaurer* remet un fichier, un dossier ou toute la tâche **tels qu'à une date**, dans un dossier de votre choix. |
 | 💿 **Doux avec vos disques** | S'arrête à la première erreur matérielle au lieu de s'acharner pendant des heures, maintient le PC éveillé pendant la sauvegarde, ménage les disques mécaniques. |
 | 🩺 **État des disques en un coup d'œil** | Un clic lit le SMART de chaque disque et donne un verdict clair : Bon, Attention, Danger — avec chaque valeur expliquée. *Nouveauté de la 1.8.* |
 | 🛡️ **Jamais le mauvais disque** | Vous alternez deux disques externes que Windows appelle tous deux `E:` ? Chaque tâche reconnaît son propre disque par son identité et attend simplement qu'il soit branché. |
@@ -165,10 +165,12 @@ dans des fichiers JSON lisibles sur votre PC.
 
 ## Code signing policy
 
-Signature de code gratuite fournie par [SignPath.io](https://about.signpath.io), certificat de
-[SignPath Foundation](https://signpath.org) (*Free code signing provided by SignPath.io,
-certificate by SignPath Foundation*). *État : demande envoyée ; les versions jusqu'à la 1.8.2
-ne sont pas signées, la première version signée le précisera dans le changelog.*
+Les versions publiées ne sont pour l'instant **pas signées** : Windows SmartScreen affiche
+« éditeur inconnu » au premier lancement d'une nouvelle version (voir *Démarrez en deux
+minutes*). L'objectif est de les signer via [SignPath Foundation](https://signpath.org)
+(signature gratuite pour l'open source, certificat au nom de la Fondation), qui exige une
+visibilité publique que le projet n'a pas encore : la demande sera faite lorsqu'il l'aura. La
+première version signée le précisera dans le changelog.
 
 - **Auteurs et relecteurs** : [Roberto Serafini](https://github.com/robisera-ai)
 - **Approbateurs** : [Roberto Serafini](https://github.com/robisera-ai)

@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Windows;
+using RoboKeep.Core.Models;
 using RoboKeep.Core.Services;
 
 namespace RoboKeep;
@@ -12,20 +13,21 @@ public partial class SnapshotsWindow : Wpf.Ui.Controls.FluentWindow
     // La cartella che contiene le versioni: la destinazione stessa nel modello a hard-link,
     // «versions» in quello per differenza.
     private readonly string _versionsFolder;
+    private readonly BackupJob _job;
 
-    public SnapshotsWindow(string jobName, string destination)
+    public SnapshotsWindow(BackupJob job)
     {
+        _job = job;
+        var destination = job.Destination ?? "";
         // Quale layout ha questa destinazione si legge dalle cartelle che ci sono, senza mai
         // scrivere il file di prova degli hard-link: questa finestra guarda e apre, non decide.
-        var differentialVersions = VersioningLayout.VersionsDir(destination);
-        IsDifferential = SnapshotName.ListValid(destination).Count == 0
-            && Directory.Exists(differentialVersions);
-        _versionsFolder = IsDifferential ? differentialVersions : destination;
+        IsDifferential = VersioningLayout.DetectReadOnly(destination) == VersioningMode.Differential;
+        _versionsFolder = IsDifferential ? VersioningLayout.VersionsDir(destination) : destination;
         Snapshots = SnapshotName.ListValid(_versionsFolder).ToList();
 
         InitializeComponent();
         DataContext = this;
-        Title = jobName;
+        Title = job.Name;
 
         // Preseleziona il più recente (lista ordinata dal più nuovo): il pulsante apre sempre
         // qualcosa di VISIBILMENTE selezionato, senza fallback nascosti.
@@ -47,10 +49,13 @@ public partial class SnapshotsWindow : Wpf.Ui.Controls.FluentWindow
         // Apri solo ciò che è selezionato: niente fallback nascosto (il più recente è già preselezionato).
         if (SnapshotList.SelectedItem is not string snap) return;
 
+        // Percorso tra virgolette: senza, una destinazione con uno spazio nel nome
+        // («D:\I miei backup\…») arriverebbe a Esplora risorse spezzata in due argomenti e si
+        // aprirebbe la cartella Documenti invece della versione.
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
         {
             FileName = "explorer.exe",
-            Arguments = Path.Combine(_versionsFolder, snap),
+            Arguments = "\"" + Path.Combine(_versionsFolder, snap) + "\"",
             UseShellExecute = true,
         });
     }
@@ -60,6 +65,15 @@ public partial class SnapshotsWindow : Wpf.Ui.Controls.FluentWindow
 
     private void OnOpenInExplorer(object sender, RoutedEventArgs e)
         => OpenSelected();
+
+    /// <summary>Apre il ripristino guidato sulla versione selezionata: qui si guarda, di là si
+    /// rimette a posto. La data scelta arriva già impostata, altrimenti l'utente dovrebbe
+    /// ritrovarla in un secondo elenco.</summary>
+    private void OnRestore(object sender, RoutedEventArgs e)
+    {
+        var chosen = SnapshotList.SelectedItem as string;
+        new RestoreWindow(_job, chosen) { Owner = this }.ShowDialog();
+    }
 
     private void OnClose(object sender, RoutedEventArgs e)
         => Close();

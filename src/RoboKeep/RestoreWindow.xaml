@@ -1,0 +1,196 @@
+<ui:FluentWindow x:Class="RoboKeep.RestoreWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:l="clr-namespace:RoboKeep.Localization"
+        Title="{l:Tr Restore_Title}" Width="900" Height="620" MinWidth="640" MinHeight="460"
+        ExtendsContentIntoTitleBar="True" WindowBackdropType="Mica"
+        WindowCornerPreference="Round" WindowStartupLocation="CenterOwner">
+
+    <ui:FluentWindow.Resources>
+        <!-- L'apertura del nodo arriva al ViewModel, che materializza i figli solo allora: cosi' un
+             backup di centomila file non diventa centomila oggetti per mostrarne dieci.
+             BasedOn sullo stile implicito di WPF-UI: senza, questo stile lo sostituirebbe e i nodi
+             perderebbero l'aspetto Fluent (frecce, spaziature, colori del tema). -->
+        <Style TargetType="TreeViewItem" BasedOn="{StaticResource {x:Type TreeViewItem}}">
+            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+        </Style>
+
+        <!-- Cartella o file: l'icona lo dice prima del nome. Il segnaposto «…» di una cartella non
+             ancora aperta non e' ne' l'uno ne' l'altro: niente icona e niente casella. -->
+        <Style TargetType="ui:SymbolIcon" x:Key="NodeIcon">
+            <Setter Property="Symbol" Value="Document24"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Opacity" Value="0.7"/>
+            <Setter Property="Margin" Value="0,0,6,0"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsFolder}" Value="True">
+                    <Setter Property="Symbol" Value="Folder24"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsPlaceholder}" Value="True">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="CheckBox" x:Key="NodeCheck" BasedOn="{StaticResource {x:Type CheckBox}}">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,6,0"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsPlaceholder}" Value="True">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Il colore della riga di stato e' un messaggio: il giallo vale per gli avvisi, un
+             ripristino riuscito resta del colore del testo normale. -->
+        <Style TargetType="TextBlock" x:Key="StatusLine">
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding StatusIsWarning}" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </ui:FluentWindow.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="{l:Tr Restore_Title}">
+            <ui:TitleBar.Icon><ui:SymbolIcon Symbol="ArrowUndo24"/></ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <TextBlock Grid.Row="1" Text="{Binding Header}" TextWrapping="Wrap" Opacity="0.8"
+                   Margin="16,4,16,8"/>
+
+        <!-- Il momento da ricostruire. -->
+        <Grid Grid.Row="2" Margin="16,0,16,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="{l:Tr Restore_Point}" VerticalAlignment="Center"
+                       Margin="0,0,10,0"/>
+            <ComboBox Grid.Column="1" ItemsSource="{Binding Points}"
+                      SelectedItem="{Binding SelectedPoint, Mode=TwoWay}"
+                      DisplayMemberPath="Label" IsEnabled="{Binding CanAct}"/>
+            <TextBlock Grid.Column="2" Text="{Binding Totals}" VerticalAlignment="Center"
+                       Opacity="0.8" Margin="12,0,0,0"/>
+        </Grid>
+
+        <ui:TextBox Grid.Row="3" Margin="16,0,16,8" Icon="{ui:SymbolIcon Search24}"
+                    PlaceholderText="{l:Tr Restore_Search}"
+                    Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged, Delay=250}"
+                    IsEnabled="{Binding CanAct}"/>
+
+        <Border Grid.Row="4" Margin="16,0,16,8" CornerRadius="8" BorderThickness="1"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Intestazione dell'elenco: la casella sopra le caselle spunta o toglie tutto
+                     (con la ricerca attiva, i soli risultati). Allineata a quelle delle righe:
+                     il margine a sinistra salta la freccia di apertura delle cartelle. -->
+                <Border Grid.Row="0" BorderThickness="0,0,0,1" Padding="4,6,4,6"
+                        BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}">
+                    <StackPanel Orientation="Horizontal" Margin="38,0,0,0">
+                        <CheckBox IsChecked="{Binding AllChecked, Mode=OneWay}" Click="OnToggleAll"
+                                  IsEnabled="{Binding CanAct}" Style="{StaticResource NodeCheck}"
+                                  ToolTip="{l:Tr Restore_SelectAll}"/>
+                        <TextBlock Text="{l:Tr Restore_ColumnName}" FontWeight="SemiBold"
+                                   VerticalAlignment="Center" Margin="4,0,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <TreeView Grid.Row="1" ItemsSource="{Binding Nodes}" Background="Transparent"
+                          BorderThickness="0" Padding="4">
+                    <TreeView.ItemTemplate>
+                        <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                            <StackPanel Orientation="Horizontal">
+                                <!-- Tre stati per poter disegnare una cartella spuntata a meta';
+                                     il clic che proporrebbe «a meta'» vale «niente» (vedi il
+                                     setter di IsChecked). -->
+                                <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                          IsThreeState="True" Style="{StaticResource NodeCheck}"/>
+                                <ui:SymbolIcon Style="{StaticResource NodeIcon}"/>
+                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding SizeText}" VerticalAlignment="Center"
+                                           Opacity="0.6" FontSize="11" Margin="10,0,0,0"/>
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
+                    </TreeView.ItemTemplate>
+                </TreeView>
+
+                <!-- Stato vuoto: «niente» si confonde con «non ha funzionato». -->
+                <TextBlock Grid.Row="1" Text="{l:Tr Restore_Empty}" HorizontalAlignment="Center"
+                           VerticalAlignment="Center" Opacity="0.7" TextWrapping="Wrap"
+                           Visibility="{Binding IsEmpty, Converter={StaticResource BoolToVis}}"/>
+            </Grid>
+        </Border>
+
+        <!-- Dove mettere i file recuperati: mai la sorgente del job. -->
+        <Grid Grid.Row="5" Margin="16,0,16,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="{l:Tr Restore_Target}" VerticalAlignment="Center"
+                       Margin="0,0,10,0"/>
+            <ui:TextBox Grid.Column="1" Text="{Binding TargetFolder, UpdateSourceTrigger=PropertyChanged}"
+                        IsEnabled="{Binding CanAct}"/>
+            <ui:Button Grid.Column="2" Content="{l:Tr Common_Browse}" Click="OnBrowseTarget"
+                       Margin="8,0,0,0" IsEnabled="{Binding CanAct}"/>
+        </Grid>
+
+        <TextBlock Grid.Row="6" Text="{Binding Status}" Style="{StaticResource StatusLine}"
+                   Margin="16,0,16,4"/>
+
+        <!-- Avanzamento e file non ripristinati: due cose che si vedono solo quando ci sono.
+             RangeBase.Value si lega TwoWay per default e Progress ha il setter privato: senza
+             Mode=OneWay il binding fallirebbe appena assegnato il DataContext, cioe' all'apertura
+             della finestra. -->
+        <StackPanel Grid.Row="7" Margin="16,0,16,4">
+            <ProgressBar Height="6" Minimum="0" Maximum="{Binding ProgressMax, Mode=OneWay}"
+                         Value="{Binding Progress, Mode=OneWay}"
+                         Visibility="{Binding IsCopying, Converter={StaticResource BoolToVis}}"/>
+            <ScrollViewer MaxHeight="120" VerticalScrollBarVisibility="Auto"
+                          Visibility="{Binding HasFailures, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="{Binding Failures}" TextWrapping="Wrap" FontSize="11"
+                           Foreground="{DynamicResource SystemFillColorCriticalBrush}"/>
+            </ScrollViewer>
+        </StackPanel>
+
+        <StackPanel Grid.Row="8" Orientation="Horizontal" HorizontalAlignment="Right"
+                    Margin="16,4,16,16">
+            <ui:Button Icon="{ui:SymbolIcon FolderOpen24}" Content="{l:Tr Restore_OpenFolder}"
+                       Click="OnOpenFolder" Margin="0,0,8,0"
+                       Visibility="{Binding IsDone, Converter={StaticResource BoolToVis}}"/>
+            <ui:Button Content="{l:Tr Common_Cancel}" Appearance="Caution" Click="OnCancelCopy"
+                       Margin="0,0,8,0"
+                       Visibility="{Binding IsCopying, Converter={StaticResource BoolToVis}}"/>
+            <ui:Button Icon="{ui:SymbolIcon ArrowUndo24}" Content="{l:Tr Restore_Selection}" Appearance="Primary"
+                       Click="OnRestoreSelection" Margin="0,0,8,0"
+                       IsEnabled="{Binding CanRestoreSelection}"/>
+            <ui:Button Content="{l:Tr Common_Close}" Click="OnClose"/>
+        </StackPanel>
+    </Grid>
+</ui:FluentWindow>

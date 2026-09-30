@@ -122,6 +122,40 @@ public class VersioningLayoutTests : IDisposable
     }
 
     [Fact]
+    public void DetectReadOnly_ReadsTheLayout_WithoutEverTouchingTheDisk()
+    {
+        var hl = Dest("ro-hl");
+        Directory.CreateDirectory(Path.Combine(hl, "2026-09-25_210000"));
+        Assert.Equal(VersioningMode.HardLinks, VersioningLayout.DetectReadOnly(hl));
+
+        var diff = Dest("ro-diff");
+        Directory.CreateDirectory(VersioningLayout.CurrentDir(diff));
+        Assert.Equal(VersioningMode.Differential, VersioningLayout.DetectReadOnly(diff));
+
+        var onlyVersions = Dest("ro-versions");
+        Directory.CreateDirectory(Path.Combine(VersioningLayout.VersionsDir(onlyVersions), "2026-09-25_210000"));
+        Assert.Equal(VersioningMode.Differential, VersioningLayout.DetectReadOnly(onlyVersions));
+
+        // Nessun file di prova scritto: la cartella resta esattamente come l'abbiamo lasciata.
+        // È ciò che permette di aprire «Versioni...» e il ripristino su un disco in sola lettura.
+        Assert.Empty(Directory.GetFiles(Dest("ro-vergine")));
+    }
+
+    [Fact]
+    public void DetectReadOnly_IsNull_WhenThereIsNoLayoutYet()
+    {
+        Assert.Null(VersioningLayout.DetectReadOnly(Dest("ro-nuda")));
+        Assert.Null(VersioningLayout.DetectReadOnly(Path.Combine(_root, "ro-non-esiste")));
+        Assert.Null(VersioningLayout.DetectReadOnly(""));
+
+        // Contenuto qualsiasi non è un layout, e nemmeno una «versions» vuota.
+        var piatta = Dest("ro-piatta");
+        File.WriteAllText(Path.Combine(piatta, "documento.txt"), "x");
+        Directory.CreateDirectory(VersioningLayout.VersionsDir(piatta));
+        Assert.Null(VersioningLayout.DetectReadOnly(piatta));
+    }
+
+    [Fact]
     public void FolderNames_AreTheOnesOnDisk()
     {
         Assert.Equal("current", VersioningLayout.CurrentFolderName);

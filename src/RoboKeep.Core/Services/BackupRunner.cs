@@ -85,6 +85,24 @@ public sealed class BackupRunner
         BackupJob job, bool dryRun = false, IProgress<string>? progress = null, CancellationToken ct = default,
         Func<MirrorDeleteEstimate, Task<bool>>? confirmDeletions = null)
     {
+        // Rete di sicurezza per i job gia' salvati (o modificati a mano nel config.json):
+        // sorgente e destinazione sovrapposte non si eseguono mai, nemmeno in anteprima. Un
+        // mirror con la sorgente dentro la destinazione cancellerebbe tutto il resto.
+        if (JobPaths.Overlap(job.Source, job.Destination))
+        {
+            var status = CoreLoc.S("Paths_Overlap");
+            progress?.Report(status);
+            return new JobResult
+            {
+                JobName = job.Name,
+                Success = false,
+                NotStarted = true,
+                Status = status,
+                StartedAt = DateTime.Now,
+                DryRun = dryRun,
+            };
+        }
+
         // Rotazione dei dischi: due dischi alternati hanno spesso la stessa lettera. Se il
         // volume collegato non e' quello per cui il job e' stato configurato - o se non c'e'
         // nessun disco - si salta senza toccare NULLA (niente lock, niente UAC per VSS, niente

@@ -6,7 +6,7 @@
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:l="clr-namespace:RoboKeep.Localization"
         mc:Ignorable="d"
-        Title="{l:Tr Ver_Browse}" Height="420" Width="520"
+        Title="{l:Tr Ver_Browse}" Height="440" Width="620"
         ExtendsContentIntoTitleBar="True"
         WindowBackdropType="Mica"
         WindowCornerPreference="Round"
@@ -60,6 +60,8 @@
         </Border>
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="16,0,16,16">
+            <ui:Button Icon="{ui:SymbolIcon ArrowUndo24}" Content="{l:Tr Main_Restore}"
+                       Margin="0,0,8,0" Click="OnRestore"/>
             <ui:Button Icon="{ui:SymbolIcon FolderOpen24}" Content="{l:Tr Ver_OpenInExplorer}"
                        Appearance="Primary" Margin="0,0,8,0"
                        Click="OnOpenInExplorer"/>
