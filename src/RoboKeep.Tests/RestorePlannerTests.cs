@@ -61,12 +61,6 @@ public class RestorePlannerTests
             DirectoryExists = _dirs.Contains,
             Versions = _ => _points.OrderBy(p => p.Date).ToList(),
             Manifest = d => _manifests.TryGetValue(d, out var m) ? m : null,
-            Dated = dir => _dirs
-                .Where(x => C.Equals(System.IO.Path.GetDirectoryName(x), dir))
-                .Select(System.IO.Path.GetFileName).OfType<string>()
-                .Where(n => SnapshotName.TryParse(n, out _))
-                .OrderByDescending(n => { SnapshotName.TryParse(n, out var d); return d; })
-                .ToList(),
         };
 
         private static IEnumerable<string> Under(IEnumerable<string> all, string dir) =>
@@ -82,7 +76,7 @@ public class RestorePlannerTests
         Added = (added ?? Array.Empty<string>()).ToList(),
     };
 
-    // ---------------- modello per differenza ----------------
+    // ---------------- ricostruzione ----------------
 
     [Fact]
     public void Now_TakesEverythingFromCurrent_AndNoVersionIsRead()
@@ -95,7 +89,7 @@ public class RestorePlannerTests
                 Manifest(D2, changed: new[] { "a.txt" }))
             .File(Path.Combine(Versions, "2026-09-27_213000", "a.txt"));
 
-        var plan = RestorePlanner.Resolve(VersioningMode.Differential, Dest, null, fake.Reader);
+        var plan = RestorePlanner.Resolve(Dest, null, fake.Reader);
 
         Assert.Equal(2, plan.Files.Count);
         Assert.Equal(Path.Combine(Current, "a.txt"), plan.Files["a.txt"].SourcePath);
@@ -108,16 +102,16 @@ public class RestorePlannerTests
     [Fact]
     public void ChoosingAPoint_MeansBeforeThatBackup_SoEvenTheNewestDiffersFromNow()
     {
-        // Per differenza un punto vuol dire «l'albero PRIMA di quel backup»: la versione scelta si
-        // applica anch'essa, perché la sua cartella contiene proprio lo stato di prima. Anche il
-        // punto più recente è quindi uno stato diverso da «Adesso», e la finestra lo elenca.
+        // Un punto vuol dire «l'albero PRIMA di quel backup»: la versione scelta si applica
+        // anch'essa, perché la sua cartella contiene proprio lo stato di prima. Anche il punto più
+        // recente è quindi uno stato diverso da «Adesso», e la finestra lo elenca.
         var fake = new Fake()
             .File(Path.Combine(Current, "a.txt"), size: 300)
             .Point(V2, D2, hasFolder: true, Manifest(D2, changed: new[] { "a.txt" }))
             .File(Path.Combine(Versions, V2, "a.txt"), size: 100);
 
-        var beforeNewest = RestorePlanner.Resolve(VersioningMode.Differential, Dest, D2, fake.Reader);
-        var now = RestorePlanner.Resolve(VersioningMode.Differential, Dest, null, fake.Reader);
+        var beforeNewest = RestorePlanner.Resolve(Dest, D2, fake.Reader);
+        var now = RestorePlanner.Resolve(Dest, null, fake.Reader);
 
         Assert.Equal(100, beforeNewest.Files["a.txt"].Size);
         Assert.Equal(300, now.Files["a.txt"].Size);
@@ -133,7 +127,7 @@ public class RestorePlannerTests
             .Point(V3, D3, hasFolder: true, Manifest(D3, changed: new[] { "a.txt" }))
             .File(Path.Combine(Versions, V3, "a.txt"), size: 99);
 
-        var plan = RestorePlanner.Resolve(VersioningMode.Differential, Dest, D2, fake.Reader);
+        var plan = RestorePlanner.Resolve(Dest, D2, fake.Reader);
 
         Assert.Equal(Path.Combine(Current, "mai-toccato.txt"), plan.Files["mai-toccato.txt"].SourcePath);
         Assert.Equal(Path.Combine(Versions, V3, "a.txt"), plan.Files["a.txt"].SourcePath);
@@ -149,7 +143,7 @@ public class RestorePlannerTests
             .Point(V2, D2, hasFolder: false, Manifest(D2))
             .Point(V3, D3, hasFolder: false, Manifest(D3, added: new[] { "nuovo.txt" }));
 
-        var plan = RestorePlanner.Resolve(VersioningMode.Differential, Dest, D2, fake.Reader);
+        var plan = RestorePlanner.Resolve(Dest, D2, fake.Reader);
 
         Assert.True(plan.Files.ContainsKey("vecchio.txt"));
         Assert.False(plan.Files.ContainsKey("nuovo.txt")); // il backup del 27 non lo aveva ancora
@@ -168,11 +162,11 @@ public class RestorePlannerTests
             .Point(V3, D3, hasFolder: true, Manifest(D3, changed: new[] { "x.txt" }))
             .File(Path.Combine(Versions, V3, "x.txt"), size: 200);
 
-        Assert.False(RestorePlanner.Resolve(VersioningMode.Differential, Dest, D1, fake.Reader)
+        Assert.False(RestorePlanner.Resolve(Dest, D1, fake.Reader)
             .Files.ContainsKey("x.txt"));
-        Assert.False(RestorePlanner.Resolve(VersioningMode.Differential, Dest, D2, fake.Reader)
+        Assert.False(RestorePlanner.Resolve(Dest, D2, fake.Reader)
             .Files.ContainsKey("x.txt"));
-        Assert.Equal(200, RestorePlanner.Resolve(VersioningMode.Differential, Dest, D3, fake.Reader)
+        Assert.Equal(200, RestorePlanner.Resolve(Dest, D3, fake.Reader)
             .Files["x.txt"].Size);
     }
 
@@ -193,7 +187,7 @@ public class RestorePlannerTests
             .File(Path.Combine(Versions, V3, "lettera.docx"), size: 200);
 
         long SizeAt(DateTime? when) => RestorePlanner
-            .Resolve(VersioningMode.Differential, Dest, when, fake.Reader).Files["lettera.docx"].Size;
+            .Resolve(Dest, when, fake.Reader).Files["lettera.docx"].Size;
 
         Assert.Equal(50, SizeAt(D1));
         Assert.Equal(100, SizeAt(D2));
@@ -215,7 +209,7 @@ public class RestorePlannerTests
         // backup precedente, di sole aggiunte, è già stato potato dalla ritenzione.
         foreach (var when in new[] { D2, D3 })
         {
-            var plan = RestorePlanner.Resolve(VersioningMode.Differential, Dest, when, fake.Reader);
+            var plan = RestorePlanner.Resolve(Dest, when, fake.Reader);
             Assert.Equal(Path.Combine(Versions, V3, "prezioso.txt"), plan.Files["prezioso.txt"].SourcePath);
             Assert.Equal(2, plan.Files.Count);
         }
@@ -234,7 +228,7 @@ public class RestorePlannerTests
             .File(Path.Combine(Versions, V3, "archivio", "dentro", "2.txt"))
             .Dir(Path.Combine(Versions, V3, "archivio", "vuota"));
 
-        var plan = RestorePlanner.Resolve(VersioningMode.Differential, Dest, D2, fake.Reader);
+        var plan = RestorePlanner.Resolve(Dest, D2, fake.Reader);
 
         Assert.True(plan.Files.ContainsKey(@"archivio\1.txt"));
         Assert.True(plan.Files.ContainsKey(@"archivio\dentro\2.txt"));
@@ -253,7 +247,7 @@ public class RestorePlannerTests
             .Point(V1, D1, hasFolder: false, Manifest(D1))
             .Point(V2, D2, hasFolder: false, Manifest(D2, added: new[] { @"foto\nuova.jpg" }));
 
-        var plan = RestorePlanner.Resolve(VersioningMode.Differential, Dest, D1, fake.Reader);
+        var plan = RestorePlanner.Resolve(Dest, D1, fake.Reader);
 
         Assert.True(plan.Files.ContainsKey("vecchio.txt"));
         Assert.False(plan.Files.ContainsKey(@"foto\nuova.jpg"));
@@ -268,7 +262,7 @@ public class RestorePlannerTests
             .File(Path.Combine(Versions, V1, "a.txt"), size: 10)
             .Point(V3, D3, hasFolder: false, Manifest(D3));
 
-        var plan = RestorePlanner.Resolve(VersioningMode.Differential, Dest, D3, fake.Reader);
+        var plan = RestorePlanner.Resolve(Dest, D3, fake.Reader);
 
         // Il backup del 26 è successo PRIMA di quello chiesto: quello che ha messo da parte è
         // roba più vecchia ancora, e non descrive l'albero lasciato dal backup del 28.
@@ -287,7 +281,7 @@ public class RestorePlannerTests
             .Point(V3, D3, hasFolder: true, Manifest(D3, changed: new[] { "db.mdb" }))
             .File(Path.Combine(Versions, V3, "db.mdb"), size: 200);
 
-        var plan = RestorePlanner.Resolve(VersioningMode.Differential, Dest, D1, fake.Reader);
+        var plan = RestorePlanner.Resolve(Dest, D1, fake.Reader);
 
         Assert.Equal(200, plan.Files["db.mdb"].Size);
     }
@@ -301,54 +295,55 @@ public class RestorePlannerTests
             .Point(V3, D3, hasFolder: true, manifest: null)
             .File(Path.Combine(Versions, V3, "a.txt"), size: 10);
 
-        var plan = RestorePlanner.Resolve(VersioningMode.Differential, Dest, D2, fake.Reader);
+        var plan = RestorePlanner.Resolve(Dest, D2, fake.Reader);
 
         Assert.Equal(10, plan.Files["a.txt"].Size);
     }
 
-    // ---------------- modello a hard-link ----------------
+    // ---------------- nessuna versione ancora ----------------
 
     [Fact]
-    public void HardLinks_ADateIsTheWholeDatedFolder()
+    public void NothingOnDiskYet_IsAnEmptyPlan()
     {
+        // Job con le versioni appena accese e nessun backup fatto: niente «current», niente
+        // versioni. Il ripristino si apre lo stesso e dice che non c'è niente da recuperare.
+        var fake = new Fake();
+
+        Assert.Empty(RestorePlanner.Resolve(Dest, null, fake.Reader).Files);
+        Assert.Empty(RestorePlanner.Resolve(Dest, D2, fake.Reader).Files);
+    }
+
+    [Fact]
+    public void CurrentWithoutVersions_IsTheAnswerForAnyDate()
+    {
+        // Primo backup fatto, nessun file ancora sostituito: ogni data dà l'albero di «current».
+        var fake = new Fake().File(Path.Combine(Current, "a.txt"), size: 5);
+
+        Assert.Equal(Path.Combine(Current, "a.txt"),
+            RestorePlanner.Resolve(Dest, null, fake.Reader).Files["a.txt"].SourcePath);
+        Assert.Equal(Path.Combine(Current, "a.txt"),
+            RestorePlanner.Resolve(Dest, D2, fake.Reader).Files["a.txt"].SourcePath);
+    }
+
+    [Fact]
+    public void DatedFoldersInTheRoot_AreNeverRead()
+    {
+        // Cartelle con nome-data nella radice della destinazione non sono versioni: il piano
+        // legge solo «current» e «versions».
         var fake = new Fake()
-            .File(Path.Combine(Dest, "2026-09-27_213000", "a.txt"), size: 1)
-            .File(Path.Combine(Dest, "2026-09-27_213000", "sotto", "b.txt"), size: 2)
-            .Dir(Path.Combine(Dest, "2026-09-27_213000", "vuota"))
-            .File(Path.Combine(Dest, "2026-09-28_213000", "a.txt"), size: 99);
+            .File(Path.Combine(Current, "a.txt"), size: 1)
+            .File(Path.Combine(Dest, V2, "a.txt"), size: 99)
+            .File(Path.Combine(Dest, V2, "solo-qui.txt"), size: 3);
 
-        var plan = RestorePlanner.Resolve(VersioningMode.HardLinks, Dest, D2, fake.Reader);
+        var plan = RestorePlanner.Resolve(Dest, D1, fake.Reader);
 
-        Assert.Equal(2, plan.Files.Count);
+        Assert.Single(plan.Files);
         Assert.Equal(1, plan.Files["a.txt"].Size);
-        Assert.Equal(3, plan.TotalBytes);
-        Assert.Contains("vuota", plan.Directories);
-        Assert.Contains("sotto", plan.Directories);
     }
 
     [Fact]
-    public void HardLinks_NowIsTheMostRecentDatedFolder()
-    {
-        var fake = new Fake()
-            .File(Path.Combine(Dest, "2026-09-27_213000", "a.txt"), size: 1)
-            .File(Path.Combine(Dest, "2026-09-28_213000", "a.txt"), size: 99);
-
-        var plan = RestorePlanner.Resolve(VersioningMode.HardLinks, Dest, null, fake.Reader);
-
-        Assert.Equal(99, plan.Files["a.txt"].Size);
-    }
-
-    [Fact]
-    public void HardLinks_WithoutAnyDatedFolder_TheDestinationItselfIsTheAnswer()
-    {
-        // Job con le versioni accese che non ha ancora scritto nessuna cartella datata: nella
-        // destinazione c'è solo il mirror piatto, ed è comunque «lo stato di adesso».
-        var fake = new Fake().File(Path.Combine(Dest, "a.txt"), size: 5);
-
-        var plan = RestorePlanner.Resolve(VersioningMode.HardLinks, Dest, null, fake.Reader);
-
-        Assert.Equal(Path.Combine(Dest, "a.txt"), plan.Files["a.txt"].SourcePath);
-    }
+    public void EmptyDestination_IsAnEmptyPlan()
+        => Assert.Empty(RestorePlanner.Resolve("", null, new Fake().Reader).Files);
 
     // ---------------- selezione ----------------
 
@@ -362,7 +357,7 @@ public class RestorePlannerTests
             .File(Path.Combine(Current, "fotografie", "c.jpg"), size: 40)
             .Dir(Path.Combine(Current, "foto", "vuota"));
 
-        var plan = RestorePlanner.Resolve(VersioningMode.Differential, Dest, null, fake.Reader);
+        var plan = RestorePlanner.Resolve(Dest, null, fake.Reader);
         var sub = RestorePlanner.Select(plan, new[] { "foto" });
 
         Assert.Equal(2, sub.Files.Count);
@@ -377,7 +372,7 @@ public class RestorePlannerTests
     {
         var fake = new Fake().File(Path.Combine(Current, "foto", "2026", "b.jpg"), size: 20);
 
-        var plan = RestorePlanner.Resolve(VersioningMode.Differential, Dest, null, fake.Reader);
+        var plan = RestorePlanner.Resolve(Dest, null, fake.Reader);
         var sub = RestorePlanner.Select(plan, new[] { @"foto\2026\b.jpg" });
 
         Assert.Single(sub.Files);
@@ -389,7 +384,7 @@ public class RestorePlannerTests
     public void Select_NothingChosen_IsAnEmptyPlan()
     {
         var fake = new Fake().File(Path.Combine(Current, "a.txt"));
-        var plan = RestorePlanner.Resolve(VersioningMode.Differential, Dest, null, fake.Reader);
+        var plan = RestorePlanner.Resolve(Dest, null, fake.Reader);
 
         Assert.Empty(RestorePlanner.Select(plan, Array.Empty<string>()).Files);
     }

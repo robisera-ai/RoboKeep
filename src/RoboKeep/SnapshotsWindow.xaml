@@ -26,10 +26,10 @@
             </ui:TitleBar.Icon>
         </ui:TitleBar>
 
-        <!-- Versioni per differenza: una cartella-data non è l'albero intero di quel giorno. -->
+        <!-- Una cartella-data non è l'albero intero di quel giorno: va detto prima che l'utente
+             ci guardi dentro e si spaventi di non trovarci tutto. -->
         <TextBlock Grid.Row="1" Text="{l:Tr Ver_DiffIntro}" TextWrapping="Wrap" Opacity="0.75"
-                   FontSize="12" Margin="16,4,16,0"
-                   Visibility="{Binding IsDifferential, Converter={StaticResource BoolToVis}}"/>
+                   FontSize="12" Margin="16,4,16,0"/>
 
         <Border Grid.Row="2" Margin="16,8,16,8" CornerRadius="8" BorderThickness="1"
                 Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"

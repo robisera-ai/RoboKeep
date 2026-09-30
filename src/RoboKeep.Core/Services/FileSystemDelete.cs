@@ -5,14 +5,12 @@ using Microsoft.Win32.SafeHandles;
 namespace RoboKeep.Core.Services;
 
 /// <summary>
-/// Cancellazione che tollera i file sola-lettura SENZA spegnerne l'attributo.
-/// Le API .NET (File.Delete / Directory.Delete) lanciano UnauthorizedAccessException sui file
-/// read-only; la soluzione ingenua (togliere il ReadOnly e poi cancellare) su un file hard-linkato
-/// toccherebbe l'inode CONDIVISO, spegnendo il ReadOnly anche negli snapshot superstiti. Qui invece
-/// si cancella il NOME col flag FILE_DISPOSITION_FLAG_IGNORE_READONLY_ATTRIBUTE: l'attributo
-/// sull'inode resta intatto e gli altri hard-link conservano la loro protezione. Necessario perche'
-/// robocopy (/COPY:DAT) copia l'attributo ReadOnly dei file dalla sorgente dentro ogni snapshot.
-/// Richiede NTFS + Windows 10 1709 o successivo (sempre soddisfatto: il versioning richiede gia' NTFS).
+/// Cancellazione che tollera i file sola-lettura. Le API .NET (File.Delete / Directory.Delete)
+/// lanciano UnauthorizedAccessException sui file read-only, e robocopy (/COPY:DAT) copia
+/// l'attributo ReadOnly dei file dalla sorgente dentro il backup e quindi dentro le versioni. Qui
+/// si cancella col flag FILE_DISPOSITION_FLAG_IGNORE_READONLY_ATTRIBUTE, senza dover togliere
+/// l'attributo prima (NTFS, Windows 10 1709 o successivo). Dove il filesystem non conosce quel
+/// flag (exFAT, FAT32, alcune share) si toglie il ReadOnly e si cancella nel modo classico.
 /// </summary>
 public static class FileSystemDelete
 {
@@ -47,22 +45,22 @@ public static class FileSystemDelete
     private static extern bool SetFileInformationByHandle(
         SafeFileHandle hFile, int fileInformationClass, ref FileDispositionInfoExData lpFileInformation, uint dwBufferSize);
 
-    /// <summary>Cancella un file preservandone l'attributo ReadOnly sugli eventuali hard-link superstiti.</summary>
+    /// <summary>Cancella un file, anche se ha l'attributo ReadOnly.</summary>
     public static void DeleteFile(string path)
     {
         if (!File.Exists(path)) return;
         DeleteLeaf(path, isDirectory: false);
     }
 
-    /// <summary>Cancella ricorsivamente una directory (dal basso verso l'alto) preservando il ReadOnly
-    /// dei file sugli hard-link superstiti. Le directory reparse point vengono rimosse come foglia.</summary>
+    /// <summary>Cancella ricorsivamente una directory (dal basso verso l'alto), compresi i file
+    /// ReadOnly. Le directory reparse point vengono rimosse come foglia.</summary>
     public static void DeleteDirectory(string path)
     {
         var di = new DirectoryInfo(path);
         if (!di.Exists) return;
 
         // Rinomina-prima-di-cancellare: se la cancellazione si interrompe a metà (file bloccato da
-        // antivirus/indicizzazione, crash), il residuo ha un nome ".deleting-…" che NON è uno snapshot
+        // antivirus/indicizzazione, crash), il residuo ha un nome ".deleting-…" che NON è una versione
         // valido (SnapshotName non lo riconosce), quindi non compare come versione ripristinabile.
         var target = di;
         var parent = di.Parent?.FullName;
@@ -103,8 +101,7 @@ public static class FileSystemDelete
     {
         if (TryPosixDelete(path, isDirectory)) return;
 
-        // Fallback (filesystem senza FileDispositionInfoEx, es. FAT): ripristina il vecchio comportamento.
-        // Tocca l'inode condiviso, ma su NTFS questo ramo non viene mai eseguito.
+        // Fallback (filesystem senza FileDispositionInfoEx, es. FAT): toglie il ReadOnly e cancella.
         var info = isDirectory ? (FileSystemInfo)new DirectoryInfo(path) : new FileInfo(path);
         if ((info.Attributes & FileAttributes.ReadOnly) != 0)
             info.Attributes &= ~FileAttributes.ReadOnly;

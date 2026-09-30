@@ -624,14 +624,12 @@ public sealed class MainViewModel : ObservableObject
 
         return app.Dispatcher.InvokeAsync(() =>
         {
-            // Con le versioni non si cancella niente di esistente: la versione nuova ha meno file
-            // della precedente, che resta dov'e'. Due frasi diverse per due fatti diversi.
-            var body = estimate.PreviousSnapshot is { } previous
-                ? string.Format(Loc.Instance["Guard_ConfirmVersioned"], estimate.JobName, estimate.Extra,
-                    estimate.Total, estimate.Percent, previous)
-                : string.Format(Loc.Instance["Guard_Confirm"], estimate.JobName, estimate.Extra,
-                    estimate.Total, estimate.Percent, estimate.Destination);
-            var title = Loc.Instance["Guard_ConfirmTitle"];
+            // Con le versioni i file escono dal backup corrente ma restano nella versione finche' la
+            // ritenzione la conserva: stessi numeri, frase diversa, perche' «cancellerebbe» sarebbe falso.
+            var body = string.Format(
+                Loc.Instance[estimate.Versioned ? "Guard_ConfirmVersioned" : "Guard_Confirm"],
+                estimate.JobName, estimate.Extra, estimate.Total, estimate.Percent, estimate.Destination);
+            var title = Loc.Instance[estimate.Versioned ? "Guard_ConfirmTitleVersioned" : "Guard_ConfirmTitle"];
             var owner = app.MainWindow;
             // Finestra ridotta a icona nella barra di notifica: una MessageBox modale a una finestra
             // invisibile non si vede e non si puo' rispondere — il job resterebbe appeso per sempre.

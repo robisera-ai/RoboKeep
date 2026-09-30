@@ -18,11 +18,11 @@ public static class RobocopyArgsBuilder
     /// <param name="job">Definizione del job.</param>
     /// <param name="dryRun">Se true aggiunge <c>/L</c> (anteprima: nessuna modifica).</param>
     /// <param name="logFile">Se valorizzato aggiunge <c>/TEE</c> e <c>/LOG:&lt;file&gt;</c>.</param>
-    /// <param name="destinationOverride">Destinazione alternativa (usata dal versioning per scrivere nello snapshot corrente).</param>
+    /// <param name="destinationOverride">Destinazione alternativa (usata dal versioning per scrivere in <c>current</c>).</param>
     /// <param name="sourceOverride">Sorgente alternativa (usata da VSS per leggere dallo snapshot congelato).</param>
     /// <param name="maxThreads">Tetto ai thread <c>/MT</c> deciso a runtime dal tipo di disco (vedi <see cref="StorageProbe"/>). null = nessun tetto.</param>
     /// <param name="listDetails">Aggiunge <c>/FP /BYTES</c>: percorso completo e dimensione in byte
-    /// su ogni riga dell'elenco. Serve all'anteprima del modello di versioni per differenza, che
+    /// su ogni riga dell'elenco. Serve all'anteprima dei job con versioni, che
     /// dalle righe deve ricavare i percorsi (vedi <see cref="RobocopyListParser"/>); per un run
     /// normale sarebbe solo un log piu' largo, quindi non si aggiunge da solo.</param>
     public static IReadOnlyList<string> Build(
@@ -170,7 +170,7 @@ public static class RobocopyArgsBuilder
     /// (normale e "forza copia"): un'esclusione vale sempre, anche contro un pattern della forza
     /// copia. E' la precedenza giusta — «non toccare questo» e' una richiesta piu' forte di
     /// «ricopia sempre questo», e chi scrive lo stesso file in tutte due le liste intende la prima.
-    /// Serve anche al modello di versioni per differenza, che a ogni run esclude i file che non ha
+    /// Serve anche ai job con versioni, che a ogni run escludono i file che non hanno
     /// potuto mettere da parte: senza queste righe la passata forzata li sovrascriverebbe sul posto,
     /// cancellando l'unica copia precedente che esisteva.
     /// <para>Alla lista dell'utente si aggiunge la copia della configurazione (vedi

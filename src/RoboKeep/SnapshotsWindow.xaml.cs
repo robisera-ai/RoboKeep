@@ -10,19 +10,14 @@ namespace RoboKeep;
 
 public partial class SnapshotsWindow : Wpf.Ui.Controls.FluentWindow
 {
-    // La cartella che contiene le versioni: la destinazione stessa nel modello a hard-link,
-    // «versions» in quello per differenza.
+    // La cartella che contiene le versioni: «versions» nella destinazione del job.
     private readonly string _versionsFolder;
     private readonly BackupJob _job;
 
     public SnapshotsWindow(BackupJob job)
     {
         _job = job;
-        var destination = job.Destination ?? "";
-        // Quale layout ha questa destinazione si legge dalle cartelle che ci sono, senza mai
-        // scrivere il file di prova degli hard-link: questa finestra guarda e apre, non decide.
-        IsDifferential = VersioningLayout.DetectReadOnly(destination) == VersioningMode.Differential;
-        _versionsFolder = IsDifferential ? VersioningLayout.VersionsDir(destination) : destination;
+        _versionsFolder = VersioningLayout.VersionsDir((job.Destination ?? "").Trim());
         Snapshots = SnapshotName.ListValid(_versionsFolder).ToList();
 
         InitializeComponent();
@@ -38,11 +33,6 @@ public partial class SnapshotsWindow : Wpf.Ui.Controls.FluentWindow
     public List<string> Snapshots { get; }
     public bool HasSnapshots => Snapshots.Count > 0;
     public bool IsEmpty => Snapshots.Count == 0;
-
-    /// <summary>true se il job usa le versioni per differenza: una cartella-data non è l'albero
-    /// intero di quel giorno ma i soli file che quel backup ha sostituito o cancellato, e va detto
-    /// prima che l'utente ci guardi dentro e si spaventi di non trovarci tutto.</summary>
-    public bool IsDifferential { get; }
 
     private void OpenSelected()
     {

@@ -57,11 +57,8 @@ public sealed class AppHost
         var email = new EmailService(Credentials);
         // Le impostazioni servono alla ritenzione per spazio: la soglia e l'interruttore della
         // pulizia automatica delle versioni vecchie.
-        var snapshots = new SnapshotService(runner, Config.Settings);
-        // Secondo modello di versioni, per le destinazioni senza hard-link (exFAT, FAT32, rete):
-        // a sceglierlo e' BackupRunner, dal layout che trova in destinazione.
         var differential = new DifferentialSnapshotService(runner, Config.Settings);
-        return new BackupRunner(Config, runner, log, email, Credentials, Results, snapshots, LockFolder,
+        return new BackupRunner(Config, runner, log, email, Credentials, Results, LockFolder,
             Path.Combine(Store.DirectoryPath, "vss"), History, faultedDisks: FaultedDisks,
             differentialSnapshots: differential);
     }

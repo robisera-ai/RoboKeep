@@ -88,10 +88,10 @@ public sealed class RobocopyRunner
 
     /// <param name="beforeForceCopyPass">Invocato (mai in anteprima) subito prima della passata
     /// "forza copia", con i filtri che robocopy ricevera'. Serve al versioning: la passata
-    /// sovrascrive SUL POSTO, e su un file ancora hard-linkato agli snapshot precedenti ne
-    /// riscriverebbe la storia; chi versiona deve prima scollegarli.</param>
+    /// sovrascrive SUL POSTO, e chi versiona deve prima mettere da parte la copia precedente di
+    /// quei file, altrimenti la versione non la conterrebbe.</param>
     /// <param name="listDetails">Chiede a robocopy un elenco con percorso completo e byte
-    /// (<c>/FP /BYTES</c>): serve solo all'anteprima delle versioni per differenza, che quelle
+    /// (<c>/FP /BYTES</c>): serve solo all'anteprima dei job con versioni, che quelle
     /// righe deve leggerle (vedi <see cref="RobocopyListParser"/>).</param>
     public async Task<RobocopyRunResult> RunAsync(
         BackupJob job, bool dryRun = false, IProgress<string>? progress = null, CancellationToken ct = default,

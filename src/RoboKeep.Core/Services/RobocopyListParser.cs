@@ -22,7 +22,7 @@ public sealed record ListedChange(ChangeKind Kind, string RelativePath);
 
 /// <summary>
 /// Legge l'elenco che robocopy stampa in anteprima (<c>/L /FP /BYTES</c>) e lo trasforma in voci
-/// (che cosa, percorso relativo). Serve al modello di versioni per differenza: prima del mirror
+/// (che cosa, percorso relativo). Serve ai job con versioni: prima del mirror
 /// bisogna sapere quali file di <c>current\</c> verranno sostituiti o rimossi, per metterli da parte.
 /// <para><b>Le etichette di robocopy sono TRADOTTE</b> (su questa macchina, Windows in italiano,
 /// stampa «Nuovo file», «Modificato», «*File supplementare», «Nuova directory», «*directory

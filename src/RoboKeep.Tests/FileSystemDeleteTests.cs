@@ -32,19 +32,20 @@ public class FileSystemDeleteTests : IDisposable
     }
 
     [Fact]
-    public void DeleteFile_PreservesReadOnly_OnSurvivingHardLink()
+    public void DeleteFile_RemovesAReadOnlyFile_AndLeavesTheOthersAlone()
     {
         var a = Path.Combine(_root, "a.txt");
         var b = Path.Combine(_root, "b.txt");
-        File.WriteAllText(a, "shared");
-        Assert.True(HardLink.TryCreate(b, a));          // b e a puntano allo stesso inode
-        File.SetAttributes(a, FileAttributes.ReadOnly); // attributo ReadOnly sull'inode condiviso
+        File.WriteAllText(a, "uno");
+        File.WriteAllText(b, "due");
+        File.SetAttributes(a, FileAttributes.ReadOnly);
+        File.SetAttributes(b, FileAttributes.ReadOnly);
 
-        FileSystemDelete.DeleteFile(a);                 // cancella il NOME 'a' senza toccare l'inode
+        FileSystemDelete.DeleteFile(a);
 
         Assert.False(File.Exists(a));
         Assert.True(File.Exists(b));
-        Assert.True(new FileInfo(b).Attributes.HasFlag(FileAttributes.ReadOnly)); // b conserva il ReadOnly
+        Assert.True(new FileInfo(b).Attributes.HasFlag(FileAttributes.ReadOnly)); // b non e' stato toccato
     }
 
     [Fact]

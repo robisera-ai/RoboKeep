@@ -192,11 +192,6 @@
                 <ui:Card Margin="0,12,0,0" Padding="14">
                     <StackPanel>
                         <CheckBox Content="{l:Tr Ver_Enable}" IsChecked="{Binding Versioned}" Margin="0,0,0,6"/>
-                        <!-- Quale dei due modelli di versione userà questa destinazione: informativo,
-                             non un avviso. Si aggiorna da solo quando la destinazione cambia, e a
-                             versioni spente non compare (né viene calcolato). -->
-                        <TextBlock Text="{Binding VersioningModeText}" Style="{StaticResource Hint}"
-                                   Visibility="{Binding Versioned, Converter={StaticResource BoolToVis}}"/>
                         <Grid Margin="0,4,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>

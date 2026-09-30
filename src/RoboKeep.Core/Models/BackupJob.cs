@@ -87,20 +87,22 @@ public sealed class BackupJob
     /// <summary>Id facoltativo della credenziale di rete da usare per le share UNC.</summary>
     public string? CredentialId { get; set; }
 
-    /// <summary>true → mantiene snapshot datati con hard-link (versioning). Richiede destinazione NTFS locale.</summary>
+    /// <summary>true → tiene le versioni: il mirror vive in <c>current\</c> e ogni backup mette da
+    /// parte in <c>versions\&lt;data&gt;\</c> i file che sostituisce o cancella. Funziona su
+    /// qualunque destinazione.</summary>
     public bool Versioned { get; set; }
 
-    /// <summary>Numero massimo di snapshot da conservare. 0 = nessun limite di numero.
-    /// Default 10 per i job NUOVI (editor e wizard): senza limite la MFT della destinazione cresce
-    /// all'infinito e NTFS rifiuta nuovi hard-link oltre i 1023 per file. I job gia' salvati
+    /// <summary>Numero massimo di versioni da conservare. 0 = nessun limite di numero.
+    /// Default 10 per i job NUOVI (editor e wizard): senza limite le versioni si accumulano
+    /// all'infinito e prima o poi riempiono il disco di backup. I job gia' salvati
     /// conservano il loro valore (anche 0): una ritenzione non si stringe alle spalle dell'utente,
     /// cancellerebbe versioni.</summary>
     public int SnapshotKeepCount { get; set; } = DefaultSnapshotKeepCount;
 
-    /// <summary>Snapshot conservati per default nei job nuovi, ovunque vengano creati.</summary>
+    /// <summary>Versioni conservate per default nei job nuovi, ovunque vengano creati.</summary>
     public const int DefaultSnapshotKeepCount = 10;
 
-    /// <summary>Elimina gli snapshot più vecchi di questi giorni. 0 = nessun limite di età.</summary>
+    /// <summary>Elimina le versioni più vecchie di questi giorni. 0 = nessun limite di età.</summary>
     public int SnapshotMaxAgeDays { get; set; }
 
     /// <summary>true → prima della copia crea uno snapshot VSS del volume sorgente e copia da lì,

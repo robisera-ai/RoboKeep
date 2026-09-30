@@ -169,11 +169,11 @@ public static class CoreLoc
             "[vérification] ATTENTION : {0} fichiers DIFFÉRENTS de la source ! Premiers : {1}",
             "[Prüfung] ACHTUNG: {0} Dateien WEICHEN von der Quelle AB! Erste Dateien: {1}"),
         ["Verify_NothingToVerify"] = L(
-            "[verifica] niente da verificare: il job versionato non ha ancora snapshot.",
-            "[verify] nothing to verify: the versioned job has no snapshots yet.",
-            "[verificación] nada que verificar: el trabajo versionado aún no tiene instantáneas.",
-            "[vérification] rien à vérifier : la tâche versionnée n'a pas encore d'instantanés.",
-            "[Prüfung] nichts zu prüfen: der versionierte Job hat noch keine Snapshots."),
+            "[verifica] niente da verificare: il job con versioni non ha ancora fatto il primo backup (manca la cartella «current»).",
+            "[verify] nothing to verify: the versioned job has not made its first backup yet (the \"current\" folder is missing).",
+            "[verificación] nada que verificar: el trabajo con versiones aún no ha hecho su primera copia (falta la carpeta «current»).",
+            "[vérification] rien à vérifier : la tâche avec versions n'a pas encore fait sa première sauvegarde (le dossier « current » manque).",
+            "[Prüfung] nichts zu prüfen: der Job mit Versionen hat sein erstes Backup noch nicht gemacht (der Ordner „current“ fehlt)."),
         ["Verify_LogTitle"] = L(
             "VERIFICA INTEGRITÀ", "INTEGRITY VERIFICATION", "VERIFICACIÓN DE INTEGRIDAD",
             "VÉRIFICATION D'INTÉGRITÉ", "INTEGRITÄTSPRÜFUNG"),
@@ -191,37 +191,13 @@ public static class CoreLoc
             "[verificación] no prevista hoy: la última fue el {0}, la próxima en {1} días.",
             "[vérification] non prévue aujourd'hui : la dernière date du {0}, la prochaine dans {1} jours.",
             "[Prüfung] heute nicht vorgesehen: die letzte war am {0}, die nächste in {1} Tagen."),
-        ["Versioning_NoHardLink"] = L(
-            "[versioning] ATTENZIONE: la destinazione non supporta gli hard-link. Eseguo un mirror semplice (nessuno snapshot). Usa una destinazione NTFS locale per le versioni.",
-            "[versioning] WARNING: the destination does not support hard-links. Running a plain mirror (no snapshot). Use a local NTFS destination for versions.",
-            "[versionado] ATENCIÓN: el destino no admite enlaces duros. Ejecuto un espejo simple (sin instantánea). Usa un destino NTFS local para las versiones.",
-            "[versioning] ATTENTION : la destination ne prend pas en charge les liens physiques. Miroir simple exécuté (pas d'instantané). Utilisez une destination NTFS locale pour les versions.",
-            "[Versionierung] ACHTUNG: das Ziel unterstützt keine Hardlinks. Einfache Spiegelung wird ausgeführt (kein Snapshot). Verwenden Sie ein lokales NTFS-Ziel für Versionen."),
-        ["Versioning_SkipFile"] = L(
-            "[versioning] file del vecchio snapshot non leggibile, saltato (verrà ricopiato dalla sorgente): {0}",
-            "[versioning] file in the previous snapshot could not be read, skipped (it will be recopied from the source): {0}",
-            "[versionado] archivo de la instantánea anterior ilegible, omitido (se volverá a copiar desde el origen): {0}",
-            "[versioning] fichier de l'instantané précédent illisible, ignoré (il sera recopié depuis la source) : {0}",
-            "[Versionierung] Datei im vorherigen Snapshot nicht lesbar, übersprungen (wird aus der Quelle neu kopiert): {0}"),
-        ["Versioning_SkipSummary"] = L(
-            "[versioning] {0} file del vecchio snapshot saltati (bloccati o non accessibili): verranno ricopiati dalla sorgente.",
-            "[versioning] {0} files skipped from the previous snapshot (locked or not accessible): they will be recopied from the source.",
-            "[versionado] {0} archivos omitidos de la instantánea anterior (bloqueados o inaccesibles): se volverán a copiar desde el origen.",
-            "[versioning] {0} fichiers ignorés de l'instantané précédent (verrouillés ou inaccessibles) : ils seront recopiés depuis la source.",
-            "[Versionierung] {0} Dateien aus dem vorherigen Snapshot übersprungen (gesperrt oder nicht zugänglich): sie werden aus der Quelle neu kopiert."),
 
-        ["Versioning_Adopted"] = L(
-            "[versioning] trovata una copia semplice già presente nella destinazione: diventa la prima versione ({0}, {1} elementi spostati, nessuna ricopia). Da ora si copia solo ciò che cambia.",
-            "[versioning] found an existing plain copy in the destination: it becomes the first version ({0}, {1} items moved, nothing recopied). From now on only changes are copied.",
-            "[versionado] se encontró una copia simple ya presente en el destino: pasa a ser la primera versión ({0}, {1} elementos movidos, nada recopiado). Desde ahora solo se copia lo que cambia.",
-            "[versioning] copie simple déjà présente dans la destination : elle devient la première version ({0}, {1} éléments déplacés, rien recopié). Désormais seuls les changements sont copiés.",
-            "[Versionierung] vorhandene einfache Kopie im Ziel gefunden: sie wird zur ersten Version ({0}, {1} Elemente verschoben, nichts neu kopiert). Ab jetzt wird nur kopiert, was sich ändert."),
         ["Versioning_NotAdopted"] = L(
-            "[versioning] nella destinazione ci sono elementi che non esistono nella sorgente (es. {0}; {1} in tutto): non è una copia di questo job, quindi non viene adottata come prima versione. Restano dove sono; la prima versione parte da zero.",
-            "[versioning] the destination contains items that do not exist in the source (e.g. {0}; {1} in total): it is not a copy made by this job, so it is not adopted as the first version. They stay where they are; the first version starts from scratch.",
-            "[versionado] el destino contiene elementos que no existen en el origen (p. ej. {0}; {1} en total): no es una copia de este trabajo, así que no se adopta como primera versión. Se quedan donde están; la primera versión empieza desde cero.",
-            "[versioning] la destination contient des éléments absents de la source (ex. {0} ; {1} au total) : ce n'est pas une copie faite par cette tâche, elle n'est donc pas adoptée comme première version. Ils restent en place ; la première version part de zéro.",
-            "[Versionierung] das Ziel enthält Elemente, die es in der Quelle nicht gibt (z. B. {0}; {1} insgesamt): es ist keine Kopie dieses Jobs und wird daher nicht als erste Version übernommen. Sie bleiben, wo sie sind; die erste Version beginnt von vorn."),
+            "[versioni] nella destinazione ci sono elementi che non esistono nella sorgente (es. {0}; {1} in tutto): non è una copia di questo job, quindi non diventa il backup corrente. Restano dove sono, fuori da «current», e nessuno li tocca; il primo backup copia tutto da zero in «current».",
+            "[versions] the destination contains items that do not exist in the source (e.g. {0}; {1} in total): it is not a copy made by this job, so it does not become the current backup. They stay where they are, outside \"current\", and nothing touches them; the first backup copies everything from scratch into \"current\".",
+            "[versiones] el destino contiene elementos que no existen en el origen (p. ej. {0}; {1} en total): no es una copia de este trabajo, así que no pasa a ser la copia actual. Se quedan donde están, fuera de «current», y nada los toca; la primera copia lo copia todo desde cero en «current».",
+            "[versions] la destination contient des éléments absents de la source (ex. {0} ; {1} au total) : ce n'est pas une copie faite par cette tâche, elle ne devient donc pas la sauvegarde courante. Ils restent en place, hors de « current », et rien ne les touche ; la première sauvegarde copie tout depuis zéro dans « current ».",
+            "[Versionen] das Ziel enthält Elemente, die es in der Quelle nicht gibt (z. B. {0}; {1} insgesamt): es ist keine Kopie dieses Jobs und wird daher nicht zum aktuellen Backup. Sie bleiben, wo sie sind, außerhalb von „current“, und nichts rührt sie an; das erste Backup kopiert alles von vorn nach „current“."),
         ["Versioning_NoService"] = L(
             "[versioni] job NON eseguito: in {0} ci sono già versioni, ma questa esecuzione di RoboKeep non è in grado di gestirle. Un mirror semplice le cancellerebbe come file extra, quindi non è stato toccato niente. Aggiorna RoboKeep o avvialo dalla finestra principale.",
             "[versions] job NOT run: {0} already holds versions, but this run of RoboKeep cannot handle them. A plain mirror would delete them as extra files, so nothing was touched. Update RoboKeep or start it from the main window.",
@@ -234,26 +210,26 @@ public static class CoreLoc
             "No ejecutado: hay versiones pero no se pueden gestionar.",
             "Non exécutée : versions présentes mais non gérables.",
             "Nicht ausgeführt: Versionen vorhanden, aber nicht verwaltbar."),
+        ["Versioning_TurnedOff"] = L(
+            "Non eseguito: la destinazione contiene le versioni di un backup (current e versions). Riattiva «Mantieni versioni datate» nel job, oppure scegli un'altra destinazione o sposta quelle cartelle.",
+            "Not run: the destination holds a backup's versions (current and versions). Turn \"Keep dated versions\" back on in the job, or pick another destination or move those folders.",
+            "No ejecutado: el destino contiene las versiones de una copia (current y versions). Vuelve a activar «Mantener versiones por fecha» en el trabajo, o elige otro destino o mueve esas carpetas.",
+            "Non exécutée : la destination contient les versions d'une sauvegarde (current et versions). Réactivez « Conserver des versions datées » dans la tâche, ou choisissez une autre destination ou déplacez ces dossiers.",
+            "Nicht ausgeführt: das Ziel enthält die Versionen eines Backups (current und versions). Aktivieren Sie „Datierte Versionen behalten“ im Job wieder, oder wählen Sie ein anderes Ziel oder verschieben Sie diese Ordner."),
         ["Versioning_PreviewAgainst"] = L(
-            "[versioni] anteprima confrontata con {0}, che è la cartella su cui scrive il run vero. Le cartelle delle versioni non vengono toccate né conteggiate.",
-            "[versions] preview compared against {0}, the folder the real run writes to. The version folders are neither touched nor counted.",
-            "[versiones] vista previa comparada con {0}, la carpeta en la que escribe la ejecución real. Las carpetas de versiones no se tocan ni se cuentan.",
-            "[versions] aperçu comparé à {0}, le dossier dans lequel écrit l'exécution réelle. Les dossiers de versions ne sont ni touchés ni comptés.",
-            "[Versionen] Vorschau verglichen mit {0}, dem Ordner, in den der echte Lauf schreibt. Die Versionsordner werden weder angetastet noch gezählt."),
+            "[versioni] anteprima confrontata con {0}, la cartella «current» su cui scrive il run vero. La cartella «versions» non viene toccata né conteggiata.",
+            "[versions] preview compared against {0}, the \"current\" folder the real run writes to. The \"versions\" folder is neither touched nor counted.",
+            "[versiones] vista previa comparada con {0}, la carpeta «current» en la que escribe la ejecución real. La carpeta «versions» no se toca ni se cuenta.",
+            "[versions] aperçu comparé à {0}, le dossier « current » dans lequel écrit l'exécution réelle. Le dossier « versions » n'est ni touché ni compté.",
+            "[Versionen] Vorschau verglichen mit {0}, dem Ordner „current“, in den der echte Lauf schreibt. Der Ordner „versions“ wird weder angetastet noch gezählt."),
         ["Versioning_Checking"] = L(
-            "[versioning] controllo se è cambiato qualcosa rispetto all'ultima versione...",
-            "[versioning] checking whether anything changed since the last version...",
-            "[versionado] compruebo si algo ha cambiado desde la última versión...",
-            "[versioning] vérification des changements depuis la dernière version...",
-            "[Versionierung] prüfe, ob sich seit der letzten Version etwas geändert hat..."),
-        ["Versioning_NoChanges"] = L(
-            "[versioning] nessuna modifica dall'ultima versione ({0}): non creo un nuovo snapshot identico. Il backup è già aggiornato.",
-            "[versioning] nothing changed since the last version ({0}): no identical new snapshot is created. The backup is already up to date.",
-            "[versionado] ningún cambio desde la última versión ({0}): no creo una nueva instantánea idéntica. La copia ya está al día.",
-            "[versioning] aucun changement depuis la dernière version ({0}) : pas de nouvel instantané identique. La sauvegarde est déjà à jour.",
-            "[Versionierung] keine Änderung seit der letzten Version ({0}): kein identischer neuer Snapshot. Das Backup ist bereits aktuell."),
+            "[versioni] controllo che cosa è cambiato rispetto all'ultimo backup...",
+            "[versions] checking what changed since the last backup...",
+            "[versiones] compruebo qué ha cambiado desde la última copia...",
+            "[versions] vérification de ce qui a changé depuis la dernière sauvegarde...",
+            "[Versionen] prüfe, was sich seit dem letzten Backup geändert hat..."),
 
-        // --- Modello di versioni PER DIFFERENZA (destinazioni senza hard-link) ---
+        // --- Versioni: «current» + «versions» ---
         ["Diff_Adopted"] = L(
             "[versioni] trovata una copia semplice già presente nella destinazione: diventa il backup corrente, spostata in «current» ({0} elementi, nessuna ricopia). Da ora ogni backup mette da parte in «versions» solo i file che sostituisce o cancella.",
             "[versions] found an existing plain copy in the destination: it becomes the current backup, moved into \"current\" ({0} items, nothing recopied). From now on every backup sets aside in \"versions\" only the files it replaces or deletes.",
@@ -267,11 +243,11 @@ public static class CoreLoc
             "[versions] {0} fichiers et {1} dossiers mis de côté dans la version {2}",
             "[Versionen] {0} Dateien und {1} Ordner in Version {2} beiseitegelegt"),
         ["Diff_MoveFailed"] = L(
-            "[versioni] {0} non messo da parte ({1}): il backup lo sovrascrive lo stesso, ma questa versione non ne conterrà la copia precedente.",
-            "[versions] {0} not set aside ({1}): the backup overwrites it anyway, but this version will not hold its previous copy.",
-            "[versiones] {0} no apartado ({1}): la copia lo sobrescribe igualmente, pero esta versión no contendrá su copia anterior.",
-            "[versions] {0} non mis de côté ({1}) : la sauvegarde l'écrase quand même, mais cette version ne contiendra pas sa copie précédente.",
-            "[Versionen] {0} nicht beiseitegelegt ({1}): das Backup überschreibt sie trotzdem, aber diese Version enthält ihre vorherige Kopie nicht."),
+            "[versioni] {0} non messo da parte ({1}): resta com'era nel backup, non viene sovrascritto, e si riprova al prossimo backup.",
+            "[versions] {0} not set aside ({1}): it stays as it was in the backup, is not overwritten, and will be retried at the next backup.",
+            "[versiones] {0} no apartado ({1}): se queda como estaba en la copia, no se sobrescribe y se reintenta en la próxima copia.",
+            "[versions] {0} non mis de côté ({1}) : il reste tel quel dans la sauvegarde, n'est pas écrasé, et une nouvelle tentative aura lieu à la prochaine sauvegarde.",
+            "[Versionen] {0} nicht beiseitegelegt ({1}): sie bleibt im Backup unverändert, wird nicht überschrieben und beim nächsten Backup erneut versucht."),
         ["Diff_Created"] = L(
             "[versioni] versione {0} creata: contiene i file sostituiti o cancellati da questo backup.",
             "[versions] version {0} created: it holds the files this backup replaced or deleted.",
@@ -382,11 +358,11 @@ public static class CoreLoc
             "Miroir arrêté : il aurait supprimé {0:N0} fichiers sur {1:N0} ({2} %) dans {3}. Si c'est voulu, lancez la tâche depuis la fenêtre de RoboKeep et confirmez, ou augmentez le seuil dans l'éditeur de la tâche.",
             "Spiegelung gestoppt: sie hätte {0:N0} von {1:N0} Dateien ({2} %) in {3} gelöscht. Wenn das gewollt ist, starten Sie den Job aus dem RoboKeep-Fenster und bestätigen Sie, oder erhöhen Sie die Schwelle im Job-Editor."),
         ["Guard_BlockedVersioned"] = L(
-            "Mirror fermato: la nuova versione avrebbe {0:N0} file in meno su {1:N0} ({2} %) rispetto all'ultima ({3}). Se è voluto, avvia il job dalla finestra di RoboKeep e conferma, oppure alza la soglia nell'editor del job.",
-            "Mirror stopped: the new version would have {0:N0} files fewer out of {1:N0} ({2} %) than the last one ({3}). If that is what you want, start the job from the RoboKeep window and confirm, or raise the threshold in the job editor.",
-            "Espejo detenido: la nueva versión tendría {0:N0} archivos menos de {1:N0} ({2} %) respecto a la última ({3}). Si es lo que quieres, inicia el trabajo desde la ventana de RoboKeep y confirma, o sube el umbral en el editor del trabajo.",
-            "Miroir arrêté : la nouvelle version aurait {0:N0} fichiers en moins sur {1:N0} ({2} %) par rapport à la dernière ({3}). Si c'est voulu, lancez la tâche depuis la fenêtre de RoboKeep et confirmez, ou augmentez le seuil dans l'éditeur de la tâche.",
-            "Spiegelung gestoppt: die neue Version hätte {0:N0} von {1:N0} Dateien ({2} %) weniger als die letzte ({3}). Wenn das gewollt ist, starten Sie den Job aus dem RoboKeep-Fenster und bestätigen Sie, oder erhöhen Sie die Schwelle im Job-Editor."),
+            "Mirror fermato: {0:N0} file su {1:N0} ({2} %) uscirebbero dal backup corrente in {3}. Non verrebbero cancellati subito: finirebbero nella versione di questo backup e sparirebbero quando la ritenzione la elimina. Se è voluto, avvia il job dalla finestra di RoboKeep e conferma, oppure alza la soglia nell'editor del job.",
+            "Mirror stopped: {0:N0} files out of {1:N0} ({2} %) would leave the current backup in {3}. They would not be deleted right away: they would go into this backup's version and disappear when retention removes it. If that is what you want, start the job from the RoboKeep window and confirm, or raise the threshold in the job editor.",
+            "Espejo detenido: {0:N0} archivos de {1:N0} ({2} %) saldrían de la copia actual en {3}. No se eliminarían de inmediato: pasarían a la versión de esta copia y desaparecerían cuando la retención la elimine. Si es lo que quieres, inicia el trabajo desde la ventana de RoboKeep y confirma, o sube el umbral en el editor del trabajo.",
+            "Miroir arrêté : {0:N0} fichiers sur {1:N0} ({2} %) sortiraient de la sauvegarde courante dans {3}. Ils ne seraient pas supprimés tout de suite : ils iraient dans la version de cette sauvegarde et disparaîtraient quand la rétention la supprimera. Si c'est voulu, lancez la tâche depuis la fenêtre de RoboKeep et confirmez, ou augmentez le seuil dans l'éditeur de la tâche.",
+            "Spiegelung gestoppt: {0:N0} von {1:N0} Dateien ({2} %) würden das aktuelle Backup in {3} verlassen. Sie würden nicht sofort gelöscht: sie kämen in die Version dieses Backups und verschwänden, wenn die Aufbewahrung sie entfernt. Wenn das gewollt ist, starten Sie den Job aus dem RoboKeep-Fenster und bestätigen Sie, oder erhöhen Sie die Schwelle im Job-Editor."),
         ["Guard_DryRunNote"] = L(
             "Il mirror cancellerebbe {0:N0} file su {1:N0} ({2} %): sopra la soglia del {3} % del job.",
             "The mirror would delete {0:N0} files out of {1:N0} ({2} %): above the job's {3} % threshold.",
@@ -403,11 +379,11 @@ public static class CoreLoc
         ["Space_Status"] = L(
             "Disco pieno", "Disk full", "Disco lleno", "Disque plein", "Datenträger voll"),
         ["Space_Detail"] = L(
-            "{0} pieno: il backup non è stato completato. Le {1} versioni del job occupano {2}. Abbassa «Numero massimo di versioni» nell'editor del job — il run successivo cancella le più vecchie — oppure attiva «Quando il disco di backup è pieno, cancella le versioni più vecchie» in Impostazioni → Affidabilità. Per fare posto subito: Versioni... → Apri in Esplora risorse e cancella a mano qualche cartella datata.",
-            "{0} is full: the backup was not completed. The job's {1} versions take up {2}. Lower \"Max number of versions\" in the job editor — the next run deletes the oldest ones — or turn on \"When the backup disk is full, delete the oldest versions\" in Settings → Reliability. To make room right now: Versions... → Open in File Explorer and delete a few dated folders by hand.",
-            "{0} lleno: la copia no se ha completado. Las {1} versiones del trabajo ocupan {2}. Baja «Número máximo de versiones» en el editor del trabajo (la siguiente ejecución elimina las más antiguas) o activa «Cuando el disco de backup está lleno, elimina las versiones más antiguas» en Ajustes → Fiabilidad. Para hacer sitio ahora mismo: Versiones... → Abrir en el Explorador y elimina a mano alguna carpeta con fecha.",
-            "{0} plein : la sauvegarde n'a pas été terminée. Les {1} versions de la tâche occupent {2}. Réduisez « Nombre max de versions » dans l'éditeur de la tâche — la prochaine exécution supprime les plus anciennes — ou activez « Quand le disque de sauvegarde est plein, supprimer les versions les plus anciennes » dans Paramètres → Fiabilité. Pour faire de la place tout de suite : Versions... → Ouvrir dans l'Explorateur et supprimez à la main quelques dossiers datés.",
-            "{0} ist voll: das Backup wurde nicht abgeschlossen. Die {1} Versionen des Jobs belegen {2}. Verringern Sie „Maximale Anzahl Versionen“ im Job-Editor — der nächste Lauf löscht die ältesten — oder aktivieren Sie „Wenn der Backup-Datenträger voll ist, die ältesten Versionen löschen“ in Einstellungen → Zuverlässigkeit. Um sofort Platz zu schaffen: Versionen... → Im Explorer öffnen und einige datierte Ordner von Hand löschen."),
+            "{0} pieno: il backup non è stato completato. Le {1} versioni del job occupano {2}. Abbassa «Numero massimo di versioni» nell'editor del job — il run successivo cancella le più vecchie — oppure attiva «Quando il disco di backup è pieno, cancella le versioni più vecchie» in Impostazioni → Affidabilità. Per fare posto subito: cancella a mano le versioni più vecchie nella cartella «versions» della destinazione (mai «current», che è il backup).",
+            "{0} is full: the backup was not completed. The job's {1} versions take up {2}. Lower \"Max number of versions\" in the job editor — the next run deletes the oldest ones — or turn on \"When the backup disk is full, delete the oldest versions\" in Settings → Reliability. To make room right now: delete the oldest versions by hand in the destination's \"versions\" folder (never \"current\", which is the backup).",
+            "{0} lleno: la copia no se ha completado. Las {1} versiones del trabajo ocupan {2}. Baja «Número máximo de versiones» en el editor del trabajo (la siguiente ejecución elimina las más antiguas) o activa «Cuando el disco de backup está lleno, elimina las versiones más antiguas» en Ajustes → Fiabilidad. Para hacer sitio ahora mismo: elimina a mano las versiones más antiguas en la carpeta «versions» del destino (nunca «current», que es la copia).",
+            "{0} plein : la sauvegarde n'a pas été terminée. Les {1} versions de la tâche occupent {2}. Réduisez « Nombre max de versions » dans l'éditeur de la tâche — la prochaine exécution supprime les plus anciennes — ou activez « Quand le disque de sauvegarde est plein, supprimer les versions les plus anciennes » dans Paramètres → Fiabilité. Pour faire de la place tout de suite : supprimez à la main les versions les plus anciennes dans le dossier « versions » de la destination (jamais « current », qui est la sauvegarde).",
+            "{0} ist voll: das Backup wurde nicht abgeschlossen. Die {1} Versionen des Jobs belegen {2}. Verringern Sie „Maximale Anzahl Versionen“ im Job-Editor — der nächste Lauf löscht die ältesten — oder aktivieren Sie „Wenn der Backup-Datenträger voll ist, die ältesten Versionen löschen“ in Einstellungen → Zuverlässigkeit. Um sofort Platz zu schaffen: löschen Sie die ältesten Versionen von Hand im Ordner „versions“ des Ziels (nie „current“, das ist das Backup)."),
         ["Space_DetailNoVersions"] = L(
             "{0} pieno: il backup non è stato completato. Fai posto sul disco o scegli una destinazione più capiente; questo job non tiene versioni, quindi non c'è niente da cancellare qui.",
             "{0} is full: the backup was not completed. Free up space on the disk or pick a roomier destination; this job keeps no versions, so there is nothing to delete here.",
@@ -420,12 +396,6 @@ public static class CoreLoc
             "[espacio] liberados {0} eliminando la versión {1}",
             "[espace] {0} libérés en supprimant la version {1}",
             "[Speicher] {0} freigegeben durch Löschen der Version {1}"),
-        ["Space_FreedNothing"] = L(
-            "[spazio] la cancellazione della versione {0} non ha liberato spazio misurabile (era tutta condivisa con le altre versioni).",
-            "[space] deleting version {0} freed no measurable space (it was entirely shared with the other versions).",
-            "[espacio] eliminar la versión {0} no ha liberado espacio apreciable (estaba toda compartida con las demás versiones).",
-            "[espace] la suppression de la version {0} n'a libéré aucun espace mesurable (elle était entièrement partagée avec les autres versions).",
-            "[Speicher] das Löschen der Version {0} hat keinen messbaren Speicher freigegeben (sie war vollständig mit den anderen Versionen geteilt)."),
         ["Space_NotFreed"] = L(
             "[spazio] versione {0} non cancellata ({1}): la pulizia si ferma qui.",
             "[space] version {0} not deleted ({1}): the cleanup stops here.",

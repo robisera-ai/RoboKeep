@@ -60,6 +60,6 @@ riepilogo dice soltanto che si andrebbe oltre soglia. L'accumulo non c'entra: no
 I job con le versioni riusano il controllo che il versioning fa già per sapere se qualcosa è
 cambiato, quindi non costano nulla in più; per i mirror senza versioni è una lettura in più della
 destinazione, che su cartelle enormi può richiedere qualche decina di secondi (nel log lo dice la
-riga «anteprima delle cancellazioni»). Con le versioni, però, **nessun file esistente viene
-cancellato** — l'ultima versione resta intatta — e la domanda lo dice così com'è: quanti file *in
-meno* avrebbe la versione nuova rispetto all'ultima.
+riga «anteprima delle cancellazioni»). Con le versioni, però, i file **non vengono cancellati
+subito**: escono dal backup corrente e finiscono nella versione di quel backup, dove restano finché
+la ritenzione la conserva — e la domanda lo dice così com'è.

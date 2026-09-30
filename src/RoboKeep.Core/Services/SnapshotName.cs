@@ -2,7 +2,7 @@ using System.Globalization;
 
 namespace RoboKeep.Core.Services;
 
-/// <summary>Convenzioni di naming degli snapshot datati (cartelle in destinazione).</summary>
+/// <summary>Convenzioni di naming delle versioni datate (cartelle in <c>versions</c>).</summary>
 public static class SnapshotName
 {
     public const string Format = "yyyy-MM-dd_HHmmss";
@@ -16,21 +16,18 @@ public static class SnapshotName
     public static bool TryParse(string name, out DateTime date)
         => DateTime.TryParseExact(name, Format, CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
 
-    /// <summary>Nomi degli snapshot validi (niente .inprogress, nome parsabile) in una
-    /// destinazione, in ordine cronologico inverso (più recente prima). Cartella mancante → vuoto.</summary>
-    public static IReadOnlyList<string> ListValid(string destinationDir)
+    /// <summary>Nomi delle versioni valide (niente .inprogress, nome parsabile) in una
+    /// cartella, in ordine cronologico inverso (più recente prima). Cartella mancante → vuoto.</summary>
+    public static IReadOnlyList<string> ListValid(string folder)
     {
-        if (!Directory.Exists(destinationDir)) return Array.Empty<string>();
-        return Directory.GetDirectories(destinationDir)
+        if (!Directory.Exists(folder)) return Array.Empty<string>();
+        return Directory.GetDirectories(folder)
             .Select(Path.GetFileName)
             .OfType<string>()
             .Where(n => !IsInProgress(n) && TryParse(n, out _))
             .OrderByDescending(n => { TryParse(n, out var d); return d; })
             .ToList();
     }
-
-    /// <summary>Nome dello snapshot più recente, o null se non ce ne sono.</summary>
-    public static string? Latest(string destinationDir) => ListValid(destinationDir).FirstOrDefault();
 
     /// <summary>
     /// Il nome desiderato se è libero, altrimenti il primo libero avanzando di un secondo alla
@@ -44,7 +41,7 @@ public static class SnapshotName
     /// quindi irraggiungibile dall'utente.</para>
     /// </summary>
     /// <param name="preferred">Nome desiderato (deve essere un nome-data).</param>
-    /// <param name="isTaken">true se quel nome è già occupato. Il modello per differenza considera
+    /// <param name="isTaken">true se quel nome è già occupato. Le versioni considerano
     /// occupato anche un nome che ha solo il manifest gemello.</param>
     /// <param name="maxTries">Quanti secondi provare prima di arrendersi a un suffisso univoco.</param>
     public static string FreeName(string preferred, Func<string, bool> isTaken, int maxTries = 120)

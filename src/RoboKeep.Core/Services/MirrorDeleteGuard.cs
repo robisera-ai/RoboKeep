@@ -5,13 +5,12 @@ namespace RoboKeep.Core.Services;
 /// <summary>Stima delle cancellazioni che un mirror farebbe: quanti file spariscono dalla
 /// destinazione (<paramref name="Extra"/>) su quanti in tutto (<paramref name="Total"/>), la
 /// percentuale che ne risulta e la soglia del job con cui e' stata confrontata.
-/// <para><paramref name="PreviousSnapshot"/> e' valorizzato solo per i job con versioni, dove il
-/// confronto e' con l'ultima versione e non con la destinazione: la stima e' la stessa, ma il
-/// racconto cambia — nessun file esistente viene cancellato, la versione nuova ne avrebbe di
-/// meno.</para></summary>
+/// <para><paramref name="Versioned"/>: il job tiene le versioni. I numeri sono gli stessi, ma il
+/// racconto cambia: i file non spariscono subito, escono dal backup corrente e restano nella
+/// versione di quel backup finche' la ritenzione la conserva.</para></summary>
 public sealed record MirrorDeleteEstimate(
     string JobName, string Destination, long Extra, long Total, int Percent, int LimitPercent,
-    string? PreviousSnapshot = null);
+    bool Versioned = false);
 
 /// <summary>
 /// Guardia sulle cancellazioni del mirror: decide se un mirror sta per cancellare cosi' tanto da
@@ -37,9 +36,7 @@ public static class MirrorDeleteGuard
     /// <summary>Stima a partire dai conteggi di un'anteprima: <c>extra</c> sono i file presenti in
     /// destinazione e assenti in sorgente (quelli che il mirror cancellerebbe), il totale e' quello
     /// che la destinazione ha o avra' (extra + invariati + copiati).</summary>
-    /// <param name="previousSnapshot">Nome dell'ultima versione, se il confronto e' contro uno
-    /// snapshot invece che contro la destinazione (job con versioni).</param>
-    public static MirrorDeleteEstimate Estimate(BackupJob job, RobocopyCounts counts, string? previousSnapshot = null)
+    public static MirrorDeleteEstimate Estimate(BackupJob job, RobocopyCounts counts)
     {
         ArgumentNullException.ThrowIfNull(job);
         var extra = counts.FilesExtra;
@@ -48,17 +45,17 @@ public static class MirrorDeleteGuard
         // Con totale 0 (destinazione vuota, primo run) non c'e' nessuna percentuale da dare.
         var percent = total <= 0 ? 0 : (int)Math.Round(extra * 100.0 / total, MidpointRounding.AwayFromZero);
         return new MirrorDeleteEstimate(job.Name, job.Destination, extra, total, percent,
-            job.MirrorDeleteLimitPercent, previousSnapshot);
+            job.MirrorDeleteLimitPercent, job.Versioned);
     }
 
-    /// <summary>Come <see cref="Estimate(BackupJob, RobocopyCounts, string?)"/>, partendo dall'esito
+    /// <summary>Come <see cref="Estimate(BackupJob, RobocopyCounts)"/>, partendo dall'esito
     /// di un'anteprima gia' eseguita (i conteggi sono gli stessi, letti dal <see cref="JobResult"/>).</summary>
-    public static MirrorDeleteEstimate Estimate(BackupJob job, JobResult preview, string? previousSnapshot = null)
+    public static MirrorDeleteEstimate Estimate(BackupJob job, JobResult preview)
     {
         ArgumentNullException.ThrowIfNull(preview);
         return Estimate(job, new RobocopyCounts(
             preview.DirsCopied, preview.FilesCopied, preview.FilesSkipped, preview.FilesFailed,
-            preview.FilesExtra, preview.DirsFailed, preview.DirsExtra), previousSnapshot);
+            preview.FilesExtra, preview.DirsFailed, preview.DirsExtra));
     }
 
     /// <summary>true se il run non deve partire senza una conferma: soglia attiva, abbastanza file
@@ -82,14 +79,11 @@ public static class MirrorDeleteGuard
             Success = false,
             NotStarted = true,
             DeletionsBlocked = true,
-            // Con le versioni nessun file esistente viene cancellato — l'ultima versione resta
-            // intatta — e dirlo come una cancellazione sarebbe una bugia che spaventa: la frase
-            // cambia, i numeri sono gli stessi.
-            DeletionsBlockedDetail = estimate.PreviousSnapshot is { } previous
-                ? string.Format(CoreLoc.S("Guard_BlockedVersioned"),
-                    estimate.Extra, estimate.Total, estimate.Percent, previous)
-                : string.Format(CoreLoc.S("Guard_Blocked"),
-                    estimate.Extra, estimate.Total, estimate.Percent, estimate.Destination),
+            // Con le versioni i file non vengono cancellati subito: dirlo come una cancellazione
+            // sarebbe falso. Stessi numeri, frase diversa.
+            DeletionsBlockedDetail = string.Format(
+                CoreLoc.S(estimate.Versioned ? "Guard_BlockedVersioned" : "Guard_Blocked"),
+                estimate.Extra, estimate.Total, estimate.Percent, estimate.Destination),
             ExitCode = BlockedExitCode,
             Status = CoreLoc.S("Guard_Status"),
             StartedAt = startedAt,

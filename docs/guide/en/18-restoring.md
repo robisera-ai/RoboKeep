@@ -2,7 +2,7 @@
 
 A backup earns its keep on the day something goes wrong. **Restore...** is the window that puts that
 day back: you pick **how the backup looked on a given date**, tick **what** to recover and say
-**where** to put it. It works with both version models, and it never touches your originals.
+**where** to put it. It never touches your originals.
 
 There are two ways in:
 
@@ -14,38 +14,33 @@ There are two ways in:
 
 They are two different things, and mixing them up is the easiest way to believe you have lost files.
 
-- **Versions...** opens a dated folder in File Explorer. With the **differential** model that folder
-  holds **only the files that backup replaced or deleted**. Finding three files in there does not
-  mean the backup is incomplete: nothing else had changed, and the rest is in `current`.
+- **Versions...** opens a dated folder in File Explorer. That folder holds **only the files that
+  backup replaced or deleted**. Finding three files in there does not mean the backup is
+  incomplete: nothing else had changed, and the rest is in `current`.
 - **Restore...** instead rebuilds the **whole tree**: changed files come from the version folders,
   everything else from `current`, and files that **did not exist yet** back then are left out. It
   is almost always many more files than the dated folder shows — and it is exactly what you need.
+- In **Restore**, once you pick a past backup, the **"Show only the files that backup changed or
+  deleted"** box narrows the tree to exactly those files: the handiest way to answer "what changed
+  that day?" and get one of them back.
 
-With the **hard-link** model the distinction does not arise: every dated folder is already the whole
-tree of that day, and restoring simply saves you from copying it back by hand.
+### What a date means: "Before the backup of …"
 
-### What a date means: it depends on the model, and the list says so
+Every entry in the list reads **"Before the backup of …"**. A version folder holds copies of the
+files that backup **replaced or deleted**: the state from *before* that backup. Picking that point
+gives you exactly that. A file that vanished with the backup of the 28th is in **"Before the backup
+of the 28th"**.
 
-The two models keep different things, so a date does not mean the same in both. The list spells it
-out, entry by entry:
+**Every** point in time is listed, including backups that only added files (no folder, and no count
+of changed files): each one is a different state.
 
-- **differential → "Before the backup of …"**. A version folder holds copies of the files that
-  backup **replaced or deleted**: the state from *before* that backup. Picking that point gives you
-  exactly that. A file that vanished with the backup of the 28th is in **"Before the backup of the
-  28th"**.
-- **hard-link → "After the backup of …"**. The dated folder is the tree **as that backup left it**:
-  picking that point gives you exactly that.
-
-In the differential model **every** point in time is listed, including backups that only added files
-(no folder, and no count of changed files): each one is a different state.
-
-Why not "after" for differential too? Because the copies in the **oldest** version folder would
+Why not "after the backup"? Because the copies in the **oldest** version folder would
 become unreachable: you would need the point before it, which is often an additions-only backup whose
 record retention has already removed. A file deleted from the source, whose only copy lives right
 there, could no longer be recovered from the window. With "before the backup" every version folder is
 reachable by picking its own point.
 
-### How RoboKeep walks back (differential model)
+### How RoboKeep walks back
 
 It starts from `current`, which is **now**, and walks back one version at a time, from the oldest to
 the most recent among **the backup you picked** and the **later** ones:
@@ -71,11 +66,9 @@ The everyday case: you overwrote a document, or emptied a folder by mistake.
 1. Select the job and press **Restore...**.
 2. Under **As it was on:** pick the moment. The first entry, **Now (current state)**, is the
    up-to-date backup; below it, most recent first, one entry per backup, each with how many files
-   it changed — often that is how you spot "the day it went wrong".
-   - Differential: pick that very entry, **"Before the backup of …"**: it gives the files back as
-     they were before that backup replaced or deleted them.
-   - Hard links: entries read **"After the backup of …"**: pick the one **below** the suspicious
-     backup, i.e. the last backup before things went wrong.
+   it changed — often that is how you spot "the day it went wrong". Pick that very entry,
+   **"Before the backup of …"**: it gives the files back as they were before that backup replaced
+   or deleted them.
 3. Open the folders in the tree and **tick** what you need. Ticking a folder takes everything
    beneath it, including branches you never opened; untick a file inside and the folder becomes
    partly ticked, with the exception honoured.
@@ -92,8 +85,7 @@ files keep the **last-modified date** they had: that is what makes a March lette
 New disk, new PC, a folder deleted outright: here you tick nothing.
 
 1. **Restore...**, pick the moment: usually **Now**; if the source was emptied or damaged and a
-   backup has already recorded the damage, **"Before the backup of …"** of that backup
-   (differential) or **"After the backup of …"** of the one before it (hard links).
+   backup has already recorded the damage, **"Before the backup of …"** of that backup.
 2. Choose an empty destination folder.
 3. Tick the box at the top of the list, next to "Files and folders": it selects everything. Then **Restore**.
 

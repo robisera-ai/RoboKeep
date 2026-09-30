@@ -4,7 +4,7 @@ using RoboKeep.Core.Services;
 namespace RoboKeep.Tests;
 
 /// <summary>
-/// Il giro completo con robocopy VERO: backup per differenza su cartelle temporanee, poi il
+/// Il giro completo con robocopy VERO: backup con versioni su cartelle temporanee, poi il
 /// ripristino «prima del backup del …» in una cartella nuova. L'albero ricostruito deve essere
 /// identico — nomi, contenuti e niente in più — a quello che la sorgente aveva subito prima di quel
 /// backup. È la prova che manifest, cartelle-versione e pianificatore raccontano la stessa storia:
@@ -150,7 +150,7 @@ public class RestoreEndToEndTests : IDisposable
     /// restituisce l'albero ottenuto.</summary>
     private async Task<Dictionary<string, string>> RestoreInto(string dest, string source, DateTime? when, string folder)
     {
-        var plan = RestorePlanner.Resolve(VersioningMode.Differential, dest, when);
+        var plan = RestorePlanner.Resolve(dest, when);
         var target = Path.Combine(_root, folder);
         var outcome = await RestoreCopier.CopyAsync(plan, target, jobSource: source);
         Assert.Empty(outcome.Failures);

@@ -22,7 +22,7 @@ nube, sin cuenta, sin suscripción.**
 | | |
 |---|---|
 | 🧙 **Configuración sencilla** | El asistente pregunta sobre tus datos en lenguaje sencillo y elige los ajustes adecuados. Quien lo prefiera puede ajustarlo todo a mano. |
-| 🕰️ **Vuelve atrás en el tiempo** | Cada ejecución puede guardar una versión fechada. Los archivos sin cambios se comparten entre versiones, así que diez versiones no cuestan diez veces el espacio. Y *Restaurar* devuelve un archivo, una carpeta o todo el trabajo **como estaba en una fecha**, en la carpeta que elijas. |
+| 🕰️ **Vuelve atrás en el tiempo** | Cada ejecución puede guardar una versión fechada con solo los archivos que sustituyó o eliminó, así que diez versiones no cuestan diez veces el espacio, en cualquier disco. Y *Restaurar* devuelve un archivo, una carpeta o todo el trabajo **como estaba en una fecha**, en la carpeta que elijas. |
 | 💿 **Cuida tus discos** | Se detiene al primer error de hardware en vez de insistir durante horas, mantiene el PC despierto durante la copia y va con cuidado en los discos mecánicos. |
 | 🩺 **Salud de discos de un vistazo** | Un clic lee el SMART de cada disco y da un veredicto claro: Bien, Precaución, Peligro — con cada valor explicado. *Novedad en 1.8.* |
 | 🛡️ **Nunca el disco equivocado** | ¿Alternas dos discos externos que Windows llama a ambos `E:`? Cada tarea reconoce su disco por identidad y simplemente espera a que esté conectado. |
@@ -54,7 +54,7 @@ nube, sin cuenta, sin suscripción.**
 | ![Vista previa del comando y versiones](docs/images/editor-preview.png) | **Nada oculto.** Versiones fechadas, exclusiones por tarea y el comando robocopy exacto siempre a la vista. |
 | ![Historial de ejecuciones](docs/images/history.png) | **Cada ejecución queda registrada.** Copias y verificaciones de integridad una al lado de la otra; doble clic abre el registro completo. |
 | ![Programación por tarea](docs/images/editor-schedule.png) | **Configúralo y olvídate.** Diaria, semanal o mensual, más verificaciones de integridad periódicas. |
-| ![Explorar versiones](docs/images/versions.png) | **Elige una fecha.** La copia de ese día se abre en el Explorador de archivos; recupera lo que necesites. |
+| ![Explorar versiones](docs/images/versions.png) | **Elige una fecha.** Lo que esa copia sustituyó o eliminó se abre en el Explorador de archivos; *Restaurar* reconstruye el árbol entero. |
 
 ## Cómo se comporta una copia de seguridad
 
@@ -65,7 +65,8 @@ Cada tarea es un par carpeta origen → carpeta destino. En cada ejecución, Rob
 - en modo **espejo** (predeterminado) también **elimina** del destino lo que borraste;
 - con el espejo desactivado, solo añade y actualiza, **nunca elimina**.
 
-Con las versiones activadas, el estado anterior se guarda primero como una instantánea fechada.
+Con las versiones activadas, el estado anterior de los archivos que van a sustituirse o eliminarse
+se aparta primero en una versión fechada.
 
 ## Novedades de la 1.8
 
@@ -86,8 +87,8 @@ Historial completo en el [CHANGELOG](CHANGELOG.md).
 <summary><b>Todas las funciones</b></summary>
 
 **Copia de seguridad**: modo espejo o acumular · protección de rotación de discos (la tarea se
-vincula a su disco por identidad de volumen) · versiones fechadas con enlaces duros y retención
-configurable, sin versión duplicada cuando no ha cambiado nada · copia de archivos
+vincula a su disco por identidad de volumen) · versiones fechadas en cualquier disco y retención
+configurable, sin versión vacía cuando no ha cambiado nada · copia de archivos
 abiertos/bloqueados mediante VSS · verificación de integridad SHA-256, a demanda o periódica ·
 parada por error de hardware que deja el disco en reposo · límite automático de hilos en discos
 mecánicos · PC mantenido despierto · copia multihilo · exclusiones por tarea · "forzar copia"
@@ -97,7 +98,7 @@ reanudable para archivos enormes · vista previa / ejecución en seco.
 **Te mantiene informado**: historial de ejecuciones con un registro por cada entrada, abierto en
 el Bloc de notas · botón Carpeta de registros · iconos de salud por tarea con explicaciones
 claras · iconos que se actualizan en el instante en que conectas o desconectas un disco ·
-comprobaciones previas (destino accesible, espacio en disco, idoneidad de VSS y de versiones,
+comprobaciones previas (destino accesible, espacio en disco, idoneidad de VSS,
 errores de disco recientes del registro de eventos de Windows) · ventana de salud de discos
 (SMART) · registro en tiempo real · archivo de registros comprimidos con limpieza automática ·
 notificaciones toast y bandeja del sistema · informes por correo (SMTP), opcionalmente solo en
@@ -117,8 +118,6 @@ tareas arrastrando · comprobación de actualizaciones opcional · 5 idiomas · 
 - **Solo Windows 10/11.** RoboKeep se apoya en robocopy y otras funciones nativas de Windows.
 - **Los archivos cambiados se recopian enteros** (sin copia por bloques/delta): perfecto para
   documentos y fotos, costoso para archivos enormes que cambian a diario.
-- **Las versiones necesitan un destino NTFS local** (los enlaces duros no existen en exFAT ni en
-  recursos de red).
 - **La copia de archivos abiertos necesita un origen NTFS local** y una confirmación de
   administrador (UAC) por ejecución.
 - **Las verificaciones de integridad releen cada archivo en ambos lados**, así que tardan casi

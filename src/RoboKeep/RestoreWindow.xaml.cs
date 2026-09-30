@@ -68,6 +68,16 @@ public partial class RestoreWindow : Wpf.Ui.Controls.FluentWindow
             return;
 
         await _vm.RestoreAsync(plan);
+
+        // Tutto a posto: un ultimo messaggio con l'esito (e la cartella a portata di clic), poi la
+        // finestra si chiude. Con un annullamento o file non ripristinati resta aperta: l'elenco
+        // di cosa è rimasto indietro sta qui sotto.
+        if (!_vm.LastRestoreClean) return;
+        var done = string.Format(Loc.Instance["Restore_DoneAsk"], _vm.Status, _vm.RestoredTo);
+        if (MessageBox.Show(this, done, Loc.Instance["Restore_Title"],
+                MessageBoxButton.YesNo, MessageBoxImage.Information) == MessageBoxResult.Yes)
+            OnOpenFolder(this, new RoutedEventArgs());
+        Close();
     }
 
     private void OnCancelCopy(object sender, RoutedEventArgs e) => _vm.Cancel();

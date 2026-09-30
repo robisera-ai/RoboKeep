@@ -281,8 +281,8 @@ public class RobocopyArgsBuilderTests
     public void ForceCopyPass_HonoursTheJobsExclusions_WhichBeatTheForceCopyPatterns()
     {
         // «non toccare questo» e' una richiesta piu' forte di «ricopia sempre questo»: la passata
-        // forzata deve portare /XF e /XD come quella normale. Ci conta anche il modello di versioni
-        // per differenza, che a ogni run esclude i file che non ha potuto mettere da parte.
+        // forzata deve portare /XF e /XD come quella normale. Ci contano anche i job con versioni,
+        // che a ogni run escludono i file che non hanno potuto mettere da parte.
         var job = NewJob();
         job.ExcludeFiles = new List<string> { "*.tmp", @"D:\dst\in-uso.pst" };
         job.ExcludeDirs = new List<string> { "cache" };

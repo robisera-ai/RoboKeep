@@ -24,7 +24,7 @@ importante poggia su un pezzo di Windows collaudato da decenni:
 |---|---|
 | Motore di copia | `robocopy` di sistema (multi-thread, sempre aggiornato con Windows Update) |
 | File aperti/bloccati | **Volume Shadow Copy** (snapshot del volume via WMI) |
-| Versioni senza sprecare spazio | **hard-link NTFS** (modello Time Machine/rsnapshot) |
+| Versioni senza sprecare spazio | **spostamento sullo stesso disco** dei soli file sostituiti o cancellati in `versions\` (modello Cronologia file/`rsync --backup-dir`), su qualunque file system |
 | Pianificazione | **Utilità di pianificazione** di Windows |
 | Password mai in chiaro | **DPAPI** (cifratura legata a macchina o utente) |
 | Compressione log, email, hash | .NET puro (`System.IO.Compression`, `System.Net.Mail`, SHA-256) |
@@ -99,7 +99,7 @@ sempre un backup bloccato.
   se un file risulta diverso ma la sorgente è stata modificata *dopo* il backup, viene contato
   come "modificato dopo", **non come corruzione** — una funzione che esiste per dare fiducia non
   può gridare falsi allarmi. Le esclusioni del job vengono rispettate; i job versionati
-  verificano l'ultimo snapshot.
+  verificano la cartella `current`, cioè il backup vero.
 - **Rallentamento** (`/IPG`) per i backup su rete — e quando è attivo il multi-thread si spegne,
   perché robocopy applica il ritardo per thread e il limite diventerebbe imprevedibile.
 - **Esporta/importa configurazione**, con validazione, copia di sicurezza automatica e
@@ -143,8 +143,9 @@ Windows già lo diceva. Le decisioni:
   pendenti. Il registro Sistema conserva blocchi danneggiati, errori di I/O e scritture perse, e
   si legge da utente normale. Avvisa, non blocca: nomina i dischi per lettera e numero.
 - **Forza copia con `/IM`**: i robocopy recenti classificano "modificato" un file riscritto con
-  stessa data e dimensione e lo saltano nonostante `/IS /IT`. Nei job versionati i file da
-  forzare vengono prima scollegati dallo snapshot: la passata sovrascrive sul posto.
+  stessa data e dimensione e lo saltano nonostante `/IS /IT`. Nei job versionati la copia
+  precedente dei file da forzare viene prima messa da parte nella versione: la passata
+  sovrascrive sul posto.
 - **Verifica periodica** (7 giorni) invece che a ogni backup, con un log a sé per ogni verifica.
 - Lezione di processo: un test asseriva su testo localizzato mentre un altro cambiava la lingua
   del processo in parallelo; la release è fallita in CI al primo tentativo. Ora nessun codice

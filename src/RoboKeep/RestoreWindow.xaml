@@ -78,6 +78,10 @@
 
         <!-- Il momento da ricostruire. -->
         <Grid Grid.Row="2" Margin="16,0,16,8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
@@ -90,6 +94,11 @@
                       DisplayMemberPath="Label" IsEnabled="{Binding CanAct}"/>
             <TextBlock Grid.Column="2" Text="{Binding Totals}" VerticalAlignment="Center"
                        Opacity="0.8" Margin="12,0,0,0"/>
+            <!-- Vista ridotta: solo cio' che quel backup ha sostituito o cancellato. -->
+            <CheckBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,6,0,0"
+                      Content="{l:Tr Restore_OnlyChanged}" IsChecked="{Binding OnlyChanged}"
+                      IsEnabled="{Binding CanAct}"
+                      Visibility="{Binding CanShowOnlyChanged, Converter={StaticResource BoolToVis}}"/>
         </Grid>
 
         <ui:TextBox Grid.Row="3" Margin="16,0,16,8" Icon="{ui:SymbolIcon Search24}"

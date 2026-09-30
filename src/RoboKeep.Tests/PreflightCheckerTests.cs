@@ -49,15 +49,13 @@ public class PreflightCheckerTests
     }
 
     [Fact]
-    public void VersionedJob_NoHardLinkWarningAnyMore()
+    public void ReachableDestination_WithRoomToSpare_HasNothingToSay()
     {
-        // Una destinazione senza hard-link non e' un problema: le versioni ci sono comunque, per
-        // differenza. Il pre-avvio non ha piu' niente da dire, e nemmeno il controllo da fare
-        // (scriveva un file di prova nella destinazione a ogni avvio).
+        // Il tipo di disco non conta: le versioni funzionano ovunque, e il pre-avvio non ha
+        // niente da dire su una destinazione raggiungibile e con spazio.
         var w = PreflightChecker.Evaluate(new PreflightInputs(
             DestinationReachable: true, FreeBytes: 10_000 * Mb, MinFreeBytes: 1024 * Mb, SourceSizeBytes: 100 * Mb));
         Assert.Empty(w);
-        Assert.DoesNotContain(w, x => x.MessageKey == "Preflight_NoHardLink");
     }
 
     [Fact]

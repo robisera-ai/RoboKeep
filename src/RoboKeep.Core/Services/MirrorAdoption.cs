@@ -1,19 +1,19 @@
 namespace RoboKeep.Core.Services;
 
 /// <summary>
-/// Riconoscimento condiviso dai due modelli di versione: il contenuto sciolto che c'e' nella
-/// destinazione e' davvero una copia della sorgente, e quindi si puo' adottare come prima versione?
+/// Riconoscimento usato dall'adozione di una copia semplice: il contenuto sciolto che c'e' nella
+/// destinazione e' davvero una copia della sorgente, e quindi si puo' adottare come «current»?
 /// Una copia (anche con esclusioni) e' un SOTTOINSIEME della sorgente: ogni file e cartella della
 /// destinazione deve esistere nella sorgente allo stesso percorso relativo. Contenuto diverso va
 /// bene (e' lo stato precedente, proprio quello da adottare); un percorso che nella sorgente non c'e'
-/// no. Basta una voce estranea e non si adotta niente: meglio una prima versione "da zero" che
+/// no. Basta una voce estranea e non si adotta niente: meglio un primo backup "da zero" che
 /// spostare roba altrui.
 /// </summary>
 public static class MirrorAdoption
 {
     /// <summary>
-    /// Voci della destinazione che appartengono a RoboKeep e non al backup: le cartelle dei due
-    /// layout di versione (<c>current</c>, <c>versions</c>), la copia della configurazione
+    /// Voci della destinazione che appartengono a RoboKeep e non al backup: le cartelle delle
+    /// versioni (<c>current</c>, <c>versions</c>), la copia della configurazione
     /// (<see cref="ConfigMirror.FolderName"/>), i residui di un run interrotto (<c>.inprogress</c>)
     /// o di una cancellazione interrotta (<c>.deleting-…</c>) e i manifest gemelli delle versioni.
     /// Non si adottano e non si contano come "contenuto estraneo": spostare <c>RoboKeep-config</c>

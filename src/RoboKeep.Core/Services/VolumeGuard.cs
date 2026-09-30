@@ -21,7 +21,7 @@ public enum VolumeCheck
 /// <summary>
 /// Decide se un job può girare sul disco attualmente collegato (funzione pura).
 /// La protezione della rotazione dei dischi vive qui: è la decisione che impedisce a un
-/// mirror di cancellare gli snapshot del disco sbagliato, quindi è testata al 100%.
+/// mirror di cancellare i backup e le versioni del disco sbagliato, quindi è testata al 100%.
 /// </summary>
 public static class VolumeGuard
 {

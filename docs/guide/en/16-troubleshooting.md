@@ -12,7 +12,7 @@ That's **VSS**: copying open files photographs the disk for an instant and asks 
 
 ### A version folder holds only a few files
 
-If the destination has `current` and `versions`, the job is using **differential** versions: every dated folder holds **only the files that backup replaced or deleted**, not the whole tree. The complete, up-to-date backup is in `current`; the other files hadn't changed, so there was nothing to set aside. This is the model RoboKeep picks by itself when the destination doesn't support hard links (exFAT, FAT32, network). See *Versions*.
+With versions on, every dated folder in `versions` holds **only the files that backup replaced or deleted**, not the whole tree. The complete, up-to-date backup is in `current`; the other files hadn't changed, so there was nothing to set aside. See *Versions*.
 
 ### SmartScreen says "unknown publisher"
 

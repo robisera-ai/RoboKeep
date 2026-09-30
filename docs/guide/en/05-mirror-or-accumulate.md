@@ -60,6 +60,6 @@ concerned: it never deletes.
 Jobs with versions reuse the check the versioning already runs to see whether anything changed, so
 they cost nothing extra; for mirrors without versions it's one more read of the destination, which
 on huge folders can take tens of seconds (the "previewing the mirror's deletions" line in the log
-says so). With versions, though, **no existing file is deleted** — the last version stays untouched
-— and the question says it as it is: how many files *fewer* the new version would have than the
-last one.
+says so). With versions, though, the files are **not deleted right away**: they leave the current
+backup and go into that backup's version, where they stay for as long as retention keeps it — and
+the question says it as it is.

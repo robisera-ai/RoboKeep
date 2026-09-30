@@ -9,7 +9,8 @@ namespace RoboKeep.Tests;
 /// e l'email del caso bloccato. Il mirror che cancella tutto non si puo' provare su robocopy vero
 /// senza dati veri da perdere: al suo posto gira un finto robocopy che dichiara i conteggi che
 /// servono e REGISTRA ogni chiamata, cosi' il test puo' dimostrare che il mirror vero non e' mai
-/// partito. La strada con le versioni invece usa robocopy vero: li' l'anteprima esiste gia'.
+/// partito. La strada con le versioni invece usa robocopy vero: li' l'anteprima esiste gia',
+/// ed e' quella che compone la versione.
 /// </summary>
 [Collection(CultureCollection.Name)]
 public sealed class MirrorDeleteGuardTests : IDisposable
@@ -134,19 +135,19 @@ public sealed class MirrorDeleteGuardTests : IDisposable
     }
 
     [Fact]
-    public void BlockedResult_ForAVersionedJob_TalksAboutTheNewVersion_NotAboutDeleting()
+    public void BlockedResult_ForAVersionedJob_SaysTheFilesLeaveTheCurrentBackup_NotThatTheyAreDeleted()
     {
-        // Con le versioni non si cancella niente: l'ultima versione resta intatta e la nuova
-        // avrebbe meno file. Dirlo come una cancellazione sarebbe falso, e spaventerebbe.
-        var e = MirrorDeleteGuard.Estimate(Job(20), Counts(extra: 1812, skipped: 202),
-            previousSnapshot: "2026-09-25_210000");
+        // Con le versioni i file non spariscono subito: finiscono nella versione di quel backup.
+        // Stessi numeri, frase diversa.
+        var job = Job(20);
+        job.Versioned = true;
+        var e = MirrorDeleteGuard.Estimate(job, Counts(extra: 1812, skipped: 202));
         var r = MirrorDeleteGuard.BlockedResult(e, DateTime.Now);
 
-        Assert.Equal("2026-09-25_210000", e.PreviousSnapshot);
-        Assert.Contains("2026-09-25_210000", r.DeletionsBlockedDetail);
-        Assert.Contains(N(1812), r.DeletionsBlockedDetail);
-        Assert.DoesNotContain(@"E:\Backup\Documenti", r.DeletionsBlockedDetail);
-        // E non e' la frase del mirror piatto.
+        Assert.True(e.Versioned);
+        Assert.False(MirrorDeleteGuard.Estimate(Job(20), Counts(extra: 1812, skipped: 202)).Versioned);
+        Assert.Equal(string.Format(CoreLoc.S("Guard_BlockedVersioned"), 1812L, 2014L, 90, @"E:\Backup\Documenti"),
+            r.DeletionsBlockedDetail);
         var plain = MirrorDeleteGuard.BlockedResult(
             MirrorDeleteGuard.Estimate(Job(20), Counts(extra: 1812, skipped: 202)), DateTime.Now);
         Assert.NotEqual(plain.DeletionsBlockedDetail, r.DeletionsBlockedDetail);
@@ -343,10 +344,9 @@ public sealed class MirrorDeleteGuardTests : IDisposable
     [Fact]
     public async Task Preview_OfAVersionedJob_DoesNotCryWolf()
     {
-        // In anteprima il /L di un job versionato gira contro la RADICE della destinazione, dove
-        // stanno le cartelle-data di tutti gli snapshot: le conterebbe come file "extra" e
-        // annuncerebbe una cancellazione in massa che il run vero non farebbe mai (lui confronta
-        // con l'ultima versione).
+        // L'anteprima di un job versionato ancora senza «current» gira contro la RADICE della
+        // destinazione: i suoi "extra" non direbbero niente del run vero, che confronta con
+        // «current» e applica la guardia da se'.
         var job = LocalJob();
         job.Versioned = true;
         var lines = new List<string>();
@@ -389,42 +389,42 @@ public sealed class MirrorDeleteGuardTests : IDisposable
         foreach (var f in Directory.GetFiles(Src)) File.Delete(f);
     }
 
-    private string[] Snapshots() =>
-        Directory.GetDirectories(Dst).Select(Path.GetFileName)
-            .Where(n => n is not null && !SnapshotName.IsInProgress(n!) && SnapshotName.TryParse(n!, out _))
-            .Cast<string>().OrderBy(n => n).ToArray();
+    private string Current => VersioningLayout.CurrentDir(Dst);
+    private string VersionsFolder => VersioningLayout.VersionsDir(Dst);
+
+    /// <summary>Tutte le voci di «versions» (cartelle, manifest, residui): dopo un blocco non ne
+    /// deve essere nata nessuna.</summary>
+    private string[] VersionEntries() =>
+        Directory.Exists(VersionsFolder) ? Directory.GetFileSystemEntries(VersionsFolder) : Array.Empty<string>();
 
     [Fact]
-    public async Task VersionedMirror_IsBlockedByTheExistingPreview_BeforeCloningAnything()
+    public async Task VersionedMirror_IsBlockedByTheExistingPreview_BeforeMovingAnything()
     {
         FillSource(ManyFiles);
         var job = new BackupJob { Name = "V", Source = Src, Destination = Dst, Versioned = true };
-        var svc = new SnapshotService(new RobocopyRunner());
-        await svc.RunVersionedAsync(job);
-        var first = Assert.Single(Snapshots());
-        var copied = Directory.GetFiles(Path.Combine(Dst, first)).Length;
+        var svc = new DifferentialSnapshotService(new RobocopyRunner());
+        await svc.RunAsync(job);
+        var copied = Directory.GetFiles(Current).Length;
         Assert.True(copied > MirrorDeleteGuard.MinFiles);
+        var before = VersionEntries();
 
         EmptySource(); // la cartella sorgente si e' svuotata (spostata, unita' non montata, ...)
-        var run = await svc.RunVersionedAsync(job);
+        var run = await svc.RunAsync(job);
 
         Assert.True(run.Result.DeletionsBlocked);
         Assert.False(run.Result.Success);
         Assert.Equal(copied, run.Result.FilesExtra);
-        // Il messaggio nomina l'ultima versione e non promette cancellazioni: quella versione resta.
-        Assert.Contains(first, run.Result.DeletionsBlockedDetail);
-        // Niente clone: la versione precedente e' intatta e non e' rimasta nessuna .inprogress.
-        Assert.Equal(new[] { first }, Snapshots());
-        Assert.DoesNotContain(Directory.GetDirectories(Dst).Select(Path.GetFileName),
-            n => n is not null && SnapshotName.IsInProgress(n!));
-        Assert.Equal(copied, Directory.GetFiles(Path.Combine(Dst, first)).Length);
+        // Niente spostato: «current» e' intatta e in «versions» non e' nato niente.
+        Assert.Equal(copied, Directory.GetFiles(Current).Length);
+        Assert.Equal(before, VersionEntries());
 
-        // Con la conferma, invece, il run procede: nasce la versione nuova (vuota) e la vecchia resta.
-        await Task.Delay(1100); // nome dello snapshot al secondo
-        var confirmed = await svc.RunVersionedAsync(job, confirmDeletions: _ => Task.FromResult(true));
+        // Con la conferma, invece, il run procede: i file tolti da «current» finiscono tutti nella
+        // versione nuova, nessuno sparisce.
+        var confirmed = await svc.RunAsync(job, confirmDeletions: _ => Task.FromResult(true));
         Assert.False(confirmed.Result.DeletionsBlocked);
-        Assert.Equal(2, Snapshots().Length);
-        Assert.Equal(copied, Directory.GetFiles(Path.Combine(Dst, first)).Length);
+        Assert.Empty(Directory.GetFiles(Current));
+        var version = Assert.Single(SnapshotName.ListValid(VersionsFolder));
+        Assert.Equal(copied, Directory.GetFiles(Path.Combine(VersionsFolder, version)).Length);
     }
 
     [Fact]
@@ -436,17 +436,19 @@ public sealed class MirrorDeleteGuardTests : IDisposable
         // bloccherebbe nulla.
         FillSource(ManyFiles);
         var job = new BackupJob { Name = "V", Source = Src, Destination = Dst, Versioned = true };
-        var svc = new SnapshotService(new RobocopyRunner());
-        await svc.RunVersionedAsync(job);
-        var first = Assert.Single(Snapshots());
+        var svc = new DifferentialSnapshotService(new RobocopyRunner());
+        await svc.RunAsync(job);
+        var copied = Directory.GetFiles(Current).Length;
+        var before = VersionEntries();
 
         var frozen = Path.Combine(_root, "frozen");
         Directory.CreateDirectory(frozen);
-        var run = await svc.RunVersionedAsync(job, sourceOverride: frozen);
+        var run = await svc.RunAsync(job, sourceOverride: frozen);
 
         Assert.True(run.Result.DeletionsBlocked);
         Assert.True(Directory.GetFiles(Src).Length > MirrorDeleteGuard.MinFiles); // la viva e' intatta
-        Assert.Equal(new[] { first }, Snapshots());
+        Assert.Equal(copied, Directory.GetFiles(Current).Length);
+        Assert.Equal(before, VersionEntries());
     }
 
     [Fact]
@@ -465,7 +467,8 @@ public sealed class MirrorDeleteGuardTests : IDisposable
         var creds = new CredentialService(config.Settings.CredentialScope);
         var robocopy = new RobocopyRunner();
         var runner = new BackupRunner(config, robocopy, new LogService(config.Settings),
-            new EmailService(creds), creds, results, new SnapshotService(robocopy), history: history);
+            new EmailService(creds), creds, results, history: history,
+            differentialSnapshots: new DifferentialSnapshotService(robocopy));
         var job = new BackupJob { Name = "V", Source = Src, Destination = Dst, Versioned = true };
 
         var ok = await runner.RunJobAsync(job);

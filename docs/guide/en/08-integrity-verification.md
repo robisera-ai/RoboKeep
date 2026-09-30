@@ -18,7 +18,7 @@ Re-reading everything could raise pointless alarms. RoboKeep avoids them:
 - A file you **edited after** the backup is reported as *"changed after the backup"*, not as
   corruption: it's a legitimate difference, not a fault.
 - Verification **respects the job's exclusions**: what you don't copy isn't checked either.
-- Jobs with **versions** verify the **latest snapshot** — the most recent, consistent copy.
+- Jobs with **versions** verify the **`current`** folder — the real, complete, up-to-date backup.
 
 ## When to run it
 

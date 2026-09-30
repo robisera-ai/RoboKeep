@@ -22,7 +22,7 @@ d'abonnement.**
 | | |
 |---|---|
 | 🧙 **Configuration simple** | L'assistant pose des questions sur vos données en langage clair et choisit les bons réglages. Les experts peuvent tout ajuster à la main. |
-| 🕰️ **Remontez le temps** | Chaque exécution peut conserver une version datée. Les fichiers inchangés sont partagés entre les versions, donc dix versions ne coûtent pas dix fois l'espace. Et *Restaurer* remet un fichier, un dossier ou toute la tâche **tels qu'à une date**, dans un dossier de votre choix. |
+| 🕰️ **Remontez le temps** | Chaque exécution peut conserver une version datée qui ne contient que les fichiers qu'elle a remplacés ou supprimés, donc dix versions ne coûtent pas dix fois l'espace, sur n'importe quel disque. Et *Restaurer* remet un fichier, un dossier ou toute la tâche **tels qu'à une date**, dans un dossier de votre choix. |
 | 💿 **Doux avec vos disques** | S'arrête à la première erreur matérielle au lieu de s'acharner pendant des heures, maintient le PC éveillé pendant la sauvegarde, ménage les disques mécaniques. |
 | 🩺 **État des disques en un coup d'œil** | Un clic lit le SMART de chaque disque et donne un verdict clair : Bon, Attention, Danger — avec chaque valeur expliquée. *Nouveauté de la 1.8.* |
 | 🛡️ **Jamais le mauvais disque** | Vous alternez deux disques externes que Windows appelle tous deux `E:` ? Chaque tâche reconnaît son propre disque par son identité et attend simplement qu'il soit branché. |
@@ -56,7 +56,7 @@ d'abonnement.**
 | ![Aperçu de la commande et versions](docs/images/editor-preview.png) | **Rien de caché.** Versions datées, exclusions par tâche, et la commande robocopy exacte toujours affichée. |
 | ![Historique des exécutions](docs/images/history.png) | **Chaque exécution consignée.** Sauvegardes et vérifications d'intégrité côte à côte ; un double-clic ouvre le journal complet. |
 | ![Planification par tâche](docs/images/editor-schedule.png) | **Réglez et oubliez.** Quotidienne, hebdomadaire ou mensuelle, plus des vérifications d'intégrité périodiques. |
-| ![Parcourir les versions](docs/images/versions.png) | **Choisissez une date.** La sauvegarde de ce jour s'ouvre dans l'Explorateur de fichiers ; recopiez ce dont vous avez besoin. |
+| ![Parcourir les versions](docs/images/versions.png) | **Choisissez une date.** Ce que cette sauvegarde a remplacé ou supprimé s'ouvre dans l'Explorateur de fichiers ; *Restaurer* reconstruit l'arborescence entière. |
 
 ## Comment se comporte une sauvegarde
 
@@ -67,7 +67,8 @@ Chaque tâche est une paire dossier source → dossier destination. À chaque ex
 - en mode **miroir** (par défaut), **supprime** aussi de la destination ce que vous avez effacé ;
 - miroir désactivé, il ajoute et met à jour seulement, **sans jamais supprimer**.
 
-Avec les versions activées, l'état précédent est d'abord enregistré sous forme d'instantané daté.
+Avec les versions activées, l'état précédent des fichiers sur le point d'être remplacés ou supprimés
+est d'abord mis de côté dans une version datée.
 
 ## Nouveautés de la 1.8
 
@@ -89,8 +90,8 @@ Historique complet dans le [CHANGELOG](CHANGELOG.md).
 <summary><b>Toutes les fonctionnalités</b></summary>
 
 **Sauvegarde** : miroir ou accumulation · protection contre la rotation des disques (tâche liée à
-son disque par l'identité du volume) · versions datées avec liens physiques et rétention
-configurable, pas de version en double si rien n'a changé · copie des fichiers ouverts/verrouillés
+son disque par l'identité du volume) · versions datées sur n'importe quel disque et rétention
+configurable, pas de version vide si rien n'a changé · copie des fichiers ouverts/verrouillés
 via VSS · vérification d'intégrité SHA-256, à la demande ou périodique · arrêt sur erreur
 matérielle qui met le disque au repos · plafond automatique de threads sur les disques mécaniques ·
 PC maintenu éveillé · copie multithread · exclusions par tâche · « forcer la copie » pour les
@@ -100,7 +101,7 @@ mode redémarrable pour les fichiers énormes · aperçu/exécution à blanc.
 **Il vous tient informé** : historique des exécutions avec un journal pour chaque entrée, ouvert
 dans le Bloc-notes · bouton Dossier des journaux · icônes de santé par tâche avec infobulles en
 langage clair · icônes qui s'actualisent à l'instant où vous branchez ou débranchez un disque ·
-contrôles préalables (destination joignable, espace disque, éligibilité VSS et versions, erreurs
+contrôles préalables (destination joignable, espace disque, éligibilité VSS, erreurs
 disque récentes dans le journal des événements Windows) · fenêtre État des disques (SMART) ·
 journal en temps réel · archive des journaux compressés avec nettoyage automatique · notifications
 toast et zone de notification · rapports par e-mail (SMTP), au besoin seulement en cas d'erreurs.
@@ -121,8 +122,6 @@ mode portable.
   Windows.
 - **Les fichiers modifiés sont recopiés en entier** (pas de copie par blocs/delta) : parfait pour
   documents et photos, coûteux pour un gros fichier unique qui change chaque jour.
-- **Les versions requièrent une destination NTFS locale** (les liens physiques n'existent pas sur
-  exFAT ni sur les partages réseau).
 - **La copie des fichiers ouverts requiert une source NTFS locale** et une confirmation
   administrateur (UAC) par exécution.
 - **Les vérifications d'intégrité relisent chaque fichier des deux côtés**, elles durent donc à peu

@@ -3,9 +3,8 @@ using RoboKeep.Core.Services;
 namespace RoboKeep.Tests;
 
 /// <summary>
-/// Scelta del modello di versioni: il layout che c'e' in destinazione vince sempre (un backup
-/// avviato non cambia modello sotto i piedi dell'utente), e solo su una destinazione vergine decide
-/// la prova sul disco, qui iniettata.
+/// Dove stanno le versioni e quando una destinazione ne ha gia' da rispettare: «current» o
+/// versioni datate in «versions». Solo lettura, nessun file scritto.
 /// </summary>
 public class VersioningLayoutTests : IDisposable
 {
@@ -22,137 +21,86 @@ public class VersioningLayoutTests : IDisposable
     }
 
     [Fact]
-    public void DatedFolders_WinOverTheProbe()
-    {
-        var dest = Dest("hl");
-        Directory.CreateDirectory(Path.Combine(dest, "2026-09-25_210000"));
-        // La prova dice "niente hard-link", ma qui ci sono gia' cartelle datate: cambiare modello
-        // renderebbe irraggiungibili le versioni esistenti.
-        Assert.Equal(VersioningMode.HardLinks, VersioningLayout.Detect(dest, _ => false));
-    }
-
-    [Fact]
-    public void StaleInProgressDatedFolder_IsStillTheHardLinkLayout()
-    {
-        var dest = Dest("hl-stale");
-        Directory.CreateDirectory(Path.Combine(dest, "2026-09-25_210000" + SnapshotName.InProgressSuffix));
-        Assert.Equal(VersioningMode.HardLinks, VersioningLayout.Detect(dest, _ => false));
-    }
-
-    [Fact]
-    public void CurrentFolder_WinsOverTheProbe()
+    public void CurrentFolder_MeansVersionsToRespect()
     {
         var dest = Dest("diff");
         Directory.CreateDirectory(VersioningLayout.CurrentDir(dest));
-        // La prova dice "hard-link disponibili" (il disco e' NTFS), ma il job gira gia' per
-        // differenza: passare all'altro modello lascerebbe «current» e «versions» orfane.
-        Assert.Equal(VersioningMode.Differential, VersioningLayout.Detect(dest, _ => true));
+        Assert.True(VersioningLayout.HasVersions(dest));
     }
 
     [Fact]
-    public void VirginDestination_AsksTheProbe()
-    {
-        var dest = Dest("vuota");
-        Assert.Equal(VersioningMode.HardLinks, VersioningLayout.Detect(dest, _ => true));
-        Assert.Equal(VersioningMode.Differential, VersioningLayout.Detect(dest, _ => false));
-    }
-
-    [Fact]
-    public void MissingDestination_AsksTheProbe()
-    {
-        var dest = Path.Combine(_root, "non-esiste-ancora");
-        Assert.Equal(VersioningMode.Differential, VersioningLayout.Detect(dest, _ => false));
-        Assert.Equal(VersioningMode.HardLinks, VersioningLayout.Detect(dest, _ => true));
-    }
-
-    [Fact]
-    public void DestinationWithUnrelatedContent_AsksTheProbe()
-    {
-        // Contenuto qualsiasi non e' un layout: decide la prova.
-        var dest = Dest("piatta");
-        File.WriteAllText(Path.Combine(dest, "documento.txt"), "x");
-        Directory.CreateDirectory(Path.Combine(dest, "cartella"));
-        Assert.Equal(VersioningMode.Differential, VersioningLayout.Detect(dest, _ => false));
-    }
-
-    [Fact]
-    public void VersionsFolderWithDatedEntries_IsEnoughToWinOverTheProbe()
+    public void VersionsFolderWithDatedEntries_IsEnough()
     {
         // «current» cancellata a mano (o mai creata perche' il primo mirror non e' riuscito): le
-        // versioni restano, e i file che contengono sono spesso l'unica copia rimasta. Il layout
-        // c'e' ancora e va rispettato.
+        // versioni restano, e i file che contengono sono spesso l'unica copia rimasta.
         var dest = Dest("solo-versions");
         Directory.CreateDirectory(Path.Combine(VersioningLayout.VersionsDir(dest), "2026-09-25_210000"));
-        Assert.Equal(VersioningMode.Differential, VersioningLayout.Detect(dest, _ => true));
-        Assert.True(VersioningLayout.HasLayout(dest));
+        Assert.True(VersioningLayout.HasVersions(dest));
     }
 
     [Fact]
-    public void HasLayout_IsFalse_OnAVirginOrMissingDestination()
+    public void AManifestAlone_IsEnough()
     {
-        Assert.False(VersioningLayout.HasLayout(Dest("nuda")));
-        Assert.False(VersioningLayout.HasLayout(Path.Combine(_root, "non-esiste")));
-        Assert.False(VersioningLayout.HasLayout(""));
-        // Una cartella «versions» vuota non e' un layout: non c'e' niente da proteggere.
+        // Un backup di sole aggiunte lascia soltanto il manifest: e' un punto nel tempo, e dice che
+        // quella «versions» e' di RoboKeep.
+        var dest = Dest("solo-manifest");
+        Directory.CreateDirectory(VersioningLayout.VersionsDir(dest));
+        File.WriteAllText(Path.Combine(VersioningLayout.VersionsDir(dest),
+            "2026-09-25_210000" + VersionManifest.FileSuffix), "{}");
+        Assert.True(VersioningLayout.HasVersions(dest));
+        Assert.True(VersioningLayout.HasArchivedVersions(dest));
+    }
+
+    [Fact]
+    public void CurrentAlone_IsNotAnArchive()
+    {
+        var dest = Dest("solo-current");
+        Directory.CreateDirectory(VersioningLayout.CurrentDir(dest));
+        Assert.True(VersioningLayout.HasVersions(dest));
+        Assert.False(VersioningLayout.HasArchivedVersions(dest));
+    }
+
+    [Fact]
+    public void InterruptedVersion_IsEnough()
+    {
+        // Una versione interrotta contiene gli originali spostati via da «current».
+        var dest = Dest("solo-inprogress");
+        Directory.CreateDirectory(Path.Combine(VersioningLayout.VersionsDir(dest),
+            "2026-09-25_210000" + SnapshotName.InProgressSuffix));
+        Assert.True(VersioningLayout.HasVersions(dest));
+    }
+
+    [Fact]
+    public void HasVersions_IsFalse_OnAVirginOrMissingDestination()
+    {
+        Assert.False(VersioningLayout.HasVersions(Dest("nuda")));
+        Assert.False(VersioningLayout.HasVersions(Path.Combine(_root, "non-esiste")));
+        Assert.False(VersioningLayout.HasVersions(""));
+        // Una cartella «versions» vuota non conta: non c'e' niente da proteggere.
         var dest = Dest("versions-vuota");
         Directory.CreateDirectory(VersioningLayout.VersionsDir(dest));
-        Assert.False(VersioningLayout.HasLayout(dest));
+        Assert.False(VersioningLayout.HasVersions(dest));
     }
 
     [Fact]
-    public void HasLayout_IsTrue_ForBothModels()
+    public void DatedFoldersInTheRoot_AreNotVersions()
     {
-        var hl = Dest("hl-layout");
-        Directory.CreateDirectory(Path.Combine(hl, "2026-09-25_210000"));
-        Assert.True(VersioningLayout.HasLayout(hl));
-
-        var diff = Dest("diff-layout");
-        Directory.CreateDirectory(VersioningLayout.CurrentDir(diff));
-        Assert.True(VersioningLayout.HasLayout(diff));
+        // Cartelle con nome-data nella radice non sono versioni di RoboKeep: sono contenuto come un
+        // altro, e l'unico posto dove stanno le versioni e' «versions».
+        var dest = Dest("radice-datata");
+        Directory.CreateDirectory(Path.Combine(dest, "2026-09-25_210000"));
+        File.WriteAllText(Path.Combine(dest, "documento.txt"), "x");
+        Assert.False(VersioningLayout.HasVersions(dest));
     }
 
     [Fact]
-    public void DefaultProbe_OnNtfsTempFolder_SaysHardLinks()
+    public void HasVersions_WritesNothing()
     {
-        var dest = Dest("ntfs");
-        // Su una macchina la cui cartella temporanea NON fosse NTFS (ramdisk exFAT, cartella
-        // reindirizzata su una share) la risposta giusta sarebbe l'altra: la prova non ha senso.
-        if (!HardLinkSupport.IsSupported(dest)) return;
-        Assert.Equal(VersioningMode.HardLinks, VersioningLayout.Detect(dest));
-    }
-
-    [Fact]
-    public void DetectReadOnly_ReadsTheLayout_WithoutEverTouchingTheDisk()
-    {
-        var hl = Dest("ro-hl");
-        Directory.CreateDirectory(Path.Combine(hl, "2026-09-25_210000"));
-        Assert.Equal(VersioningMode.HardLinks, VersioningLayout.DetectReadOnly(hl));
-
-        var diff = Dest("ro-diff");
-        Directory.CreateDirectory(VersioningLayout.CurrentDir(diff));
-        Assert.Equal(VersioningMode.Differential, VersioningLayout.DetectReadOnly(diff));
-
-        var onlyVersions = Dest("ro-versions");
-        Directory.CreateDirectory(Path.Combine(VersioningLayout.VersionsDir(onlyVersions), "2026-09-25_210000"));
-        Assert.Equal(VersioningMode.Differential, VersioningLayout.DetectReadOnly(onlyVersions));
-
-        // Nessun file di prova scritto: la cartella resta esattamente come l'abbiamo lasciata.
-        // È ciò che permette di aprire «Versioni...» e il ripristino su un disco in sola lettura.
-        Assert.Empty(Directory.GetFiles(Dest("ro-vergine")));
-    }
-
-    [Fact]
-    public void DetectReadOnly_IsNull_WhenThereIsNoLayoutYet()
-    {
-        Assert.Null(VersioningLayout.DetectReadOnly(Dest("ro-nuda")));
-        Assert.Null(VersioningLayout.DetectReadOnly(Path.Combine(_root, "ro-non-esiste")));
-        Assert.Null(VersioningLayout.DetectReadOnly(""));
-
-        // Contenuto qualsiasi non è un layout, e nemmeno una «versions» vuota.
-        var piatta = Dest("ro-piatta");
-        File.WriteAllText(Path.Combine(piatta, "documento.txt"), "x");
-        Directory.CreateDirectory(VersioningLayout.VersionsDir(piatta));
-        Assert.Null(VersioningLayout.DetectReadOnly(piatta));
+        // E' la domanda che fanno anche «Versioni...» e il ripristino: deve poter rispondere su un
+        // disco in sola lettura, senza scriverci sopra un byte.
+        var dest = Dest("ro");
+        Assert.False(VersioningLayout.HasVersions(dest));
+        Assert.Empty(Directory.GetFileSystemEntries(dest));
     }
 
     [Fact]

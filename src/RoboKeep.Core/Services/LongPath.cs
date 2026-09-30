@@ -2,7 +2,7 @@ namespace RoboKeep.Core.Services;
 
 /// <summary>
 /// Converte un percorso nella forma "extended-length" (prefisso <c>\\?\</c>) per aggirare il limite
-/// storico MAX_PATH (260 caratteri) delle chiamate Win32 dirette come CreateHardLinkW e CreateFileW:
+/// storico MAX_PATH (260 caratteri) delle chiamate Win32 dirette come CreateFileW:
 /// senza il prefisso, un percorso più lungo fallisce con ERROR_PATH_NOT_FOUND (Win32 3). Le API .NET
 /// gestiscono già i percorsi lunghi; le P/Invoke grezze no, quindi vanno prefissate a mano.
 /// </summary>

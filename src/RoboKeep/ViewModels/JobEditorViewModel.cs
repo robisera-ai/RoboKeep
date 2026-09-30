@@ -1,4 +1,3 @@
-using System.Threading;
 using RoboKeep.Core.Models;
 using RoboKeep.Core.Services;
 using RoboKeep.Infra;
@@ -22,7 +21,6 @@ public sealed class JobEditorViewModel : ObservableObject
             Credentials.Add(new CredentialOption(c.Id, $"{c.Id} ({c.Host})"));
         _selectedCredential = Credentials.FirstOrDefault(o => o.Id == job.CredentialId) ?? Credentials[0];
         RefreshVolumeState();
-        RefreshVersioningMode();
     }
 
     public BackupJob Job => _job;
@@ -52,45 +50,9 @@ public sealed class JobEditorViewModel : ObservableObject
             // altrimenti basterebbe aprire l'editor col disco sbagliato inserito e salvare una
             // modifica qualsiasi per annullare in silenzio la protezione.
             UseCurrentVolume();
-            RefreshVersioningMode();
             OnPropertyChanged();
             RaisePreview();
         }
-    }
-
-    private CancellationTokenSource? _versioningModeCts;
-    private string _versioningModeText = Loc.Instance["Ver_ModeUnknown"];
-
-    /// <summary>Riga di stato sotto «Tieni le versioni»: quale modello di versioni userà il job con
-    /// la destinazione attuale. Si aggiorna da sola quando la destinazione cambia.</summary>
-    public string VersioningModeText
-    {
-        get => _versioningModeText;
-        private set { _versioningModeText = value; OnPropertyChanged(); }
-    }
-
-    /// <summary>Ricalcola la riga di stato: fuori dal thread della UI e con un'attesa, perché la
-    /// destinazione si digita un carattere alla volta e la risposta costa un accesso al disco.
-    /// <para>A versioni spente non si interroga affatto il disco: la risposta non serve a nessuno
-    /// (la riga è nascosta) e il controllo degli hard-link scrive un file di prova nella
-    /// destinazione — in una cartella che l'utente sta ancora digitando, e per una domanda che
-    /// nemmeno si è posto.</para></summary>
-    private void RefreshVersioningMode()
-    {
-        var previous = _versioningModeCts;
-        _versioningModeCts = null;
-        previous?.Cancel();
-        previous?.Dispose();
-
-        if (!Versioned)
-        {
-            VersioningModeText = Loc.Instance["Ver_ModeUnknown"];
-            return;
-        }
-
-        var cts = new CancellationTokenSource();
-        _versioningModeCts = cts;
-        _ = VersioningModeLabel.RefreshAsync(_job.Destination, t => VersioningModeText = t, cts.Token);
     }
 
     public bool Mirror
@@ -245,7 +207,7 @@ public sealed class JobEditorViewModel : ObservableObject
     public bool Versioned
     {
         get => _job.Versioned;
-        set { _job.Versioned = value; OnPropertyChanged(); RefreshVersioningMode(); }
+        set { _job.Versioned = value; OnPropertyChanged(); }
     }
 
     public int SnapshotKeepCount

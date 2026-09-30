@@ -5,7 +5,7 @@ using RoboKeep.Core.Services;
 namespace RoboKeep.Tests;
 
 /// <summary>
-/// Versioni per differenza con robocopy VERO su cartelle temporanee: il mirror in <c>current</c>,
+/// Versioni con robocopy VERO su cartelle temporanee: il mirror in <c>current</c>,
 /// le cartelle-data in <c>versions</c> con i soli file sostituiti o cancellati, il manifest, la
 /// ritenzione, i residui dei run interrotti e la guardia sulle cancellazioni.
 /// </summary>
@@ -472,9 +472,9 @@ public class DifferentialSnapshotServiceTests : IDisposable
         var (source, dest, job, svc) = Setup("recupero");
         File.WriteAllText(Path.Combine(source, "a.txt"), "v1");
 
-        // Run interrotto: una .inprogress residua con dentro un file messo da parte. Per il modello
-        // per differenza quel file e' un ORIGINALE spostato via da current — cancellarlo, come fa
-        // il modello a hard-link con i suoi cloni, lo perderebbe per sempre.
+        // Run interrotto: una .inprogress residua con dentro un file messo da parte. Quel file e'
+        // un ORIGINALE spostato via da current: cancellarlo come un residuo qualsiasi lo
+        // perderebbe per sempre.
         var stale = Path.Combine(Versions(dest), "2026-01-01_000000" + SnapshotName.InProgressSuffix);
         Directory.CreateDirectory(Path.Combine(stale, "sotto"));
         File.WriteAllText(Path.Combine(stale, "sotto", "unica-copia.txt"), "non esiste altrove");
@@ -724,11 +724,131 @@ public class DifferentialSnapshotServiceTests : IDisposable
         Assert.InRange(VersionNames(dest).Length, 1, 2);
         Assert.Equal("v3 di lunghezza ancora diversa", File.ReadAllText(Path.Combine(Current(dest), "a.txt")));
     }
+
+    [Fact]
+    public async Task ReadOnlySourceRoot_DoesNotLeaveCurrentReadOnly()
+    {
+        // Una sorgente "speciale" come il Desktop ha la cartella in sola lettura e un desktop.ini:
+        // robocopy ne copia gli attributi, ed Esplora risorse mostrerebbe «current» col nome
+        // della sorgente. Dopo il run «current» non e' in sola lettura; il desktop.ini resta.
+        var (source, dest, job, svc) = Setup("desktop");
+        File.WriteAllText(Path.Combine(source, "a.txt"), "x");
+        File.WriteAllText(Path.Combine(source, "desktop.ini"), "[.ShellClassInfo]\r\nLocalizedResourceName=Sorgente\r\n");
+        new DirectoryInfo(source).Attributes |= FileAttributes.ReadOnly | FileAttributes.System;
+
+        try
+        {
+            Assert.True((await svc.RunAsync(job)).Result.Success);
+
+            var attrs = new DirectoryInfo(Current(dest)).Attributes;
+            Assert.False(attrs.HasFlag(FileAttributes.ReadOnly));
+            Assert.False(attrs.HasFlag(FileAttributes.System));
+            Assert.True(File.Exists(Path.Combine(Current(dest), "desktop.ini")));
+            Assert.True(new DirectoryInfo(source).Attributes.HasFlag(FileAttributes.ReadOnly)); // la sorgente non si tocca
+        }
+        finally { new DirectoryInfo(source).Attributes &= ~(FileAttributes.ReadOnly | FileAttributes.System); }
+    }
+
+    [Fact]
+    public async Task ARunWithNothingToDo_StillClearsAReadOnlyCurrent()
+    {
+        // Una «current» rimasta in sola lettura (o di sistema) da un backup precedente si rimette a
+        // posto anche quando il run non ha niente da copiare.
+        var (source, dest, job, svc) = Setup("desktop2");
+        File.WriteAllText(Path.Combine(source, "a.txt"), "x");
+        await svc.RunAsync(job);
+        new DirectoryInfo(Current(dest)).Attributes |= FileAttributes.ReadOnly | FileAttributes.System;
+
+        var second = await svc.RunAsync(job);
+
+        Assert.True(second.Result.Success);
+        Assert.Equal(CoreLoc.S("Diff_NoChanges"), second.Output);
+        var attrs = new DirectoryInfo(Current(dest)).Attributes;
+        Assert.False(attrs.HasFlag(FileAttributes.ReadOnly));
+        Assert.False(attrs.HasFlag(FileAttributes.System));
+    }
+
+    [Fact]
+    public async Task Retention_DeletesAVersionHoldingAReadOnlyFile()
+    {
+        var (source, dest, job, svc) = Setup("ritenzione-ro", keepCount: 1);
+        var file = Path.Combine(source, "a.txt");
+        void Write(string content)
+        {
+            if (File.Exists(file)) File.SetAttributes(file, FileAttributes.Normal);
+            File.WriteAllText(file, content);
+            File.SetAttributes(file, FileAttributes.ReadOnly);
+        }
+
+        Write("v1");
+        await svc.RunAsync(job);
+        await Task.Delay(1100);
+        Write("v2 di lunghezza diversa");
+        await svc.RunAsync(job);
+        var first = Assert.Single(VersionNames(dest));
+        Assert.True(File.GetAttributes(Path.Combine(Versions(dest), first, "a.txt")).HasFlag(FileAttributes.ReadOnly));
+
+        await Task.Delay(1100);
+        Write("v3 di lunghezza ancora diversa");
+        Assert.True((await svc.RunAsync(job)).Result.Success);
+
+        var kept = Assert.Single(VersionNames(dest));
+        Assert.NotEqual(first, kept);
+        Assert.False(Directory.Exists(Path.Combine(Versions(dest), first)));
+        File.SetAttributes(file, FileAttributes.Normal);
+    }
+
+    [Fact]
+    public async Task Adoption_NeverMovesRoboKeepEntries_IntoCurrent()
+    {
+        var (source, dest, job, svc) = Setup("adozione-layout");
+        File.WriteAllText(Path.Combine(source, "a.txt"), "aaa");
+        Directory.CreateDirectory(dest);
+        File.WriteAllText(Path.Combine(dest, "a.txt"), "aaa");
+        var config = Path.Combine(dest, ConfigMirror.FolderName);
+        Directory.CreateDirectory(config);
+        File.WriteAllText(Path.Combine(config, "config.json"), "{}");
+        var manifest = Path.Combine(dest, "2026-01-01_000000" + VersionManifest.FileSuffix);
+        File.WriteAllText(manifest, "{}");
+        var inProgress = Path.Combine(dest, "2026-01-01_000000" + SnapshotName.InProgressSuffix);
+        Directory.CreateDirectory(inProgress);
+        File.WriteAllText(Path.Combine(inProgress, "x.txt"), "x");
+
+        Assert.True((await svc.RunAsync(job)).Result.Success);
+
+        Assert.True(File.Exists(Path.Combine(Current(dest), "a.txt")));   // la copia e' stata adottata
+        Assert.True(File.Exists(Path.Combine(config, "config.json")));    // ...ma queste restano dove sono
+        Assert.True(File.Exists(manifest));
+        Assert.True(File.Exists(Path.Combine(inProgress, "x.txt")));
+        Assert.False(Directory.Exists(Path.Combine(Current(dest), ConfigMirror.FolderName)));
+        Assert.Empty(Directory.GetFileSystemEntries(Current(dest), "2026-01-01_000000*"));
+    }
+
+    [Fact]
+    public async Task AmbiguousCurrent_IsReportedOnlyUntilTheFirstVersionExists()
+    {
+        // Destinazione alla radice di un disco con altre cartelle dell'utente: l'avviso sulla
+        // «current» ambigua ha senso prima che esista una versione, poi e' solo rumore.
+        var (source, dest, job, svc) = Setup("ambigua");
+        File.WriteAllText(Path.Combine(source, "a.txt"), "x");
+        Directory.CreateDirectory(Path.Combine(dest, "Foto dell'utente"));
+        Directory.CreateDirectory(Current(dest));
+        var ambiguous = CoreLoc.S("Diff_AdoptAmbiguous").Split('{')[0];
+
+        var lines = new List<string>();
+        await svc.RunAsync(job, new SyncProgress(lines.Add));
+        Assert.Contains(lines, l => l.StartsWith(ambiguous, StringComparison.Ordinal));
+
+        lines.Clear();
+        await Task.Delay(1100);
+        await svc.RunAsync(job, new SyncProgress(lines.Add));
+        Assert.DoesNotContain(lines, l => l.StartsWith(ambiguous, StringComparison.Ordinal));
+    }
 }
 
 /// <summary>
-/// Il modello di versioni visto da BackupRunner: chi sceglie quale servizio, che cosa succede se
-/// quello giusto non c'e', e contro che cosa gira l'anteprima di un job versionato.
+/// Le versioni viste da BackupRunner: un job versionato va sempre al servizio delle versioni,
+/// che cosa succede se il servizio non c'e', e contro che cosa gira l'anteprima.
 /// </summary>
 public class DifferentialBackupRunnerTests : IDisposable
 {
@@ -760,7 +880,7 @@ public class DifferentialBackupRunnerTests : IDisposable
         var dest = Path.Combine(_root, "dst");
         Directory.CreateDirectory(source);
         File.WriteAllText(Path.Combine(source, "a.txt"), "x");
-        // Layout per differenza gia' in piedi, con una versione dentro.
+        // Versioni gia' in piedi, con una versione dentro.
         Directory.CreateDirectory(VersioningLayout.CurrentDir(dest));
         Directory.CreateDirectory(Path.Combine(VersioningLayout.VersionsDir(dest), "2026-09-25_210000"));
         File.WriteAllText(
@@ -787,9 +907,10 @@ public class DifferentialBackupRunnerTests : IDisposable
     }
 
     [Fact]
-    public async Task VirginDestination_WithoutAnyVersioningService_StillRunsAPlainMirror()
+    public async Task VirginDestination_WithoutAnyVersioningService_IsRefusedToo()
     {
-        // Nessun layout da proteggere: il degrado di sempre resta (mirror semplice con avviso).
+        // Anche senza versioni da proteggere un job versionato non degrada a mirror piatto: il
+        // backup nascerebbe nella radice, e il run successivo col servizio non lo riconoscerebbe.
         var source = Path.Combine(_root, "src2");
         var dest = Path.Combine(_root, "dst2");
         Directory.CreateDirectory(source);
@@ -802,12 +923,71 @@ public class DifferentialBackupRunnerTests : IDisposable
 
         var result = await runner.RunJobAsync(job);
 
-        Assert.True(result.Success);
-        Assert.True(File.Exists(Path.Combine(dest, "a.txt")));
+        Assert.False(result.Success);
+        Assert.True(result.NotStarted);
+        Assert.Equal(CoreLoc.S("Versioning_NoServiceStatus"), result.Status);
+        Assert.False(File.Exists(Path.Combine(dest, "a.txt")));
+    }
+
+    /// <summary>Destinazione con le versioni di un backup: «current» e una versione con dentro
+    /// l'unica copia di un file.</summary>
+    private static void VersionsLayout(string dest)
+    {
+        Directory.CreateDirectory(VersioningLayout.CurrentDir(dest));
+        File.WriteAllText(Path.Combine(VersioningLayout.CurrentDir(dest), "a.txt"), "x");
+        var version = Path.Combine(VersioningLayout.VersionsDir(dest), "2026-09-25_210000");
+        Directory.CreateDirectory(version);
+        File.WriteAllText(Path.Combine(version, "unica-copia.txt"), "prezioso");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task VersionsTurnedOff_WhileTheDestinationHoldsThem_IsRefused_AndTouchesNothing(bool dryRun)
+    {
+        // Le versioni sono state spente, ma la destinazione le contiene: un /MIR sulla radice
+        // cancellerebbe «current» e «versions» come "extra". Si ferma anche l'anteprima.
+        var source = Path.Combine(_root, "src-off-" + dryRun);
+        var dest = Path.Combine(_root, "dst-off-" + dryRun);
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "a.txt"), "x");
+        VersionsLayout(dest);
+        var runner = VersionedRunner();
+        var job = new BackupJob { Name = "P", Source = source, Destination = dest, Versioned = false, Retries = 0, Wait = 0 };
+        var progress = new Collect();
+
+        var result = await runner.RunJobAsync(job, dryRun: dryRun, progress: progress);
+
+        Assert.False(result.Success);
+        Assert.True(result.NotStarted);
+        Assert.Equal(CoreLoc.S("Versioning_TurnedOff"), result.Status);
+        Assert.Contains(progress.Lines, l => l == CoreLoc.S("Versioning_TurnedOff"));
+        Assert.Equal("prezioso", File.ReadAllText(
+            Path.Combine(VersioningLayout.VersionsDir(dest), "2026-09-25_210000", "unica-copia.txt")));
+        Assert.True(File.Exists(Path.Combine(VersioningLayout.CurrentDir(dest), "a.txt")));
+        Assert.False(File.Exists(Path.Combine(dest, "a.txt")));
     }
 
     [Fact]
-    public async Task DryRun_OfADifferentialJob_PreviewsAgainstCurrent_NotTheDestinationRoot()
+    public async Task PlainJob_WhoseSourceHasItsOwnCurrentFolder_IsNotMistakenForVersions()
+    {
+        // La sorgente ha una cartella di primo livello «current»: il mirror piatto l'ha copiata
+        // nella destinazione, ed e' roba dell'utente. Rifiutare il job per sempre sarebbe un falso
+        // allarme.
+        var source = Path.Combine(_root, "src-cur");
+        var dest = Path.Combine(_root, "dst-cur");
+        Directory.CreateDirectory(Path.Combine(source, VersioningLayout.CurrentFolderName));
+        File.WriteAllText(Path.Combine(source, VersioningLayout.CurrentFolderName, "b.txt"), "b");
+        var runner = VersionedRunner();
+        var job = new BackupJob { Name = "P2", Source = source, Destination = dest, Versioned = false, Retries = 0, Wait = 0 };
+
+        Assert.True((await runner.RunJobAsync(job)).Success);
+        Assert.True((await runner.RunJobAsync(job)).Success);
+        Assert.True(File.Exists(Path.Combine(dest, VersioningLayout.CurrentFolderName, "b.txt")));
+    }
+
+    [Fact]
+    public async Task DryRun_OfAVersionedJob_PreviewsAgainstCurrent_NotTheDestinationRoot()
     {
         var source = Path.Combine(_root, "src3");
         var dest = Path.Combine(_root, "dst3");
@@ -828,7 +1008,7 @@ public class DifferentialBackupRunnerTests : IDisposable
         var (config, creds) = Wiring();
         var fake = new RobocopyRunner();
         var runner = new BackupRunner(config, fake, new LogService(config.Settings),
-            new EmailService(creds), creds, snapshots: new SnapshotService(fake),
+            new EmailService(creds), creds,
             differentialSnapshots: new DifferentialSnapshotService(fake));
         var progress = new Collect();
         var job = new BackupJob { Name = "V", Source = source, Destination = dest, Versioned = true, Retries = 0, Wait = 0 };
@@ -841,31 +1021,74 @@ public class DifferentialBackupRunnerTests : IDisposable
         Assert.Equal(0, result.FilesCopied);
     }
 
-    [Fact]
-    public async Task DryRun_OfAHardLinkJob_PreviewsAgainstTheLatestDatedFolder()
+    // ---- un solo modello, su qualunque disco ----
+
+    private static string Current(string dest) => VersioningLayout.CurrentDir(dest);
+    private static string Versions(string dest) => VersioningLayout.VersionsDir(dest);
+    private static IReadOnlyList<string> VersionNames(string dest) => SnapshotName.ListValid(Versions(dest));
+
+    /// <summary>BackupRunner cablato come in AppHost: il servizio delle versioni c'e'.</summary>
+    private BackupRunner VersionedRunner()
     {
-        var source = Path.Combine(_root, "src4");
-        var dest = Path.Combine(_root, "dst4");
-        Directory.CreateDirectory(source);
-        var latest = Path.Combine(dest, "2026-09-26_210000");
-        Directory.CreateDirectory(Path.Combine(dest, "2026-09-25_210000"));
-        Directory.CreateDirectory(latest);
-        for (var i = 0; i < 30; i++)
-        {
-            File.WriteAllText(Path.Combine(source, $"f{i}.txt"), "contenuto " + i);
-            File.Copy(Path.Combine(source, $"f{i}.txt"), Path.Combine(latest, $"f{i}.txt"));
-        }
-
         var (config, creds) = Wiring();
-        var fake = new RobocopyRunner();
-        var runner = new BackupRunner(config, fake, new LogService(config.Settings),
-            new EmailService(creds), creds, snapshots: new SnapshotService(fake));
+        var robocopy = new RobocopyRunner();
+        return new BackupRunner(config, robocopy, new LogService(config.Settings),
+            new EmailService(creds), creds, differentialSnapshots: new DifferentialSnapshotService(robocopy));
+    }
+
+    [Fact]
+    public async Task VersionedJob_OnAnNtfsTempFolder_UsesCurrentAndVersions_NoDatedFoldersAtTheRoot()
+    {
+        // La cartella temporanea di Windows e' su NTFS: anche qui le versioni stanno in
+        // «current» + «versions», e nella radice della destinazione non nasce nessuna cartella-data.
+        var source = Path.Combine(_root, "ntfs-src");
+        var dest = Path.Combine(_root, "ntfs-dst");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "a.txt"), "v1");
+        var runner = VersionedRunner();
+        var job = new BackupJob { Name = "N", Source = source, Destination = dest, Versioned = true, Retries = 0, Wait = 0 };
+
+        Assert.True((await runner.RunJobAsync(job)).Success);
+        await Task.Delay(1100); // nome delle versioni al secondo
+        File.WriteAllText(Path.Combine(source, "a.txt"), "v2 diversa");
+        Assert.True((await runner.RunJobAsync(job)).Success);
+
+        var rootEntries = Directory.GetFileSystemEntries(dest).Select(Path.GetFileName).OrderBy(n => n).ToArray();
+        Assert.Equal(new[] { VersioningLayout.CurrentFolderName, VersioningLayout.VersionsFolderName }, rootEntries);
+        Assert.Equal("v2 diversa", File.ReadAllText(Path.Combine(Current(dest), "a.txt")));
+        var version = Assert.Single(VersionNames(dest));
+        Assert.Equal("v1", File.ReadAllText(Path.Combine(Versions(dest), version, "a.txt")));
+    }
+
+    [Fact]
+    public async Task OldDatedFoldersInTheRoot_AreNeitherTouchedNorDeleted_AndCurrentIsCreated()
+    {
+        // Una destinazione che ha nella radice cartelle con nome-data (qualunque sia la loro
+        // origine) non e' una copia della sorgente: non si adotta, non si sposta, non si cancella.
+        // Il mirror lavora solo dentro «current».
+        var source = Path.Combine(_root, "old-src");
+        var dest = Path.Combine(_root, "old-dst");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "x.txt"), "sorgente");
+        var old = Path.Combine(dest, "2026-09-22_182012");
+        Directory.CreateDirectory(old);
+        File.WriteAllText(Path.Combine(old, "x.txt"), "vecchio");
+        var runner = VersionedRunner();
+        var job = new BackupJob { Name = "O", Source = source, Destination = dest, Versioned = true, Retries = 0, Wait = 0 };
         var progress = new Collect();
-        var job = new BackupJob { Name = "V", Source = source, Destination = dest, Versioned = true, Retries = 0, Wait = 0 };
 
-        var result = await runner.RunJobAsync(job, dryRun: true, progress: progress);
+        Assert.True((await runner.RunJobAsync(job, progress: progress)).Success);
+        await Task.Delay(1100);
+        File.WriteAllText(Path.Combine(source, "x.txt"), "sorgente cambiata");
+        Assert.True((await runner.RunJobAsync(job)).Success);
 
-        Assert.Contains(progress.Lines, l => l.Contains(latest));
-        Assert.Equal(0, result.FilesExtra);
+        Assert.Equal("vecchio", File.ReadAllText(Path.Combine(old, "x.txt")));
+        Assert.Single(Directory.GetFileSystemEntries(old));
+        Assert.Equal("sorgente cambiata", File.ReadAllText(Path.Combine(Current(dest), "x.txt")));
+        Assert.False(Directory.Exists(Path.Combine(Current(dest), "2026-09-22_182012")));
+        // L'utente sa perche' quella roba e' rimasta dov'era.
+        var notAdopted = CoreLoc.S("Versioning_NotAdopted").Split('{')[0];
+        Assert.Contains(progress.Lines, l => l.StartsWith(notAdopted, StringComparison.Ordinal));
     }
 }
+

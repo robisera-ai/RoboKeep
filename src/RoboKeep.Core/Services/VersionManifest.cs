@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace RoboKeep.Core.Services;
 
 /// <summary>
-/// Il biglietto da visita di una versione per differenza: quando e' nata e che cosa quel backup ha
+/// Il biglietto da visita di una versione: quando e' nata e che cosa quel backup ha
 /// cambiato. I tre elenchi sono percorsi relativi a <c>current\</c>.
 /// <list type="bullet">
 /// <item><see cref="Changed"/>: file che il backup ha sostituito. La copia PRECEDENTE sta nella
@@ -76,7 +76,7 @@ public sealed class VersionManifest
 
     /// <summary>Cancella il manifest gemello di una versione che non c'e' piu' (ritenzione, pulizia
     /// per spazio, residuo vuoto): senza questo resterebbero file orfani in <c>versions\</c>.
-    /// Best-effort, e senza effetto per il modello a hard-link, che non ha manifest.</summary>
+    /// Best-effort.</summary>
     public static void DeleteFor(string versionDir)
     {
         try

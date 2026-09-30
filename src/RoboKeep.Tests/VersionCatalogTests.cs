@@ -3,7 +3,7 @@ using RoboKeep.Core.Services;
 namespace RoboKeep.Tests;
 
 /// <summary>
-/// L'archivio delle versioni per differenza: quali punti nel tempo esistono, e quali manifest si
+/// L'archivio delle versioni: quali punti nel tempo esistono, e quali manifest si
 /// possono buttare. La regola che conta: «tieni N versioni» deve contare le versioni VERE (quelle
 /// con una cartella), non i backup di sole aggiunte, che non hanno niente da conservare.
 /// </summary>

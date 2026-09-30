@@ -21,6 +21,6 @@ public class SnapshotNameListTests : IDisposable
     }
 
     [Fact]
-    public void Latest_MissingDir_ReturnsNull()
-        => Assert.Null(SnapshotName.Latest(Path.Combine(_dir, "non-esiste")));
+    public void ListValid_MissingDir_ReturnsEmpty()
+        => Assert.Empty(SnapshotName.ListValid(Path.Combine(_dir, "non-esiste")));
 }

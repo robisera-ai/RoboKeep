@@ -21,7 +21,7 @@ versioni datate a cui tornare quando serve. **Niente cloud, niente account, ness
 | | |
 |---|---|
 | 🧙 **Configurazione semplice** | La creazione guidata chiede dei tuoi dati in linguaggio semplice e sceglie le impostazioni giuste. Chi è esperto può comunque regolare tutto a mano. |
-| 🕰️ **Torna indietro nel tempo** | Ogni esecuzione può salvare una versione datata. I file invariati sono condivisi tra le versioni, quindi dieci versioni non costano dieci volte lo spazio. E *Ripristina* rimette a posto un file, una cartella o tutto il job **com'era a una data**, in una cartella a tua scelta. |
+| 🕰️ **Torna indietro nel tempo** | Ogni esecuzione può salvare una versione datata con i soli file che ha sostituito o cancellato, quindi dieci versioni non costano dieci volte lo spazio — su qualunque disco. E *Ripristina* rimette a posto un file, una cartella o tutto il job **com'era a una data**, in una cartella a tua scelta. |
 | 💿 **Rispetta i tuoi dischi** | Si ferma al primo errore hardware invece di insistere per ore, tiene il PC sveglio durante il backup, va piano sui dischi meccanici. |
 | 🩺 **Salute dischi a colpo d'occhio** | Un clic legge lo SMART di ogni disco e dà un verdetto semplice: Buono, Attenzione, Pericolo — con ogni valore spiegato. *Novità della 1.8.* |
 | 🛡️ **Mai il disco sbagliato** | Alterni due dischi esterni che Windows chiama entrambi `E:`? Ogni job riconosce il proprio disco dall'identità e semplicemente lo aspetta. |
@@ -54,7 +54,7 @@ versioni datate a cui tornare quando serve. **Niente cloud, niente account, ness
 | ![Anteprima comando e versioning](docs/images/editor-preview.png) | **Niente di nascosto.** Versioni datate, esclusioni per job e il comando robocopy esatto sempre in vista. |
 | ![Cronologia esecuzioni](docs/images/history.png) | **Ogni esecuzione a registro.** Backup e verifiche fianco a fianco; doppio clic apre il log completo. |
 | ![Pianificazione per job](docs/images/editor-schedule.png) | **Imposta e dimentica.** Giornaliera, settimanale o mensile, più le verifiche d'integrità periodiche. |
-| ![Sfoglia le versioni](docs/images/versions.png) | **Scegli una data.** Il backup di quel giorno si apre in Esplora file; ricopia quello che ti serve. |
+| ![Sfoglia le versioni](docs/images/versions.png) | **Scegli una data.** Ciò che quel backup ha sostituito o cancellato si apre in Esplora file; *Ripristina* ricostruisce l'albero intero. |
 
 ## Come si comporta un backup
 
@@ -65,7 +65,8 @@ Ogni job è una coppia cartella sorgente → cartella destinazione. Ad ogni esec
 - in modalità **mirror** (predefinita) **rimuove** dalla destinazione anche ciò che hai cancellato;
 - con mirror disattivato, aggiunge e aggiorna soltanto, **senza mai cancellare**.
 
-Con le versioni attive, lo stato precedente viene salvato prima come snapshot datato.
+Con le versioni attive, lo stato precedente dei file che stanno per essere sostituiti o cancellati
+viene prima messo da parte in una versione datata.
 
 ## Novità della 1.8
 
@@ -85,8 +86,8 @@ Cronologia completa nel [CHANGELOG](CHANGELOG.md).
 <summary><b>Tutte le funzioni</b></summary>
 
 **Backup**: mirror o accumulo · protezione dalla rotazione dei dischi (job legato al suo disco
-tramite l'identità del volume) · versioni datate con hard-link e ritenzione configurabile, nessuna
-versione doppia se non è cambiato nulla · copia dei file aperti/bloccati via VSS · verifica
+tramite l'identità del volume) · versioni datate su qualunque disco con ritenzione configurabile, nessuna
+versione vuota se non è cambiato nulla · copia dei file aperti/bloccati via VSS · verifica
 d'integrità SHA-256, a richiesta o periodica · stop su errore hardware che mette a riposo il
 disco · tetto automatico ai thread sui dischi meccanici · PC tenuto sveglio · copia multi-thread ·
 esclusioni per job · "forza copia" per i file con data/dimensione che non cambiano mai, con
@@ -96,7 +97,7 @@ anteprima/dry-run.
 **Ti tiene informato**: cronologia esecuzioni con un log per ogni voce, aperto nel Blocco note ·
 pulsante Cartella log · icone di salute per job con tooltip in linguaggio semplice · icone che si
 aggiornano nell'istante in cui colleghi o scolleghi un disco · controlli pre-avvio (destinazione
-raggiungibile, spazio disco, idoneità VSS e versioning, errori disco recenti dal registro eventi
+raggiungibile, spazio disco, idoneità VSS, errori disco recenti dal registro eventi
 di Windows) · finestra Salute dischi (SMART) · log in tempo reale · archivio log zippati con
 pulizia automatica · notifiche toast e area di notifica · report via email (SMTP), anche solo in
 caso di errori.
@@ -115,8 +116,6 @@ trascinamento · controllo aggiornamenti facoltativo · 5 lingue · modalità po
 - **Solo Windows 10/11.** RoboKeep si appoggia a robocopy e ad altre funzioni native di Windows.
 - **I file cambiati vengono ricopiati per intero** (niente copia a blocchi/delta): perfetto per
   documenti e foto, costoso per singoli file enormi che cambiano ogni giorno.
-- **Le versioni richiedono una destinazione NTFS locale** (gli hard-link non esistono su exFAT o
-  share di rete).
 - **La copia dei file aperti richiede una sorgente NTFS locale** e una conferma amministratore
   (UAC) per ogni esecuzione.
 - **Le verifiche d'integrità rileggono ogni file da entrambi i lati**, quindi durano all'incirca

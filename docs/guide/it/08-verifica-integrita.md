@@ -19,7 +19,7 @@ Rileggere tutto potrebbe generare allarmi inutili. RoboKeep li evita:
 - Un file che hai **modificato dopo** il backup viene segnalato come *"cambiato dopo il backup"*,
   non come corruzione: è una differenza legittima, non un difetto.
 - La verifica **rispetta le esclusioni del job**: ciò che non copi non viene nemmeno controllato.
-- I job con **versioni** verificano l'**ultimo snapshot**, cioè la copia più recente e coerente.
+- I job con **versioni** verificano la cartella **`current`**, cioè il backup vero, completo e aggiornato.
 
 ## Quando eseguirla
 

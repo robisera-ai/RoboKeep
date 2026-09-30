@@ -25,10 +25,6 @@ public static class PreflightChecker
             return w; // senza destinazione, gli altri controlli non hanno senso.
         }
 
-        // Una destinazione senza hard-link NON e' piu' un problema da segnalare: le versioni ci
-        // sono lo stesso, per differenza (vedi VersioningLayout). Quale dei due modelli userà il
-        // job lo dice l'editor, dove si sceglie la destinazione, e non un avviso prima del backup.
-
         if (i.VssSourceEligible == false)
             w.Add(new PreflightWarning(PreflightSeverity.Warning, "Preflight_VssNotEligible", ""));
 

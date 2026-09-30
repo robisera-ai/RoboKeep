@@ -12,7 +12,7 @@ Le situazioni più comuni, con la risposta breve. Se non trovi la tua, quasi sem
 
 ### In una cartella-versione ci sono pochi file
 
-Se nella destinazione trovi `current` e `versions`, il job usa le versioni **per differenza**: ogni cartella datata contiene **soltanto i file che quel backup ha sostituito o cancellato**, non l'albero intero. Il backup completo e aggiornato è in `current`; gli altri file non erano cambiati, quindi non c'era niente da mettere da parte. È il modello che RoboKeep sceglie da sé quando la destinazione non supporta gli hard-link (exFAT, FAT32, rete). Vedi *Le versioni*.
+Con le versioni attive ogni cartella datata in `versions` contiene **soltanto i file che quel backup ha sostituito o cancellato**, non l'albero intero. Il backup completo e aggiornato è in `current`; gli altri file non erano cambiati, quindi non c'era niente da mettere da parte. Vedi *Le versioni*.
 
 ### SmartScreen dice «editore sconosciuto»
 

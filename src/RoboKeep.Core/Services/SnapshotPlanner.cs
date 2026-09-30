@@ -1,7 +1,7 @@
 namespace RoboKeep.Core.Services;
 
 /// <summary>
-/// Decide quali snapshot eliminare in base alla ritenzione. Funzione pura: il tempo è un
+/// Decide quali versioni eliminare in base alla ritenzione. Funzione pura: il tempo è un
 /// parametro. Ignora le cartelle .inprogress e i nomi non parsabili.
 /// </summary>
 public static class SnapshotPlanner
@@ -21,9 +21,9 @@ public static class SnapshotPlanner
             foreach (var s in snaps.Skip(keepCount))
                 toDelete.Add(s.Name);
 
-        // Il limite di eta' non tocca mai lo snapshot piu' recente: quando la sorgente non cambia
-        // per settimane non ne nascono di nuovi, e l'ultimo - che E' il backup corrente - non deve
-        // sparire solo perche' e' invecchiato.
+        // Il limite di eta' non tocca mai la versione piu' recente: quando la sorgente non cambia
+        // per settimane non ne nascono di nuove, e l'ultima - la copia precedente piu' vicina a oggi -
+        // non deve sparire solo perche' e' invecchiata.
         if (maxAgeDays > 0)
             foreach (var s in snaps.Skip(1).Where(s => (now - s.Date).TotalDays > maxAgeDays))
                 toDelete.Add(s.Name);

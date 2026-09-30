@@ -2,7 +2,7 @@
 
 Un backup serve il giorno in cui qualcosa va storto. **Ripristina...** è la finestra che rimette a
 posto quel giorno: scegli **com'era il backup a una certa data**, spunti **che cosa** recuperare e
-dici **dove** metterlo. Funziona con entrambi i modelli di versione, e non tocca mai gli originali.
+dici **dove** metterlo. Non tocca mai gli originali.
 
 Si apre in due modi:
 
@@ -14,39 +14,34 @@ Si apre in due modi:
 
 Sono due cose diverse, e confonderle è il modo più facile per credere di aver perso dei file.
 
-- **Versioni...** apre una cartella datata in Esplora file. Con il modello **per differenza**, quella
-  cartella contiene **solo i file che quel backup ha sostituito o cancellato**. Se ci trovi tre file
-  non è un backup incompleto: gli altri non erano cambiati e stanno in `current`.
+- **Versioni...** apre una cartella datata in Esplora file. Quella cartella contiene **solo i file
+  che quel backup ha sostituito o cancellato**. Se ci trovi tre file non è un backup incompleto:
+  gli altri non erano cambiati e stanno in `current`.
 - **Ripristina...** invece ricostruisce **l'albero intero**: i file cambiati li prende dalle
   cartelle-versione, tutti gli altri da `current`, e lascia fuori quelli che allora **non
   esistevano ancora**. Quasi sempre sono molti più file di quelli che vedi nella cartella datata —
   ed è esattamente quello che ti serve.
+- Nel **Ripristina**, scegliendo un backup passato, la casella **«Mostra solo i file cambiati o
+  cancellati da quel backup»** riduce l'albero proprio a quei file: è il modo più comodo per
+  rispondere a «che cosa è cambiato quel giorno?» e recuperarne uno.
 
-Con il modello a **hard-link** la distinzione non esiste: ogni cartella datata è già l'albero intero
-di quel giorno, e il ripristino ti risparmia solo il lavoro di ricopiare a mano.
+### Che cosa vuol dire una data: «Prima del backup del …»
 
-### Che cosa vuol dire una data: dipende dal modello, e l'elenco lo dice
+Ogni voce dell'elenco dice **«Prima del backup del …»**. La cartella di una versione contiene le
+copie dei file che quel backup ha **sostituito o cancellato**: lo stato di *prima* di quel backup.
+Scegliere quel punto ti ridà proprio quello. Se un file è sparito con il backup del 28, lo ritrovi
+in **«Prima del backup del 28»**.
 
-I due modelli conservano cose diverse, quindi una data non vuol dire la stessa cosa. L'elenco lo
-scrive per esteso, voce per voce:
+Compaiono **tutti** i punti nel tempo, anche i backup che hanno solo aggiunto file (senza cartella,
+e senza il conteggio dei file cambiati): ognuno è uno stato diverso.
 
-- **per differenza → «Prima del backup del …»**. La cartella di una versione contiene le copie dei
-  file che quel backup ha **sostituito o cancellato**: lo stato di *prima* di quel backup. Scegliere
-  quel punto ti ridà proprio quello. Se un file è sparito con il backup del 28, lo ritrovi in
-  **«Prima del backup del 28»**.
-- **hard-link → «Dopo il backup del …»**. La cartella datata è l'albero **come quel backup lo ha
-  lasciato**: scegliere quel punto ti ridà proprio quello.
-
-Nel modello per differenza compaiono **tutti** i punti nel tempo, anche i backup che hanno solo
-aggiunto file (senza cartella, e senza il conteggio dei file cambiati): ognuno è uno stato diverso.
-
-Perché non «dopo» anche per differenza? Perché le copie della cartella-versione **più vecchia**
+Perché non «dopo il backup»? Perché le copie della cartella-versione **più vecchia**
 diventerebbero irraggiungibili: servirebbe il punto precedente, che spesso è un backup di sole
 aggiunte il cui elenco è già stato tolto dalla ritenzione. Un file cancellato dalla sorgente, la cui
 unica copia sta proprio lì, non si potrebbe più recuperare dalla finestra. Con «prima del backup»
 ogni cartella-versione si raggiunge scegliendo il suo punto.
 
-### Come RoboKeep torna indietro (modello per differenza)
+### Come RoboKeep torna indietro
 
 Parte da `current`, cioè da **adesso**, e risale il tempo una versione alla volta, dalla più vecchia
 alla più recente tra il **backup che hai scelto** e quelli **successivi**:
@@ -72,11 +67,9 @@ Il caso normale: hai sovrascritto un documento, o hai svuotato una cartella per 
 1. Seleziona il job e premi **Ripristina...**.
 2. In **Com'era il:** scegli il momento. La prima voce, **Adesso (stato attuale)**, è il backup
    aggiornato; sotto, dalla più recente, le voci dei singoli backup, con quanti file ciascuno aveva
-   cambiato — spesso è così che si riconosce «il giorno in cui è successo il pasticcio».
-   - Per differenza scegli proprio quella voce, **«Prima del backup del …»**: ti ridà i file come
-     erano prima che quel backup li sostituisse o cancellasse.
-   - Con gli hard-link le voci dicono **«Dopo il backup del …»**: scegli quella **sotto** il backup
-     sospetto, cioè l'ultimo backup prima del pasticcio.
+   cambiato — spesso è così che si riconosce «il giorno in cui è successo il pasticcio». Scegli
+   proprio quella voce, **«Prima del backup del …»**: ti ridà i file come erano prima che quel
+   backup li sostituisse o cancellasse.
 3. Apri le cartelle nell'albero e **spunta** quello che ti serve. Spuntare una cartella prende tutto
    ciò che sta sotto, anche i rami che non hai aperto; se poi togli la spunta a un file dentro,
    la cartella diventa «in parte spuntata» e l'eccezione viene rispettata.
@@ -94,8 +87,7 @@ lettera di marzo.
 Disco sostituito, PC nuovo, cartella cancellata per intero: qui non si spunta niente.
 
 1. **Ripristina...**, scegli il momento: di solito **Adesso**; se la sorgente è stata svuotata o
-   rovinata e un backup ha già registrato il danno, **«Prima del backup del …»** di quel backup
-   (per differenza) o **«Dopo il backup del …»** di quello precedente (hard-link).
+   rovinata e un backup ha già registrato il danno, **«Prima del backup del …»** di quel backup.
 2. Scegli una cartella di destinazione vuota.
 3. Spunta la casella in cima all'elenco, accanto a «File e cartelle»: seleziona tutto. Poi **Ripristina**.
 

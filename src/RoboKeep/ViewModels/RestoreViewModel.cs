@@ -294,7 +294,6 @@ public sealed class RestoreNode : ObservableObject
 public sealed class RestoreViewModel : ObservableObject
 {
     private readonly BackupJob _job;
-    private readonly VersioningMode _mode;
     private RestorePlan _plan = RestorePlan.Empty;
     private RestoreTree? _tree;
     private CancellationTokenSource? _cts;
@@ -303,12 +302,6 @@ public sealed class RestoreViewModel : ObservableObject
     public RestoreViewModel(BackupJob job)
     {
         _job = job;
-        // Quale layout ha questa destinazione si legge dalle cartelle che ci sono: come
-        // «Versioni...», il ripristino guarda e copia, non decide né scrive file di prova.
-        // Destinazione ancora senza layout → si guarda nella radice, che è dove sta il mirror
-        // piatto di un job con le versioni accese che non ne ha ancora scritta nessuna.
-        var dest = (job.Destination ?? "").Trim();
-        _mode = VersioningLayout.DetectReadOnly(dest) ?? VersioningMode.HardLinks;
         Header = string.Format(Loc.Instance["Restore_Header"], job.Name);
     }
 
@@ -323,10 +316,27 @@ public sealed class RestoreViewModel : ObservableObject
         get => _selectedPoint;
         set
         {
-            if (SetField(ref _selectedPoint, value) && value is not null)
-                _ = LoadPlanAsync();
+            if (!SetField(ref _selectedPoint, value)) return;
+            OnPropertyChanged(nameof(CanShowOnlyChanged));
+            if (value is not null) _ = LoadPlanAsync();
         }
     }
+
+    private bool _onlyChanged;
+    /// <summary>Mostra solo i file che il backup scelto ha sostituito o cancellato (la sua
+    /// cartella-versione), invece dell'albero completo di quel momento.</summary>
+    public bool OnlyChanged
+    {
+        get => _onlyChanged;
+        set
+        {
+            if (!SetField(ref _onlyChanged, value)) return;
+            if (_selectedPoint?.Name is not null) _ = LoadPlanAsync();
+        }
+    }
+
+    /// <summary>La casella ha senso solo per un backup passato: «Adesso» non ha una versione.</summary>
+    public bool CanShowOnlyChanged => _selectedPoint?.Name is not null;
 
     private string _search = "";
     public string SearchText
@@ -460,6 +470,10 @@ public sealed class RestoreViewModel : ObservableObject
     /// <summary>La cartella dove sono finiti i file (per «Apri cartella»).</summary>
     public string RestoredTo { get; private set; } = "";
 
+    /// <summary>L'ultimo ripristino è finito senza annullamento né file rimasti indietro: la
+    /// finestra può chiudersi. Altrimenti resta aperta, perché l'elenco dei problemi è lì.</summary>
+    public bool LastRestoreClean { get; private set; }
+
     /// <summary>Legge l'elenco delle date e sceglie quella indicata (o «Adesso»).</summary>
     public async Task LoadPointsAsync(string? preselect)
     {
@@ -469,10 +483,9 @@ public sealed class RestoreViewModel : ObservableObject
         try
         {
             var dest = (_job.Destination ?? "").Trim();
-            var mode = _mode;
             // Leggere una destinazione con molte versioni (e i loro manifest) costa: mai sul
             // thread della UI, o la finestra si aprirebbe congelata.
-            var items = await Task.Run(() => BuildPoints(dest, mode));
+            var items = await Task.Run(() => BuildPoints(dest));
 
             Points.Clear();
             Points.Add(new RestorePointItem { Label = Loc.Instance["Restore_Now"], Date = null });
@@ -480,7 +493,7 @@ public sealed class RestoreViewModel : ObservableObject
 
             SetStatus("");
             // Chi arriva da «Versioni...» ha scelto una cartella: il punto con lo stesso nome è in
-            // elenco in entrambi i modelli («Dopo il backup del…» / «Prima del backup del…»).
+            // elenco come «Prima del backup del…».
             choice = Points.FirstOrDefault(p => preselect is not null && p.Name == preselect)
                 ?? Points[0];
         }
@@ -502,32 +515,17 @@ public sealed class RestoreViewModel : ObservableObject
     }
 
     /// <summary>
-    /// Le date selezionabili, dalla più recente. L'etichetta dice onestamente che cosa ricostruisce
-    /// ciascun modello, perché non è la stessa cosa (vedi <see cref="RestorePlanner"/>):
-    /// <list type="bullet">
-    /// <item>hard-link: «Dopo il backup del…» — la cartella datata È l'albero lasciato da quel backup;</item>
-    /// <item>per differenza: «Prima del backup del…» — la cartella di una versione contiene le copie
-    /// di ciò che quel backup ha sostituito o cancellato, cioè lo stato di prima.</item>
-    /// </list>
-    /// <para>Nel modello per differenza si elencano TUTTI i punti, anche quelli di solo manifest:
-    /// ogni punto è uno stato diverso, e togliere il più vecchio renderebbe irraggiungibili proprio
-    /// le copie di file cancellati dalla sorgente che stanno solo lì.</para>
+    /// Le date selezionabili, dalla più recente, come «Prima del backup del…»: la cartella di una
+    /// versione contiene le copie di ciò che quel backup ha sostituito o cancellato, cioè lo stato
+    /// di prima (vedi <see cref="RestorePlanner"/>).
+    /// <para>Si elencano TUTTI i punti, anche quelli di solo manifest: ogni punto è uno stato
+    /// diverso, e togliere il più vecchio renderebbe irraggiungibili proprio le copie di file
+    /// cancellati dalla sorgente che stanno solo lì. Nessuna versione ancora (job appena acceso,
+    /// destinazione vuota): elenco vuoto, e resta solo «Adesso».</para>
     /// </summary>
-    private static List<RestorePointItem> BuildPoints(string dest, VersioningMode mode)
+    private static List<RestorePointItem> BuildPoints(string dest)
     {
-        if (mode == VersioningMode.HardLinks)
-        {
-            var after = Loc.Instance["Restore_PointAfter"];
-            // Già dal più recente: la data che si cerca di solito è l'ultima.
-            return SnapshotName.ListValid(dest)
-                .Select(n =>
-                {
-                    SnapshotName.TryParse(n, out var d);
-                    return new RestorePointItem { Label = string.Format(after, d.ToString("g")), Date = d, Name = n };
-                })
-                .ToList();
-        }
-
+        if (dest.Length == 0) return new List<RestorePointItem>();
         var before = Loc.Instance["Restore_PointBefore"];
         var versions = VersioningLayout.VersionsDir(dest);
         return VersionCatalog.List(versions).OrderByDescending(p => p.Date).Select(p =>
@@ -557,15 +555,20 @@ public sealed class RestoreViewModel : ObservableObject
         try
         {
             var dest = (_job.Destination ?? "").Trim();
-            var mode = _mode;
             var when = point.Date;
             // Anche l'indice dell'albero si costruisce qui, sul thread di lavoro: su una
             // destinazione da centomila file è la stessa mole di lavoro della risoluzione, e
             // farlo sul thread della UI congelerebbe la finestra a ogni cambio di data.
             // RestoreTree non tocca nessun oggetto WPF, quindi può nascere fuori dalla UI.
+            var onlyChanged = _onlyChanged && point.Name is not null;
             var (plan, tree) = await Task.Run(() =>
             {
-                var p = RestorePlanner.Resolve(mode, dest, when);
+                var p = RestorePlanner.Resolve(dest, when);
+                // «Solo i file cambiati»: il piano completo filtrato con il manifest di quel
+                // backup. Senza manifest leggibile resta la vista completa, non una vista vuota.
+                if (onlyChanged && VersionManifest.ReadFrom(
+                        Path.Combine(VersioningLayout.VersionsDir(dest), point.Name!)) is { } manifest)
+                    p = RestorePlanner.OnlyChangedBy(p, manifest);
                 return (p, new RestoreTree(p));
             });
 
@@ -727,6 +730,7 @@ public sealed class RestoreViewModel : ObservableObject
                 jobDestination: _job.Destination);
 
             RestoredTo = target;
+            LastRestoreClean = !outcome.Cancelled && outcome.Failures.Count == 0;
             // Un ripristino riuscito non è un avviso: il giallo è riservato a ciò che è rimasto
             // indietro (annullamento) o non ha funzionato.
             if (outcome.Cancelled)

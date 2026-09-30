@@ -82,10 +82,6 @@ public partial class JobEditorWindow : Wpf.Ui.Controls.FluentWindow
                 return;
             }
 
-            // Niente piu' controllo bloccante sugli hard-link: una destinazione che non li supporta
-            // tiene comunque le versioni, per differenza (vedi VersioningLayout), e quale dei due
-            // modelli usera' il job lo dice la riga di stato sotto la casella «Tieni le versioni».
-
             // VSS richiede sorgente su volume NTFS locale: avvisa subito, non solo al run.
             // Solo informativo: il salvataggio prosegue (al run scatterà il fallback con avviso).
             if (_vm.Job.UseVss && !RoboKeep.Core.Services.VssEligibility.IsEligible(_vm.Job.Source))

@@ -8,40 +8,36 @@ All notable changes to RoboKeep are documented here. The format is based on
 
 ### Added
 - **Restore: put a file, a folder or the whole job back as it was on a date.** Until now getting
-  something back meant opening a dated folder in File Explorer and copying by hand — and with the
-  new differential model that folder holds only *what changed that day*, which is not the same
-  thing as *how it was that day*. The new **Restore...** window (toolbar, and from *Versions...*
-  with the chosen date already selected) does the reconstruction for you: pick a point in time — or
-  **Now** — and it rebuilds the whole tree, taking changed and deleted files from the version
-  folders, everything untouched from `current`, and leaving out what did not exist yet. Each entry
-  says plainly what it rebuilds, because the two version models keep different things: with
-  differential versions a point reads **"Before the backup of …"** (a version folder holds what that
-  backup replaced or deleted — the state before it — so every folder, including the oldest, is
-  reachable and a file deleted from the source can always be got back); with hard links it reads
-  **"After the backup of …"** (a dated folder is the tree that backup left). Tick a file,
+  something back meant opening a dated folder in File Explorer and copying by hand — and a version
+  folder holds only *what changed that day*, which is not the same thing as *how it was that day*.
+  The new **Restore...** window (toolbar, and from *Versions...* with the chosen date already
+  selected) does the reconstruction for you: pick a point in time — or **Now** — and it rebuilds the
+  whole tree, taking changed and deleted files from the version folders, everything untouched from
+  `current`, and leaving out what did not exist yet. Every point reads **"Before the backup of …"**:
+  a version folder holds what that backup replaced or deleted — the state before it — so every
+  folder, including the oldest, is reachable and a file deleted from the source can always be got
+  back. Tick a file,
   a folder (everything beneath it comes along, including branches you never opened, and you can
-  untick an exception inside), or everything with the box at the top of the list; a search box filters
+  untick an exception inside), or everything with the box at the top of the list; for a past backup,
+  "Show only the files that backup changed or deleted" narrows the tree to them; a search box filters
   by name. Files land in a folder **you** choose, keeping their last-modified date, with the empty
   folders of that date recreated. Nothing is ever overwritten and the job's source is refused as a
   target — restoring over today's files in one click, with no way back, is exactly the accident a
   backup program should not make easy; a file already there, or one that cannot be read, is listed
   at the end with its reason instead of stopping the rest. Progress bar, cancel, and **Open folder**
-  when it is done. Works with both version models: with hard links a date is simply its dated folder.
-  New guide chapter *Restoring*.
-- **Versions now work on every disk, not just NTFS.** Dated versions used to need hard links, so on
-  an exFAT or FAT32 stick — how most external drives come from the factory — or on a network share
-  you simply got none. Now RoboKeep keeps versions there too, with a second model it picks by
-  itself: the backup lives in a **`current`** folder and each **`versions\<date>\`** folder holds
-  **only the files that backup replaced or deleted**, beside a small `<date>.manifest.json`
-  recording what changed, was deleted and was added. It is the model of Windows File History and
-  `rsync --backup-dir`: still ordinary files you can open in File Explorer, no archive to extract,
-  and one write per changed file instead of the thousands of metadata writes it takes to clone a
-  hard-link tree — much gentler on a mechanical disk. Nothing to configure: on NTFS you keep the
-  complete hard-linked folders as before, and an existing backup never switches model underneath
-  (the layout already on the disk wins). The job editor now says which of the two a destination will
-  use, right under *Keep dated versions*, and the pre-run check no longer warns "no versions here" —
-  because there are. An existing plain copy is adopted into `current` with an instant same-disk move;
-  retention, the deletion threshold, integrity verification and *Versions...* all work the same, and
+  when it is done. New guide chapter *Restoring*.
+- **Versions now work on every disk, the same way everywhere.** exFAT or FAT32 sticks — how most
+  external drives come from the factory — network shares and NTFS disks alike: the backup lives in
+  a **`current`** folder and each **`versions\<date>\`** folder holds **only the files that backup
+  replaced or deleted**, beside a small `<date>.manifest.json` recording what changed, was deleted
+  and was added. It is the model of Windows File History and `rsync --backup-dir`: ordinary files
+  you can open in File Explorer, no archive to extract, and one same-disk move per changed file —
+  nothing at all for untouched ones, which is gentle on a mechanical disk. Nothing to configure,
+  and the pre-run check no longer warns "no versions here" — because there are. Folders already at
+  the root of a destination that RoboKeep does not recognise as a copy of the source (dated folders
+  included) are neither moved nor deleted: the mirror only ever works inside `current`, and the log
+  says why they were left alone. An existing plain copy is adopted into `current` with an instant
+  same-disk move. Integrity verification checks `current`, the real backup, and
   **"keep N versions" counts N real versions**: a backup that only added files has no earlier state
   to keep, so it leaves a note rather than an empty folder — otherwise a few days of pure additions
   would push out the one version that still held the only copy of a deleted file. A run that fails
@@ -52,7 +48,16 @@ All notable changes to RoboKeep are documented here. The format is based on
   it is **left exactly as it was** and skipped by this run rather than overwritten with no previous
   copy kept; the log, the summary and the email name it, and the next backup retries — including
   files on the *Force copy* list, because a job's exclusions now apply to the force-copy pass too,
-  where "don't touch this" rightly beats "always recopy this".
+  where "don't touch this" rightly beats "always recopy this". In a job with versions, files on
+  the *Force copy* list are now recopied even when nothing else changed (before, a run with no other
+  change stopped at "already up to date" and never refreshed them), with their previous copy set
+  aside in the version; a forced file that turns out identical to the new copy is not kept, so a
+  nightly force-copy does not fill every retention slot with duplicates. A forced file held open by
+  another program is named in the outcome instead of being silently left stale.
+  Turning versions **off** for a job whose destination still holds them (`current` and `versions`)
+  is refused, even in Preview: a plain mirror on that folder would delete the whole version history
+  as extra files. The job says so and asks you to turn versions back on, or to pick another
+  destination.
 - **A mirror that would wipe out the destination now stops and asks first.** Before a mirror job
   runs, RoboKeep counts — without touching anything — how many files it would delete in the
   destination; if that reaches the job's threshold (**20 %** by default, in the job editor, 0 to
@@ -62,7 +67,9 @@ All notable changes to RoboKeep are documented here. The format is based on
   log, in the result email and on the job's row. This is how data usually gets lost to a mirror —
   a source folder moved or renamed, a network drive that did not mount and looks empty, ransomware
   — and now the copy stays where it is. Jobs with versions reuse the check the versioning already
-  does, so they cost nothing extra; below 20 files the threshold never triggers, and Preview never
+  does, so they cost nothing extra, and they word it for what it is: the files would leave the
+  current backup and stay in that backup's version for as long as retention keeps it, not vanish
+  at once. Below 20 files the threshold never triggers, and Preview never
   blocks (it just says you would be over).
 - **Your backup disks now carry your configuration too.** After every successful backup RoboKeep
   writes a **`RoboKeep-config`** folder in the root of the destination disk (`E:\RoboKeep-config`)
@@ -79,14 +86,12 @@ All notable changes to RoboKeep are documented here. The format is based on
 - **A full backup disk now says so, and can make room by itself.** When a backup stops for lack of
   space, the job no longer reports a bare error code: it says **"Disk full"**, and the log, the
   warning tooltip and the email name the disk, how many versions the job has and **how much they
-  really take up** — each physical file counted once, because with hard-links adding up the dated
-  folders would give a number far larger than the truth (it says *n/a* rather than guess, if the
-  count cannot be finished). And a new checkbox in **Settings → Reliability**, *"When the backup disk
+  take up** (it says *n/a* rather than guess, if the count cannot be finished). And a new checkbox in **Settings → Reliability**, *"When the backup disk
   is full, delete the oldest versions to make room (never the latest)"*, lets RoboKeep free space on
   its own: before a backup with versions, if free space is below the **Minimum free space** threshold
   it deletes that job's oldest version, rechecks the space and keeps going until it is back above the
-  threshold or only the most recent version is left — that one is the current backup and is never
-  touched. Every deletion is one line in the log, with the version removed and how much it freed. The
+  threshold or only the most recent version is left, which is never touched (nor, ever, the backup
+  in `current`). Every deletion is one line in the log, with the version removed and how much it freed. The
   checkbox is **off by default**: deleting to make room is your decision. The threshold's default
   rises from 1 GB to **10 GB**, so both the warning and the cleanup act before the disk is truly
   full: if you had left the old 1 GB default untouched it becomes 10 GB the first time this version

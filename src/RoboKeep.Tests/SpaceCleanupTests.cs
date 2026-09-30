@@ -6,7 +6,7 @@ namespace RoboKeep.Tests;
 
 /// <summary>
 /// Ritenzione per SPAZIO e racconto del disco pieno: il pianificatore puro, la pulizia dentro
-/// SnapshotService (con lo spazio libero iniettato: un disco pieno non si puo' simulare) e il
+/// DifferentialSnapshotService (con lo spazio libero iniettato: un disco pieno non si puo' simulare) e il
 /// riconoscimento del «spazio su disco insufficiente» nell'output di robocopy.
 /// </summary>
 public sealed class SpaceCleanupTests : IDisposable
@@ -66,7 +66,16 @@ public sealed class SpaceCleanupTests : IDisposable
         Assert.Null(SpaceCleanupPlanner.NextToDelete(alone, 0, 10 * Gb));
     }
 
-    // ---- Pulizia dentro SnapshotService ----
+    // ---- Pulizia dentro DifferentialSnapshotService ----
+
+    /// <summary>Crea una versione datata in «versions» con un file dentro.</summary>
+    private static string Version(string dest, string name, string content)
+    {
+        var dir = Path.Combine(VersioningLayout.VersionsDir(dest), name);
+        Directory.CreateDirectory(dir);
+        File.WriteAllText(Path.Combine(dir, "f.txt"), content);
+        return dir;
+    }
 
     [Fact]
     public async Task Cleanup_DeletesTheOldestVersion_KeepsTheNewest_AndSaysSoInTheLog()
@@ -77,12 +86,8 @@ public sealed class SpaceCleanupTests : IDisposable
         File.WriteAllText(Path.Combine(source, "f.txt"), "v1");
 
         // Due versioni gia' in destinazione: la piu' vecchia e' quella che deve sparire.
-        var old = Path.Combine(dest, "2026-09-20_210000");
-        var recent = Path.Combine(dest, "2026-09-25_210000");
-        Directory.CreateDirectory(old);
-        Directory.CreateDirectory(recent);
-        File.WriteAllText(Path.Combine(old, "f.txt"), "vecchia");
-        File.WriteAllText(Path.Combine(recent, "f.txt"), "recente");
+        var old = Version(dest, "2026-09-20_210000", "vecchia");
+        var recent = Version(dest, "2026-09-25_210000", "recente");
 
         // Spazio libero: sotto soglia alla prima lettura, sopra dopo la cancellazione. Un disco
         // pieno non si puo' simulare, ma la decisione dipende solo da questi numeri.
@@ -92,12 +97,12 @@ public sealed class SpaceCleanupTests : IDisposable
         var settings = new AppSettings { FreeSpaceCleanup = true, MinFreeSpaceMb = 10240 };
         var job = new BackupJob { Name = "V", Source = source, Destination = dest, Versioned = true };
         var lines = new List<string>();
-        var svc = new SnapshotService(new RobocopyRunner(), settings, Space);
+        var svc = new DifferentialSnapshotService(new RobocopyRunner(), settings, Space);
 
-        await svc.RunVersionedAsync(job, new SyncProgress(lines.Add));
+        await svc.RunAsync(job, new SyncProgress(lines.Add));
 
         Assert.False(Directory.Exists(old));      // la piu' vecchia e' stata cancellata
-        Assert.True(Directory.Exists(recent));    // la piu' recente E' il backup: non si tocca
+        Assert.True(Directory.Exists(recent));    // la piu' recente non si tocca
         // Una riga nel log per la cancellazione, con il nome della versione e quanto si e' liberato.
         var freed = Assert.Single(lines, l => l.Contains("2026-09-20_210000")
             && l.StartsWith(CoreLoc.S("Space_Freed").Split('{')[0], StringComparison.Ordinal));
@@ -106,29 +111,33 @@ public sealed class SpaceCleanupTests : IDisposable
     }
 
     [Fact]
-    public async Task Cleanup_SaysSoWhenAVersionFreesNothing_InsteadOfPrintingAnUnknownSize()
+    public async Task Cleanup_SaysUnknown_WhenTheSpaceCannotBeReadAgain_AndStops()
     {
         var source = Path.Combine(_root, "src4");
         var dest = Path.Combine(_root, "dest4");
         Directory.CreateDirectory(source);
         File.WriteAllText(Path.Combine(source, "f.txt"), "v1");
-        Directory.CreateDirectory(Path.Combine(dest, "2026-09-20_210000"));
-        Directory.CreateDirectory(Path.Combine(dest, "2026-09-25_210000"));
+        Version(dest, "2026-09-19_210000", "a");
+        var middle = Version(dest, "2026-09-20_210000", "b");
+        var recent = Version(dest, "2026-09-25_210000", "c");
 
-        // Spazio libero sempre uguale: e' quel che succede quando la versione cancellata condivideva
-        // tutti i suoi file con le altre (hard-link). Non e' una misura mancata, e' un fatto.
+        // Sotto soglia alla prima lettura, poi il disco non risponde piu': si dice «n/d» invece di
+        // inventare una cifra, e non si continua a cancellare al buio.
+        var reads = 0;
+        long? Space(string _) => ++reads == 1 ? 1 * Gb : null;
         var settings = new AppSettings { FreeSpaceCleanup = true, MinFreeSpaceMb = 10240 };
         var job = new BackupJob { Name = "V", Source = source, Destination = dest, Versioned = true };
         var lines = new List<string>();
 
-        await new SnapshotService(new RobocopyRunner(), settings, _ => 1 * Gb)
-            .RunVersionedAsync(job, new SyncProgress(lines.Add));
+        await new DifferentialSnapshotService(new RobocopyRunner(), settings, Space)
+            .RunAsync(job, new SyncProgress(lines.Add));
 
-        var note = Assert.Single(lines, l => l.Contains("2026-09-20_210000")
-            && l.StartsWith(CoreLoc.S("Space_FreedNothing").Split('{')[0], StringComparison.Ordinal));
-        Assert.DoesNotContain(CoreLoc.S("Space_Unknown"), note);
-        // La versione piu' recente resta: il ciclo si e' fermato da solo, senza svuotare il disco.
-        Assert.True(Directory.Exists(Path.Combine(dest, "2026-09-25_210000")));
+        var note = Assert.Single(lines,
+            l => l.StartsWith(CoreLoc.S("Space_Freed").Split('{')[0], StringComparison.Ordinal));
+        Assert.Contains("2026-09-19_210000", note);
+        Assert.Contains(CoreLoc.S("Space_Unknown"), note);
+        Assert.True(Directory.Exists(middle));
+        Assert.True(Directory.Exists(recent));
     }
 
     [Fact]
@@ -138,22 +147,21 @@ public sealed class SpaceCleanupTests : IDisposable
         var dest = Path.Combine(_root, "dest2");
         Directory.CreateDirectory(source);
         File.WriteAllText(Path.Combine(source, "f.txt"), "v1");
-        var old = Path.Combine(dest, "2026-09-20_210000");
-        Directory.CreateDirectory(old);
-        Directory.CreateDirectory(Path.Combine(dest, "2026-09-25_210000"));
+        var old = Version(dest, "2026-09-20_210000", "a");
+        Version(dest, "2026-09-25_210000", "b");
 
         var job = new BackupJob { Name = "V", Source = source, Destination = dest, Versioned = true };
 
         // Casella spenta (il default): nemmeno con il disco a zero si cancella qualcosa.
-        await new SnapshotService(new RobocopyRunner(),
+        await new DifferentialSnapshotService(new RobocopyRunner(),
                 new AppSettings { FreeSpaceCleanup = false, MinFreeSpaceMb = 10240 }, _ => 0L)
-            .RunVersionedAsync(job);
+            .RunAsync(job);
         Assert.True(Directory.Exists(old));
 
         // Casella accesa ma spazio non determinabile: non si cancella al buio.
-        await new SnapshotService(new RobocopyRunner(),
+        await new DifferentialSnapshotService(new RobocopyRunner(),
                 new AppSettings { FreeSpaceCleanup = true, MinFreeSpaceMb = 10240 }, _ => null)
-            .RunVersionedAsync(job);
+            .RunAsync(job);
         Assert.True(Directory.Exists(old));
     }
 
@@ -193,18 +201,15 @@ public sealed class SpaceCleanupTests : IDisposable
         File.WriteAllText(Path.Combine(source, "f.txt"), "x");
         // Due versioni in destinazione: il dettaglio deve saperle contare e misurare.
         foreach (var name in new[] { "2026-09-20_210000", "2026-09-25_210000" })
-        {
-            Directory.CreateDirectory(Path.Combine(dest, name));
-            File.WriteAllText(Path.Combine(dest, name, "f.txt"), new string('x', 4096));
-        }
+            Version(dest, name, new string('x', 4096));
 
-        // Il job e' versionato e la destinazione HA gia' due cartelle-data: senza un servizio che
+        // Il job e' versionato e la destinazione HA gia' delle versioni: senza un servizio che
         // sappia gestirle BackupRunner si rifiuta di partire (un mirror piatto sulla radice le
         // cancellerebbe come file extra). Qui serve il run vero, quindi il servizio si passa.
         var fake = new RobocopyRunner(FakeRobocopyDiskFull(), detectMedia: _ => DiskMedia.Unknown);
         var runner = new BackupRunner(config, fake,
             new LogService(config.Settings), new EmailService(creds), creds, results,
-            new SnapshotService(fake));
+            differentialSnapshots: new DifferentialSnapshotService(fake));
 
         var lines = new List<string>();
         var job = new BackupJob { Name = "V", Source = source, Destination = dest, Versioned = true, Retries = 0, Wait = 0 };
@@ -230,32 +235,31 @@ public sealed class SpaceCleanupTests : IDisposable
     }
 
     [Fact]
-    public void VersionsUsage_CountsEachPhysicalFileOnce_AndOnlyTheDatedFolders()
+    public void VersionsUsage_SumsTheFilesOfTheDatedFolders_Only()
     {
         var dir = Path.Combine(_root, "usage");
         var v1 = Path.Combine(dir, "2026-09-20_210000");
         var v2 = Path.Combine(dir, "2026-09-25_210000");
-        Directory.CreateDirectory(v1);
+        Directory.CreateDirectory(Path.Combine(v1, "sub"));
         Directory.CreateDirectory(v2);
-        var first = Path.Combine(v1, "big.bin");
-        File.WriteAllBytes(first, new byte[100_000]);
-        // La seconda versione condivide il file con la prima: l'occupazione reale resta una sola copia.
-        if (!HardLink.TryCreate(Path.Combine(v2, "big.bin"), first)) return; // niente hard-link qui: prova saltata
+        File.WriteAllBytes(Path.Combine(v1, "sub", "big.bin"), new byte[100_000]);
+        File.WriteAllBytes(Path.Combine(v2, "big.bin"), new byte[50_000]);
 
         // Roba che NON e' una versione: non va addebitata a chi decide quante versioni tenere.
-        Directory.CreateDirectory(Path.Combine(dir, "RoboKeep-config"));
-        File.WriteAllBytes(Path.Combine(dir, "RoboKeep-config", "config.json"), new byte[500_000]);
+        Directory.CreateDirectory(Path.Combine(dir, "altro"));
+        File.WriteAllBytes(Path.Combine(dir, "altro", "config.json"), new byte[500_000]);
         var inProgress = Path.Combine(dir, "2026-09-26_210000" + SnapshotName.InProgressSuffix);
         Directory.CreateDirectory(inProgress);
         File.WriteAllBytes(Path.Combine(inProgress, "partial.bin"), new byte[500_000]);
+        File.WriteAllBytes(Path.Combine(dir, "2026-09-25_210000.manifest.json"), new byte[1_000]);
 
         var measured = VersionsUsage.Measure(dir);
-        Assert.NotNull(measured);
-        Assert.InRange(measured!.Value, 100_000, 120_000); // non 200 000 (un solo file fisico), non 1 MB
+        Assert.Equal(150_000, measured);
         Assert.Contains("KB", VersionsUsage.Describe(measured));
         Assert.Equal(CoreLoc.S("Space_Unknown"), VersionsUsage.Describe(null));
         // Nessuna versione datata = niente da misurare: si dice «n/d», non «0».
-        Assert.Null(VersionsUsage.Measure(Path.Combine(dir, "RoboKeep-config")));
+        Assert.Null(VersionsUsage.Measure(Path.Combine(dir, "altro")));
+        Assert.Null(VersionsUsage.Measure(Path.Combine(dir, "non-esiste")));
     }
 
     [Fact]

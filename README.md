@@ -21,7 +21,7 @@ versions you can go back to. **No cloud, no account, no subscription.**
 | | |
 |---|---|
 | 🧙 **Simple setup** | The wizard asks about your data in plain language and picks the right settings. Experts can tweak everything by hand. |
-| 🕰️ **Go back in time** | Every run can keep a dated version. Unchanged files are shared between versions, so ten versions don't cost ten times the space. And *Restore* puts a file, a folder or the whole job back **as it was on a date**, into a folder you choose. |
+| 🕰️ **Go back in time** | Every run can keep a dated version holding only the files it replaced or deleted, so ten versions don't cost ten times the space — on any disk. And *Restore* puts a file, a folder or the whole job back **as it was on a date**, into a folder you choose. |
 | 💿 **Kind to your disks** | Stops at the first hardware error instead of grinding for hours, keeps the PC awake mid-backup, goes easy on mechanical disks. |
 | 🩺 **Disk health at a glance** | One click reads every disk's SMART and gives a plain verdict: Good, Caution, Danger — with each value explained. *New in 1.8.* |
 | 🛡️ **Never the wrong disk** | Rotating two external drives that Windows both calls `E:`? Each job knows its own disk by identity and simply waits for it. |
@@ -52,7 +52,7 @@ versions you can go back to. **No cloud, no account, no subscription.**
 | ![Command preview and versioning](docs/images/editor-preview.png) | **Nothing hidden.** Dated versions, per-job exclusions, and the exact robocopy command always in view. |
 | ![Run history](docs/images/history.png) | **Every run on record.** Backups and integrity checks side by side; double-click opens the full log. |
 | ![Per-job scheduling](docs/images/editor-schedule.png) | **Set it and forget it.** Daily, weekly, or monthly, plus periodic integrity checks. |
-| ![Browse versions](docs/images/versions.png) | **Pick a date.** That day's backup opens in File Explorer; copy back whatever you need. |
+| ![Browse versions](docs/images/versions.png) | **Pick a date.** What that backup replaced or deleted opens in File Explorer; *Restore* rebuilds the whole tree. |
 
 ## How a backup behaves
 
@@ -63,7 +63,8 @@ Each job is a source folder → destination folder pair. On every run RoboKeep:
 - in **mirror** mode (default) also **removes** from the destination what you deleted;
 - with mirror off, only adds and updates, **never deletes**.
 
-With versions on, the previous state is saved as a dated snapshot first.
+With versions on, the previous state of every file about to be replaced or deleted is set aside
+in a dated version first.
 
 ## What's new in 1.8
 
@@ -82,7 +83,7 @@ Full history in the [CHANGELOG](CHANGELOG.md).
 <summary><b>All the features</b></summary>
 
 **Backing up**: mirror or accumulate · disk-rotation protection (job tied to its disk by volume
-identity) · dated versions with hard-links and configurable retention, no duplicate version when
+identity) · dated versions on any disk with configurable retention, no empty version when
 nothing changed · open/locked file copying via VSS · SHA-256 integrity verification, on demand or
 periodic · hardware-error stop that rests the disk · automatic thread cap on mechanical disks ·
 PC kept awake · multi-threaded copying · per-job exclusions · "force copy" for files whose
@@ -91,7 +92,7 @@ preview / dry-run.
 
 **Keeping you informed**: run history with a log for every entry, opened in Notepad · Log folder
 button · per-job health icons with plain tooltips · icons that refresh the instant you plug or
-unplug a disk · pre-run checks (destination reachable, disk space, VSS and versioning eligibility,
+unplug a disk · pre-run checks (destination reachable, disk space, VSS eligibility,
 recent disk errors from the Windows event log) · disk health window (SMART) · real-time log ·
 zipped log archive with automatic cleanup · toast notifications and system tray · email reports
 (SMTP), optionally only on errors.
@@ -109,7 +110,6 @@ for automation · drag & drop job ordering · optional update check · 5 languag
 - **Windows 10/11 only.** RoboKeep builds on robocopy and other Windows-native features.
 - **Changed files are recopied whole** (no block-level delta): fine for documents and photos,
   costly for single huge files that change daily.
-- **Versions need a local NTFS destination** (hard-links don't exist on exFAT or network shares).
 - **Open-file copying needs a local NTFS source** and one administrator confirmation (UAC) per run.
 - **Integrity checks re-read every file on both sides**, so they take about as long as a first
   backup. That's why the automatic check runs every 7 days by default (0 = after every run).

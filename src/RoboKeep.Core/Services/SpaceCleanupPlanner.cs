@@ -4,7 +4,7 @@ namespace RoboKeep.Core.Services;
 /// Ritenzione per SPAZIO: quale versione cancellare per far posto quando il disco di backup e'
 /// sotto la soglia di spazio libero. Funzione pura (lo spazio e' un parametro), pensata per essere
 /// chiamata in ciclo: una versione alla volta, ricontrollando lo spazio dopo ciascuna, perche'
-/// quanto si libera non si sa prima. Mai la piu' recente - quella E' il backup - e mai una
+/// quanto si libera non si sa prima. Mai la piu' recente - la copia precedente piu' vicina a oggi - e mai una
 /// <c>.inprogress</c> o un nome non parsabile, esattamente come <see cref="SnapshotPlanner"/>.
 /// </summary>
 public static class SpaceCleanupPlanner
@@ -22,7 +22,7 @@ public static class SpaceCleanupPlanner
             .OrderBy(v => v.Date)
             .ToList();
 
-        // Con una sola versione ci si fermerebbe con un disco ancora pieno E nessun backup: il
+        // Con una sola versione ci si fermerebbe con un disco ancora pieno E nessuna copia precedente: il
         // dato che si ha vale piu' dello spazio che si libererebbe.
         return valid.Count >= 2 ? valid[0].Name : null;
     }

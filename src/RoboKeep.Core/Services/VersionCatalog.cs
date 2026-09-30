@@ -1,6 +1,6 @@
 namespace RoboKeep.Core.Services;
 
-/// <summary>Un punto nel tempo nell'archivio di un job per differenza.
+/// <summary>Un punto nel tempo nell'archivio delle versioni di un job.
 /// <para><see cref="HasFolder"/> distingue i due casi: una versione con una CARTELLA contiene gli
 /// stati precedenti dei file che quel backup ha sostituito o cancellato; una versione di SOLO
 /// MANIFEST è un backup che non ha sostituito né cancellato niente (ha solo aggiunto file), e la
@@ -8,7 +8,7 @@ namespace RoboKeep.Core.Services;
 public sealed record VersionPoint(string Name, DateTime Date, bool HasFolder);
 
 /// <summary>
-/// L'archivio delle versioni per differenza letto come elenco di punti nel tempo, e le regole per
+/// L'archivio delle versioni letto come elenco di punti nel tempo, e le regole per
 /// tenerlo in ordine.
 /// <para><b>Perché i backup di sole aggiunte non creano una cartella:</b> un archivio di foto o di
 /// documenti cresce e basta — si aggiungono file, non se ne sostituiscono né cancellano. Con una

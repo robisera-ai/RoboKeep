@@ -22,7 +22,7 @@ Cloud, kein Konto, kein Abo.**
 | | |
 |---|---|
 | 🧙 **Einfache Einrichtung** | Der Assistent fragt in klarer Sprache nach Ihren Daten und wählt die passenden Einstellungen. Wer möchte, kann alles von Hand anpassen. |
-| 🕰️ **Zurück in der Zeit** | Jeder Lauf kann eine datierte Version speichern. Unveränderte Dateien werden zwischen den Versionen geteilt, sodass zehn Versionen nicht das Zehnfache an Platz kosten. Und *Wiederherstellen* holt eine Datei, einen Ordner oder den ganzen Job **so zurück, wie er an einem Datum war**, in einen Ordner Ihrer Wahl. |
+| 🕰️ **Zurück in der Zeit** | Jeder Lauf kann eine datierte Version speichern, die nur die ersetzten oder gelöschten Dateien enthält, sodass zehn Versionen nicht das Zehnfache an Platz kosten – auf jedem Datenträger. Und *Wiederherstellen* holt eine Datei, einen Ordner oder den ganzen Job **so zurück, wie er an einem Datum war**, in einen Ordner Ihrer Wahl. |
 | 💿 **Schont Ihre Datenträger** | Stoppt beim ersten Hardwarefehler, statt stundenlang weiterzukopieren, hält den PC während des Backups wach und geht behutsam mit mechanischen Festplatten um. |
 | 🩺 **Datenträgerzustand auf einen Blick** | Ein Klick liest den SMART-Zustand jedes Datenträgers aus und liefert ein klares Urteil: Gut, Achtung, Gefahr — mit jedem Wert erklärt. *Neu in 1.8.* |
 | 🛡️ **Nie der falsche Datenträger** | Wechseln Sie zwischen zwei externen Datenträgern, die Windows beide `E:` nennt? Jeder Auftrag erkennt seinen eigenen Datenträger an der Identität und wartet einfach auf ihn. |
@@ -56,7 +56,7 @@ Cloud, kein Konto, kein Abo.**
 | ![Befehlsvorschau und Versionierung](docs/images/editor-preview.png) | **Nichts versteckt.** Datierte Versionen, Ausschlüsse pro Auftrag und der exakte robocopy-Befehl stets im Blick. |
 | ![Ausführungsverlauf](docs/images/history.png) | **Jeder Lauf im Protokoll.** Backups und Integritätsprüfungen nebeneinander; Doppelklick öffnet das vollständige Protokoll. |
 | ![Zeitplanung pro Auftrag](docs/images/editor-schedule.png) | **Einstellen und vergessen.** Täglich, wöchentlich oder monatlich, plus regelmäßige Integritätsprüfungen. |
-| ![Versionen durchsuchen](docs/images/versions.png) | **Ein Datum wählen.** Das Backup dieses Tages öffnet sich im Datei-Explorer; kopieren Sie zurück, was Sie brauchen. |
+| ![Versionen durchsuchen](docs/images/versions.png) | **Ein Datum wählen.** Was dieses Backup ersetzt oder gelöscht hat, öffnet sich im Datei-Explorer; *Wiederherstellen* baut den ganzen Baum wieder auf. |
 
 ## Wie sich ein Backup verhält
 
@@ -67,7 +67,8 @@ Jeder Auftrag ist ein Paar aus Quellordner → Zielordner. Bei jedem Lauf macht 
 - im **Spiegel**-Modus (Standard) **entfernt** es aus dem Ziel auch, was Sie gelöscht haben;
 - bei ausgeschaltetem Spiegel wird nur hinzugefügt und aktualisiert, **nie gelöscht**.
 
-Mit aktivierten Versionen wird zuerst der vorherige Stand als datierter Schnappschuss gespeichert.
+Mit aktivierten Versionen wird der vorherige Stand der Dateien, die ersetzt oder gelöscht werden,
+zuerst in einer datierten Version beiseitegelegt.
 
 ## Neuerungen in 1.8
 
@@ -88,8 +89,8 @@ Vollständige Historie im [CHANGELOG](CHANGELOG.md).
 <summary><b>Alle Funktionen</b></summary>
 
 **Sichern**: Spiegeln oder Ansammeln · Schutz bei Datenträger-Rotation (Auftrag per
-Volume-Identität an seinen Datenträger gebunden) · datierte Versionen mit Hardlinks und
-konfigurierbarer Aufbewahrung, keine doppelte Version, wenn sich nichts geändert hat · Kopieren
+Volume-Identität an seinen Datenträger gebunden) · datierte Versionen auf jedem Datenträger mit
+konfigurierbarer Aufbewahrung, keine leere Version, wenn sich nichts geändert hat · Kopieren
 offener/gesperrter Dateien via VSS · Integritätsprüfung (SHA-256), auf Abruf oder periodisch ·
 Stopp bei Hardwarefehler, der den Datenträger schont · automatische Thread-Begrenzung auf
 mechanischen Festplatten · PC bleibt wach · Multithread-Kopieren · Ausschlüsse pro Auftrag ·
@@ -99,7 +100,7 @@ Inhalts-Hash-Modus · fortsetzbarer Modus für riesige Dateien · Vorschau/Trock
 **Hält Sie informiert**: Ausführungsverlauf mit einem Protokoll für jeden Eintrag, geöffnet im
 Editor (Notepad) · Schaltfläche Log-Ordner · Zustandssymbole pro Auftrag mit klaren Tooltips ·
 Symbole, die sich aktualisieren, sobald Sie einen Datenträger an- oder abstecken · Vorabprüfungen
-(Ziel erreichbar, Speicherplatz, VSS- und Versions-Eignung, aktuelle Datenträgerfehler aus dem
+(Ziel erreichbar, Speicherplatz, VSS-Eignung, aktuelle Datenträgerfehler aus dem
 Windows-Ereignisprotokoll) · Fenster Datenträgerzustand (SMART) · Echtzeit-Protokoll · gezipptes
 Protokollarchiv mit automatischer Bereinigung · Toast-Benachrichtigungen und Infobereich ·
 E-Mail-Berichte (SMTP), auf Wunsch nur bei Fehlern.
@@ -118,8 +119,6 @@ und Ablegen sortieren · optionale Updateprüfung · 5 Sprachen · portabler Mod
 - **Nur Windows 10/11.** RoboKeep baut auf robocopy und andere Windows-eigene Funktionen.
 - **Geänderte Dateien werden vollständig neu kopiert** (keine Block-/Delta-Kopie): gut für
   Dokumente und Fotos, teuer für einzelne riesige Dateien, die sich täglich ändern.
-- **Versionen brauchen ein lokales NTFS-Ziel** (Hardlinks gibt es nicht auf exFAT oder
-  Netzwerkfreigaben).
 - **Kopieren offener Dateien braucht eine lokale NTFS-Quelle** und eine Administratorbestätigung
   (UAC) pro Lauf.
 - **Integritätsprüfungen lesen jede Datei auf beiden Seiten neu ein**, sie dauern daher etwa so

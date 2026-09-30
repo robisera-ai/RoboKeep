@@ -3,14 +3,13 @@ using RoboKeep.Core.Models;
 namespace RoboKeep.Core.Services;
 
 /// <summary>
-/// Esegue un job versionato dove gli hard-link non esistono (exFAT, FAT32, share di rete): il
-/// mirror vive in <c>current\</c> e ogni backup, PRIMA di sovrascrivere, sposta in
+/// Esegue un job versionato, su qualunque disco (NTFS, exFAT, FAT32, share di rete): il mirror
+/// vive in <c>current\</c> e ogni backup, PRIMA di sovrascrivere, sposta in
 /// <c>versions\&lt;data&gt;\</c> i file che sta per sostituire o rimuovere. E' il modello di
 /// Cronologia file di Windows e di <c>rsync --backup-dir</c>: niente formati speciali, niente
 /// estrazioni, solo file normali leggibili con Esplora risorse.
-/// <para>Costa una scrittura sola per ogni file cambiato (lo spostamento e' una rinomina sullo
-/// stesso volume, istantanea) invece delle migliaia di scritture di metadati che costa clonare un
-/// albero di hard-link. In cambio una versione non e' l'albero completo di quel giorno: e' la
+/// <para>Costa una scrittura sola per ogni file cambiato: lo spostamento e' una rinomina sullo
+/// stesso volume, istantanea. Una versione non e' l'albero completo di quel giorno: e' la
 /// differenza. Ricostruire "com'era il {giorno}" e' il lavoro del ripristino guidato, che legge i
 /// manifest (<see cref="VersionManifest"/>).</para>
 /// <para>Sicurezza: se il mirror fallisce a meta', <c>current</c> resta incompleta ma NESSUN dato e'
@@ -55,8 +54,11 @@ public sealed class DifferentialSnapshotService
         var versions = VersioningLayout.VersionsDir(dest);
         var now = DateTime.Now;
 
-        AdoptPlainMirror(dest, current, sourceOverride ?? job.Source, progress);
+        AdoptPlainMirror(dest, current, versions, sourceOverride ?? job.Source, progress);
         Directory.CreateDirectory(current);
+        // Subito, non solo dopo il mirror: anche un run che non ha niente da fare deve rimettere a
+        // posto una «current» rimasta in sola lettura da un backup precedente.
+        ClearReadOnly(current);
         Directory.CreateDirectory(versions);
 
         await SweepLeftoversAsync(versions, progress, ct).ConfigureAwait(false);
@@ -100,8 +102,11 @@ public sealed class DifferentialSnapshotService
             sourceOverride ?? job.Source, current);
 
         // Niente da fare = nessuna cartella-versione. Creare una versione vuota a ogni backup
-        // riempirebbe il disco di cartelle che non raccontano niente.
-        if (changes.Count == 0 && NothingToDo(preview.Result))
+        // riempirebbe il disco di cartelle che non raccontano niente. Ma la passata "forza copia"
+        // esiste proprio per i file che l'anteprima vede invariati (stessa data e dimensione, e
+        // l'anteprima gira senza di lei): se il job ne ha, dall'anteprima non si puo' decidere.
+        var forceCopy = job.ForceCopyFiles is { Count: > 0 };
+        if (changes.Count == 0 && NothingToDo(preview.Result) && !forceCopy)
         {
             var note = CoreLoc.S("Diff_NoChanges");
             progress?.Report(note);
@@ -122,6 +127,9 @@ public sealed class DifferentialSnapshotService
         manifest.WriteTo(versionDir);
 
         var skipped = new List<string>();
+        // I file messi da parte dal gancio della forza-copia: dopo la passata si confrontano con
+        // quelli appena riscritti (vedi DropUnchangedForced).
+        var forcedMoved = new List<string>();
         var (movedFiles, movedDirs) = MoveAsideChanges(current, versionDir, changes, manifest, skipped, progress, ct);
         manifest.WriteTo(versionDir);
         progress?.Report(string.Format(CoreLoc.S("Diff_Moved"), movedFiles, movedDirs, newName));
@@ -144,7 +152,7 @@ public sealed class DifferentialSnapshotService
             beforeForceCopyPass: filters => Task.Run(() =>
             {
                 var before = skipped.Count;
-                var moved = MoveMatching(current, versionDir, filters, manifest, skipped, progress);
+                var moved = MoveMatching(current, versionDir, filters, manifest, skipped, forcedMoved, progress);
                 if (moved > 0) manifest.WriteTo(versionDir);
                 // Anche i file della forza-copia che non si sono potuti spostare vanno esclusi: gli
                 // argomenti di quella passata vengono costruiti DOPO questo gancio, quindi si
@@ -155,6 +163,34 @@ public sealed class DifferentialSnapshotService
             }, ct))
             .ConfigureAwait(false);
 
+        // La passata "forza copia" semplice ricopia i suoi file a OGNI run, cambiati o no, e il
+        // gancio li ha messi tutti da parte. Quelli identici alla copia appena scritta non sono
+        // uno stato precedente: tenerli farebbe nascere una versione a ogni backup, e a furia di
+        // versioni-doppione la ritenzione («tieni N versioni») finirebbe per cancellare quella che
+        // conteneva l'unica copia di un file sparito dalla sorgente. Costa una rilettura dei soli
+        // file forzati (di solito pochi, anche se grandi): un prezzo giusto per non perdere quella
+        // copia. Solo a run riuscito: dopo un fallimento il contenuto di «current» non e' affidabile.
+        if (run.Result.Success && forcedMoved.Count > 0
+            && DropUnchangedForced(current, versionDir, forcedMoved, manifest) > 0)
+        {
+            manifest.WriteTo(versionDir);
+        }
+
+        // Si e' corso solo per la "forza copia" e non c'era niente da conservare: nessun punto nel
+        // tempo da annotare, come quando l'anteprima dice che non c'e' niente da fare. Mai se un
+        // file e' rimasto indietro perche' in uso: quella notizia deve arrivare all'utente (piu'
+        // sotto), altrimenti il backup direbbe "tutto a posto" con «current» ferma per sempre.
+        if (run.Result.Success && changes.Count == 0 && skipped.Count == 0 && !HasContent(versionDir)
+            && manifest.Changed.Count == 0 && manifest.Deleted.Count == 0 && manifest.Added.Count == 0)
+        {
+            // Non ricorsiva: la cartella e' vuota per costruzione, e se non lo fosse non si butta.
+            try { Directory.Delete(versionDir, recursive: false); } catch { /* best-effort */ }
+            VersionManifest.DeleteFor(versionDir);
+            ClearReadOnly(current);
+            progress?.Report(CoreLoc.S("Diff_NoChanges"));
+            return run;
+        }
+
         // Riuscito o no, la cartella va promossa a versione vera se contiene qualcosa: i file che
         // ci sono stati messi da parte NON sono in nessun altro posto — quelli cancellati dalla
         // sorgente hanno li' l'unica copia rimasta — e lasciarla ".inprogress" significherebbe
@@ -162,6 +198,8 @@ public sealed class DifferentialSnapshotService
         // una versione vera: contiene esattamente gli stati precedenti di cio' che ha spostato.
         Promote(versions, versionDir, newName, progress,
             run.Result.Success ? null : CoreLoc.S("Diff_PromotedPartial"));
+
+        ClearReadOnly(current);
 
         // La ritenzione si applica solo dopo un backup RIUSCITO: dopo un fallimento il conto delle
         // versioni non e' quello che l'utente crede, e cancellare la piu' vecchia per far posto a
@@ -356,13 +394,11 @@ public sealed class DifferentialSnapshotService
 
     /// <summary>Mette da parte i file della lista "Forza copia" prima che la passata con
     /// <c>/IS /IT</c> li riscriva sul posto. Stessa semantica di filtro di robocopy (nome o pattern,
-    /// cercato in tutto l'albero); i file gia' spostati non si toccano due volte.
-    /// <para>Qui l'esclusione dal mirror non e' piu' possibile — la passata "forza copia" sta per
-    /// partire e non accetta <c>/XF</c> — ma un file che non si e' potuto mettere da parte finisce
-    /// comunque tra gli avvisi dell'esito, cosi' l'utente sa che di quello manca la copia
-    /// precedente.</para></summary>
+    /// cercato in tutto l'albero); i file gia' spostati non si toccano due volte. Quelli spostati
+    /// finiscono anche in <paramref name="movedList"/>; quelli che non si sono potuti spostare in
+    /// <paramref name="skipped"/>, e chi chiama li esclude dalla passata prima che parta.</summary>
     private static int MoveMatching(string current, string versionDir, IReadOnlyList<string> filters,
-        VersionManifest manifest, List<string> skipped, IProgress<string>? progress)
+        VersionManifest manifest, List<string> skipped, List<string> movedList, IProgress<string>? progress)
     {
         if (!Directory.Exists(current)) return 0;
         var options = new EnumerationOptions
@@ -381,14 +417,78 @@ public sealed class DifferentialSnapshotService
                 if (done.Contains(rel)) continue;
                 if (!MoveAside(current, versionDir, rel, progress)) { skipped.Add(rel); continue; }
                 Add(manifest.Changed, done, rel);
+                movedList.Add(rel);
                 moved++;
             }
         return moved;
     }
 
+    /// <summary>Toglie dalla versione le copie dei file forzati che la passata ha riscritto
+    /// identici (stessa lunghezza e stesso SHA-256), e le toglie dal manifest: non erano uno stato
+    /// precedente. Restituisce quante ne ha tolte. Nel dubbio (un file che non si legge) la copia
+    /// resta: meglio una versione in piu' che una copia in meno.</summary>
+    private static int DropUnchangedForced(string current, string versionDir, IReadOnlyList<string> forced,
+        VersionManifest manifest)
+    {
+        var dropped = 0;
+        foreach (var rel in forced)
+        {
+            var kept = Path.Combine(versionDir, rel);
+            if (!SameContent(kept, Path.Combine(current, rel))) continue;
+            try
+            {
+                FileSystemDelete.DeleteFile(kept);
+            }
+            catch (Exception ex) when (!DiskError.IsUnreadable(ex)) { continue; }
+            manifest.Changed.RemoveAll(c => string.Equals(c, rel, StringComparison.OrdinalIgnoreCase));
+            RemoveEmptyParents(versionDir, Path.GetDirectoryName(kept), manifest);
+            dropped++;
+        }
+        return dropped;
+    }
+
+    /// <summary>true se i due file hanno la stessa lunghezza e lo stesso SHA-256. Qualunque
+    /// imprevisto (file sparito, in uso) vale "diversi".</summary>
+    private static bool SameContent(string a, string b)
+    {
+        try
+        {
+            var fa = new FileInfo(a);
+            var fb = new FileInfo(b);
+            if (!fa.Exists || !fb.Exists || fa.Length != fb.Length) return false;
+            using var sa = new FileStream(a, FileMode.Open, FileAccess.Read, FileShare.Read);
+            using var sb = new FileStream(b, FileMode.Open, FileAccess.Read, FileShare.Read);
+            return System.Security.Cryptography.SHA256.HashData(sa)
+                .AsSpan().SequenceEqual(System.Security.Cryptography.SHA256.HashData(sb));
+        }
+        catch (Exception ex) when (!DiskError.IsUnreadable(ex)) { return false; }
+    }
+
+    /// <summary>Dopo aver tolto un file dalla versione, toglie le cartelle rimaste vuote risalendo
+    /// fino alla cartella della versione (esclusa). Una cartella che il manifest elenca come
+    /// cancellata e' un dato della versione, e resta anche se vuota.</summary>
+    private static void RemoveEmptyParents(string versionDir, string? dir, VersionManifest manifest)
+    {
+        var root = Path.TrimEndingDirectorySeparator(versionDir);
+        while (!string.IsNullOrEmpty(dir)
+               && !string.Equals(Path.TrimEndingDirectorySeparator(dir), root, StringComparison.OrdinalIgnoreCase)
+               && dir.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+        {
+            var rel = Path.GetRelativePath(versionDir, dir);
+            if (manifest.Deleted.Contains(rel, StringComparer.OrdinalIgnoreCase)) return;
+            try
+            {
+                if (Directory.EnumerateFileSystemEntries(dir).Any()) return;
+                Directory.Delete(dir, recursive: false);
+            }
+            catch { return; }
+            dir = Path.GetDirectoryName(dir);
+        }
+    }
+
     /// <summary>Sposta un file da <c>current</c> alla cartella della versione (rinomina sullo stesso
-    /// volume: istantanea). Un file che non si riesce a spostare (in uso, permessi) resta dov'e' e
-    /// verra' sovrascritto dal mirror: e' una riga nel log, non un errore che ferma il backup.</summary>
+    /// volume: istantanea). Un file che non si riesce a spostare (in uso, permessi) resta dov'e': chi
+    /// chiama lo esclude dal mirror, e il backup successivo riprovera'.</summary>
     private static bool MoveAside(string current, string versionDir, string rel, IProgress<string>? progress)
     {
         try
@@ -442,7 +542,8 @@ public sealed class DifferentialSnapshotService
         // pesa un nulla e dice al ripristino quali file a quella data non esistevano ancora.
         if (!HasContent(versionDir))
         {
-            try { Directory.Delete(versionDir, recursive: true); } catch { /* best-effort */ }
+            // Non ricorsiva: vuota per costruzione, e se non lo fosse non si butta.
+            try { Directory.Delete(versionDir, recursive: false); } catch { /* best-effort */ }
 
             if (partialNote is not null)
             {
@@ -491,9 +592,9 @@ public sealed class DifferentialSnapshotService
         return Directory.Exists(path) || File.Exists(VersionManifest.PathFor(path));
     }
 
-    /// <summary>Ritenzione sulle cartelle di <c>versions\</c>: gli stessi «tieni N versioni» /
-    /// «non piu' vecchie di N giorni» del modello a hard-link (<see cref="SnapshotPlanner"/>). Ogni
-    /// versione se ne porta via il manifest gemello.</summary>
+    /// <summary>Ritenzione sulle cartelle di <c>versions\</c>: «tieni N versioni» / «non piu'
+    /// vecchie di N giorni» (<see cref="SnapshotPlanner"/>). Ogni versione se ne porta via il
+    /// manifest gemello.</summary>
     private static void ApplyRetention(string versions, BackupJob job, DateTime now, IProgress<string>? progress)
     {
         // «Tieni N versioni» conta le CARTELLE, cioe' le versioni che contengono davvero qualcosa.
@@ -533,7 +634,7 @@ public sealed class DifferentialSnapshotService
     }
 
     /// <summary>
-    /// Un job che passa da "copia semplice" a "con versioni" (o un job vecchio) ha gia' un backup
+    /// Un job che passa da "copia semplice" a "con versioni" ha gia' un backup
     /// completo sciolto nella destinazione. Qui quella copia diventa <c>current</c> con una rinomina
     /// per voce - stesso volume, istantanea, zero ricopia - invece di essere ricopiata da zero
     /// lasciando il doppione a occupare il disco. Le cartelle del layout (<c>current</c>,
@@ -544,7 +645,8 @@ public sealed class DifferentialSnapshotService
     /// (<see cref="MirrorAdoption"/>): qui conta doppio, perche' <c>current</c> e' il bersaglio del
     /// mirror e quel che ci finisce dentro senza essere in sorgente verrebbe cancellato al primo run.</para>
     /// </summary>
-    private static void AdoptPlainMirror(string dest, string current, string source, IProgress<string>? progress)
+    private static void AdoptPlainMirror(string dest, string current, string versions, string source,
+        IProgress<string>? progress)
     {
         if (!Directory.Exists(dest)) return;
 
@@ -561,8 +663,10 @@ public sealed class DifferentialSnapshotService
             // chiamata «current», un mirror piatto precedente l'ha copiata li', e quella e' roba
             // dell'utente — non il nostro layout. Nel dubbio non si adotta e non si sposta niente,
             // ma lo si DICE: in silenzio l'utente si ritroverebbe il backup dentro una cartella sua
-            // senza capire perche'.
-            if (entries.Count > 0)
+            // senza capire perche'. Lo si dice finche' non esiste nessuna versione: dopo, il
+            // layout e' evidentemente il nostro, e ripeterlo a ogni run (una destinazione che e' la
+            // radice di un disco con altre cartelle dell'utente) sarebbe solo rumore.
+            if (entries.Count > 0 && VersionCatalog.List(versions).Count == 0)
                 progress?.Report(string.Format(CoreLoc.S("Diff_AdoptAmbiguous"),
                     VersioningLayout.CurrentFolderName, entries.Count));
             return;
@@ -604,12 +708,10 @@ public sealed class DifferentialSnapshotService
     /// Ripulisce <c>versions\</c> dai resti di un run interrotto (crash, chiusura dell'app, caduta
     /// di corrente) e di una cancellazione interrotta (<c>.deleting-…</c>): nessuna regola li
     /// toccherebbe mai piu' e occuperebbero disco per sempre.
-    /// <para><b>Ma una <c>.inprogress</c> che contiene qualcosa NON si cancella</b>: qui il modello
-    /// per differenza e' l'opposto di quello a hard-link. La' una <c>.inprogress</c> e' un clone di
-    /// file che esistono ancora altrove, e buttarla non perde niente; qui contiene gli originali
-    /// SPOSTATI via da <c>current</c>, e per quelli cancellati dalla sorgente e' l'unica copia
-    /// rimasta. Quindi si promuove a versione vera (era esattamente questo: gli stati precedenti di
-    /// cio' che era stato spostato) e solo le cartelle vuote si cancellano.</para>
+    /// <para><b>Ma una <c>.inprogress</c> che contiene qualcosa NON si cancella</b>: contiene gli
+    /// originali SPOSTATI via da <c>current</c>, e per quelli cancellati dalla sorgente e' l'unica
+    /// copia rimasta. Quindi si promuove a versione vera (era esattamente questo: gli stati
+    /// precedenti di cio' che era stato spostato) e solo le cartelle vuote si cancellano.</para>
     /// Best-effort — un residuo bloccato non deve far fallire il job — ma un errore hardware no:
     /// quello ferma il job come ovunque.
     /// </summary>
@@ -645,6 +747,24 @@ public sealed class DifferentialSnapshotService
                 progress?.Report(string.Format(CoreLoc.S("Diff_LeftoverKept"), name, ex.Message));
             }
         }
+    }
+
+    /// <summary>Toglie gli attributi sola-lettura e sistema dalla cartella <c>current</c>. robocopy
+    /// copia gli attributi della cartella sorgente: se la sorgente e' una cartella "speciale" (es.
+    /// Desktop) con un desktop.ini, Esplora risorse — che lo onora con l'uno o con l'altro
+    /// attributo — mostrerebbe <c>current</c> col nome e l'icona del desktop.ini invece del suo
+    /// nome vero. Il desktop.ini resta tra i file del backup, intatto. Best-effort: un attributo
+    /// non deve far fallire il backup.</summary>
+    private static void ClearReadOnly(string dir)
+    {
+        const FileAttributes marks = FileAttributes.ReadOnly | FileAttributes.System;
+        try
+        {
+            var di = new DirectoryInfo(dir);
+            if (di.Exists && (di.Attributes & marks) != 0)
+                di.Attributes &= ~marks;
+        }
+        catch { /* best-effort */ }
     }
 
     /// <summary>true se l'anteprima dice che sorgente e <c>current</c> sono gia' allineate: nessun

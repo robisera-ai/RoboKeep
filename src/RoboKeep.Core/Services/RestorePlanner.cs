@@ -1,8 +1,8 @@
 namespace RoboKeep.Core.Services;
 
 /// <summary>Un file del piano di ripristino: dove va rimesso (percorso relativo, uguale a quello che
-/// aveva nella sorgente) e da dove si copia (<paramref name="SourcePath"/>: <c>current</c>, una
-/// cartella-versione o una cartella datata del modello a hard-link).</summary>
+/// aveva nella sorgente) e da dove si copia (<paramref name="SourcePath"/>: <c>current</c> o una
+/// cartella-versione).</summary>
 public sealed record RestoreEntry(string RelativePath, string SourcePath, long Size, DateTime? LastWrite);
 
 /// <summary>
@@ -51,9 +51,6 @@ public sealed class RestoreReader
     /// <summary>Il manifest di una cartella-versione, null se manca o e' illeggibile.</summary>
     public Func<string, VersionManifest?> Manifest { get; init; } = VersionManifest.ReadFrom;
 
-    /// <summary>I nomi delle cartelle datate del modello a hard-link, dalla piu' recente.</summary>
-    public Func<string, IReadOnlyList<string>> Dated { get; init; } = SnapshotName.ListValid;
-
     /// <summary>Il lettore che legge davvero dal disco.</summary>
     public static RestoreReader Real { get; } = new();
 
@@ -101,17 +98,10 @@ public sealed class RestoreReader
 }
 
 /// <summary>
-/// Ricostruisce l'albero intero di un job a un punto nel tempo, per entrambi i modelli di versione,
-/// senza copiare niente: il risultato e' un elenco di percorsi da cui copiare, che
-/// <see cref="RestoreCopier"/> esegue e la finestra di ripristino mostra.
-/// <para><b>Che cosa significa una data: dipende dal modello, e va detto.</b> Ciascun modello ha
-/// una lettura naturale, quella che il suo layout sul disco rende completa. Forzarle a coincidere
-/// renderebbe irraggiungibile una parte dei dati, quindi la finestra usa due etichette diverse
-/// («Dopo il backup del…» / «Prima del backup del…») invece di una sola che mentirebbe.</para>
-/// <para><b>Hard-link = DOPO il backup.</b> La cartella datata E' l'albero come quel backup lo ha
-/// lasciato, quindi il piano e' il suo contenuto. «Adesso» e' la cartella datata piu' recente: nel
-/// modello a hard-link non esiste un <c>current</c>, il backup attuale e' l'ultima versione.</para>
-/// <para><b>Per differenza = PRIMA del backup.</b> La cartella di una versione contiene le copie di
+/// Ricostruisce l'albero intero di un job a un punto nel tempo, senza copiare niente: il risultato
+/// e' un elenco di percorsi da cui copiare, che <see cref="RestoreCopier"/> esegue e la finestra di
+/// ripristino mostra.
+/// <para><b>Una data significa PRIMA di quel backup.</b> La cartella di una versione contiene le copie di
 /// cio' che quel backup stava per sostituire o cancellare: e' lo stato di <i>prima</i> di quel
 /// backup, ed e' quello che la versione sa ricostruire. Si parte da <c>current</c> (adesso) e si
 /// applicano le versioni con data <b>&gt;=</b> di quella scelta, dalla piu' vecchia alla piu'
@@ -119,7 +109,7 @@ public sealed class RestoreReader
 /// cartella, quelli che ha <i>aggiunto</i> escono dal piano, perche' prima non esistevano. Il primo
 /// che risolve un percorso vince: in ordine crescente e' la versione piu' vicina alla data scelta,
 /// cioe' proprio lo stato che c'era allora.</para>
-/// <para><b>Perche' non «dopo» anche qui.</b> Con «dopo il backup P» (versioni &gt; P) le copie
+/// <para><b>Perche' non «dopo».</b> Con «dopo il backup P» (versioni &gt; P) le copie
 /// della cartella piu' vecchia non sarebbero raggiungibili da nessun punto: servirebbe il punto
 /// precedente, che spesso e' un manifest di sole aggiunte gia' potato dalla ritenzione. Un file
 /// cancellato dalla sorgente, la cui unica copia sta proprio li', diventerebbe irrecuperabile dalla
@@ -137,106 +127,19 @@ public static class RestorePlanner
     /// <summary>
     /// Il piano per la destinazione indicata al punto nel tempo indicato.
     /// </summary>
-    /// <param name="mode">Modello di versione del job (vedi <see cref="VersioningLayout.Detect"/>).</param>
     /// <param name="destination">Radice della destinazione del job (non <c>current</c>).</param>
     /// <param name="pointInTime">La data del backup scelto, oppure null per «adesso» (lo stato
-    /// corrente). Hard-link: l'albero DOPO quel backup. Per differenza: l'albero PRIMA di quel
-    /// backup (vedi il commento della classe).</param>
+    /// corrente): l'albero PRIMA di quel backup (vedi il commento della classe).</param>
     /// <param name="reader">Le letture dal disco, iniettabili nei test; default
     /// <see cref="RestoreReader.Real"/>.</param>
-    public static RestorePlan Resolve(VersioningMode mode, string destination, DateTime? pointInTime,
-        RestoreReader? reader = null)
+    /// <remarks>Una destinazione che non ha ancora niente (job appena acceso, primo backup mai
+    /// fatto) da' un piano vuoto: nessun <c>current</c> da leggere e nessuna versione da applicare.</remarks>
+    public static RestorePlan Resolve(string destination, DateTime? pointInTime, RestoreReader? reader = null)
     {
         var fs = reader ?? RestoreReader.Real;
         var dest = (destination ?? "").Trim();
         if (dest.Length == 0) return RestorePlan.Empty;
 
-        return mode == VersioningMode.HardLinks
-            ? ResolveHardLinks(dest, pointInTime, fs)
-            : ResolveDifferential(dest, pointInTime, fs);
-    }
-
-    /// <summary>
-    /// Il sotto-piano dei soli percorsi scelti. Una <b>cartella</b> scelta porta con se' tutto
-    /// quello che sta sotto: e' il significato ovvio di una casella spuntata su una cartella, e
-    /// l'unico che non obblighi l'utente ad aprire ogni ramo per essere sicuro di aver preso tutto.
-    /// </summary>
-    /// <param name="plan">Il piano completo da cui si sceglie.</param>
-    /// <param name="selected">Percorsi relativi di file, oppure di cartelle (prefissi).</param>
-    public static RestorePlan Select(RestorePlan plan, IEnumerable<string> selected)
-    {
-        ArgumentNullException.ThrowIfNull(plan);
-        ArgumentNullException.ThrowIfNull(selected);
-
-        var picks = selected.Select(Normalize).Where(s => s.Length > 0).Distinct(Cmp).ToList();
-        if (picks.Count == 0) return RestorePlan.Empty;
-
-        bool Covered(string rel) =>
-            picks.Any(p => rel.Equals(p, Ord) || rel.StartsWith(p + '\\', Ord));
-
-        var files = new Dictionary<string, RestoreEntry>(Cmp);
-        long total = 0;
-        foreach (var (rel, entry) in plan.Files)
-        {
-            if (!Covered(rel)) continue;
-            files[rel] = entry;
-            total += entry.Size;
-        }
-
-        var dirs = new HashSet<string>(plan.Directories.Where(Covered), Cmp);
-        // Le cartelle che CONTENGONO i file scelti non sono «scelte», ma senza di loro i file non
-        // avrebbero dove atterrare: ci vanno lo stesso.
-        foreach (var rel in files.Keys) AddAncestors(dirs, rel);
-
-        return new RestorePlan(files, Ordered(dirs), total);
-    }
-
-    private static RestorePlan ResolveHardLinks(string dest, DateTime? pointInTime, RestoreReader fs)
-    {
-        var dated = fs.Dated(dest);
-        // Nessuna cartella datata: il job ha le versioni accese ma non ne ha ancora scritta
-        // nessuna, e nella destinazione c'e' solo il mirror piatto. E' comunque «lo stato di
-        // adesso», ed e' l'unica risposta utile che si possa dare.
-        var root = dated.Count == 0
-            ? dest
-            : Path.Combine(dest, pointInTime is { } when ? Nearest(dated, when) : dated[0]);
-
-        var files = new Dictionary<string, RestoreEntry>(Cmp);
-        long total = 0;
-        foreach (var f in fs.Files(root))
-        {
-            var rel = Normalize(Path.GetRelativePath(root, f.FullPath));
-            if (rel.Length == 0) continue;
-            files[rel] = new RestoreEntry(rel, f.FullPath, f.Size, f.LastWrite);
-            total += f.Size;
-        }
-
-        var dirs = new HashSet<string>(Cmp);
-        foreach (var d in fs.Directories(root))
-        {
-            var rel = Normalize(Path.GetRelativePath(root, d));
-            if (rel.Length > 0) dirs.Add(rel);
-        }
-        foreach (var rel in files.Keys) AddAncestors(dirs, rel);
-
-        return new RestorePlan(files, Ordered(dirs), total);
-    }
-
-    /// <summary>La cartella datata dell'albero «come quel backup lo ha lasciato»: quella con la
-    /// data esatta se c'e', altrimenti la prima successiva. Se la data richiesta e' piu' recente di
-    /// tutte, l'ultima: e' lo stato piu' vicino che esista.</summary>
-    private static string Nearest(IReadOnlyList<string> dated, DateTime when)
-    {
-        var byDate = dated
-            .Select(n => { SnapshotName.TryParse(n, out var d); return (Name: n, Date: d); })
-            .OrderBy(x => x.Date).ToList();
-        foreach (var x in byDate)
-            if (x.Date >= when) return x.Name;
-        return byDate[^1].Name;
-    }
-
-    private static RestorePlan ResolveDifferential(string dest, DateTime? pointInTime, RestoreReader fs)
-    {
         var current = VersioningLayout.CurrentDir(dest);
         var versionsDir = VersioningLayout.VersionsDir(dest);
 
@@ -277,6 +180,54 @@ public static class RestorePlanner
         foreach (var rel in files.Keys) AddAncestors(dirs, rel);
 
         return new RestorePlan(files, Ordered(dirs), files.Values.Sum(e => e.Size));
+    }
+
+    /// <summary>
+    /// Il sotto-piano dei soli percorsi scelti. Una <b>cartella</b> scelta porta con se' tutto
+    /// quello che sta sotto: e' il significato ovvio di una casella spuntata su una cartella, e
+    /// l'unico che non obblighi l'utente ad aprire ogni ramo per essere sicuro di aver preso tutto.
+    /// </summary>
+    /// <param name="plan">Il piano completo da cui si sceglie.</param>
+    /// <param name="selected">Percorsi relativi di file, oppure di cartelle (prefissi).</param>
+    /// <summary>
+    /// Solo cio' che il backup del punto scelto ha tolto da <c>current</c>: i file che ha
+    /// sostituito o cancellato, e le cartelle cancellate con tutto il loro contenuto. E' la
+    /// risposta a «che cosa e' cambiato quel giorno?», presa dal piano gia' risolto: per quei
+    /// percorsi il piano punta proprio alla cartella di quella versione.
+    /// </summary>
+    public static RestorePlan OnlyChangedBy(RestorePlan plan, VersionManifest manifest)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        ArgumentNullException.ThrowIfNull(manifest);
+        return Select(plan, manifest.Changed.Concat(manifest.Deleted));
+    }
+
+    public static RestorePlan Select(RestorePlan plan, IEnumerable<string> selected)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        ArgumentNullException.ThrowIfNull(selected);
+
+        var picks = selected.Select(Normalize).Where(s => s.Length > 0).Distinct(Cmp).ToList();
+        if (picks.Count == 0) return RestorePlan.Empty;
+
+        bool Covered(string rel) =>
+            picks.Any(p => rel.Equals(p, Ord) || rel.StartsWith(p + '\\', Ord));
+
+        var files = new Dictionary<string, RestoreEntry>(Cmp);
+        long total = 0;
+        foreach (var (rel, entry) in plan.Files)
+        {
+            if (!Covered(rel)) continue;
+            files[rel] = entry;
+            total += entry.Size;
+        }
+
+        var dirs = new HashSet<string>(plan.Directories.Where(Covered), Cmp);
+        // Le cartelle che CONTENGONO i file scelti non sono «scelte», ma senza di loro i file non
+        // avrebbero dove atterrare: ci vanno lo stesso.
+        foreach (var rel in files.Keys) AddAncestors(dirs, rel);
+
+        return new RestorePlan(files, Ordered(dirs), total);
     }
 
     /// <summary>Riporta indietro il piano di una versione: i file che quel backup ha sostituito o
