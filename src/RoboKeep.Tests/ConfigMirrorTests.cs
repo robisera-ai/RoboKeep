@@ -203,12 +203,10 @@ public sealed class ConfigMirrorTests : IDisposable
     }
 
     [Fact]
-    public void Write_DoesNothingForANetworkDestination()
+    public void NoTargetFolder_ForANetworkDestination()
     {
-        // Nessuna radice di volume: la scorciatoia pubblica non deve inventarsi una cartella.
-        var lines = new List<string>();
-        ConfigMirror.Write(SampleConfig(), @"\\nas01\backup$\Foto", new Collect(lines));
-        Assert.Empty(lines);
+        // Nessuna radice di volume: non ci si inventa una cartella dove scrivere la copia.
+        Assert.Null(ConfigMirror.TargetFolder(@"\\nas01\backup$\Foto"));
     }
 
     // ---- il mirror non la cancella ----

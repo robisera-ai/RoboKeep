@@ -16,9 +16,7 @@ public static class SpaceCleanupPlanner
         // Soglia a zero = controllo spento: non si cancella niente, nemmeno con il disco pieno.
         if (thresholdBytes <= 0 || freeBytes >= thresholdBytes) return null;
 
-        var valid = versionNames
-            .Where(n => !SnapshotName.IsInProgress(n) && SnapshotName.TryParse(n, out _))
-            .Select(n => { SnapshotName.TryParse(n, out var d); return (Name: n, Date: d); })
+        var valid = SnapshotName.WithDates(versionNames)
             .OrderBy(v => v.Date)
             .ToList();
 

@@ -698,9 +698,6 @@ public sealed class RestoreViewModel : ObservableObject
         catch { SetStatus(""); }
     }
 
-    /// <summary>Il piano intero: tutto com'era alla data scelta.</summary>
-    public RestorePlan FullPlan => _plan;
-
     /// <summary>Il piano dei soli percorsi spuntati.</summary>
     public RestorePlan SelectedPlan =>
         _tree is { } tree ? RestorePlanner.Select(_plan, tree.Selection()) : RestorePlan.Empty;

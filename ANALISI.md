@@ -77,7 +77,8 @@ prima di robocopy (mai modificare sul posto un file condiviso con le versioni pr
 cancellazione **POSIX-safe** che rimuove una versione senza toccare il bit read-only degli inode
 ancora condivisi; il pattern **`.inprogress` + rinomina finale**, così un run interrotto non
 lascia mai una versione a metà spacciata per buona; il prefisso `\\?\` per i percorsi oltre i
-260 caratteri.
+260 caratteri. *Modello sostituito nella v1.9 (vedi sotto): gli hard-link funzionavano solo su
+NTFS ed erano fragili di fronte ad altri strumenti.*
 
 ### v1.3 — File aperti: lo snapshot VSS
 Outlook aperto, database in uso: robocopy li salta. Con un'opzione per job, RoboKeep fotografa
@@ -151,13 +152,39 @@ Windows già lo diceva. Le decisioni:
   del processo in parallelo; la release è fallita in CI al primo tentativo. Ora nessun codice
   riconosce righe dal loro testo, e i test che toccano la lingua girano in una collection isolata.
 
+### v1.8 — Salute dei dischi e aggiornamenti
+
+Lettura dello **SMART** di ogni disco, tramite lo stesso RoboKeep rilanciato elevato, tradotta in
+un giudizio a parole (sano, da tenere d'occhio, da sostituire). Controllo degli aggiornamenti su
+GitHub, solo se l'utente lo accende. Una finestra per vedere e togliere le attività pianificate
+di RoboKeep.
+
+### v1.9 — Ripristino e versioni su ogni disco
+
+Le due strade più probabili per perdere dati sono state chiuse. Un mirror che svuoterebbe la
+destinazione **si ferma e chiede** (soglia per job). Il disco di backup porta una **copia della
+configurazione**. Le versioni abbandonano gli hard-link: il mirror vive in `current`, ogni
+versione contiene solo i file sostituiti o cancellati quel giorno più un **manifest** di cosa è
+cambiato, e funziona su NTFS, exFAT, FAT32 e rete. Il **ripristino guidato** ricostruisce
+«com'era alla data X» combinando `current` con le versioni successive alla data.
+
+Una revisione successiva del codice ha trovato e corretto, con un test ciascuno:
+- con «Versioni» + «Accumula», i file tolti dalla sorgente finivano nella versione e poi nella
+  ritenzione;
+- i nomi che la code page della console non sa scrivere tornavano da robocopy con `?`, e la loro
+  copia precedente si perdeva;
+- un job con un errore imprevisto fermava tutti i successivi senza lasciare traccia;
+- due run dello stesso job potevano lavorare insieme sulla stessa destinazione.
+
+Tutti i file di stato ora si scrivono «tutto o niente».
+
 ## Qualità del processo
 
 Ogni tappa segue lo stesso ciclo: **brainstorming → spec scritta → piano di implementazione →
 sviluppo TDD → doppia revisione del codice → prova manuale sul campo → release**. I difetti
 trovati dalle revisioni (una corsa sul rilascio degli snapshot VSS, i falsi allarmi della
 verifica sulle esclusioni, i giorni localizzati di schtasks) sono stati corretti **prima** di
-arrivare a un utente. La suite conta **225 test**; le release pubblicano due pacchetti
+arrivare a un utente. La suite conta **circa 680 test**; le release pubblicano due pacchetti
 (self-contained e framework-dependent) con changelog completo.
 
 ## Confini di scopo

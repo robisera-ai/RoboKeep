@@ -30,17 +30,15 @@ public static class VersionCatalog
         var points = new List<VersionPoint>();
         var withFolder = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var name in SnapshotName.ListValid(versionsDir))
+        foreach (var (name, date) in SnapshotName.WithDates(SnapshotName.ListValid(versionsDir)))
         {
-            SnapshotName.TryParse(name, out var date);
             points.Add(new VersionPoint(name, date, HasFolder: true));
             withFolder.Add(name);
         }
 
-        foreach (var name in ManifestNames(versionsDir))
+        foreach (var (name, date) in SnapshotName.WithDates(ManifestNames(versionsDir)))
         {
             if (withFolder.Contains(name)) continue; // è il gemello di una cartella già elencata
-            SnapshotName.TryParse(name, out var date);
             points.Add(new VersionPoint(name, date, HasFolder: false));
         }
 
@@ -66,18 +64,15 @@ public static class VersionCatalog
         ArgumentNullException.ThrowIfNull(dirNames);
         ArgumentNullException.ThrowIfNull(manifestNames);
 
-        var dirs = dirNames
-            .Where(n => !SnapshotName.IsInProgress(n) && SnapshotName.TryParse(n, out _))
-            .ToList();
+        var dirs = SnapshotName.WithDates(dirNames).ToList();
         if (dirs.Count == 0) return Array.Empty<string>();
 
-        var kept = new HashSet<string>(dirs, StringComparer.OrdinalIgnoreCase);
-        var oldest = dirs.Min(n => { SnapshotName.TryParse(n, out var d); return d; });
+        var kept = new HashSet<string>(dirs.Select(d => d.Name), StringComparer.OrdinalIgnoreCase);
+        var oldest = dirs.Min(d => d.Date);
 
-        return manifestNames
-            .Where(n => !SnapshotName.IsInProgress(n) && SnapshotName.TryParse(n, out _))
-            .Where(n => !kept.Contains(n))
-            .Where(n => { SnapshotName.TryParse(n, out var d); return d < oldest; })
+        return SnapshotName.WithDates(manifestNames)
+            .Where(m => !kept.Contains(m.Name) && m.Date < oldest)
+            .Select(m => m.Name)
             .ToList();
     }
 

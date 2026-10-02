@@ -388,4 +388,21 @@ public class RestorePlannerTests
 
         Assert.Empty(RestorePlanner.Select(plan, Array.Empty<string>()).Files);
     }
+
+    [Fact]
+    public void ATamperedManifest_CannotReadFromOutsideTheVersion()
+    {
+        // Un manifest modificato a mano (o da un programma ostile) non deve poter far copiare file
+        // che stanno fuori dalla cartella della versione.
+        var fake = new Fake()
+            .File(Path.Combine(Current, "a.txt"))
+            .File(@"D:\bk\segreto.txt")
+            .File(@"C:\Windows\win.ini")
+            .Point(V2, D2, hasFolder: true, Manifest(D2,
+                changed: new[] { @"..\..\segreto.txt", @"C:\Windows\win.ini", @"sotto\.\..\..\..\segreto.txt" }));
+
+        var plan = RestorePlanner.Resolve(Dest, D2, fake.Reader);
+
+        Assert.All(plan.Files.Values, e => Assert.StartsWith(Dest + "\\", e.SourcePath, StringComparison.OrdinalIgnoreCase));
+    }
 }

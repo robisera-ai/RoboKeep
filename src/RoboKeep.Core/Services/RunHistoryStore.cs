@@ -65,7 +65,7 @@ public sealed class RunHistoryStore
                 var dir = Path.GetDirectoryName(_path);
                 if (!string.IsNullOrEmpty(dir))
                     Directory.CreateDirectory(dir);
-                File.WriteAllText(_path, JsonSerializer.Serialize(trimmed, Options));
+                AtomicFile.WriteAllText(_path, JsonSerializer.Serialize(trimmed, Options));
             }
             finally
             {

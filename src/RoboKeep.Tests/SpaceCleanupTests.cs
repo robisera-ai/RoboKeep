@@ -6,7 +6,7 @@ namespace RoboKeep.Tests;
 
 /// <summary>
 /// Ritenzione per SPAZIO e racconto del disco pieno: il pianificatore puro, la pulizia dentro
-/// DifferentialSnapshotService (con lo spazio libero iniettato: un disco pieno non si puo' simulare) e il
+/// VersionedBackupService (con lo spazio libero iniettato: un disco pieno non si puo' simulare) e il
 /// riconoscimento del «spazio su disco insufficiente» nell'output di robocopy.
 /// </summary>
 public sealed class SpaceCleanupTests : IDisposable
@@ -66,7 +66,7 @@ public sealed class SpaceCleanupTests : IDisposable
         Assert.Null(SpaceCleanupPlanner.NextToDelete(alone, 0, 10 * Gb));
     }
 
-    // ---- Pulizia dentro DifferentialSnapshotService ----
+    // ---- Pulizia dentro VersionedBackupService ----
 
     /// <summary>Crea una versione datata in «versions» con un file dentro.</summary>
     private static string Version(string dest, string name, string content)
@@ -97,7 +97,7 @@ public sealed class SpaceCleanupTests : IDisposable
         var settings = new AppSettings { FreeSpaceCleanup = true, MinFreeSpaceMb = 10240 };
         var job = new BackupJob { Name = "V", Source = source, Destination = dest, Versioned = true };
         var lines = new List<string>();
-        var svc = new DifferentialSnapshotService(new RobocopyRunner(), settings, Space);
+        var svc = new VersionedBackupService(new RobocopyRunner(), settings, Space);
 
         await svc.RunAsync(job, new SyncProgress(lines.Add));
 
@@ -129,7 +129,7 @@ public sealed class SpaceCleanupTests : IDisposable
         var job = new BackupJob { Name = "V", Source = source, Destination = dest, Versioned = true };
         var lines = new List<string>();
 
-        await new DifferentialSnapshotService(new RobocopyRunner(), settings, Space)
+        await new VersionedBackupService(new RobocopyRunner(), settings, Space)
             .RunAsync(job, new SyncProgress(lines.Add));
 
         var note = Assert.Single(lines,
@@ -153,13 +153,13 @@ public sealed class SpaceCleanupTests : IDisposable
         var job = new BackupJob { Name = "V", Source = source, Destination = dest, Versioned = true };
 
         // Casella spenta (il default): nemmeno con il disco a zero si cancella qualcosa.
-        await new DifferentialSnapshotService(new RobocopyRunner(),
+        await new VersionedBackupService(new RobocopyRunner(),
                 new AppSettings { FreeSpaceCleanup = false, MinFreeSpaceMb = 10240 }, _ => 0L)
             .RunAsync(job);
         Assert.True(Directory.Exists(old));
 
         // Casella accesa ma spazio non determinabile: non si cancella al buio.
-        await new DifferentialSnapshotService(new RobocopyRunner(),
+        await new VersionedBackupService(new RobocopyRunner(),
                 new AppSettings { FreeSpaceCleanup = true, MinFreeSpaceMb = 10240 }, _ => null)
             .RunAsync(job);
         Assert.True(Directory.Exists(old));
@@ -209,7 +209,7 @@ public sealed class SpaceCleanupTests : IDisposable
         var fake = new RobocopyRunner(FakeRobocopyDiskFull(), detectMedia: _ => DiskMedia.Unknown);
         var runner = new BackupRunner(config, fake,
             new LogService(config.Settings), new EmailService(creds), creds, results,
-            differentialSnapshots: new DifferentialSnapshotService(fake));
+            versionedBackups: new VersionedBackupService(fake));
 
         var lines = new List<string>();
         var job = new BackupJob { Name = "V", Source = source, Destination = dest, Versioned = true, Retries = 0, Wait = 0 };

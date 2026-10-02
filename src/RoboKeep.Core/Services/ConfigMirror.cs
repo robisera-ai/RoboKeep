@@ -54,18 +54,10 @@ public static class ConfigMirror
         catch { return null; }
     }
 
-    /// <summary>Scrive la copia nella radice del volume di <paramref name="destination"/>.
-    /// Non lancia mai: se non c'e' una radice valida non fa nulla, e ogni errore di scrittura
-    /// diventa una riga per <paramref name="progress"/>.</summary>
-    public static void Write(AppConfig config, string destination, IProgress<string>? progress = null)
-    {
-        if (TargetFolder(destination) is { } folder)
-            WriteTo(config, folder, progress, Environment.MachineName, DateTime.Now);
-    }
-
-    /// <summary>Come <see cref="Write"/>, ma con la cartella gia' risolta: la usa
-    /// <see cref="BackupRunner"/>, che la calcola per conto suo (e nei test la reindirizza, per non
-    /// scrivere nella radice del disco della macchina che esegue le prove).</summary>
+    /// <summary>Scrive la copia nella cartella indicata, di norma <see cref="TargetFolder"/> della
+    /// destinazione: la calcola <see cref="BackupRunner"/> (e nei test la reindirizza, per non
+    /// scrivere nella radice del disco della macchina che esegue le prove). Non lancia mai: ogni
+    /// errore di scrittura diventa una riga per <c>progress</c>.</summary>
     public static void WriteTo(
         AppConfig config, string targetFolder, IProgress<string>? progress, string machineName, DateTime when)
     {
@@ -124,9 +116,7 @@ public static class ConfigMirror
         // consumerebbe la memoria flash del disco e cambierebbe la data per niente.
         if (SameContent(path, content)) return;
 
-        var tmp = path + ".tmp";
-        File.WriteAllText(tmp, content, encoding);
-        File.Move(tmp, path, overwrite: true);
+        AtomicFile.WriteAllText(path, content, encoding);
     }
 
     /// <summary>true solo se il file esiste e contiene gia' esattamente questo testo. Qualunque

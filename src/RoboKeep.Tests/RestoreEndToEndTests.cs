@@ -20,7 +20,7 @@ public class RestoreEndToEndTests : IDisposable
         catch { /* best-effort */ }
     }
 
-    private (string Source, string Dest, BackupJob Job, DifferentialSnapshotService Svc) Setup(string name)
+    private (string Source, string Dest, BackupJob Job, VersionedBackupService Svc) Setup(string name)
     {
         var source = Path.Combine(_root, name + "-sorgente");
         var dest = Path.Combine(_root, name + "-backup");
@@ -30,7 +30,7 @@ public class RestoreEndToEndTests : IDisposable
             Name = name, Source = source, Destination = dest, Versioned = true, Mirror = true,
             MultiThread = 0, Retries = 0, Wait = 0,
         };
-        return (source, dest, job, new DifferentialSnapshotService(new RobocopyRunner()));
+        return (source, dest, job, new VersionedBackupService(new RobocopyRunner()));
     }
 
     /// <summary>

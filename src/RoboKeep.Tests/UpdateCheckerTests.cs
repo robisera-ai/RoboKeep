@@ -177,7 +177,7 @@ public class UpdateCheckerTests
 
     [Fact]
     public async Task Fetch_ReturnsNull_WhenServerIsUnreachable()
-        => Assert.Null(await UpdateChecker.FetchAsync(CancellationToken.None, "http://127.0.0.1:9/nessuno"));
+        => Assert.Null((await UpdateChecker.FetchWithStatusAsync(CancellationToken.None, "http://127.0.0.1:9/nessuno")).Info);
 
     [Fact]
     public async Task FetchWithStatus_DistinguishesNotFound_FromUnreachable()

@@ -33,7 +33,7 @@ public sealed class ForceCopyHashStore
             if (!string.IsNullOrEmpty(dir))
                 Directory.CreateDirectory(dir);
 
-            File.WriteAllText(_path, JsonSerializer.Serialize(all, Options));
+            AtomicFile.WriteAllText(_path, JsonSerializer.Serialize(all, Options));
         }
         catch
         {

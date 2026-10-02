@@ -37,9 +37,8 @@ public static class VersionSpaceCleanup
             try
             {
                 // Su thread di background: cancellare migliaia di file non deve congelare la UI.
-                await Task.Run(() => FileSystemDelete.DeleteDirectory(victimDir), ct).ConfigureAwait(false);
                 // Il manifest gemello segue la sua versione.
-                VersionManifest.DeleteFor(victimDir);
+                await Task.Run(() => VersioningLayout.DeleteVersion(victimDir), ct).ConfigureAwait(false);
             }
             // L'annullamento dell'utente ferma il job: va riproposto a chi chiama, non raccontato
             // come "cancellazione non riuscita".

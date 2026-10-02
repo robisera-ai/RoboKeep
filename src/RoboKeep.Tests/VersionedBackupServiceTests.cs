@@ -9,7 +9,7 @@ namespace RoboKeep.Tests;
 /// le cartelle-data in <c>versions</c> con i soli file sostituiti o cancellati, il manifest, la
 /// ritenzione, i residui dei run interrotti e la guardia sulle cancellazioni.
 /// </summary>
-public class DifferentialSnapshotServiceTests : IDisposable
+public class VersionedBackupServiceTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "RbcDiff_" + Guid.NewGuid().ToString("N"));
 
@@ -22,7 +22,7 @@ public class DifferentialSnapshotServiceTests : IDisposable
         Directory.Delete(_root, recursive: true);
     }
 
-    private (string Source, string Dest, BackupJob Job, DifferentialSnapshotService Svc) Setup(
+    private (string Source, string Dest, BackupJob Job, VersionedBackupService Svc) Setup(
         string name, int keepCount = 0, int maxAgeDays = 0)
     {
         var source = Path.Combine(_root, name + "-src");
@@ -34,7 +34,7 @@ public class DifferentialSnapshotServiceTests : IDisposable
             MultiThread = 0, Retries = 0, Wait = 0,
             SnapshotKeepCount = keepCount, SnapshotMaxAgeDays = maxAgeDays,
         };
-        return (source, dest, job, new DifferentialSnapshotService(new RobocopyRunner()));
+        return (source, dest, job, new VersionedBackupService(new RobocopyRunner()));
     }
 
     /// <summary>Progresso che esegue la richiamata sul thread di chi riporta, non sul pool: serve
@@ -212,7 +212,7 @@ public class DifferentialSnapshotServiceTests : IDisposable
         };
         // Il runner ha bisogno di un pianificatore perche' la passata forzata parta davvero.
         var planner = new ForceCopyPlanner(new ForceCopyHashStore(Path.Combine(_root, "hashes.json")));
-        var svc = new DifferentialSnapshotService(new RobocopyRunner(forceCopyPlanner: planner));
+        var svc = new VersionedBackupService(new RobocopyRunner(forceCopyPlanner: planner));
 
         // Un .pst la cui data e dimensione non cambiano mai: e' il caso per cui esiste la forza copia.
         var pst = Path.Combine(source, "posta.pst");
@@ -710,7 +710,7 @@ public class DifferentialSnapshotServiceTests : IDisposable
             MultiThread = 0, Retries = 0, Wait = 0,
         };
         // Spazio libero sempre sotto la soglia: la pulizia cancella finche' resta la piu' recente.
-        var svc = new DifferentialSnapshotService(new RobocopyRunner(), settings, _ => 1024L * 1024);
+        var svc = new VersionedBackupService(new RobocopyRunner(), settings, _ => 1024L * 1024);
 
         await svc.RunAsync(job);
         await Task.Delay(1100);
@@ -844,17 +844,34 @@ public class DifferentialSnapshotServiceTests : IDisposable
         await svc.RunAsync(job, new SyncProgress(lines.Add));
         Assert.DoesNotContain(lines, l => l.StartsWith(ambiguous, StringComparison.Ordinal));
     }
+
+    [Fact]
+    public async Task OrphanInProgressManifest_IsSweptByTheNextRun()
+    {
+        var (source, dest, job, svc) = Setup("orfano");
+        File.WriteAllText(Path.Combine(source, "a.txt"), "v1");
+        await svc.RunAsync(job);
+        // Il manifest di un run la cui cartella non c'e' piu' (promozione del solo manifest
+        // fallita): nessun elenco lo mostra, e senza pulizia resterebbe per sempre.
+        var orphan = VersionManifest.PathFor(Path.Combine(Versions(dest),
+            "2020-01-01_000000" + SnapshotName.InProgressSuffix));
+        File.WriteAllText(orphan, "{}");
+
+        await svc.RunAsync(job);
+
+        Assert.False(File.Exists(orphan));
+    }
 }
 
 /// <summary>
 /// Le versioni viste da BackupRunner: un job versionato va sempre al servizio delle versioni,
 /// che cosa succede se il servizio non c'e', e contro che cosa gira l'anteprima.
 /// </summary>
-public class DifferentialBackupRunnerTests : IDisposable
+public class VersionedBackupRunnerTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "RbcDiffRun_" + Guid.NewGuid().ToString("N"));
 
-    public DifferentialBackupRunnerTests() => Directory.CreateDirectory(_root);
+    public VersionedBackupRunnerTests() => Directory.CreateDirectory(_root);
     public void Dispose() { if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true); }
 
     private sealed class Collect : IProgress<string>
@@ -887,7 +904,7 @@ public class DifferentialBackupRunnerTests : IDisposable
             Path.Combine(VersioningLayout.VersionsDir(dest), "2026-09-25_210000", "unica-copia.txt"), "prezioso");
 
         var (config, creds) = Wiring();
-        // BackupRunner senza DifferentialSnapshotService: un mirror piatto sulla radice
+        // BackupRunner senza VersionedBackupService: un mirror piatto sulla radice
         // cancellerebbe current e versions come "extra".
         var runner = new BackupRunner(config, new RobocopyRunner(), new LogService(config.Settings),
             new EmailService(creds), creds);
@@ -1009,7 +1026,7 @@ public class DifferentialBackupRunnerTests : IDisposable
         var fake = new RobocopyRunner();
         var runner = new BackupRunner(config, fake, new LogService(config.Settings),
             new EmailService(creds), creds,
-            differentialSnapshots: new DifferentialSnapshotService(fake));
+            versionedBackups: new VersionedBackupService(fake));
         var progress = new Collect();
         var job = new BackupJob { Name = "V", Source = source, Destination = dest, Versioned = true, Retries = 0, Wait = 0 };
 
@@ -1033,7 +1050,7 @@ public class DifferentialBackupRunnerTests : IDisposable
         var (config, creds) = Wiring();
         var robocopy = new RobocopyRunner();
         return new BackupRunner(config, robocopy, new LogService(config.Settings),
-            new EmailService(creds), creds, differentialSnapshots: new DifferentialSnapshotService(robocopy));
+            new EmailService(creds), creds, versionedBackups: new VersionedBackupService(robocopy));
     }
 
     [Fact]
@@ -1089,6 +1106,80 @@ public class DifferentialBackupRunnerTests : IDisposable
         // L'utente sa perche' quella roba e' rimasta dov'era.
         var notAdopted = CoreLoc.S("Versioning_NotAdopted").Split('{')[0];
         Assert.Contains(progress.Lines, l => l.StartsWith(notAdopted, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task Accumulate_WithVersions_KeepsFilesDeletedFromTheSource_InCurrent()
+    {
+        // «Accumula» promette che cio' che sparisce dalla sorgente resta nel backup. Con le versioni
+        // accese l'anteprima elenca comunque i file "extra": non devono finire in una versione
+        // (dove la ritenzione prima o poi li cancellerebbe), devono restare in «current».
+        var source = Path.Combine(_root, "acc-src");
+        var dest = Path.Combine(_root, "acc-dst");
+        Directory.CreateDirectory(source);
+        var job = new BackupJob
+        {
+            Name = "A", Source = source, Destination = dest, Versioned = true, Mirror = false,
+            MultiThread = 0, Retries = 0, Wait = 0, SnapshotKeepCount = 1,
+        };
+        var svc = new VersionedBackupService(new RobocopyRunner());
+        Directory.CreateDirectory(Path.Combine(source, "cartella"));
+        File.WriteAllText(Path.Combine(source, "resta.txt"), "x");
+        File.WriteAllText(Path.Combine(source, "sparisce.txt"), "da non perdere");
+        File.WriteAllText(Path.Combine(source, "cartella", "dentro.txt"), "anche questo");
+        Assert.True((await svc.RunAsync(job)).Result.Success);
+
+        File.Delete(Path.Combine(source, "sparisce.txt"));
+        Directory.Delete(Path.Combine(source, "cartella"), recursive: true);
+        for (var i = 0; i < 3; i++)
+        {
+            await Task.Delay(1100);
+            File.WriteAllText(Path.Combine(source, "resta.txt"), "giro " + i);
+            Assert.True((await svc.RunAsync(job)).Result.Success);
+        }
+
+        Assert.Equal("da non perdere", File.ReadAllText(Path.Combine(Current(dest), "sparisce.txt")));
+        Assert.Equal("anche questo", File.ReadAllText(Path.Combine(Current(dest), "cartella", "dentro.txt")));
+        foreach (var point in VersionCatalog.List(Versions(dest)))
+        {
+            var manifest = VersionManifest.ReadFrom(Path.Combine(Versions(dest), point.Name));
+            Assert.DoesNotContain("sparisce.txt", manifest?.Deleted ?? new List<string>());
+        }
+    }
+
+    [Fact]
+    public async Task NameOutsideTheConsoleCodePage_PreviousCopyIsNeverLost()
+    {
+        // L'output di robocopy passa per la code page OEM: un'emoji (o una lettera che la code page
+        // non ha) torna come '?'. Quel percorso non esiste sul disco: non va scambiato per "nuovo"
+        // (la copia precedente verrebbe sovrascritta senza finire in una versione) ne' ignorato
+        // quando e' "extra" (il mirror lo cancellerebbe).
+        var source = Path.Combine(_root, "oem-src");
+        var dest = Path.Combine(_root, "oem-dst");
+        Directory.CreateDirectory(source);
+        var job = new BackupJob
+        {
+            Name = "E", Source = source, Destination = dest, Versioned = true, Mirror = true,
+            MultiThread = 0, Retries = 0, Wait = 0,
+        };
+        var svc = new VersionedBackupService(new RobocopyRunner());
+        var changed = "foto\U0001F600.txt";
+        var deleted = "nota\U0001F680.txt";
+        File.WriteAllText(Path.Combine(source, changed), "prima");
+        File.WriteAllText(Path.Combine(source, deleted), "unica copia");
+        File.WriteAllText(Path.Combine(source, "normale.txt"), "x");
+        Assert.True((await svc.RunAsync(job)).Result.Success);
+
+        await Task.Delay(1100);
+        File.WriteAllText(Path.Combine(source, changed), "dopo, piu' lungo");
+        File.Delete(Path.Combine(source, deleted));
+        await svc.RunAsync(job);
+
+        bool Kept(string name, string content) =>
+            Directory.EnumerateFiles(dest, name, SearchOption.AllDirectories)
+                .Any(f => File.ReadAllText(f) == content);
+        Assert.True(Kept(changed, "prima"), "la copia precedente del file cambiato e' andata persa");
+        Assert.True(Kept(deleted, "unica copia"), "il file cancellato dalla sorgente e' andato perso");
     }
 }
 

@@ -39,6 +39,11 @@ public sealed record RunHistoryEntry(
 
     /// <summary>Voce per un job annullato dall'utente: Success = false ma <see cref="IsCancelled"/>
     /// permette alla cronologia di scriverlo come "annullato" invece che come errore.</summary>
+    /// <summary>La voce di un backup appena chiuso, con i conteggi e il log del suo esito.</summary>
+    public static RunHistoryEntry ForBackup(JobResult r, DateTime finishedAt) =>
+        new(r.JobName, KindBackup, r.StartedAt, finishedAt, r.Success, r.ExitCode,
+            r.FilesCopied, r.FilesSkipped, r.FilesExtra, r.FilesFailed, r.DirsFailed, r.LogPath);
+
     public static RunHistoryEntry ForCancelled(string jobName, DateTime startedAt, string? logPath) =>
         new(jobName, KindCancelled, startedAt, DateTime.Now, false, 0, 0, 0, 0, 0, 0, logPath);
 

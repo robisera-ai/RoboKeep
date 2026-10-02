@@ -46,7 +46,7 @@ public sealed class VersionManifest
 
     /// <summary>Scrive (o riscrive) il manifest accanto alla cartella della versione.</summary>
     public void WriteTo(string versionDir)
-        => File.WriteAllText(PathFor(versionDir), JsonSerializer.Serialize(this, Options));
+        => AtomicFile.WriteAllText(PathFor(versionDir), JsonSerializer.Serialize(this, Options));
 
     /// <summary>Rilegge il manifest di una versione, o null se manca o e' illeggibile: una versione
     /// senza manifest resta comunque una cartella di file apribile con Esplora risorse.</summary>
@@ -63,15 +63,18 @@ public sealed class VersionManifest
 
     /// <summary>Sposta il manifest insieme alla sua cartella-versione (promozione da
     /// <c>.inprogress</c> al nome definitivo). Best-effort: una versione con i file e senza
-    /// manifest resta utile, una cartella orfana di file no.</summary>
-    public static void MoveWith(string fromVersionDir, string toVersionDir)
+    /// manifest resta utile, una cartella orfana di file no. false se il manifest c'era e non si
+    /// e' potuto spostare: chi chiama lo dice all'utente (il ripristino di quella data sara' meno
+    /// preciso), il manifest rimasto indietro lo toglie la pulizia dei residui.</summary>
+    public static bool MoveWith(string fromVersionDir, string toVersionDir)
     {
         try
         {
             var from = PathFor(fromVersionDir);
             if (File.Exists(from)) File.Move(from, PathFor(toVersionDir), overwrite: true);
+            return true;
         }
-        catch { /* best-effort: il manifest non vale il fallimento di una promozione */ }
+        catch { return false; /* il manifest non vale il fallimento di una promozione */ }
     }
 
     /// <summary>Cancella il manifest gemello di una versione che non c'e' piu' (ritenzione, pulizia

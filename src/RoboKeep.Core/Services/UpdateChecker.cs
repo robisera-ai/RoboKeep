@@ -119,12 +119,8 @@ public static class UpdateChecker
         return c;
     }
 
-    /// <summary>Interroga GitHub; null su qualunque errore (rete assente, timeout, 404, JSON inatteso).</summary>
-    public static async Task<UpdateInfo?> FetchAsync(CancellationToken ct = default, string? apiUrl = null)
-        => (await FetchWithStatusAsync(ct, apiUrl).ConfigureAwait(false)).Info;
-
-    /// <summary>Come <see cref="FetchAsync"/>, ma dice anche perche' non c'e' un risultato:
-    /// <see cref="FetchStatus.NotFound"/> (404: release o repository non pubblici) e' una
+    /// <summary>Interroga GitHub; senza risultato su qualunque errore (rete assente, timeout, 404,
+    /// JSON inatteso), e dice anche perche': <see cref="FetchStatus.NotFound"/> (404: release o repository non pubblici) e' una
     /// situazione diversa da "rete assente", e chi preme "Controlla ora" deve poterle distinguere.</summary>
     public static async Task<(UpdateInfo? Info, FetchStatus Status)> FetchWithStatusAsync(
         CancellationToken ct = default, string? apiUrl = null)

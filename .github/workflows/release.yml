@@ -41,7 +41,7 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Test (blocca la release se qualcosa è rosso)
-        run: dotnet test src/RoboKeep.Tests/RoboKeep.Tests.csproj -c Release
+        run: dotnet test src/RoboKeep.Tests/RoboKeep.Tests.csproj -c Release --filter "Category!=Hardware"
 
       - name: Ricava la versione dal tag
         id: ver

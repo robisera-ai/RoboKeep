@@ -16,26 +16,56 @@ public class JobLockFileTests : IDisposable
     public void Acquire_CreatesLockFile_DeletedOnDispose()
     {
         var lockPath = Path.Combine(_dir, "Desktop.lock");
-        using (JobLockFile.Acquire(_dir, "Desktop"))
+        using (JobLockFile.TryAcquire(_dir, "Desktop"))
             Assert.True(File.Exists(lockPath));
         Assert.False(File.Exists(lockPath));
     }
 
     [Fact]
-    public void GetInterrupted_ReturnsJobsWithLockFile()
+    public void GetInterrupted_ReturnsJobsWithALeftoverLockFile()
     {
-        using (JobLockFile.Acquire(_dir, "Desktop"))
+        // Il processo e' morto: il file resta, ma nessuno lo tiene aperto.
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(Path.Combine(_dir, "Desktop.lock"), "");
+
+        var interrupted = JobLockFile.GetInterrupted(_dir, ["Desktop", "Programmi"]);
+        Assert.Contains("Desktop", interrupted);
+        Assert.DoesNotContain("Programmi", interrupted);
+    }
+
+    [Fact]
+    public void GetInterrupted_IgnoresAJobThatIsRunningRightNow()
+    {
+        // L'attivita' pianificata sta girando mentre si apre la finestra: non e' "interrotto".
+        using (JobLockFile.TryAcquire(_dir, "Desktop"))
+            Assert.Empty(JobLockFile.GetInterrupted(_dir, ["Desktop"]));
+    }
+
+    [Fact]
+    public void TryAcquire_SecondTime_ReturnsNull_UntilTheFirstIsReleased()
+    {
+        using (var first = JobLockFile.TryAcquire(_dir, "Desktop"))
         {
-            var interrupted = JobLockFile.GetInterrupted(_dir, ["Desktop", "Programmi"]);
-            Assert.Contains("Desktop", interrupted);
-            Assert.DoesNotContain("Programmi", interrupted);
+            Assert.NotNull(first);
+            Assert.Null(JobLockFile.TryAcquire(_dir, "desktop"));
         }
+        using var again = JobLockFile.TryAcquire(_dir, "Desktop");
+        Assert.NotNull(again);
+    }
+
+    [Fact]
+    public void TryAcquire_TakesOverALeftoverLockFile()
+    {
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(Path.Combine(_dir, "Desktop.lock"), "");
+        using var handle = JobLockFile.TryAcquire(_dir, "Desktop");
+        Assert.NotNull(handle);
     }
 
     [Fact]
     public void GetInterrupted_EmptyAfterDispose()
     {
-        using (JobLockFile.Acquire(_dir, "Desktop")) { }
+        using (JobLockFile.TryAcquire(_dir, "Desktop")) { }
         var interrupted = JobLockFile.GetInterrupted(_dir, ["Desktop"]);
         Assert.Empty(interrupted);
     }
@@ -50,7 +80,7 @@ public class JobLockFileTests : IDisposable
     [Fact]
     public void Acquire_SanitizesInvalidChars_InFileName()
     {
-        using (JobLockFile.Acquire(_dir, "My:Job/Name"))
+        using (JobLockFile.TryAcquire(_dir, "My:Job/Name"))
         {
             var files = Directory.GetFiles(_dir, "*.lock");
             Assert.Single(files);

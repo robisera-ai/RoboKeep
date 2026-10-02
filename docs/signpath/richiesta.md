@@ -144,7 +144,7 @@ RoboKeep is a free, open-source backup application for Windows 10 and 11, writte
 on .NET 10 (WPF). It is a complete graphical front end for robocopy, the copy engine that
 already ships with Windows: a wizard asks a few plain-language questions and turns the
 answers into backup jobs that mirror folders to an external or network disk, keep dated
-versions using NTFS hard links, verify copies with SHA-256, copy open files through VSS,
+versions of every changed or deleted file, verify copies with SHA-256, copy open files through VSS,
 and run on their own schedule through the Windows Task Scheduler.
 
 RoboKeep is entirely local. It has no cloud service, no account, no subscription and no

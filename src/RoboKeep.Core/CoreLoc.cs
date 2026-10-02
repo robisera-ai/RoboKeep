@@ -96,6 +96,28 @@ public static class CoreLoc
             "====== CANCELADO POR EL USUARIO a las {0:HH:mm:ss} (RoboKeep) ======",
             "====== ANNULÉ PAR L'UTILISATEUR à {0:HH:mm:ss} (RoboKeep) ======",
             "====== VOM BENUTZER ABGEBROCHEN um {0:HH:mm:ss} (RoboKeep) ======"),
+        ["Run_Unexpected"] = L(
+            "Il job si è fermato per un errore imprevisto: {0}",
+            "The job stopped because of an unexpected error: {0}",
+            "El trabajo se detuvo por un error inesperado: {0}",
+            "La tâche s'est arrêtée à cause d'une erreur inattendue : {0}",
+            "Der Job wurde wegen eines unerwarteten Fehlers angehalten: {0}"),
+        ["Run_UnexpectedStatus"] = L(
+            "ERRORE IMPREVISTO", "UNEXPECTED ERROR", "ERROR INESPERADO", "ERREUR INATTENDUE", "UNERWARTETER FEHLER"),
+        ["Run_AlreadyRunning"] = L(
+            "Il job «{0}» è già in esecuzione (dalla finestra o da un'attività pianificata): questo avvio non tocca niente.",
+            "Job \"{0}\" is already running (from the window or a scheduled task): this run touches nothing.",
+            "El trabajo «{0}» ya se está ejecutando (desde la ventana o una tarea programada): esta ejecución no toca nada.",
+            "La tâche « {0} » est déjà en cours (depuis la fenêtre ou une tâche planifiée) : cette exécution ne touche à rien.",
+            "Der Job „{0}“ läuft bereits (aus dem Fenster oder einer geplanten Aufgabe): dieser Start ändert nichts."),
+        ["Run_AlreadyRunningStatus"] = L(
+            "GIÀ IN ESECUZIONE", "ALREADY RUNNING", "YA EN EJECUCIÓN", "DÉJÀ EN COURS", "LÄUFT BEREITS"),
+        ["Log_WriteFailed"] = L(
+            "Il log del job non si è potuto scrivere: {0}",
+            "The job log could not be written: {0}",
+            "No se pudo escribir el registro del trabajo: {0}",
+            "Le journal de la tâche n'a pas pu être écrit : {0}",
+            "Das Job-Protokoll konnte nicht geschrieben werden: {0}"),
 
         ["Recap_TitlePreview"] = L(
             "RIEPILOGO ANTEPRIMA (RoboKeep)", "PREVIEW SUMMARY (RoboKeep)",
@@ -248,6 +270,18 @@ public static class CoreLoc
             "[versiones] {0} no apartado ({1}): se queda como estaba en la copia, no se sobrescribe y se reintenta en la próxima copia.",
             "[versions] {0} non mis de côté ({1}) : il reste tel quel dans la sauvegarde, n'est pas écrasé, et une nouvelle tentative aura lieu à la prochaine sauvegarde.",
             "[Versionen] {0} nicht beiseitegelegt ({1}): sie bleibt im Backup unverändert, wird nicht überschrieben und beim nächsten Backup erneut versucht."),
+        ["Diff_ManifestLost"] = L(
+            "[versioni] {0}: i file sono al sicuro, ma l'elenco dei cambiamenti non si è potuto salvare. Il ripristino a quella data riporterà anche file aggiunti dopo.",
+            "[versions] {0}: the files are safe, but the list of changes could not be saved. Restoring to that date will also bring back files added later.",
+            "[versiones] {0}: los archivos están a salvo, pero la lista de cambios no se pudo guardar. Restaurar a esa fecha traerá también archivos añadidos después.",
+            "[versions] {0} : les fichiers sont en sécurité, mais la liste des modifications n'a pas pu être enregistrée. Une restauration à cette date ramènera aussi des fichiers ajoutés plus tard.",
+            "[Versionen] {0}: Die Dateien sind sicher, aber die Liste der Änderungen konnte nicht gespeichert werden. Eine Wiederherstellung auf dieses Datum bringt auch später hinzugefügte Dateien zurück."),
+        ["Diff_NameNotFound"] = L(
+            "nome non ritrovato sul disco",
+            "name not found on disk",
+            "nombre no encontrado en el disco",
+            "nom introuvable sur le disque",
+            "Name auf dem Datenträger nicht gefunden"),
         ["Diff_Created"] = L(
             "[versioni] versione {0} creata: contiene i file sostituiti o cancellati da questo backup.",
             "[versions] version {0} created: it holds the files this backup replaced or deleted.",
@@ -431,6 +465,12 @@ public static class CoreLoc
             "ruta rechazada: saldría de la carpeta de destino",
             "chemin refusé : il sortirait du dossier de destination",
             "Pfad abgelehnt: er würde aus dem Zielordner herausführen"),
+        ["Restore_AlreadyThere"] = L(
+            "esiste già, non viene sovrascritto: {0}",
+            "already exists, not overwritten: {0}",
+            "ya existe, no se sobrescribe: {0}",
+            "existe déjà, n'est pas écrasé : {0}",
+            "existiert bereits, wird nicht überschrieben: {0}"),
 
         ["ConfigCopy_Written"] = L(
             "[config] copia della configurazione salvata in {0} (job, esclusioni e impostazioni, senza password).",

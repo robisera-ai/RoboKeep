@@ -51,7 +51,10 @@ public sealed class CredentialService
     /// Apre una connessione autenticata alla share di rete (equivalente a <c>net use</c>).
     /// Idempotente: se già connessa non solleva eccezioni.
     /// </summary>
-    public void Connect(string remoteName, string user, string password)
+    /// <returns>true se la connessione l'ha aperta questa chiamata: solo allora chi chiama la
+    /// chiude. Una connessione che esisteva gia' (l'utente ha la share aperta o mappata) non e'
+    /// del backup, e chiuderla gli toglierebbe l'unita' di rete.</returns>
+    public bool Connect(string remoteName, string user, string password)
     {
         remoteName = NormalizeShare(remoteName);
         var nr = new NetResource
@@ -65,13 +68,15 @@ public sealed class CredentialService
         if (result is not (0 or 1219 or 85))
             throw new InvalidOperationException(
                 $"Impossibile connettersi a '{remoteName}' (codice errore {result}).");
+        return result == 0;
     }
 
-    /// <summary>Chiude la connessione alla share, se presente.</summary>
+    /// <summary>Chiude una connessione aperta da <see cref="Connect"/>. Senza aggiornare il profilo:
+    /// RoboKeep apre solo connessioni non persistenti, e il flag toglierebbe anche una mappatura
+    /// dell'utente con lo stesso nome.</summary>
     public void Disconnect(string remoteName)
     {
-        // 0x00000001 = aggiorna il profilo; force = true.
-        WNetCancelConnection2(NormalizeShare(remoteName), 1, fForce: true);
+        WNetCancelConnection2(NormalizeShare(remoteName), 0, fForce: true);
     }
 
     /// <summary>
@@ -98,7 +103,8 @@ public sealed class CredentialService
         var result = WNetAddConnection2(nr, p, u, ConnectFlags: 0);
         if (result is 0 or 1219 or 85)
         {
-            Disconnect(remoteName);
+            // Solo la connessione aperta dalla prova: quella che c'era gia' resta all'utente.
+            if (result == 0) Disconnect(remoteName);
             return 0;
         }
 

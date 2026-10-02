@@ -14,6 +14,11 @@ namespace RoboKeep.Core.Services;
 /// </summary>
 public static class FileSystemDelete
 {
+    /// <summary>Segno nel nome di una cartella gia' condannata, la cui cancellazione si e'
+    /// interrotta: <c>&lt;nome&gt;.deleting-xxxxxxxx</c>. Non e' piu' una versione ne' contenuto
+    /// da adottare; la pulizia dei residui la finisce.</summary>
+    public const string DeletingMarker = ".deleting-";
+
     // FILE_INFO_BY_HANDLE_CLASS.FileDispositionInfoEx
     private const int FileDispositionInfoEx = 21;
     private const uint DELETE = 0x00010000;
@@ -68,7 +73,7 @@ public static class FileSystemDelete
         {
             try
             {
-                var staged = Path.Combine(parent, di.Name + ".deleting-" + Guid.NewGuid().ToString("N")[..8]);
+                var staged = Path.Combine(parent, di.Name + DeletingMarker + Guid.NewGuid().ToString("N")[..8]);
                 Directory.Move(path, staged);
                 target = new DirectoryInfo(staged);
             }

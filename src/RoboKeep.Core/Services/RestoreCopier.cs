@@ -117,23 +117,35 @@ public static class RestoreCopier
                 continue;
             }
 
+            // Si copia su un nome temporaneo e solo a copia finita si da' il nome vero: un disco
+            // pieno o un errore di lettura a meta' non lasciano un file troncato col nome giusto,
+            // che sembrerebbe ripristinato e al tentativo dopo risulterebbe «gia' presente».
+            var tmp = $"{destPath}.{Guid.NewGuid():N}.rbk-tmp";
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
-                File.Copy(entry.SourcePath, destPath, overwrite: false);
+                // Un file gia' presente non si tocca mai: lo si scopre prima di copiare per niente.
+                if (File.Exists(destPath))
+                    throw new IOException(string.Format(CoreLoc.S("Restore_AlreadyThere"), destPath));
+                File.Copy(entry.SourcePath, tmp, overwrite: false);
                 // La data di ultima modifica E' un dato: e' quella che dice «questa e' la lettera
                 // di marzo». Un ripristino che la azzerasse renderebbe irriconoscibili i file.
                 if (entry.LastWrite is { } when)
                 {
-                    try { File.SetLastWriteTime(destPath, when); }
+                    try { File.SetLastWriteTime(tmp, when); }
                     catch { /* la copia c'e': la data e' un di piu', non un fallimento */ }
                 }
+                File.Move(tmp, destPath, overwrite: false);
                 copied++;
                 bytes += entry.Size;
             }
             catch (Exception ex)
             {
                 failures.Add(new RestoreFailure(rel, ex.Message));
+            }
+            finally
+            {
+                try { if (File.Exists(tmp)) File.Delete(tmp); } catch { /* resta un .rbk-tmp: innocuo */ }
             }
 
             progress?.Report((done, total));

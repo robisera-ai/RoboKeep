@@ -79,12 +79,36 @@ public sealed class RobocopyRunner
             psi.ArgumentList.Add("/?");
             using var p = Process.Start(psi);
             if (p is null) return false;
-            var help = p.StandardOutput.ReadToEnd();
-            p.WaitForExit(10_000);
-            return help.Contains("/IM ", StringComparison.OrdinalIgnoreCase);
+            // Il tempo massimo deve valere anche per la lettura: un ReadToEnd sincrono aspetterebbe
+            // per sempre un robocopy che non risponde, prima ancora di arrivare al WaitForExit.
+            var read = p.StandardOutput.ReadToEndAsync();
+            if (!read.Wait(10_000))
+            {
+                try { p.Kill(); } catch { /* gia' uscito */ }
+                return false;
+            }
+            return read.Result.Contains("/IM ", StringComparison.OrdinalIgnoreCase);
         }
         catch { return false; }
     });
+
+    /// <summary>Copia del job adatta a un'anteprima che deve CONTARE (guardia sulle cancellazioni,
+    /// elenco dei cambiamenti delle versioni).
+    /// <list type="bullet">
+    /// <item>Senza multi-thread: con /MT robocopy conta come "copiata" ogni cartella anche quando
+    /// non c'e' niente da fare, e i conteggi mentirebbero. Per un'enumerazione il parallelismo non
+    /// serve.</item>
+    /// <item>Senza passata "forza copia": gira senza /MIR (alla guardia non dice niente), i suoi
+    /// conteggi gonfierebbero il totale, le sue righe duplicherebbero l'elenco, e in modalita' smart
+    /// farebbe pure l'hash di file grandi per una stima.</item>
+    /// </list></summary>
+    public static BackupJob PreviewJobFor(BackupJob job)
+    {
+        var preview = job.Clone();
+        preview.MultiThread = 0;
+        preview.ForceCopyFiles = new();
+        return preview;
+    }
 
     /// <param name="beforeForceCopyPass">Invocato (mai in anteprima) subito prima della passata
     /// "forza copia", con i filtri che robocopy ricevera'. Serve al versioning: la passata

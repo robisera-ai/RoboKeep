@@ -13,7 +13,6 @@
         WindowCornerPreference="Round"
         WindowStartupLocation="CenterOwner">
     <ui:FluentWindow.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <Style TargetType="TextBlock" x:Key="Label">
             <Setter Property="Margin" Value="0,12,8,4"/>
             <Setter Property="FontWeight" Value="SemiBold"/>

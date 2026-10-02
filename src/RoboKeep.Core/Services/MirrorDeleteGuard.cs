@@ -68,6 +68,22 @@ public static class MirrorDeleteGuard
             && estimate.Percent >= estimate.LimitPercent;
     }
 
+    /// <summary>La decisione intera su un'anteprima gia' eseguita (riuscita): null se il run puo'
+    /// partire (sotto soglia, o confermato), altrimenti l'esito "fermato" da consegnare al chiamante.
+    /// Una sola domanda, valida per questo run: chi ha una finestra davanti decide, chi non c'e'
+    /// (<paramref name="confirm"/> null) si ferma. Il "si'" non viene ricordato: domani la stima e'
+    /// un'altra. L'output dell'anteprima e' l'elenco dei file che sarebbero spariti: nel log del job
+    /// vale piu' di qualunque spiegazione.</summary>
+    public static async Task<RobocopyRunResult?> DecideAsync(BackupJob job, RobocopyRunResult preview,
+        DateTime startedAt, Func<MirrorDeleteEstimate, Task<bool>>? confirm)
+    {
+        ArgumentNullException.ThrowIfNull(preview);
+        var estimate = Estimate(job, preview.Result);
+        if (!ShouldBlock(estimate)) return null;
+        if (confirm is not null && await confirm(estimate).ConfigureAwait(false)) return null;
+        return new RobocopyRunResult { Result = BlockedResult(estimate, startedAt), Output = preview.Output };
+    }
+
     /// <summary>Esito di un job fermato dalla guardia: non e' partito (<c>NotStarted</c>), non e'
     /// un successo, e il dettaglio dice i numeri e come sbloccarlo.</summary>
     public static JobResult BlockedResult(MirrorDeleteEstimate estimate, DateTime startedAt)

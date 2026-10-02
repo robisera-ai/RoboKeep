@@ -50,7 +50,7 @@ public sealed class VssLedger
     {
         var dir = Path.GetDirectoryName(_path);
         if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-        File.WriteAllText(_path, JsonSerializer.Serialize(entries));
+        AtomicFile.WriteAllText(_path, JsonSerializer.Serialize(entries));
     }
 
     private static bool IsProcessAlive(int pid)

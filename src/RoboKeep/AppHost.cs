@@ -57,10 +57,10 @@ public sealed class AppHost
         var email = new EmailService(Credentials);
         // Le impostazioni servono alla ritenzione per spazio: la soglia e l'interruttore della
         // pulizia automatica delle versioni vecchie.
-        var differential = new DifferentialSnapshotService(runner, Config.Settings);
+        var versioned = new VersionedBackupService(runner, Config.Settings);
         return new BackupRunner(Config, runner, log, email, Credentials, Results, LockFolder,
             Path.Combine(Store.DirectoryPath, "vss"), History, faultedDisks: FaultedDisks,
-            differentialSnapshots: differential);
+            versionedBackups: versioned);
     }
 
     /// <summary>

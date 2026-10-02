@@ -402,7 +402,7 @@ public sealed class MirrorDeleteGuardTests : IDisposable
     {
         FillSource(ManyFiles);
         var job = new BackupJob { Name = "V", Source = Src, Destination = Dst, Versioned = true };
-        var svc = new DifferentialSnapshotService(new RobocopyRunner());
+        var svc = new VersionedBackupService(new RobocopyRunner());
         await svc.RunAsync(job);
         var copied = Directory.GetFiles(Current).Length;
         Assert.True(copied > MirrorDeleteGuard.MinFiles);
@@ -436,7 +436,7 @@ public sealed class MirrorDeleteGuardTests : IDisposable
         // bloccherebbe nulla.
         FillSource(ManyFiles);
         var job = new BackupJob { Name = "V", Source = Src, Destination = Dst, Versioned = true };
-        var svc = new DifferentialSnapshotService(new RobocopyRunner());
+        var svc = new VersionedBackupService(new RobocopyRunner());
         await svc.RunAsync(job);
         var copied = Directory.GetFiles(Current).Length;
         var before = VersionEntries();
@@ -468,7 +468,7 @@ public sealed class MirrorDeleteGuardTests : IDisposable
         var robocopy = new RobocopyRunner();
         var runner = new BackupRunner(config, robocopy, new LogService(config.Settings),
             new EmailService(creds), creds, results, history: history,
-            differentialSnapshots: new DifferentialSnapshotService(robocopy));
+            versionedBackups: new VersionedBackupService(robocopy));
         var job = new BackupJob { Name = "V", Source = Src, Destination = Dst, Versioned = true };
 
         var ok = await runner.RunJobAsync(job);

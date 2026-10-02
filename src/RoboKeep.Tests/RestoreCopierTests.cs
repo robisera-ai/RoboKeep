@@ -96,6 +96,8 @@ public class RestoreCopierTests : IDisposable
         }
 
         Assert.Equal("libero", File.ReadAllText(Path.Combine(target, "ok.txt")));
+        // Nessun file a meta' e nessun temporaneo: solo quello ripristinato davvero.
+        Assert.Equal(new[] { "ok.txt" }, Directory.GetFiles(target).Select(Path.GetFileName));
     }
 
     [Fact]
@@ -121,13 +123,19 @@ public class RestoreCopierTests : IDisposable
         var seen = new List<(int Done, int Total)>();
         var target = Path.Combine(_root, "dentro");
 
+        // Progresso sincrono: Progress<T> consegnerebbe sul pool, e il test dovrebbe aspettare a
+        // tentoni che le notifiche arrivino.
         await RestoreCopier.CopyAsync(Plan(new[] { Entry("a.txt", a), Entry("b.txt", b) }), target,
-            progress: new Progress<(int, int)>(p => { lock (seen) seen.Add(p); }));
+            progress: new SyncProgress<(int, int)>(p => { lock (seen) seen.Add(p); }));
 
-        // Progress<T> consegna sul pool: si aspetta che le due notifiche siano arrivate.
-        for (var i = 0; i < 50 && Count() < 2; i++) await Task.Delay(20);
-        Assert.Equal(2, Count());
-        int Count() { lock (seen) return seen.Count; }
+        Assert.Equal(new[] { (1, 2), (2, 2) }, seen);
+    }
+
+    private sealed class SyncProgress<T> : IProgress<T>
+    {
+        private readonly Action<T> _action;
+        public SyncProgress(Action<T> action) => _action = action;
+        public void Report(T value) => _action(value);
     }
 
     [Fact]

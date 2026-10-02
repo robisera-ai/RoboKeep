@@ -33,7 +33,6 @@
         <Style TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
             <Setter Property="Padding" Value="0,5,0,6"/>
         </Style>
-        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </ui:FluentWindow.Resources>
 
     <Grid>

@@ -16,7 +16,7 @@ namespace RoboKeep.Core.Services;
 /// perso — i file spostati stanno nella <c>.inprogress</c>, che viene ripulita solo dopo un mirror
 /// riuscito, e il run successivo li ricopia dalla sorgente.</para>
 /// </summary>
-public sealed class DifferentialSnapshotService
+public sealed class VersionedBackupService
 {
     private readonly RobocopyRunner _runner;
     private readonly AppSettings? _settings;
@@ -31,7 +31,7 @@ public sealed class DifferentialSnapshotService
     /// null = nessuna pulizia per spazio.</param>
     /// <param name="freeSpace">Lettore dello spazio libero, iniettabile nei test; default
     /// <see cref="FreeSpaceReader.Read"/>.</param>
-    public DifferentialSnapshotService(RobocopyRunner runner, AppSettings? settings = null,
+    public VersionedBackupService(RobocopyRunner runner, AppSettings? settings = null,
         Func<string, long?>? freeSpace = null)
     {
         _runner = runner;
@@ -75,21 +75,20 @@ public sealed class DifferentialSnapshotService
         // Guardia sulle cancellazioni, sui conteggi dell'anteprima appena fatta. Una sorgente
         // svuotata per errore si vede proprio qui: quasi tutti i file di current risultano "extra".
         // Prima di decidere "niente da fare": un blocco deve arrivare all'utente in ogni caso.
-        if (job.Mirror && preview.Result.Success && !preview.Result.HardwareError)
+        // Esito "fermato" identico a quello dei mirror senza versioni: BackupRunner lo riconosce e
+        // lo chiude allo stesso modo (log, cronologia, email).
+        if (job.Mirror && preview.Result.Success && !preview.Result.HardwareError
+            && await MirrorDeleteGuard.DecideAsync(job, preview, now, confirmDeletions).ConfigureAwait(false) is { } blocked)
         {
-            var estimate = MirrorDeleteGuard.Estimate(job, preview.Result);
-            if (MirrorDeleteGuard.ShouldBlock(estimate)
-                && !(confirmDeletions is not null && await confirmDeletions(estimate).ConfigureAwait(false)))
-            {
-                // Esito "fermato" identico a quello dei mirror senza versioni: BackupRunner lo
-                // riconosce e lo chiude allo stesso modo (log, cronologia, email).
-                return new RobocopyRunResult
-                {
-                    Result = MirrorDeleteGuard.BlockedResult(estimate, now),
-                    Output = preview.Output,
-                };
-            }
+            return blocked;
         }
+
+        // Anteprima non riuscita per altro (un file o una cartella della sorgente illeggibili): la
+        // guardia non ha numeri su cui decidere. Il run prosegue come nei mirror senza versioni,
+        // ma lo si dice nel riepilogo, nel log e nell'email: e' partito senza rete di sicurezza.
+        var guardNote = job.Mirror && !preview.Result.Success && !preview.Result.HardwareError
+            ? CoreLoc.S("Guard_PreviewFailed") : null;
+        if (guardNote is not null) progress?.Report(guardNote);
 
         // Un errore hardware gia' in anteprima: inutile (e dannoso) proseguire.
         if (preview.Result.HardwareError)
@@ -100,13 +99,25 @@ public sealed class DifferentialSnapshotService
 
         var changes = RobocopyListParser.Parse(preview.Output.Split('\n'),
             sourceOverride ?? job.Source, current);
+        // «Accumula»: cio' che e' sparito dalla sorgente resta in «current». L'anteprima elenca
+        // comunque i file e le cartelle "extra" (anche senza /MIR): spostarli in una versione
+        // vorrebbe dire toglierli dal backup e lasciarli alla ritenzione, che prima o poi li cancella.
+        if (!job.Mirror)
+            changes = changes.Where(c => c.Kind is not (ChangeKind.ExtraFile or ChangeKind.ExtraDir)).ToList();
+        // Nomi con caratteri che la console non sa scrivere: tornano con '?' e vanno riportati ai
+        // nomi veri, altrimenti la copia precedente si perderebbe. Quelli che non si ritrovano sono
+        // trattati come i file in uso: fuori da questo mirror, e segnalati.
+        var skipped = new List<string>();
+        changes = ListedPathResolver.Resolve(changes, sourceOverride ?? job.Source ?? "", current, skipped);
+        foreach (var rel in skipped)
+            progress?.Report(string.Format(CoreLoc.S("Diff_MoveFailed"), rel, CoreLoc.S("Diff_NameNotFound")));
 
         // Niente da fare = nessuna cartella-versione. Creare una versione vuota a ogni backup
         // riempirebbe il disco di cartelle che non raccontano niente. Ma la passata "forza copia"
         // esiste proprio per i file che l'anteprima vede invariati (stessa data e dimensione, e
         // l'anteprima gira senza di lei): se il job ne ha, dall'anteprima non si puo' decidere.
         var forceCopy = job.ForceCopyFiles is { Count: > 0 };
-        if (changes.Count == 0 && NothingToDo(preview.Result) && !forceCopy)
+        if (changes.Count == 0 && skipped.Count == 0 && NothingToDo(preview.Result, extrasMatter: job.Mirror) && !forceCopy)
         {
             var note = CoreLoc.S("Diff_NoChanges");
             progress?.Report(note);
@@ -126,7 +137,6 @@ public sealed class DifferentialSnapshotService
         var manifest = Plan(current, changes, now);
         manifest.WriteTo(versionDir);
 
-        var skipped = new List<string>();
         // I file messi da parte dal gancio della forza-copia: dopo la passata si confrontano con
         // quelli appena riscritti (vedi DropUnchangedForced).
         var forcedMoved = new List<string>();
@@ -188,6 +198,7 @@ public sealed class DifferentialSnapshotService
             VersionManifest.DeleteFor(versionDir);
             ClearReadOnly(current);
             progress?.Report(CoreLoc.S("Diff_NoChanges"));
+            if (guardNote is not null) run.Result.VersionNotes.Add(guardNote);
             return run;
         }
 
@@ -215,6 +226,7 @@ public sealed class DifferentialSnapshotService
             run.Result.VersionNotes.Add(string.Format(CoreLoc.S("Diff_SkippedLocked"),
                 skipped.Count, string.Join(", ", skipped.Take(10))));
 
+        if (guardNote is not null) run.Result.VersionNotes.Add(guardNote);
         return run;
     }
 
@@ -286,17 +298,12 @@ public sealed class DifferentialSnapshotService
     /// guardia). Una sola enumerazione per due domande.</summary>
     private Task<RobocopyRunResult> PreviewAsync(BackupJob job, string current, string? sourceOverride, CancellationToken ct)
     {
-        var previewJob = job.Clone();
-        // Senza multi-thread: con /MT robocopy conta come "copiata" ogni cartella anche quando non
-        // c'e' niente da fare, e i conteggi mentirebbero. Per una enumerazione il parallelismo non serve.
-        previewJob.MultiThread = 0;
+        // Senza "forza copia": i file di quella lista li mette da parte il gancio
+        // beforeForceCopyPass, al momento giusto.
+        var previewJob = RobocopyRunner.PreviewJobFor(job);
         // Senza /V: le righe dei file identici non descrivono nessun cambiamento e, con le etichette
         // tradotte, sarebbero l'unica riga che il lettore non saprebbe scartare con certezza.
         previewJob.LogAllFiles = false;
-        // Niente passata "forza copia" nell'anteprima: gira senza /MIR (quindi non dice nulla alla
-        // guardia), i suoi conteggi gonfierebbero il totale e le sue righe duplicherebbero l'elenco.
-        // I file di quella lista li mette da parte il gancio beforeForceCopyPass, al momento giusto.
-        previewJob.ForceCopyFiles = new();
         return _runner.RunAsync(previewJob, dryRun: true, progress: null, ct,
             destinationOverride: current, sourceOverride: sourceOverride, listDetails: true);
     }
@@ -555,7 +562,8 @@ public sealed class DifferentialSnapshotService
 
             var onlyManifest = Path.Combine(versions, SnapshotName.FreeName(newName,
                 n => IsTaken(versions, n)));
-            VersionManifest.MoveWith(versionDir, onlyManifest);
+            if (!VersionManifest.MoveWith(versionDir, onlyManifest))
+                progress?.Report(string.Format(CoreLoc.S("Diff_ManifestLost"), Path.GetFileName(onlyManifest)));
             progress?.Report(string.Format(CoreLoc.S("Diff_AddedOnly"), Path.GetFileName(onlyManifest)));
             return null; // nessuna cartella: non c'e' niente su cui applicare la ritenzione
         }
@@ -566,7 +574,6 @@ public sealed class DifferentialSnapshotService
         try
         {
             Directory.Move(versionDir, final);
-            VersionManifest.MoveWith(versionDir, final);
         }
         catch (Exception ex) when (!DiskError.IsUnreadable(ex))
         {
@@ -576,6 +583,10 @@ public sealed class DifferentialSnapshotService
                 Path.GetFileName(versionDir), ex.Message));
             return null;
         }
+        // Fuori dal try: la cartella e' gia' al suo nome definitivo, un manifest che non la segue
+        // non deve far credere che la promozione sia fallita.
+        if (!VersionManifest.MoveWith(versionDir, final))
+            progress?.Report(string.Format(CoreLoc.S("Diff_ManifestLost"), Path.GetFileName(final)));
 
         progress?.Report(partialNote is null
             ? string.Format(CoreLoc.S("Diff_Created"), Path.GetFileName(final))
@@ -607,8 +618,7 @@ public sealed class DifferentialSnapshotService
             var dir = Path.Combine(versions, name);
             try
             {
-                FileSystemDelete.DeleteDirectory(dir);
-                VersionManifest.DeleteFor(dir);
+                VersioningLayout.DeleteVersion(dir);
                 after.Remove(name);
                 progress?.Report(string.Format(CoreLoc.S("Diff_Removed"), name));
             }
@@ -719,7 +729,7 @@ public sealed class DifferentialSnapshotService
     {
         foreach (var stale in Directory.GetDirectories(versions)
                      .Where(d => Path.GetFileName(d) is { } n
-                         && (SnapshotName.IsInProgress(n) || n.Contains(".deleting-", StringComparison.Ordinal))))
+                         && (SnapshotName.IsInProgress(n) || n.Contains(FileSystemDelete.DeletingMarker, StringComparison.Ordinal))))
         {
             ct.ThrowIfCancellationRequested();
             var name = Path.GetFileName(stale);
@@ -737,8 +747,7 @@ public sealed class DifferentialSnapshotService
 
             try
             {
-                await Task.Run(() => FileSystemDelete.DeleteDirectory(stale), ct).ConfigureAwait(false);
-                VersionManifest.DeleteFor(stale);
+                await Task.Run(() => VersioningLayout.DeleteVersion(stale), ct).ConfigureAwait(false);
                 progress?.Report(string.Format(CoreLoc.S("Diff_StaleRemoved"), name));
             }
             catch (OperationCanceledException) { throw; }
@@ -746,6 +755,15 @@ public sealed class DifferentialSnapshotService
             {
                 progress?.Report(string.Format(CoreLoc.S("Diff_LeftoverKept"), name, ex.Message));
             }
+        }
+
+        // Manifest di un run che non ha lasciato nessuna cartella (promozione del solo manifest
+        // non riuscita, cartella vuota gia' rimossa): non descrive niente che esista. Nessun
+        // elenco lo mostra, quindi senza questo resterebbe li' per sempre.
+        foreach (var file in Directory.GetFiles(versions, "*" + SnapshotName.InProgressSuffix + VersionManifest.FileSuffix))
+        {
+            var dir = file[..^VersionManifest.FileSuffix.Length];
+            if (!Directory.Exists(dir)) VersionManifest.DeleteFor(dir);
         }
     }
 
@@ -770,9 +788,11 @@ public sealed class DifferentialSnapshotService
     /// <summary>true se l'anteprima dice che sorgente e <c>current</c> sono gia' allineate: nessun
     /// file o cartella da copiare, nessun extra da rimuovere, nessun errore. Si pretendono sia
     /// l'exit code 0 sia i conteggi a zero: due letture indipendenti dello stesso fatto.</summary>
-    private static bool NothingToDo(JobResult r) =>
-        !r.HardwareError && r.ExitCode == 0
+    /// <param name="extrasMatter">false per «Accumula»: i file "extra" (bit 2 dell'exit code) restano
+    /// dove sono, quindi non sono lavoro da fare.</param>
+    private static bool NothingToDo(JobResult r, bool extrasMatter) =>
+        !r.HardwareError && (extrasMatter ? r.ExitCode : r.ExitCode & ~2) == 0
         && r.FilesCopied == 0 && r.DirsCopied == 0
-        && r.FilesExtra == 0 && r.DirsExtra == 0
+        && (!extrasMatter || (r.FilesExtra == 0 && r.DirsExtra == 0))
         && r.FilesFailed == 0 && r.DirsFailed == 0;
 }

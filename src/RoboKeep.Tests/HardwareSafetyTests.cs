@@ -66,8 +66,16 @@ public sealed class HardwareSafetyTests : IDisposable
             new RobocopyRunner(FakeRobocopyThatHangs(), detectMedia: _ => DiskMedia.Unknown),
             new LogService(config.Settings), new EmailService(creds), creds, history: history);
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(2)); // annulla a lavoro iniziato
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => runner.RunJobAsync(Job(), ct: cts.Token));
+        // Annulla a lavoro iniziato: appena robocopy ha stampato la seconda riga, non dopo un tempo
+        // fisso (su una macchina lenta 2 s non bastavano ad arrivarci, e il test falliva a caso).
+        // Il tetto di 60 s serve solo a non restare appesi se la riga non arrivasse mai.
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+        var progress = new SyncProgress(line =>
+        {
+            if (line.Contains("secondo.txt", StringComparison.Ordinal)) cts.Cancel();
+        });
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => runner.RunJobAsync(Job(), progress: progress, ct: cts.Token));
 
         // Il log c'e', contiene quel che era stato fatto e dice che e' stato annullato.
         var log = Assert.Single(Directory.GetFiles(Path.Combine(_root, "logs"), "*.log", SearchOption.AllDirectories));

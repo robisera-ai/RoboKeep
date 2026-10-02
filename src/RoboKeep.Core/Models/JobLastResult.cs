@@ -29,4 +29,25 @@ public sealed class JobLastResult
     /// come fallito, con il dettaglio (quante versioni, quanto occupano) nel tooltip.</summary>
     public bool DiskFull { get; set; }
     public string? DiskFullDetail { get; set; }
+
+    /// <summary>L'ultimo esito da salvare per un run appena chiuso, qualunque sia stato il suo
+    /// esito (riuscito, fallito, fermato dalla guardia, disco a riposo).</summary>
+    public static JobLastResult From(JobResult r, DateTime finishedAt) => new()
+    {
+        JobName = r.JobName,
+        Success = r.Success,
+        ExitCode = r.ExitCode,
+        FilesCopied = r.FilesCopied,
+        FilesSkipped = r.FilesSkipped,
+        FilesExtra = r.FilesExtra,
+        FilesFailed = r.FilesFailed,
+        DirsFailed = r.DirsFailed,
+        HardwareError = r.HardwareError,
+        HardwareErrorDetail = r.HardwareErrorDetail,
+        DeletionsBlocked = r.DeletionsBlocked,
+        DeletionsBlockedDetail = r.DeletionsBlockedDetail,
+        DiskFull = r.DiskFull,
+        DiskFullDetail = r.DiskFullDetail,
+        FinishedAt = finishedAt,
+    };
 }

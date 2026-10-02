@@ -4,10 +4,10 @@ name: CI
 on:
   push:
     branches: [main]
-    paths: ['src/**', '.github/workflows/ci.yml']
+    paths: ['src/**', 'docs/guide/**', '.github/workflows/ci.yml']
   pull_request:
     branches: [main]
-    paths: ['src/**', '.github/workflows/ci.yml']
+    paths: ['src/**', 'docs/guide/**', '.github/workflows/ci.yml']
   workflow_dispatch: {}
 
 jobs:
@@ -27,5 +27,6 @@ jobs:
       - name: Build (Release)
         run: dotnet build src/RoboKeep.sln -c Release --no-restore
 
+      # I test "Hardware" leggono i dischi veri della macchina: sulla VM di GitHub non dicono niente.
       - name: Test
-        run: dotnet test src/RoboKeep.Tests/RoboKeep.Tests.csproj -c Release --no-build
+        run: dotnet test src/RoboKeep.Tests/RoboKeep.Tests.csproj -c Release --no-build --filter "Category!=Hardware"

@@ -13,7 +13,6 @@
 
             <BooleanToVisibilityConverter x:Key="BoolToVis" />
             <infra:CancelAppearanceConverter x:Key="CancelAppearance" />
-            <Thickness x:Key="FieldMargin">0,10,0,2</Thickness>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

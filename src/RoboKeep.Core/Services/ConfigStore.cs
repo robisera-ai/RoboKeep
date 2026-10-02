@@ -78,6 +78,6 @@ public sealed class ConfigStore
             Directory.CreateDirectory(dir);
 
         var json = JsonSerializer.Serialize(config, Options);
-        File.WriteAllText(_path, json);
+        AtomicFile.WriteAllText(_path, json);
     }
 }

@@ -551,7 +551,9 @@ public sealed class MainViewModel : ObservableObject
                     // niente da fermare (nessun file viene toccato), il riepilogo lo dice e basta.
                     var result = await runner.RunJobAsync(jvm.Model, dryRun, progress, _cts.Token,
                         dryRun ? null : ConfirmDeletionsAsync);
-                    if (result.Skipped)
+                    if (result.AlreadyRunning)
+                        jvm.LastStatus = result.Status;   // «GIÀ IN ESECUZIONE»
+                    else if (result.Skipped)
                         jvm.LastStatus = Loc.Instance["Run_SkippedDisk"];
                     else if (result.DeletionsBlocked || result.DiskFull)
                         jvm.LastStatus = result.Status;   // «BLOCCATO: troppe cancellazioni», «Disco pieno»

@@ -13,7 +13,7 @@ public class BackupJobVersioningRoundTripTests : IDisposable
     {
         var j = new BackupJob();
         Assert.False(j.Versioned);
-        // I job nuovi nascono con una ritenzione finita: illimitata fa crescere la MFT senza fine.
+        // I job nuovi nascono con una ritenzione finita: illimitata riempirebbe il disco di backup senza fine.
         Assert.Equal(BackupJob.DefaultSnapshotKeepCount, j.SnapshotKeepCount);
         Assert.Equal(0, j.SnapshotMaxAgeDays);
     }

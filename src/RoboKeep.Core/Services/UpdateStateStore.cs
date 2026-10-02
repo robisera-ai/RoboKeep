@@ -53,7 +53,7 @@ public sealed class UpdateStateStore
             if (!string.IsNullOrEmpty(dir))
                 Directory.CreateDirectory(dir);
 
-            File.WriteAllText(_path, JsonSerializer.Serialize(state, Options));
+            AtomicFile.WriteAllText(_path, JsonSerializer.Serialize(state, Options));
         }
         catch
         {

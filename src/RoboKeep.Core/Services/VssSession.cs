@@ -78,6 +78,13 @@ public sealed class VssSession : IAsyncDisposable
             TryDeleteDir(sessionDir);
             throw new VssUnavailableException($"Avvio del processo elevato fallito: {ex.Message}", ex);
         }
+        catch
+        {
+            // Annullamento durante l'attesa del prompt UAC, o processo non avviato: la cartella
+            // di sessione non serve a nessuno e non deve restare indietro.
+            TryDeleteDir(sessionDir);
+            throw;
+        }
 
         // Il timeout parte da qui: Process.Start con runas ritorna solo dopo la risposta
         // al prompt UAC, quindi il tempo di decisione dell'utente non è conteggiato.

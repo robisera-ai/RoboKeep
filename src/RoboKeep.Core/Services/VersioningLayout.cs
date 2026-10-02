@@ -17,6 +17,19 @@ public static class VersioningLayout
 
     public static string VersionsDir(string destination) => Path.Combine(destination, VersionsFolderName);
 
+    /// <summary>Cancella una cartella-versione e il suo manifest gemello. Il manifest se ne va
+    /// appena la cartella non c'e' piu' col suo nome, anche se la cancellazione dei file si e'
+    /// fermata a meta' (resta un <c>.deleting-…</c>): rimasto da solo fingerebbe un punto nel tempo
+    /// i cui file non esistono piu'. L'eccezione della cancellazione arriva comunque a chi chiama.</summary>
+    public static void DeleteVersion(string versionDir)
+    {
+        try { FileSystemDelete.DeleteDirectory(versionDir); }
+        finally
+        {
+            if (!Directory.Exists(versionDir)) VersionManifest.DeleteFor(versionDir);
+        }
+    }
+
     /// <summary>true se la destinazione ha GIA' delle versioni da rispettare: la cartella
     /// <c>current</c> oppure delle versioni in <c>versions</c> (vedi <see cref="HasArchivedVersions"/>).
     /// Le due cose non vanno sempre insieme: un primo mirror mai riuscito, o una <c>current</c>

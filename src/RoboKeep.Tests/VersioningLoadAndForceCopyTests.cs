@@ -7,7 +7,7 @@ namespace RoboKeep.Tests;
 /// La "forza copia" ricopia davvero un file cambiato a parita' di data e dimensione — anche in un
 /// job versionato, mettendo da parte la copia precedente invece di riscriverla. Tutto su robocopy
 /// reale. (Adozione, "niente di cambiato" e guardia per i job versionati stanno in
-/// <see cref="DifferentialSnapshotServiceTests"/>.)
+/// <see cref="VersionedBackupServiceTests"/>.)
 /// </summary>
 public sealed class VersioningLoadAndForceCopyTests : IDisposable
 {
@@ -63,7 +63,7 @@ public sealed class VersioningLoadAndForceCopyTests : IDisposable
         File.WriteAllText(Path.Combine(Src, "altro.txt"), "invariato");
         var job = new BackupJob { Name = "VF", Source = Src, Destination = Dst, Versioned = true, MultiThread = 1 };
         job.ForceCopyFiles = new() { "db.dat" };
-        var svc = new DifferentialSnapshotService(RunnerWithForceCopy());
+        var svc = new VersionedBackupService(RunnerWithForceCopy());
 
         await svc.RunAsync(job);
         await Task.Delay(1100);
@@ -89,7 +89,7 @@ public sealed class VersioningLoadAndForceCopyTests : IDisposable
             Name = "VS", Source = Src, Destination = Dst, Versioned = true, MultiThread = 1, ForceCopySmart = true,
         };
         job.ForceCopyFiles = new() { "db.dat" };
-        var svc = new DifferentialSnapshotService(RunnerWithForceCopy());
+        var svc = new VersionedBackupService(RunnerWithForceCopy());
 
         await svc.RunAsync(job);
         var versions = VersioningLayout.VersionsDir(Dst);
@@ -123,7 +123,7 @@ public sealed class VersioningLoadAndForceCopyTests : IDisposable
         File.WriteAllText(file, "AAAA");
         File.WriteAllText(Path.Combine(Src, "altro.txt"), "invariato");
         var job = ForcedJob(smart: true);
-        var svc = new DifferentialSnapshotService(RunnerWithForceCopy());
+        var svc = new VersionedBackupService(RunnerWithForceCopy());
 
         await svc.RunAsync(job);
         await Task.Delay(1100);
@@ -146,7 +146,7 @@ public sealed class VersioningLoadAndForceCopyTests : IDisposable
         File.WriteAllText(file, "AAAA");
         File.WriteAllText(Path.Combine(Src, "altro.txt"), "invariato");
         var job = ForcedJob(keep: 2);
-        var svc = new DifferentialSnapshotService(RunnerWithForceCopy());
+        var svc = new VersionedBackupService(RunnerWithForceCopy());
 
         await svc.RunAsync(job);
         var afterFirst = VersionCatalog.List(Versions).Select(p => p.Name).ToArray();
@@ -177,7 +177,7 @@ public sealed class VersioningLoadAndForceCopyTests : IDisposable
         // «current» ferma per sempre, l'utente deve saperlo.
         File.WriteAllText(Path.Combine(Src, "db.dat"), "AAAA");
         var job = ForcedJob();
-        var svc = new DifferentialSnapshotService(RunnerWithForceCopy());
+        var svc = new VersionedBackupService(RunnerWithForceCopy());
         await svc.RunAsync(job);
         await Task.Delay(1100);
 
@@ -225,12 +225,12 @@ public sealed class VersioningLoadAndForceCopyTests : IDisposable
         var progress = new SyncProgress(l => { if (l.Contains("PASSATA-FORZATA")) cts.Cancel(); });
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
-            new DifferentialSnapshotService(FakeRunner(FakeRobocopyForcedPass(hang: true)))
+            new VersionedBackupService(FakeRunner(FakeRobocopyForcedPass(hang: true)))
                 .RunAsync(ForcedJob(), progress, cts.Token));
         Assert.Contains(Directory.GetDirectories(Versions), d => SnapshotName.IsInProgress(Path.GetFileName(d)));
 
         // Il run dopo (robocopy vero) promuove la cartella interrotta: la copia vecchia c'e'.
-        Assert.True((await new DifferentialSnapshotService(RunnerWithForceCopy()).RunAsync(ForcedJob())).Result.Success);
+        Assert.True((await new VersionedBackupService(RunnerWithForceCopy()).RunAsync(ForcedJob())).Result.Success);
         var version = Assert.Single(SnapshotName.ListValid(Versions));
         Assert.Equal("AAAA", File.ReadAllText(Path.Combine(Versions, version, "db.dat")));
         Assert.Equal("BBBB", File.ReadAllText(Path.Combine(Current, "db.dat")));
@@ -247,7 +247,7 @@ public sealed class VersioningLoadAndForceCopyTests : IDisposable
             File.WriteAllText(Path.Combine(Versions, old, "vecchio.txt"), old);
         }
 
-        var run = await new DifferentialSnapshotService(FakeRunner(FakeRobocopyForcedPass(hang: false)))
+        var run = await new VersionedBackupService(FakeRunner(FakeRobocopyForcedPass(hang: false)))
             .RunAsync(ForcedJob(keep: 1));
 
         Assert.False(run.Result.Success);

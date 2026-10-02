@@ -40,9 +40,22 @@ public partial class App : Application
         {
             // Modalità headless: aggancia la console del processo padre (se presente) per l'output.
             AttachConsole(AttachParentProcess);
-            var host = AppHost.Load(options.ConfigPath);
-            Localization.Loc.Instance.ApplyFromSetting(host.Config.Settings.Language);
-            var exit = await host.RunHeadlessAsync(options);
+            int exit;
+            try
+            {
+                var host = AppHost.Load(options.ConfigPath);
+                Localization.Loc.Instance.ApplyFromSetting(host.Config.Settings.Language);
+                exit = await host.RunHeadlessAsync(options);
+            }
+            catch (Exception ex)
+            {
+                // Senza finestra nessuno vedrebbe niente: un config.json illeggibile o un errore
+                // imprevisto di notte devono lasciare almeno crash.log e un exit code d'errore,
+                // che l'Utilità di pianificazione mostra come "ultima esecuzione fallita".
+                var path = RoboKeep.Core.Services.CrashLog.Write(ex, "CLI");
+                Console.Error.WriteLine($"{ex.Message} ({path ?? "-"})");
+                exit = 1;
+            }
             Shutdown(exit);
             return;
         }

@@ -235,7 +235,10 @@ public sealed class DiskHealthAndVerifyScheduleTests : IDisposable
         var second = await runner.RunJobAsync(job); // verifica rimandata
 
         var text = LogArchiveReader.ReadLogText(second.LogPath)!;
-        Assert.Contains(DateTime.Now.ToString("d"), text); // "l'ultima è del <oggi>": ora sta anche nel file
+        // "l'ultima è del <data>": ora sta anche nel file. La data si prende dalla cronologia, non
+        // dall'orologio: un test lanciato a cavallo della mezzanotte vedrebbe due giorni diversi.
+        var lastVerify = history.List("T").First(e => e.IsCompletedVerify).StartedAt;
+        Assert.Contains(lastVerify.ToString("d"), text);
     }
 
     [Fact]

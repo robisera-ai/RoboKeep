@@ -26,7 +26,7 @@ public static class MirrorAdoption
         || name.Equals(ConfigMirror.FolderName, StringComparison.OrdinalIgnoreCase)
         || name.EndsWith(VersionManifest.FileSuffix, StringComparison.OrdinalIgnoreCase)
         || SnapshotName.IsInProgress(name)
-        || name.Contains(".deleting-", StringComparison.Ordinal);
+        || name.Contains(FileSystemDelete.DeletingMarker, StringComparison.Ordinal);
 
     /// <summary>Percorsi relativi presenti sotto <paramref name="entries"/> (in destinazione) ma
     /// assenti nella sorgente. Restituisce i primi <paramref name="max"/> per il messaggio e in

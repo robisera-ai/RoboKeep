@@ -298,9 +298,17 @@ public static class RestorePlanner
 
     /// <summary>Percorso relativo in forma canonica: separatori di Windows, senza separatori
     /// iniziali o finali. I manifest vengono scritti da noi, ma un file modificato a mano non deve
-    /// far sbagliare il confronto tra percorsi.</summary>
-    private static string Normalize(string? rel) =>
-        (rel ?? "").Trim().Replace('/', '\\').Trim('\\');
+    /// far sbagliare il confronto tra percorsi. Un percorso che potrebbe uscire dalla cartella
+    /// della versione (con un'unita', o con segmenti <c>..</c> e <c>.</c>) diventa vuoto, cioe'
+    /// ignorato: il ripristino legge solo dentro il backup.</summary>
+    private static string Normalize(string? rel)
+    {
+        var s = (rel ?? "").Trim().Replace('/', '\\').Trim('\\');
+        if (s.Contains(':')) return "";
+        foreach (var segment in s.Split('\\'))
+            if (segment is "." or "..") return "";
+        return s;
+    }
 
     private static void AddAncestors(HashSet<string> dirs, string rel)
     {

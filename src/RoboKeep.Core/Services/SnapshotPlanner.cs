@@ -9,9 +9,7 @@ public static class SnapshotPlanner
     public static IReadOnlyList<string> SnapshotsToDelete(
         IEnumerable<string> existingNames, int keepCount, int maxAgeDays, DateTime now)
     {
-        var snaps = existingNames
-            .Where(n => !SnapshotName.IsInProgress(n) && SnapshotName.TryParse(n, out _))
-            .Select(n => { SnapshotName.TryParse(n, out var d); return (Name: n, Date: d); })
+        var snaps = SnapshotName.WithDates(existingNames)
             .OrderByDescending(s => s.Date)
             .ToList();
 

@@ -16,16 +16,24 @@ public static class SnapshotName
     public static bool TryParse(string name, out DateTime date)
         => DateTime.TryParseExact(name, Format, CultureInfo.InvariantCulture, DateTimeStyles.None, out date);
 
+    /// <summary>I soli nomi che sono versioni valide, con la loro data. Un <c>.inprogress</c>, un
+    /// <c>.deleting-…</c> o qualunque altro nome non e' una data esatta e resta fuori. Ordine di
+    /// ingresso conservato.</summary>
+    public static IEnumerable<(string Name, DateTime Date)> WithDates(IEnumerable<string> names)
+    {
+        foreach (var name in names)
+            if (TryParse(name, out var date))
+                yield return (name, date);
+    }
+
     /// <summary>Nomi delle versioni valide (niente .inprogress, nome parsabile) in una
     /// cartella, in ordine cronologico inverso (più recente prima). Cartella mancante → vuoto.</summary>
     public static IReadOnlyList<string> ListValid(string folder)
     {
         if (!Directory.Exists(folder)) return Array.Empty<string>();
-        return Directory.GetDirectories(folder)
-            .Select(Path.GetFileName)
-            .OfType<string>()
-            .Where(n => !IsInProgress(n) && TryParse(n, out _))
-            .OrderByDescending(n => { TryParse(n, out var d); return d; })
+        return WithDates(Directory.GetDirectories(folder).Select(Path.GetFileName).OfType<string>())
+            .OrderByDescending(v => v.Date)
+            .Select(v => v.Name)
             .ToList();
     }
 

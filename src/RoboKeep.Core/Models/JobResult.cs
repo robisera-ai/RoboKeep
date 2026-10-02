@@ -32,6 +32,11 @@ public sealed class JobResult
     /// comparire in rosso: sono due domande diverse ("ha copiato?" contro "c'è un problema?").</para></summary>
     public bool Skipped { get; set; }
 
+    /// <summary>true se il job non è partito perché lo stesso job stava già girando (la finestra e
+    /// l'attività pianificata insieme). È sempre anche <see cref="Skipped"/>: l'altro run farà il
+    /// backup e registrerà il suo esito.</summary>
+    public bool AlreadyRunning { get; set; }
+
     /// <summary>true se il job è stato INTERROTTO perché un disco (o il suo collegamento) ha
     /// segnalato un errore hardware (CRC, settore non trovato, errore del dispositivo I/O).
     /// È sempre un fallimento (<c>Success = false</c>): serve a distinguerlo da un normale

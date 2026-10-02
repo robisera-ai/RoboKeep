@@ -4,6 +4,41 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- **Versions + "Accumulate" no longer lose files deleted from the source.** In a job that keeps
+  versions without mirroring, a file deleted from the source was moved out of the backup into that
+  day's version, and retention deleted it later for good. "Accumulate" now keeps it in the backup,
+  as it always promised.
+- **File names robocopy cannot print no longer lose their previous copy.** A name with an emoji or
+  a letter the console code page lacks came back from robocopy with `?`: a changed file was taken
+  for a new one (its previous copy was overwritten instead of kept in the version) and a file deleted
+  from the source was removed without being kept. RoboKeep now finds the real name on disk; if it
+  cannot, the file is left untouched and reported.
+- **One failing job no longer stops the others.** An unexpected error (a password that can no longer
+  be decrypted, a folder that cannot be created) stopped "Run all" and the scheduled task at that
+  job, leaving no log, no history entry and no email. Now that job is recorded as failed, with the
+  error in its log, and the next jobs run.
+- **The same job can no longer run twice at once.** Started from the window while its scheduled task
+  was running, the two runs worked on the same versions folder at the same time. The second one now
+  stops without touching anything ("already running"), and a job running in a scheduled task is no
+  longer reported as "interrupted" when the window opens.
+- **Configuration, history and version lists are written all-or-nothing.** A crash or power loss
+  while saving `config.json` could leave a truncated file that prevented RoboKeep from starting.
+  Every state file is now written to a temporary file and swapped in only when complete.
+- **Restore never leaves a half-copied file** with the right name after a disk-full or read error,
+  and ignores entries in a version list that point outside the backup.
+- **A backup no longer disconnects your own network drive.** If the share was already open or
+  mapped, the job used that connection and then closed it (and could remove the mapping). Now it
+  only closes a connection it opened itself.
+- A version whose deletion was interrupted no longer shows up as a restore point with no files, and
+  leftover lists of interrupted runs are cleaned up.
+- When the check before a versioned mirror cannot count the deletions (an unreadable source file),
+  the log and the email now say that the run went ahead without the safety threshold.
+- The scheduled task (command line) now writes `crash.log` and ends with an error code if
+  `config.json` cannot be read, instead of failing silently.
+
 ## [1.9.0] - 2026-09-30 — Restore, versions on every disk, safer mirrors
 
 This release closes the two most likely ways of losing data with RoboKeep and makes getting data
@@ -104,6 +139,12 @@ versioned jobs on an empty destination.
   rises from 1 GB to **10 GB**, so both the warning and the cleanup act before the disk is truly
   full: if you had left the old 1 GB default untouched it becomes 10 GB the first time this version
   reads your configuration, while a value you set yourself is kept as it is.
+
+### Changed
+- **Versions no longer use NTFS hard links.** Each version folder holds only the files that backup
+  replaced or deleted, with a list of what changed; the full tree lives in `current`. This works on
+  every disk. Backups made by earlier versions with dated folders at the destination root are left
+  untouched but are no longer managed.
 
 ### Fixed
 - **A job can no longer have the source as its destination.** The editor and the wizard accepted
