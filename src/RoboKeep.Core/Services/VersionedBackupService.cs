@@ -104,11 +104,20 @@ public sealed class VersionedBackupService
         // vorrebbe dire toglierli dal backup e lasciarli alla ritenzione, che prima o poi li cancella.
         if (!job.Mirror)
             changes = changes.Where(c => c.Kind is not (ChangeKind.ExtraFile or ChangeKind.ExtraDir)).ToList();
-        // Nomi con caratteri che la console non sa scrivere: tornano con '?' e vanno riportati ai
-        // nomi veri, altrimenti la copia precedente si perderebbe. Quelli che non si ritrovano sono
-        // trattati come i file in uso: fuori da questo mirror, e segnalati.
+        // L'anteprima legge i nomi esatti dal log Unicode di robocopy (vedi RobocopyRunner). Se quel
+        // log non si e' potuto scrivere, i caratteri che la console non sa scrivere tornano con '?'
+        // e vanno riportati ai nomi veri, altrimenti la copia precedente si perderebbe. Quelli che
+        // non si ritrovano sono trattati come i file in uso: fuori da questo mirror, e segnalati.
         var skipped = new List<string>();
         changes = ListedPathResolver.Resolve(changes, sourceOverride ?? job.Source ?? "", current, skipped);
+
+        // Senza il log Unicode un nome che non si ritrova puo' essere uno che la console ha
+        // trasformato (’ in ', – in -) senza lasciare '?': l'esclusione con quel nome non fermerebbe
+        // robocopy, che sovrascriverebbe o cancellerebbe il file vero senza che la sua copia
+        // precedente sia stata messa da parte. Ci si ferma prima di toccare qualunque cosa.
+        if (!preview.ExactNames && skipped.Count > 0)
+            return StopWithoutExactNames(job, preview, skipped, guardNote, progress);
+
         foreach (var rel in skipped)
             progress?.Report(string.Format(CoreLoc.S("Diff_MoveFailed"), rel, CoreLoc.S("Diff_NameNotFound")));
 
@@ -228,6 +237,30 @@ public sealed class VersionedBackupService
 
         if (guardNote is not null) run.Result.VersionNotes.Add(guardNote);
         return run;
+    }
+
+    /// <summary>Esito di un backup fermato prima di toccare qualunque cosa perche' l'anteprima non ha
+    /// i nomi esatti e alcuni non si ritrovano sul disco (vedi <see cref="RobocopyRunResult.ExactNames"/>).
+    /// Niente cartella-versione e niente mirror: «current» resta com'era e il prossimo backup riprova.</summary>
+    private static RobocopyRunResult StopWithoutExactNames(BackupJob job, RobocopyRunResult preview,
+        IReadOnlyList<string> unresolved, string? guardNote, IProgress<string>? progress)
+    {
+        var note = string.Format(CoreLoc.S("Diff_NoExactNames"), unresolved.Count,
+            string.Join(", ", unresolved.Take(10)));
+        progress?.Report(note);
+        var result = new JobResult
+        {
+            JobName = job.Name,
+            Success = false,
+            NotStarted = true,
+            ExitCode = MirrorDeleteGuard.BlockedExitCode,
+            Status = CoreLoc.S("Diff_NoExactNamesStatus"),
+            StartedAt = preview.Result.StartedAt,
+            Duration = preview.Result.Duration,
+        };
+        result.VersionNotes.Add(note);
+        if (guardNote is not null) result.VersionNotes.Add(guardNote);
+        return new RobocopyRunResult { Result = result, Output = string.Empty };
     }
 
     /// <summary>

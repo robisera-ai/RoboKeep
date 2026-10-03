@@ -861,6 +861,50 @@ public class VersionedBackupServiceTests : IDisposable
 
         Assert.False(File.Exists(orphan));
     }
+
+    [Fact]
+    public async Task WithoutTheUnicodeLog_ANameTheConsoleTransliterates_StopsTheRunBeforeTouchingAnything()
+    {
+        // Se il log Unicode non si puo' scrivere, l'elenco torna dallo stdout OEM: d’Appalto arriva
+        // come d'Appalto, che sul disco non esiste, e un'esclusione con quel nome non fermerebbe
+        // robocopy. Meglio un backup fermo, con «current» com'era, che uno che sovrascrive senza
+        // mettere da parte la copia precedente.
+        var (source, dest, job, svc) = Setup("senza-unilog");
+        var changed = "ditte d’Appalto.txt";
+        File.WriteAllText(Path.Combine(source, changed), "prima");
+        Assert.True((await svc.RunAsync(job)).Result.Success);
+
+        await Task.Delay(1100);
+        File.WriteAllText(Path.Combine(source, changed), "dopo, piu' lungo");
+        var withoutLog = new VersionedBackupService(new RobocopyRunner(createUnicodeLog: () => null));
+        var r = await withoutLog.RunAsync(job);
+
+        Assert.False(r.Result.Success);
+        Assert.Contains(r.Result.VersionNotes, n => n.Contains("Appalto", StringComparison.Ordinal));
+        Assert.Equal("prima", File.ReadAllText(Path.Combine(Current(dest), changed)));
+        Assert.Empty(VersionNames(dest));
+        Assert.Empty(Directory.GetDirectories(Versions(dest)));
+    }
+
+    [Fact]
+    public async Task WithoutTheUnicodeLog_NamesFoundOnDisk_RunAsUsual()
+    {
+        // Il ripiego sullo stdout resta buono quando ogni nome dell'elenco si ritrova sul disco:
+        // fermarsi sempre vorrebbe dire nessun backup per un problema che non tocca nessun file.
+        var (source, dest, job, _) = Setup("senza-unilog-ascii");
+        File.WriteAllText(Path.Combine(source, "a.txt"), "v1");
+        var withoutLog = new VersionedBackupService(new RobocopyRunner(createUnicodeLog: () => null));
+        Assert.True((await withoutLog.RunAsync(job)).Result.Success);
+
+        await Task.Delay(1100);
+        File.WriteAllText(Path.Combine(source, "a.txt"), "v2, piu' lungo");
+        var r = await withoutLog.RunAsync(job);
+
+        Assert.True(r.Result.Success);
+        Assert.Equal("v2, piu' lungo", File.ReadAllText(Path.Combine(Current(dest), "a.txt")));
+        var version = Assert.Single(VersionNames(dest));
+        Assert.Equal("v1", File.ReadAllText(Path.Combine(Versions(dest), version, "a.txt")));
+    }
 }
 
 /// <summary>
@@ -1180,6 +1224,47 @@ public class VersionedBackupRunnerTests : IDisposable
                 .Any(f => File.ReadAllText(f) == content);
         Assert.True(Kept(changed, "prima"), "la copia precedente del file cambiato e' andata persa");
         Assert.True(Kept(deleted, "unica copia"), "il file cancellato dalla sorgente e' andato perso");
+    }
+
+    [Fact]
+    public async Task NameTheConsoleTransliterates_PreviousCopyIsNeverLost()
+    {
+        // Non tutto cio' che manca alla code page OEM torna come '?': la console sostituisce molti
+        // caratteri con il piu' simile (’ diventa ', – diventa -, Ł diventa L). Quel nome non esiste
+        // sul disco e non ha '?' da cui risalire a quello vero: senza il nome giusto la copia
+        // precedente del file cambiato si perde, e il mirror cancella senza conservarli il file e la
+        // cartella spariti dalla sorgente.
+        var source = Path.Combine(_root, "bestfit-src");
+        var dest = Path.Combine(_root, "bestfit-dst");
+        Directory.CreateDirectory(source);
+        var job = new BackupJob
+        {
+            Name = "F", Source = source, Destination = dest, Versioned = true, Mirror = true,
+            MultiThread = 0, Retries = 0, Wait = 0,
+        };
+        var svc = new VersionedBackupService(new RobocopyRunner());
+        var changed = "ditte d’Appalto.txt";
+        var deleted = "Ricerca – Profilo.txt";
+        var deletedDir = "Łódź";
+        File.WriteAllText(Path.Combine(source, changed), "prima");
+        File.WriteAllText(Path.Combine(source, deleted), "unica copia");
+        Directory.CreateDirectory(Path.Combine(source, deletedDir));
+        File.WriteAllText(Path.Combine(source, deletedDir, "dentro.txt"), "unica copia della cartella");
+        Assert.True((await svc.RunAsync(job)).Result.Success);
+
+        await Task.Delay(1100);
+        File.WriteAllText(Path.Combine(source, changed), "dopo, piu' lungo");
+        File.Delete(Path.Combine(source, deleted));
+        Directory.Delete(Path.Combine(source, deletedDir), recursive: true);
+        await svc.RunAsync(job);
+
+        bool Kept(string name, string content) =>
+            Directory.EnumerateFiles(dest, name, SearchOption.AllDirectories)
+                .Any(f => File.ReadAllText(f) == content);
+        Assert.True(Kept(changed, "prima"), "la copia precedente del file cambiato e' andata persa");
+        Assert.True(Kept(deleted, "unica copia"), "il file cancellato dalla sorgente e' andato perso");
+        Assert.True(Kept("dentro.txt", "unica copia della cartella"),
+            "la cartella cancellata dalla sorgente e' andata persa");
     }
 }
 

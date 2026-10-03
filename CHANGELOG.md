@@ -11,11 +11,16 @@ All notable changes to RoboKeep are documented here. The format is based on
   versions without mirroring, a file deleted from the source was moved out of the backup into that
   day's version, and retention deleted it later for good. "Accumulate" now keeps it in the backup,
   as it always promised.
-- **File names robocopy cannot print no longer lose their previous copy.** A name with an emoji or
-  a letter the console code page lacks came back from robocopy with `?`: a changed file was taken
-  for a new one (its previous copy was overwritten instead of kept in the version) and a file deleted
-  from the source was removed without being kept. RoboKeep now finds the real name on disk; if it
-  cannot, the file is left untouched and reported.
+- **File names robocopy cannot print no longer lose their previous copy.** Robocopy's console
+  output cannot hold every character: an emoji or a letter of another alphabet came back as `?`,
+  and many common characters were silently replaced by a similar one (the typographic apostrophe
+  `’` that Word inserts became `'`, the dash `–` became `-`, `Ł` became `L`). In jobs with versions
+  a changed file with such a name was taken for a new one (its previous copy was overwritten instead
+  of kept in the version), and a file or folder deleted from the source was removed without being
+  kept. The check before each versioned backup now reads robocopy's Unicode log, which has the exact
+  names. If that log cannot be written, names with `?` are still matched on disk; if any name still
+  cannot be found, the backup stops before touching anything and says why, instead of risking the
+  previous copy.
 - **One failing job no longer stops the others.** An unexpected error (a password that can no longer
   be decrypted, a folder that cannot be created) stopped "Run all" and the scheduled task at that
   job, leaving no log, no history entry and no email. Now that job is recorded as failed, with the

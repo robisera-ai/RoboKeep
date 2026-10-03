@@ -4,12 +4,17 @@ namespace RoboKeep.Core.Services;
 
 /// <summary>
 /// Riporta ai nomi veri del disco i percorsi letti dall'anteprima di robocopy.
-/// <para>L'output di robocopy passa per la code page OEM della console: un carattere che la code
+/// <para>Rete di sicurezza: di norma l'anteprima legge i nomi esatti dal log Unicode di robocopy
+/// (vedi <see cref="RobocopyRunner"/>), e qui non c'e' niente da fare. Se quel log non si e' potuto
+/// scrivere, l'output passa per la code page OEM della console: un carattere che la code
 /// page non ha (un'emoji, una lettera di un altro alfabeto) torna come <c>?</c>. Quel percorso non
 /// esiste e, preso alla lettera, un file da sovrascrivere sembrerebbe "nuovo" (la copia precedente
 /// non finirebbe nella versione) e un file "extra" non verrebbe messo da parte prima che il mirror
 /// lo cancelli. Qui ogni gruppo di <c>?</c> sta per uno o piu' caratteri qualunque, e si cercano
 /// sul disco le voci che corrispondono.</para>
+/// <para>I caratteri che la console sostituisce con il piu' simile (’ con ', – con -, Ł con L)
+/// invece non lasciano traccia e qui non si possono ritrovare: finiscono tra i non risolti. Per
+/// questo i nomi esatti vanno chiesti a robocopy, non ricostruiti dopo.</para>
 /// <para>Se ne corrispondono piu' d'una non si sa quale robocopy intendesse: si prendono tutte,
 /// decidendo per ciascuna dal disco. Mettere da parte un file in piu' costa una copia nella
 /// versione (robocopy lo ricopia in <c>current</c>); perderne uno costerebbe il dato.</para>

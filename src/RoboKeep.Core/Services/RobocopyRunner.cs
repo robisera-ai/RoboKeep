@@ -20,6 +20,12 @@ public sealed class RobocopyRunResult
 {
     public required JobResult Result { get; init; }
     public required string Output { get; init; }
+
+    /// <summary>true se i nomi dei file in <see cref="Output"/> sono quelli veri, letti dal log
+    /// Unicode di robocopy. false se l'output viene dallo stdout OEM, dove i caratteri che la code
+    /// page non ha tornano come <c>?</c> o sostituiti dal piu' simile: chi ci decide sopra deve
+    /// prima ritrovare ogni nome sul disco.</summary>
+    public bool ExactNames { get; init; }
 }
 
 /// <summary>
@@ -32,16 +38,20 @@ public sealed class RobocopyRunner
     private readonly string _robocopyPath;
     private readonly ForceCopyPlanner? _forceCopyPlanner;
     private readonly Func<string?, DiskMedia> _detectMedia;
+    private readonly Func<string?> _createUnicodeLog;
 
     private static readonly Encoding OemEncoding = ResolveOemEncoding();
 
     /// <param name="detectMedia">Rilevatore del tipo di disco (iniettabile nei test); default <see cref="StorageProbe.Detect"/>.</param>
+    /// <param name="createUnicodeLog">Prepara il file per <c>/UNILOG</c> e ne restituisce il percorso, o
+    /// null se non si puo' (iniettabile nei test, per provare il ripiego sullo stdout).</param>
     public RobocopyRunner(string? robocopyPath = null, ForceCopyPlanner? forceCopyPlanner = null,
-        Func<string?, DiskMedia>? detectMedia = null)
+        Func<string?, DiskMedia>? detectMedia = null, Func<string?>? createUnicodeLog = null)
     {
         _robocopyPath = robocopyPath ?? Path.Combine(Environment.SystemDirectory, "Robocopy.exe");
         _forceCopyPlanner = forceCopyPlanner;
         _detectMedia = detectMedia ?? StorageProbe.Detect;
+        _createUnicodeLog = createUnicodeLog ?? CreateUnicodeLog;
     }
 
     [DllImport("kernel32.dll")]
@@ -144,13 +154,13 @@ public sealed class RobocopyRunner
         if (capNote is not null) fullText.AppendLine(capNote);
 
         // Passata principale (mirror/copia normale).
-        (int exit1, string text1, string? hardwareError) pass1;
+        (int exit1, string text1, string? hardwareError, bool exactNames) pass1;
         try
         {
             pass1 = await RunPassAsync(
                 RobocopyArgsBuilder.Build(job, dryRun, destinationOverride: destinationOverride,
                     sourceOverride: sourceOverride, maxThreads: maxThreads, listDetails: listDetails),
-                progress, ct)
+                progress, ct, exactNames: listDetails)
                 .ConfigureAwait(false);
         }
         catch (JobCancelledException ex)
@@ -158,7 +168,7 @@ public sealed class RobocopyRunner
             // Annullato a meta': l'output parziale (con l'eventuale avviso sui thread) va nel log.
             throw new JobCancelledException(fullText + ex.PartialOutput, ct);
         }
-        var (exit1, text1, hardwareError) = pass1;
+        var (exit1, text1, hardwareError, exactNames) = pass1;
         fullText.Append(text1);
         var counts = RobocopyOutputParser.ParseCounts(text1.Split('\n'));
         var exitCombined = exit1;
@@ -177,7 +187,7 @@ public sealed class RobocopyRunner
                     job, plan.Filters, dryRun, destinationOverride: destinationOverride,
                     sourceOverride: sourceOverride, maxThreads: maxThreads,
                     includeModified: SupportsIncludeModified());
-                var (exit2, text2, hardwareError2) = await RunPassAsync(pass2Args, progress, ct).ConfigureAwait(false);
+                var (exit2, text2, hardwareError2, _) = await RunPassAsync(pass2Args, progress, ct).ConfigureAwait(false);
                 hardwareError = hardwareError2;
                 fullText.AppendLine().Append(text2);
                 exitCombined |= exit2; // gli exit code robocopy sono bitfield: l'OR preserva l'esito peggiore
@@ -236,7 +246,7 @@ public sealed class RobocopyRunner
             DirsExtra = counts.DirsExtra,
         };
 
-        return new RobocopyRunResult { Result = result, Output = text };
+        return new RobocopyRunResult { Result = result, Output = text, ExactNames = exactNames };
     }
 
     /// <summary>Exit code registrato per un job interrotto da un errore hardware (bit "errore grave").</summary>
@@ -244,8 +254,67 @@ public sealed class RobocopyRunner
 
     /// <summary>Avvia un singolo processo robocopy e restituisce (exit code, output catturato,
     /// dettaglio dell'errore hardware che ha fatto interrompere la passata, o null).</summary>
-    private async Task<(int ExitCode, string Output, string? HardwareError)> RunPassAsync(
-        IReadOnlyList<string> args, IProgress<string>? progress, CancellationToken ct)
+    /// <param name="exactNames">L'output deve riportare i nomi dei file esatti, perche' qualcuno
+    /// ci decidera' sopra (l'anteprima dei job con versioni). Lo stdout di robocopy passa per la
+    /// code page OEM: quello che non ci sta torna come <c>?</c> oppure sostituito dal carattere piu'
+    /// simile (’ diventa ', – diventa -, Ł diventa L), e un nome cosi' non esiste sul disco. Il log
+    /// <c>/UNILOG</c> invece e' UTF-16 e ha i nomi veri: con <c>/TEE</c> lo stdout continua ad
+    /// arrivare come sempre (avanzamento, errori hardware), e a fine passata l'output si legge dal
+    /// file. Verificato su questa macchina: <c>/UNICODE</c> sullo stdout e' rotto (scrive l'intestazione
+    /// UTF-16 e poi prosegue in OEM) e una console in UTF-8 (<c>chcp 65001</c>) non cambia niente.</param>
+    /// <returns>L'ultimo elemento dice se l'output viene davvero dal log Unicode (nomi esatti).</returns>
+    private async Task<(int ExitCode, string Output, string? HardwareError, bool ExactNames)> RunPassAsync(
+        IReadOnlyList<string> args, IProgress<string>? progress, CancellationToken ct, bool exactNames = false)
+    {
+        var unicodeLog = exactNames ? _createUnicodeLog() : null;
+        try
+        {
+            var (exitCode, stdout, hardwareError) = await RunProcessAsync(args, unicodeLog, progress, ct)
+                .ConfigureAwait(false);
+            // Il file vale solo se robocopy e' arrivato in fondo da solo: ucciso per un errore
+            // hardware potrebbe mancare delle ultime righe, e quella dell'errore deve restare nel log.
+            // Vuoto vuol dire che robocopy non ci ha scritto (anche l'intestazione c'e' sempre):
+            // allora vale lo stdout, e chi chiama sa che i nomi vanno ritrovati sul disco.
+            var unicode = unicodeLog is not null && hardwareError is null ? ReadUnicodeLog(unicodeLog) : null;
+            return string.IsNullOrEmpty(unicode)
+                ? (exitCode, stdout, hardwareError, false)
+                : (exitCode, unicode, hardwareError, true);
+        }
+        finally
+        {
+            if (unicodeLog is not null)
+            {
+                try { File.Delete(unicodeLog); } catch { /* resta un file vuoto o quasi nella cartella temporanea */ }
+            }
+        }
+    }
+
+    /// <summary>Prepara il file per <c>/UNILOG</c>, o null se non si puo'. Va creato QUI, prima di
+    /// robocopy: un log che robocopy non riesce ad aprire lo fa uscire con errore grave (16) senza
+    /// fare nulla. Senza file si legge lo stdout come sempre, e i nomi con <c>?</c> li ritrova
+    /// comunque <see cref="ListedPathResolver"/>.</summary>
+    private static string? CreateUnicodeLog()
+    {
+        try
+        {
+            var path = Path.Combine(Path.GetTempPath(), $"robokeep-list-{Guid.NewGuid():N}.txt");
+            File.WriteAllBytes(path, Array.Empty<byte>());
+            return path;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    private static string? ReadUnicodeLog(string path)
+    {
+        try { return File.ReadAllText(path, Encoding.Unicode); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return null; }
+    }
+
+    private async Task<(int ExitCode, string Output, string? HardwareError)> RunProcessAsync(
+        IReadOnlyList<string> args, string? unicodeLog, IProgress<string>? progress, CancellationToken ct)
     {
         var output = new StringBuilder();
         string? hardwareError = null;
@@ -262,6 +331,11 @@ public sealed class RobocopyRunner
         };
         foreach (var a in args)
             psi.ArgumentList.Add(a);
+        if (unicodeLog is not null)
+        {
+            psi.ArgumentList.Add($"/UNILOG:{unicodeLog}");
+            psi.ArgumentList.Add("/TEE");
+        }
 
         using var process = new Process { StartInfo = psi };
 

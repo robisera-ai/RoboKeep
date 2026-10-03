@@ -203,6 +203,37 @@ public class RobocopyListParserRealRunTests : IDisposable
     }
 
     [Fact]
+    public async Task RealRobocopyPreview_ListsNamesTheConsoleCannotPrint_Exactly()
+    {
+        // La console di robocopy scrive nella code page OEM: quello che non ci sta torna come '?'
+        // (emoji, cirillico) oppure sostituito dal carattere piu' simile (’ diventa ', – diventa -,
+        // Ł diventa L). Chi legge l'elenco per decidere cosa mettere da parte ha bisogno dei nomi veri.
+        var src = Path.Combine(_root, "src");
+        var dst = Path.Combine(_root, "dst");
+        Directory.CreateDirectory(src);
+        Directory.CreateDirectory(dst);
+        var names = new[]
+        {
+            "ditte d’Appalto.xls",       // apostrofo tipografico (Word)
+            "Ricerca – Profilo.pdf",     // trattino medio
+            "Łódź.txt",        // polacco
+            "foto \U0001F600.jpg",            // emoji
+        };
+        foreach (var name in names) File.WriteAllText(Path.Combine(src, name), "x");
+
+        var job = new BackupJob
+        {
+            Name = "L", Source = src, Destination = dst, Mirror = true,
+            MultiThread = 0, Retries = 0, Wait = 0,
+        };
+        var preview = await new RobocopyRunner().RunAsync(job, dryRun: true, listDetails: true);
+        var changes = RobocopyListParser.Parse(preview.Output.Split('\n'), src, dst);
+
+        foreach (var name in names)
+            Assert.Contains(new ListedChange(ChangeKind.NewFile, name), changes);
+    }
+
+    [Fact]
     public void ArgsBuilder_ListDetails_AddsFullPathAndBytes_OnlyWhenAsked()
     {
         var job = new BackupJob { Name = "L", Source = @"C:\a", Destination = @"C:\b" };

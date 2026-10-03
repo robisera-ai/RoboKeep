@@ -354,6 +354,18 @@ public static class CoreLoc
             "[versiones] {0} archivos no apartados porque están en uso: se dejan como estaban, se reintenta en la próxima copia: {1}",
             "[versions] {0} fichiers non mis de côté car en cours d'utilisation : laissés tels quels, nouvelle tentative à la prochaine sauvegarde : {1}",
             "[Versionen] {0} Dateien nicht beiseitegelegt, weil sie in Benutzung sind: unverändert gelassen, erneuter Versuch beim nächsten Backup: {1}"),
+        ["Diff_NoExactNames"] = L(
+            "[versioni] backup non eseguito: robocopy non ha potuto scrivere l'elenco con i nomi esatti dei file e {0} nomi non si ritrovano sul disco (caratteri come ’ o – vengono trasformati). Per non sovrascrivere copie precedenti senza conservarle non è stato toccato nulla: si riprova al prossimo backup. Controlla che la cartella temporanea di Windows sia scrivibile. Nomi: {1}",
+            "[versions] backup not run: robocopy could not write the list with the exact file names, and {0} names cannot be found on disk (characters such as ’ or – get replaced). To avoid overwriting previous copies without keeping them, nothing was touched: it will be retried at the next backup. Check that the Windows temporary folder is writable. Names: {1}",
+            "[versiones] copia no realizada: robocopy no pudo escribir la lista con los nombres exactos de los archivos y {0} nombres no se encuentran en el disco (caracteres como ’ o – se sustituyen). Para no sobrescribir copias anteriores sin conservarlas no se ha tocado nada: se reintenta en la próxima copia. Comprueba que la carpeta temporal de Windows admite escritura. Nombres: {1}",
+            "[versions] sauvegarde non effectuée : robocopy n'a pas pu écrire la liste avec les noms exacts des fichiers et {0} noms sont introuvables sur le disque (des caractères comme ’ ou – sont remplacés). Pour ne pas écraser des copies précédentes sans les conserver, rien n'a été modifié : nouvelle tentative à la prochaine sauvegarde. Vérifiez que le dossier temporaire de Windows est accessible en écriture. Noms : {1}",
+            "[Versionen] Backup nicht ausgeführt: robocopy konnte die Liste mit den genauen Dateinamen nicht schreiben, und {0} Namen sind auf dem Datenträger nicht auffindbar (Zeichen wie ’ oder – werden ersetzt). Damit keine früheren Kopien überschrieben werden, ohne sie aufzubewahren, wurde nichts verändert: erneuter Versuch beim nächsten Backup. Prüfen Sie, ob der temporäre Windows-Ordner beschreibbar ist. Namen: {1}"),
+        ["Diff_NoExactNamesStatus"] = L(
+            "NON ESEGUITO: nomi dei file non leggibili",
+            "NOT RUN: file names unreadable",
+            "NO EJECUTADO: nombres de archivo ilegibles",
+            "NON EXÉCUTÉ : noms de fichiers illisibles",
+            "NICHT AUSGEFÜHRT: Dateinamen nicht lesbar"),
         ["Diff_AdoptAmbiguous"] = L(
             "[versioni] nella destinazione c'è già una cartella «{0}» e accanto a lei altro contenuto ({1} voci): potrebbe essere la cartella del backup oppure una cartella tua arrivata dalla sorgente. Non viene spostato niente. I nomi «current» e «versions» nella radice di una destinazione con versioni sono riservati a RoboKeep: se sono tuoi, scegli una sottocartella di destinazione diversa.",
             "[versions] the destination already has a \"{0}\" folder with other content beside it ({1} entries): it could be the backup's folder, or a folder of yours that came from the source. Nothing is moved. The names \"current\" and \"versions\" at the root of a versioned destination are reserved by RoboKeep: if they are yours, pick a different destination subfolder.",
