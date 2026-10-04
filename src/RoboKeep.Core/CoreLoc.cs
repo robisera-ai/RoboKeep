@@ -621,6 +621,20 @@ public static class CoreLoc
             "No ejecutado: origen y destino coinciden o uno está dentro del otro. Corrige el destino en el editor del trabajo.",
             "Non exécuté : la source et la destination coïncident ou l'une est dans l'autre. Corrigez la destination dans l'éditeur du travail.",
             "Nicht ausgeführt: Quelle und Ziel sind identisch oder eines liegt im anderen. Korrigieren Sie das Ziel im Auftragseditor."),
+        ["Paths_DestOverlap"] = L(
+            "Non eseguito: la destinazione coincide con quella del job «{0}» ({1}) o una sta dentro l'altra. I due backup si cancellerebbero i file a vicenda: dai a ogni job una cartella sua nell'editor.",
+            "Not run: the destination is the same as job \"{0}\" ({1}) or one is inside the other. The two backups would delete each other's files: give each job its own folder in the job editor.",
+            "No ejecutado: el destino coincide con el del trabajo «{0}» ({1}) o uno está dentro del otro. Las dos copias se borrarían los archivos entre sí: da a cada trabajo su propia carpeta en el editor.",
+            "Non exécuté : la destination est la même que celle de la tâche « {0} » ({1}) ou l'une est dans l'autre. Les deux sauvegardes supprimeraient mutuellement leurs fichiers : donnez à chaque tâche son propre dossier dans l'éditeur.",
+            "Nicht ausgeführt: das Ziel ist dasselbe wie beim Job „{0}“ ({1}) oder eines liegt im anderen. Die beiden Backups würden sich gegenseitig die Dateien löschen: geben Sie jedem Job im Editor einen eigenen Ordner."),
+        ["Run_DestinationBusy"] = L(
+            "Il job «{0}» non parte: un altro backup sta lavorando adesso sulla stessa destinazione ({1}). Questo avvio non tocca niente.",
+            "Job \"{0}\" does not start: another backup is working on the same destination right now ({1}). This run touches nothing.",
+            "El trabajo «{0}» no se inicia: otra copia está trabajando ahora en el mismo destino ({1}). Esta ejecución no toca nada.",
+            "La tâche « {0} » ne démarre pas : une autre sauvegarde travaille en ce moment sur la même destination ({1}). Cette exécution ne touche à rien.",
+            "Der Job „{0}“ startet nicht: ein anderes Backup arbeitet gerade am selben Ziel ({1}). Dieser Start ändert nichts."),
+        ["Run_DestinationBusyStatus"] = L(
+            "DESTINAZIONE OCCUPATA", "DESTINATION IN USE", "DESTINO OCUPADO", "DESTINATION OCCUPÉE", "ZIEL BELEGT"),
         ["Volume_SkippedStatus"] = L(
             "Saltato: il disco atteso non è collegato.",
             "Skipped: the expected disk is not connected.",

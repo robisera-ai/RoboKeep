@@ -405,7 +405,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private void OnNewJob(object sender, RoutedEventArgs e)
     {
         // Creazione guidata; "Salta" restituisce ResultJob = null -> editor vuoto come prima.
-        var wizard = new JobWizardWindow(_host.Config.Credentials) { Owner = this };
+        var wizard = new JobWizardWindow(OtherJob.From(_vm.Jobs.Select(j => j.Model), self: null),
+            _host.Config.Credentials) { Owner = this };
         if (wizard.ShowDialog() != true)
             return;
 
@@ -441,7 +442,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
         // "Salta e configura a mano": editor vuoto, il job nasce solo con "Salva".
         var job = new BackupJob { Name = Loc.Instance["Editor_NewJobName"] };
-        if (ShowEditor(job))
+        if (ShowEditor(job, self: null))
         {
             // Job nuovo → lo leghiamo al disco attualmente collegato: è il lato "job nuovo"
             // della regola di associazione. Solo se non già associato: cambiando la destinazione
@@ -459,12 +460,13 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     {
         var selected = _vm.SelectedJob;
         if (selected is null) return;
+        if (RefuseWhileBusy()) return;
 
         var oldName = selected.Model.Name;
 
         // Modifica su una copia: se l'utente annulla, l'originale resta intatto.
         var clone = selected.Model.Clone();
-        if (ShowEditor(clone))
+        if (ShowEditor(clone, self: selected.Model))
         {
             clone.CopyInto(selected.Model);
             selected.RefreshAll();
@@ -479,6 +481,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     {
         var selected = _vm.SelectedJob;
         if (selected is null) return;
+        if (RefuseWhileBusy()) return;
 
         var confirm = MessageBox.Show(
             string.Format(Loc.Instance["Delete_Confirm"], selected.Name),
@@ -624,10 +627,24 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         _ = _vm.RefreshScheduledTasksAsync();
     }
 
-    private bool ShowEditor(BackupJob job)
+    /// <param name="self">Il job che si sta modificando (escluso dal controllo delle destinazioni,
+    /// riconosciuto per riferimento perche' i nomi non sono unici); null per un job nuovo.</param>
+    private bool ShowEditor(BackupJob job, BackupJob? self)
     {
-        var win = new JobEditorWindow(job, _host.Config.Credentials) { Owner = this };
+        var win = new JobEditorWindow(job, _host.Config.Credentials,
+            OtherJob.From(_vm.Jobs.Select(j => j.Model), self)) { Owner = this };
         return win.ShowDialog() == true;
+    }
+
+    /// <summary>Durante un backup, una verifica o i controlli pre-avvio i job non si modificano ne'
+    /// si eliminano: anche quelli ancora in coda in «Avvia tutti» girerebbero con i dati vecchi, o
+    /// girerebbero dopo essere stati eliminati. true se ha rifiutato (e l'ha detto).</summary>
+    private bool RefuseWhileBusy()
+    {
+        if (!_vm.IsBusy) return false;
+        MessageBox.Show(Loc.Instance["Main_BusyNoEdit"], Loc.Instance["Main_Title"],
+            MessageBoxButton.OK, MessageBoxImage.Information);
+        return true;
     }
 
     private void TrySyncJobTask(BackupJob job)

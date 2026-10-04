@@ -18,10 +18,10 @@ public partial class JobWizardWindow : Wpf.Ui.Controls.FluentWindow
     /// <summary>Job costruito dalle risposte (null se l'utente ha scelto "Salta e configura a mano").</summary>
     public BackupJob? ResultJob { get; private set; }
 
-    public JobWizardWindow(IEnumerable<CredentialEntry> credentials)
+    public JobWizardWindow(IReadOnlyList<OtherJob> otherJobs, IEnumerable<CredentialEntry> credentials)
     {
         InitializeComponent();
-        _vm = new JobWizardViewModel(credentials);
+        _vm = new JobWizardViewModel(otherJobs, credentials);
         DataContext = _vm;
     }
 

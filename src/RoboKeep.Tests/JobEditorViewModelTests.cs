@@ -5,8 +5,43 @@ namespace RoboKeep.Tests;
 
 public class JobEditorViewModelTests
 {
-    private static JobEditorViewModel Vm(BackupJob? job = null) =>
-        new(job ?? new BackupJob(), Array.Empty<CredentialEntry>());
+    private static JobEditorViewModel Vm(BackupJob? job = null, params OtherJob[] others) =>
+        new(job ?? new BackupJob(), Array.Empty<CredentialEntry>(), others);
+
+    [Fact]
+    public void Validate_RejectsADestinationSharedWithAnotherJob()
+    {
+        // Due mirror nella stessa cartella, o uno dentro l'altro, si cancellano i file a vicenda.
+        var job = new BackupJob { Name = "Nuovo", Source = @"C:\Altro", Destination = @"E:\Backup\Documenti" };
+        Assert.NotNull(Vm(job, new OtherJob("3xDocumenti", @"E:\Backup\Documenti")).Validate()); // uguale
+        Assert.NotNull(Vm(job, new OtherJob("Tutto", @"E:\Backup")).Validate());                  // dentro
+        Assert.NotNull(Vm(job, new OtherJob("Vecchi", @"E:\Backup\Documenti\Vecchi")).Validate()); // contiene
+    }
+
+    [Fact]
+    public void Validate_TheSameFolderOnAnotherDisk_IsAllowed_OnTheSameDiskIsNot()
+    {
+        // Rotazione dei dischi: E:\Backup\Provadiff sul disco da 500 GB accanto allo stesso percorso
+        // sul Samsung. Due dischi diversi non si toccano; lo stesso disco si'.
+        var job = new BackupJob
+        {
+            Name = "WD", Source = @"D:\Provadiff", Destination = @"E:\Backup\Provadiff",
+            DestinationVolumeId = @"\\?\Volume{b}\",
+        };
+        Assert.Null(Vm(job, new OtherJob("provadiff", @"E:\Backup\Provadiff", @"\\?\Volume{a}\")).Validate());
+        Assert.NotNull(Vm(job, new OtherJob("provadiff", @"E:\Backup\Provadiff", @"\\?\Volume{b}\")).Validate());
+    }
+
+    [Fact]
+    public void Validate_AllowsASiblingFolder_AndTheBackupOfABackup()
+    {
+        // La sorgente di un job puo' essere la destinazione di un altro (copia della copia, su un
+        // altro disco); e E:\Backup2 non e' dentro E:\Backup.
+        var copyOfCopy = new BackupJob { Name = "Copia", Source = @"E:\Backup\Documenti", Destination = @"F:\Copia" };
+        Assert.Null(Vm(copyOfCopy, new OtherJob("3xDocumenti", @"E:\Backup\Documenti")).Validate());
+        var sibling = new BackupJob { Name = "Vicino", Source = @"C:\x", Destination = @"E:\Backup2" };
+        Assert.Null(Vm(sibling, new OtherJob("Tutto", @"E:\Backup")).Validate());
+    }
 
     [Fact]
     public void ScheduleWeekDayIndex_RoundTrips_AllSevenDays()

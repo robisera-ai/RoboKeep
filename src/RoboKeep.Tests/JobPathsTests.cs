@@ -15,6 +15,51 @@ public class JobPathsTests
     [InlineData("", @"E:\Backup", false)]
     public void Overlap_IsTrue_OnlyForTheSameFolderOrOneInsideTheOther(string source, string dest, bool expected)
         => Assert.Equal(expected, JobPaths.Overlap(source, dest));
+
+    [Fact]
+    public void DestinationOverlaps_FindsEachClashingPairOnce()
+    {
+        // Una configurazione importata non passa dall'editor: chi la importa deve sapere quali job
+        // scrivono nella stessa cartella (o uno dentro l'altro), perche' non partiranno.
+        var jobs = new[]
+        {
+            new RoboKeep.Core.Models.BackupJob { Name = "Tutto", Destination = @"E:\Backup" },
+            new RoboKeep.Core.Models.BackupJob { Name = "Foto", Destination = @"E:\Backup\Foto" },
+            new RoboKeep.Core.Models.BackupJob { Name = "Altro", Destination = @"E:\Altro" },
+        };
+
+        var pair = Assert.Single(JobPaths.DestinationOverlaps(jobs));
+
+        Assert.Equal(("Tutto", "Foto"), (pair.First.Name, pair.Second.Name));
+    }
+
+    [Fact]
+    public void DestinationOverlaps_TheSameFolderOnTwoDifferentDisks_IsNotAClash()
+    {
+        // Rotazione dei dischi: stessa cartella, ma ogni job legato al suo disco. Non finiscono mai
+        // sullo stesso disco: il job del disco che non c'e' viene saltato («disco non collegato»).
+        var jobs = new[]
+        {
+            new RoboKeep.Core.Models.BackupJob { Name = "Samsung", Destination = @"E:\Backup\Provadiff", DestinationVolumeId = @"\\?\Volume{a}\" },
+            new RoboKeep.Core.Models.BackupJob { Name = "WD", Destination = @"E:\Backup\Provadiff", DestinationVolumeId = @"\\?\Volume{b}\" },
+        };
+
+        Assert.Empty(JobPaths.DestinationOverlaps(jobs));
+    }
+
+    [Fact]
+    public void DestinationOverlaps_AJobNotTiedToADisk_StillClashes()
+    {
+        // Senza disco associato (cartella di rete, job di una versione vecchia) il job scrive su
+        // qualunque disco abbia quella lettera: puo' finire sullo stesso dell'altro.
+        var jobs = new[]
+        {
+            new RoboKeep.Core.Models.BackupJob { Name = "Legato", Destination = @"E:\Backup\Provadiff", DestinationVolumeId = @"\\?\Volume{a}\" },
+            new RoboKeep.Core.Models.BackupJob { Name = "Libero", Destination = @"E:\Backup\Provadiff" },
+        };
+
+        Assert.Single(JobPaths.DestinationOverlaps(jobs));
+    }
 }
 
 public class RestoreTargetRulesTests

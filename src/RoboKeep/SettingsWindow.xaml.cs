@@ -316,6 +316,17 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
             Loc.Instance.ApplyFromSetting(_host.Config.Settings.Language); // lingua della config importata subito attiva
             MessageBox.Show(string.Format(Loc.Instance["Cfg_Imported"], backupPath),
                 Loc.Instance["Cfg_Import"], MessageBoxButton.OK, MessageBoxImage.Information);
+
+            // Un import non passa dall'editor: se due job scrivono nella stessa cartella (o una dentro
+            // l'altra) non partiranno, e chi ha importato deve saperlo adesso, non dal primo backup fallito.
+            var clashes = JobPaths.DestinationOverlaps(_host.Config.Jobs);
+            if (clashes.Count > 0)
+            {
+                var list = string.Join(Environment.NewLine, clashes.Select(c =>
+                    $"• «{c.First.Name}» ({c.First.Destination})  —  «{c.Second.Name}» ({c.Second.Destination})"));
+                MessageBox.Show(string.Format(Loc.Instance["Cfg_ImportDestOverlap"], list),
+                    Loc.Instance["Cfg_Import"], MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
             DialogResult = true; // chiude: la MainWindow ricarica i job
         }
         catch (Exception ex)

@@ -78,6 +78,60 @@ public class JobLockFileTests : IDisposable
     }
 
     [Fact]
+    public void DestinationLock_TheSameFolderWrittenDifferently_IsTheSameLock()
+    {
+        // Due job (o un job rinominato mentre gira) sulla stessa destinazione: il lock per nome non
+        // li vede, quello per destinazione si'. Maiuscole, barra finale e spazi non contano.
+        using var first = JobLockFile.TryAcquireDestination(_dir, @"Z:\Backup\Documenti");
+        Assert.NotNull(first);
+        Assert.Null(JobLockFile.TryAcquireDestination(_dir, @"z:\backup\documenti\"));
+        Assert.Null(JobLockFile.TryAcquireDestination(_dir, @"Z:\Backup\Documenti "));
+    }
+
+    [Fact]
+    public void DestinationLock_AnotherFolder_IsFree()
+    {
+        using var documenti = JobLockFile.TryAcquireDestination(_dir, @"Z:\Backup\Documenti");
+        using var foto = JobLockFile.TryAcquireDestination(_dir, @"Z:\Backup\Foto");
+        Assert.NotNull(documenti);
+        Assert.NotNull(foto);
+    }
+
+    [Fact]
+    public void IsDestinationBusy_OnlyWhileTheLockIsHeld()
+    {
+        Assert.False(JobLockFile.IsDestinationBusy(_dir, @"Z:\Backup\Documenti"));
+        using (JobLockFile.TryAcquireDestination(_dir, @"Z:\Backup\Documenti"))
+            Assert.True(JobLockFile.IsDestinationBusy(_dir, @"z:\backup\documenti"));
+        Assert.False(JobLockFile.IsDestinationBusy(_dir, @"Z:\Backup\Documenti"));
+    }
+
+    [Fact]
+    public void GetInterrupted_IgnoresDestinationLocks()
+    {
+        using (JobLockFile.TryAcquireDestination(_dir, @"Z:\Backup\Documenti"))
+            Assert.Empty(JobLockFile.GetInterrupted(_dir, ["Documenti", @"Z:\Backup\Documenti"]));
+    }
+
+    [Fact]
+    public void TryAcquire_WaitsBriefly_ForALockReleasedAMomentLater()
+    {
+        // Il controllo dei run interrotti apre per un istante i file di lock: un backup che parte
+        // in quell'istante non deve credere che lo stesso job stia gia' girando.
+        Directory.CreateDirectory(_dir);
+        var path = Path.Combine(_dir, "Desktop.lock");
+        var probe = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Read, FileShare.None);
+        // Un thread suo, non il pool: con tutta la suite in parallelo il pool e' saturo e il
+        // rilascio arriverebbe in ritardo per motivi che con il lock non c'entrano.
+        var release = new Thread(() => { Thread.Sleep(50); probe.Dispose(); }) { IsBackground = true };
+        release.Start();
+
+        using var handle = JobLockFile.TryAcquire(_dir, "Desktop");
+        release.Join();
+        Assert.NotNull(handle);
+    }
+
+    [Fact]
     public void Acquire_SanitizesInvalidChars_InFileName()
     {
         using (JobLockFile.TryAcquire(_dir, "My:Job/Name"))

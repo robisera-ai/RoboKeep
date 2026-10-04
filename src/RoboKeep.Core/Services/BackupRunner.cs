@@ -85,9 +85,14 @@ public sealed class BackupRunner
         Func<MirrorDeleteEstimate, Task<bool>>? confirmDeletions = null)
     {
         var startedAt = DateTime.Now;
+        // Il run lavora su una COPIA: nella finestra si puo' modificare il job mentre gira, e
+        // sorgente, destinazione o mirror non devono cambiare a meta' backup. L'originale serve a
+        // riconoscere il job nella configurazione (i nomi non sono unici).
+        var original = job;
+        job = job.Clone();
         try
         {
-            return await RunJobCoreAsync(job, dryRun, progress, ct, confirmDeletions).ConfigureAwait(false);
+            return await RunJobCoreAsync(job, original, dryRun, progress, ct, confirmDeletions).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -141,8 +146,22 @@ public sealed class BackupRunner
     /// di robocopy, letto come errore ovunque.</summary>
     public const int UnexpectedErrorExitCode = 16;
 
+    /// <summary>Esito di un run che non parte perche' il job, o la sua destinazione, e' gia' in
+    /// lavorazione: saltato, non fallito (l'altro run fara' il backup e ne registrera' l'esito).</summary>
+    private static JobResult AlreadyRunningResult(BackupJob job, bool dryRun, string status) => new()
+    {
+        JobName = job.Name,
+        Skipped = true,
+        AlreadyRunning = true,
+        Success = false,
+        NotStarted = true,
+        Status = status,
+        StartedAt = DateTime.Now,
+        DryRun = dryRun,
+    };
+
     private async Task<JobResult> RunJobCoreAsync(
-        BackupJob job, bool dryRun, IProgress<string>? progress, CancellationToken ct,
+        BackupJob job, BackupJob original, bool dryRun, IProgress<string>? progress, CancellationToken ct,
         Func<MirrorDeleteEstimate, Task<bool>>? confirmDeletions)
     {
         // Rete di sicurezza per i job gia' salvati (o modificati a mano nel config.json):
@@ -151,6 +170,27 @@ public sealed class BackupRunner
         if (JobPaths.Overlap(job.Source, job.Destination))
         {
             var status = CoreLoc.S("Paths_Overlap");
+            progress?.Report(status);
+            return new JobResult
+            {
+                JobName = job.Name,
+                Success = false,
+                NotStarted = true,
+                Status = status,
+                StartedAt = DateTime.Now,
+                DryRun = dryRun,
+            };
+        }
+
+        // Stessa rete di sicurezza fra job diversi: due destinazioni uguali, o una dentro l'altra,
+        // vuol dire due mirror che si cancellano (o si spingono nelle versioni) i file a vicenda.
+        // L'editor e la procedura guidata lo impediscono; qui si coprono le configurazioni gia'
+        // salvate, importate o scritte a mano. Il job stesso si riconosce per riferimento.
+        if (_config.Jobs.FirstOrDefault(other => !ReferenceEquals(other, original)
+                && JobPaths.DestinationsClash(other.Destination, other.DestinationVolumeId,
+                    job.Destination, job.DestinationVolumeId)) is { } clash)
+        {
+            var status = string.Format(CoreLoc.S("Paths_DestOverlap"), clash.Name, clash.Destination);
             progress?.Report(status);
             return new JobResult
             {
@@ -198,26 +238,29 @@ public sealed class BackupRunner
         // persiste se il processo viene terminato brutalmente; viene rimosso nel finally (via
         // using) quando il run termina normalmente (successo, errore o cancel).
         IDisposable? lockHandle = null;
+        IDisposable? destinationHandle = null;
         if (!dryRun && _lockFolder is not null)
         {
             lockHandle = JobLockFile.TryAcquire(_lockFolder, job.Name);
             if (lockHandle is null)
             {
                 progress?.Report(string.Format(CoreLoc.S("Run_AlreadyRunning"), job.Name));
-                return new JobResult
-                {
-                    JobName = job.Name,
-                    Skipped = true,
-                    AlreadyRunning = true,
-                    Success = false,
-                    NotStarted = true,
-                    Status = CoreLoc.S("Run_AlreadyRunningStatus"),
-                    StartedAt = DateTime.Now,
-                    DryRun = dryRun,
-                };
+                return AlreadyRunningResult(job, dryRun, CoreLoc.S("Run_AlreadyRunningStatus"));
+            }
+            // Anche la destinazione: un job rinominato mentre la sua attivita' pianificata gira, o
+            // due job che condividono la cartella, hanno nomi diversi ma lavorerebbero sugli stessi
+            // file. Il lock per nome va rilasciato SUBITO: tenuto fino al garbage collector, il job
+            // sembrerebbe «gia' in esecuzione» a ogni avvio successivo.
+            destinationHandle = JobLockFile.TryAcquireDestination(_lockFolder, job.Destination ?? "");
+            if (destinationHandle is null)
+            {
+                lockHandle.Dispose();
+                progress?.Report(string.Format(CoreLoc.S("Run_DestinationBusy"), job.Name, job.Destination));
+                return AlreadyRunningResult(job, dryRun, CoreLoc.S("Run_DestinationBusyStatus"));
             }
         }
         using var lockRelease = lockHandle;
+        using var destinationRelease = destinationHandle;
 
         // Snapshot VSS: se richiesto e disponibile, la copia legge dallo snapshot invece
         // che dalla sorgente viva. Se non disponibile → copia normale con avviso (mai bloccare).

@@ -17,10 +17,10 @@ public partial class JobEditorWindow : Wpf.Ui.Controls.FluentWindow
     private bool _saving;
     private bool _closed;
 
-    public JobEditorWindow(BackupJob job, IEnumerable<CredentialEntry> credentials)
+    public JobEditorWindow(BackupJob job, IEnumerable<CredentialEntry> credentials, IReadOnlyList<OtherJob> otherJobs)
     {
         InitializeComponent();
-        _vm = new JobEditorViewModel(job, credentials);
+        _vm = new JobEditorViewModel(job, credentials, otherJobs);
         DataContext = _vm;
         // Fotografia dello stato iniziale: alla chiusura la confrontiamo con lo stato finale
         // per sapere se c'e' davvero qualcosa da perdere (vedi OnClosing).

@@ -24,16 +24,53 @@ public static class JobLockFile
     public static IDisposable? TryAcquire(string folder, string jobName)
     {
         Directory.CreateDirectory(folder);
-        var path = LockPath(folder, jobName);
-        try
+        return TryOpen(LockPath(folder, jobName));
+    }
+
+    /// <summary>Tentativi e pausa prima di dichiarare un lock "tenuto da un altro run": il controllo
+    /// dei run interrotti (<see cref="IsHeld"/>) apre i file di lock per un istante, e un backup che
+    /// parte proprio allora non deve essere saltato come "gia' in esecuzione".</summary>
+    private const int Attempts = 5;
+    private static readonly TimeSpan RetryDelay = TimeSpan.FromMilliseconds(100);
+
+    private static IDisposable? TryOpen(string path)
+    {
+        for (var attempt = 1; ; attempt++)
         {
-            var stream = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-            return new Handle(path, stream);
+            try
+            {
+                var stream = new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+                return new Handle(path, stream);
+            }
+            catch (IOException ex) when (IsHeldElsewhere(ex))
+            {
+                if (attempt >= Attempts) return null;
+                Thread.Sleep(RetryDelay);
+            }
         }
-        catch (IOException ex) when (IsHeldElsewhere(ex))
-        {
-            return null;
-        }
+    }
+
+    /// <summary>
+    /// Prende il lock della DESTINAZIONE, accanto a quello del job: due job diversi che scrivono
+    /// nella stessa cartella (un job duplicato per avere un secondo orario, o un job rinominato
+    /// mentre la sua attivita' pianificata gira) non devono lavorarci insieme, perche' si
+    /// sposterebbero i file a vicenda nelle versioni. null se lo tiene gia' qualcuno.
+    /// <para>Limiti: la stessa cartella raggiunta per strade diverse (<c>Z:\</c> e
+    /// <c>\\server\share</c>, <c>subst</c>, collegamenti simbolici) o da utenti Windows diversi non
+    /// si riconosce come la stessa.</para>
+    /// </summary>
+    public static IDisposable? TryAcquireDestination(string folder, string destination)
+    {
+        Directory.CreateDirectory(folder);
+        return TryOpen(DestinationLockPath(folder, destination));
+    }
+
+    /// <summary>true se un run (di questo o di un altro processo) sta lavorando su
+    /// <paramref name="destination"/> adesso. Non prende il lock.</summary>
+    public static bool IsDestinationBusy(string folder, string destination)
+    {
+        var path = DestinationLockPath(folder, destination);
+        return File.Exists(path) && IsHeld(path);
     }
 
     /// <summary>
@@ -79,6 +116,23 @@ public static class JobLockFile
         var invalid = Path.GetInvalidFileNameChars();
         var safe = string.Concat(jobName.Select(c => Array.IndexOf(invalid, c) >= 0 ? '_' : c));
         return Path.Combine(folder, safe + ".lock");
+    }
+
+    /// <summary>Un file per cartella di destinazione: percorso completo, senza barra finale ne'
+    /// spazi, in maiuscolo, ridotto a un'impronta (un percorso non sta in un nome di file).
+    /// L'estensione diversa lo tiene separato dai lock per nome e da <see cref="GetInterrupted"/>.</summary>
+    private static string DestinationLockPath(string folder, string destination)
+    {
+        var trimmed = (destination ?? "").Trim();
+        string full;
+        try { full = Path.GetFullPath(trimmed); }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            full = trimmed;
+        }
+        var key = full.TrimEnd('\\', '/').ToUpperInvariant();
+        var hash = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(key));
+        return Path.Combine(folder, Convert.ToHexString(hash, 0, 8) + ".destlock");
     }
 
     private sealed class Handle : IDisposable

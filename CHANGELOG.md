@@ -47,6 +47,19 @@ All notable changes to RoboKeep are documented here. The format is based on
   was running, the two runs worked on the same versions folder at the same time. The second one now
   stops without touching anything ("already running"), and a job running in a scheduled task is no
   longer reported as "interrupted" when the window opens.
+- **Two jobs can no longer work on the same backup folder.** The "one run at a time" lock was keyed
+  by job name only: a job duplicated to get a second schedule, or a job renamed while its scheduled
+  task was running, could work on the same versions folder at the same time. The lock now covers
+  the destination folder too. Beyond running at the same time, two jobs whose destinations are the
+  same folder (or one inside the other) on the same disk would delete or version each other's
+  files: the job editor and the wizard now refuse such a destination and say which job uses it, an
+  imported configuration with such jobs shows a warning, and those jobs are refused when they
+  start. Rotating disks still works: the same folder on two different disks is allowed, because
+  each job is tied to its own disk and the one whose disk is not plugged in is skipped.
+  Jobs can no longer be edited or deleted while an operation is running, and a run always uses the
+  job as it was when it started.
+- A scheduled backup is no longer skipped as "already running" when the window happened to be
+  checking for interrupted runs at that very moment.
 - **Configuration, history and version lists are written all-or-nothing.** A crash or power loss
   while saving `config.json` could leave a truncated file that prevented RoboKeep from starting.
   Every state file is now written to a temporary file and swapped in only when complete.

@@ -13,12 +13,23 @@ public sealed class JobWizardViewModel : ObservableObject
 
     private readonly JobWizardAnswers _a = new();
     private readonly IReadOnlyList<CredentialEntry> _credentials;
+    private readonly IReadOnlyList<OtherJob> _otherJobs;
+    private readonly Func<string?, string?> _volumeOf;
     private bool _hasFrozen;
     private int _step;
 
+    /// <param name="otherJobs">I job gia' configurati: obbligatorio, perche' dimenticarlo
+    /// spegnerebbe in silenzio il controllo delle destinazioni sovrapposte.</param>
     /// <param name="credentials">Credenziali gia' salvate: se una copre la share scelta, il wizard la usa.</param>
-    public JobWizardViewModel(IEnumerable<CredentialEntry>? credentials = null)
-        => _credentials = (credentials ?? Array.Empty<CredentialEntry>()).ToList();
+    /// <param name="volumeOf">Il disco collegato adesso a un percorso (iniettabile nei test); default
+    /// <see cref="Core.Services.VolumeIdentity.ForPath"/>. E' il disco a cui il job nuovo verra' legato.</param>
+    public JobWizardViewModel(IReadOnlyList<OtherJob> otherJobs, IEnumerable<CredentialEntry>? credentials = null,
+        Func<string?, string?>? volumeOf = null)
+    {
+        _otherJobs = otherJobs;
+        _credentials = (credentials ?? Array.Empty<CredentialEntry>()).ToList();
+        _volumeOf = volumeOf ?? (path => Core.Services.VolumeIdentity.ForPath(path)?.VolumeId);
+    }
 
     // --- Passo 1: dati di base ---
     public string Name
@@ -50,6 +61,8 @@ public sealed class JobWizardViewModel : ObservableObject
             OnPropertyChanged();
             OnPropertyChanged(nameof(CanGoNext));
             OnPropertyChanged(nameof(PathsOverlap));
+            OnPropertyChanged(nameof(DestOverlapMessage));
+            OnPropertyChanged(nameof(HasDestOverlap));
             RaiseNetCred();
             RaisePreview();
         }
@@ -217,6 +230,7 @@ public sealed class JobWizardViewModel : ObservableObject
             OnPropertyChanged(nameof(CanGoBack));
             OnPropertyChanged(nameof(CanGoNext));
             OnPropertyChanged(nameof(PathsOverlap));
+            OnPropertyChanged(nameof(HasDestOverlap));
             OnPropertyChanged(nameof(ShowNext));
             OnPropertyChanged(nameof(ShowOpen));
             OnPropertyChanged(nameof(StepLabel));
@@ -232,11 +246,18 @@ public sealed class JobWizardViewModel : ObservableObject
         || (!string.IsNullOrWhiteSpace(Name)
             && !string.IsNullOrWhiteSpace(Source)
             && !string.IsNullOrWhiteSpace(Destination)
-            && !PathsOverlap);
+            && !PathsOverlap
+            && !HasDestOverlap);
 
     /// <summary>Sorgente e destinazione coincidono o una sta dentro l'altra: il passo 1 non va
     /// avanti e lo dice (vedi <see cref="RoboKeep.Core.Services.JobPaths"/>).</summary>
     public bool PathsOverlap => RoboKeep.Core.Services.JobPaths.Overlap(Source, Destination);
+
+    /// <summary>La destinazione coincide con quella di un altro job, o una sta dentro l'altra: il
+    /// messaggio dice quale job; null se non succede.</summary>
+    public string? DestOverlapMessage => OtherJob.OverlapMessage(_otherJobs, Destination, _volumeOf(Destination));
+
+    public bool HasDestOverlap => CurrentStep == 0 && DestOverlapMessage is not null;
 
     public string StepLabel => string.Format(Loc.Instance["Wiz_Step"], CurrentStep + 1, StepCount);
 

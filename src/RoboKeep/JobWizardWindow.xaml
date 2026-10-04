@@ -90,6 +90,9 @@
                         <TextBlock Text="{l:Tr Editor_Val_Overlap}" TextWrapping="Wrap" Margin="0,8,0,0"
                                    Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                    Visibility="{Binding PathsOverlap, Converter={StaticResource BoolToVis}}"/>
+                        <TextBlock Text="{Binding DestOverlapMessage}" TextWrapping="Wrap" Margin="0,8,0,0"
+                                   Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                                   Visibility="{Binding HasDestOverlap, Converter={StaticResource BoolToVis}}"/>
                     </StackPanel>
                 </TabItem>
 

@@ -8,14 +8,39 @@ namespace RoboKeep.ViewModels;
 /// <summary>Opzione di credenziale per la combo (id + etichetta leggibile).</summary>
 public sealed record CredentialOption(string? Id, string Display);
 
+/// <summary>Un altro job della configurazione, per il controllo delle destinazioni sovrapposte.</summary>
+/// <param name="VolumeId">Il disco a cui il job e' legato (<see cref="BackupJob.DestinationVolumeId"/>);
+/// null se non e' legato a nessuno (cartella di rete, job di una versione vecchia).</param>
+public sealed record OtherJob(string Name, string Destination, string? VolumeId = null)
+{
+    /// <summary>Gli altri job rispetto a <paramref name="self"/>, riconosciuto per riferimento: i
+    /// nomi non sono unici. <paramref name="self"/> null (job nuovo) = tutti.</summary>
+    public static IReadOnlyList<OtherJob> From(IEnumerable<BackupJob> jobs, BackupJob? self) =>
+        jobs.Where(j => !ReferenceEquals(j, self))
+            .Select(j => new OtherJob(j.Name, j.Destination, j.DestinationVolumeId)).ToList();
+
+    /// <summary>Messaggio per una destinazione uguale a quella di un altro job, o dentro/attorno
+    /// alla sua, sullo stesso disco (vedi <see cref="JobPaths.DestinationsClash"/>); null se non ce
+    /// n'e'. Due mirror cosi' si cancellerebbero i file a vicenda.</summary>
+    /// <param name="volumeId">Il disco a cui il job verra' legato; null se nessuno.</param>
+    public static string? OverlapMessage(IEnumerable<OtherJob> others, string? destination, string? volumeId) =>
+        others.FirstOrDefault(o => JobPaths.DestinationsClash(o.Destination, o.VolumeId, destination, volumeId)) is { } clash
+            ? string.Format(Loc.Instance["Editor_Val_DestOverlap"], clash.Name, clash.Destination)
+            : null;
+}
+
 /// <summary>ViewModel per la finestra di modifica di un job, con anteprima live del comando.</summary>
 public sealed class JobEditorViewModel : ObservableObject
 {
     private readonly BackupJob _job;
+    private readonly IReadOnlyList<OtherJob> _otherJobs;
 
-    public JobEditorViewModel(BackupJob job, IEnumerable<CredentialEntry> credentials)
+    /// <param name="otherJobs">Gli altri job della configurazione (vedi <see cref="OtherJob.From"/>):
+    /// obbligatorio, perche' dimenticarlo spegnerebbe in silenzio il controllo delle destinazioni.</param>
+    public JobEditorViewModel(BackupJob job, IEnumerable<CredentialEntry> credentials, IReadOnlyList<OtherJob> otherJobs)
     {
         _job = job;
+        _otherJobs = otherJobs;
         Credentials = new List<CredentialOption> { new(null, Loc.Instance["Cred_NoneLocal"]) };
         foreach (var c in credentials)
             Credentials.Add(new CredentialOption(c.Id, $"{c.Id} ({c.Host})"));
@@ -392,6 +417,10 @@ public sealed class JobEditorViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(Destination)) return Loc.Instance["Editor_Val_Dest"];
         if (RoboKeep.Core.Services.JobPaths.Overlap(Source, Destination))
             return Loc.Instance["Editor_Val_Overlap"];
+        // Il disco e' quello con cui il job verra' salvato: cambiando la destinazione l'editor l'ha
+        // gia' legato al disco collegato adesso (vedi Destination).
+        if (OtherJob.OverlapMessage(_otherJobs, Destination, _job.DestinationVolumeId) is { } clash)
+            return clash;
         if (_job.MirrorDeleteLimitPercent is < 0 or > 100)
             return Loc.Instance["Editor_Val_MirrorDeleteLimit"];
         if (_job.Schedule != ScheduleKind.None && !TimeOnly.TryParse(_job.ScheduleTime, out _))

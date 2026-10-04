@@ -90,4 +90,86 @@ public class BackupRunnerRobustnessTests : IDisposable
 
         Assert.True((await runner.RunJobAsync(job)).Success);
     }
+
+    [Fact]
+    public async Task TwoJobsWritingIntoTheSameDestination_TheOtherIsRefused_AndWritesNothing()
+    {
+        // Un job duplicato (per avere un secondo orario) con un'altra sorgente: il suo mirror
+        // cancellerebbe i file dell'altro, o li spingerebbe nelle versioni.
+        var config = new AppConfig();
+        var first = NewJob("Primo");
+        var second = NewJob("Secondo");
+        second.Destination = first.Destination;
+        config.Jobs.Add(first);
+        config.Jobs.Add(second);
+        var (runner, _) = NewRunner(config);
+
+        var result = await runner.RunJobAsync(second);
+
+        Assert.False(result.Success);
+        Assert.True(result.NotStarted);
+        Assert.False(Directory.Exists(first.Destination));
+    }
+
+    [Fact]
+    public async Task TheSameFolderOnAnotherDisk_IsNotRefusedAsAClash()
+    {
+        // Rotazione dei dischi: stessa cartella, dischi diversi. Il job non va rifiutato come
+        // «destinazione in comune»: se il suo disco non c'e', lo salta il controllo del disco.
+        var config = new AppConfig();
+        var samsung = NewJob("Samsung");
+        samsung.DestinationVolumeId = @"\\?\Volume{aaaaaaaa-0000-0000-0000-000000000000}\";
+        var wd = NewJob("WD");
+        wd.Destination = samsung.Destination;
+        wd.DestinationVolumeId = @"\\?\Volume{bbbbbbbb-0000-0000-0000-000000000000}\";
+        config.Jobs.Add(samsung);
+        config.Jobs.Add(wd);
+        var (runner, _) = NewRunner(config);
+
+        var result = await runner.RunJobAsync(wd);
+
+        Assert.True(result.Skipped, "rifiutato come destinazione in comune invece di essere saltato per il disco");
+    }
+
+    [Fact]
+    public async Task ADestinationInsideAnotherJobsDestination_IsRefused()
+    {
+        // Un mirror su E:\Backup cancellerebbe come "extra" la cartella E:\Backup\Foto dell'altro job.
+        var config = new AppConfig();
+        var outer = NewJob("Fuori");
+        var inner = NewJob("Dentro");
+        inner.Destination = Path.Combine(outer.Destination, "sotto");
+        config.Jobs.Add(outer);
+        config.Jobs.Add(inner);
+        var (runner, _) = NewRunner(config);
+
+        var result = await runner.RunJobAsync(inner);
+
+        Assert.False(result.Success);
+        Assert.True(result.NotStarted);
+        Assert.False(Directory.Exists(inner.Destination));
+    }
+
+    [Fact]
+    public async Task DestinationBusy_SkipsTheRun_AndTheNextRunIsNotBlocked()
+    {
+        // Un altro run lavora sulla stessa cartella (un job rinominato mentre la sua attivita' gira).
+        // Il run si salta, e il lock per nome preso nel frattempo va rilasciato: altrimenti il job
+        // risulterebbe «gia' in esecuzione» per sempre.
+        var config = new AppConfig();
+        var job = NewJob("D");
+        config.Jobs.Add(job);
+        var (runner, _) = NewRunner(config);
+
+        using (JobLockFile.TryAcquireDestination(Locks, job.Destination))
+        {
+            var result = await runner.RunJobAsync(job);
+
+            Assert.True(result.Skipped);
+            Assert.True(result.AlreadyRunning);
+            Assert.False(Directory.Exists(job.Destination));
+        }
+
+        Assert.True((await runner.RunJobAsync(job)).Success);
+    }
 }

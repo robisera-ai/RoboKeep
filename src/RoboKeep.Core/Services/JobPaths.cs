@@ -25,6 +25,33 @@ public static class JobPaths
         catch { return false; }
     }
 
+    /// <summary>true se le destinazioni di due job coincidono (o stanno una dentro l'altra) SULLO
+    /// STESSO DISCO: due mirror cosi' si cancellerebbero i file a vicenda. Con la rotazione dei dischi
+    /// la stessa cartella su due dischi diversi non e' un conflitto: ogni job e' legato al suo disco
+    /// (<see cref="Models.BackupJob.DestinationVolumeId"/>) e quello del disco assente viene saltato.
+    /// Un job non legato a nessun disco (cartella di rete, job di una versione vecchia) scrive su
+    /// qualunque disco abbia quella lettera: per prudenza conta come lo stesso.</summary>
+    public static bool DestinationsClash(string? destinationA, string? volumeA, string? destinationB, string? volumeB)
+    {
+        if (!Overlap(destinationA, destinationB)) return false;
+        if (string.IsNullOrEmpty(volumeA) || string.IsNullOrEmpty(volumeB)) return true;
+        return string.Equals(volumeA, volumeB, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Le coppie di job in conflitto (vedi <see cref="DestinationsClash"/>), ognuna una volta
+    /// sola: il runner le rifiuta, e chi importa una configurazione deve saperlo.</summary>
+    public static IReadOnlyList<(Models.BackupJob First, Models.BackupJob Second)> DestinationOverlaps(
+        IReadOnlyList<Models.BackupJob> jobs)
+    {
+        var pairs = new List<(Models.BackupJob, Models.BackupJob)>();
+        for (var i = 0; i < jobs.Count; i++)
+            for (var j = i + 1; j < jobs.Count; j++)
+                if (DestinationsClash(jobs[i].Destination, jobs[i].DestinationVolumeId,
+                        jobs[j].Destination, jobs[j].DestinationVolumeId))
+                    pairs.Add((jobs[i], jobs[j]));
+        return pairs;
+    }
+
     private static string Normalize(string path) =>
         Path.GetFullPath(path.Trim()).TrimEnd('\\', '/');
 }
