@@ -58,6 +58,12 @@ All notable changes to RoboKeep are documented here. The format is based on
   each job is tied to its own disk and the one whose disk is not plugged in is skipped.
   Jobs can no longer be edited or deleted while an operation is running, and a run always uses the
   job as it was when it started.
+- **Disk warnings now belong to the right disk.** Windows logs disk errors by disk number and drive
+  letter, so when two disks took turns on the same letter, the errors of one were shown as warnings
+  for the other. RoboKeep now checks which physical disk had that number when each error was
+  logged (Windows records every connection, with the signature written on the disk itself) and
+  only shows the errors of the disk that is plugged in now. When that information is missing, the
+  error is still shown.
 - A scheduled backup is no longer skipped as "already running" when the window happened to be
   checking for interrupted runs at that very moment.
 - **Configuration, history and version lists are written all-or-nothing.** A crash or power loss

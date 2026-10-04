@@ -26,9 +26,11 @@ public sealed record DiskEventSummary(int BadBlocks, int IoErrors, int FileSyste
 /// privilegi di amministratore (e Windows, senza, dichiara "Healthy" anche un disco con settori
 /// pendenti): il registro Sistema invece si legge da utente normale e conserva per settimane
 /// blocchi danneggiati, errori di I/O e scritture perse — i segnali che precedono un disastro.
-/// Limite dichiarato: gli eventi nominano il disco per numero (\Device\HarddiskN) o per lettera,
-/// non per identità fisica; due dischi alternati sulla stessa lettera si confondono. Per questo
-/// la finestra è corta e si scartano gli eventi precedenti alla formattazione del volume.
+/// Gli eventi nominano il disco per numero (\Device\HarddiskN) o per lettera, non per identità
+/// fisica: con due dischi alternati sulla stessa lettera, gli errori di uno comparivano per l'altro.
+/// Ora ogni errore si attribuisce al disco che aveva quel numero in quel momento (vedi
+/// <see cref="DiskPresence"/>); in più la finestra è corta e si scartano gli eventi precedenti alla
+/// formattazione del volume.
 /// Best-effort: qualunque problema restituisce "nessun evento", mai un'eccezione.
 /// </summary>
 public static class DiskEventLog
@@ -136,6 +138,10 @@ public static class DiskEventLog
                 "Provider[@Name='disk' or @Name='Ntfs' or @Name='Microsoft-Windows-Ntfs'] and " +
                 $"TimeCreated[timediff(@SystemTime) <= {ms}]]]");
 
+            // Chi c'era a quel numero quando e' stato registrato l'errore: con la rotazione dei dischi
+            // numero e lettera passano da un disco all'altro (vedi DiskPresence).
+            var timeline = diskNumber is null ? Array.Empty<DiskPresence>() : DiskPresence.ReadTimeline();
+
             var matched = new List<(string, int, DateTime)>();
             using var reader = new EventLogReader(query);
             for (var ev = reader.ReadEvent(); ev is not null; ev = reader.ReadEvent())
@@ -146,8 +152,12 @@ public static class DiskEventLog
                     if (Classify(provider, ev.Id) == Kind.None) continue;
                     string message;
                     try { message = ev.FormatDescription() ?? ""; } catch { continue; }
-                    if (Concerns(provider, message, diskNumber, letter))
-                        matched.Add((provider, ev.Id, ev.TimeCreated ?? DateTime.Now));
+                    var when = ev.TimeCreated ?? DateTime.Now;
+                    // Anche gli errori NTFS, che nominano la lettera: al momento dell'errore la lettera
+                    // stava sul disco che allora aveva questo numero.
+                    if (Concerns(provider, message, diskNumber, letter)
+                        && (diskNumber is not int n || DiskPresence.BelongsToCurrentDisk(when, n, timeline)))
+                        matched.Add((provider, ev.Id, when));
                 }
             }
             return Summarize(matched);
