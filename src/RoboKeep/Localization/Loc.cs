@@ -443,6 +443,9 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tray_StartedBody"] = "Doppio click sull'icona per aprirlo; tasto destro, Esci per chiudere.",
         ["Toast_Ok"] = "Backup completato",
         ["Toast_Error"] = "Backup con errori",
+        ["Toast_Failed"] = "notifica di Windows non mostrata (il backup non ne risente)",
+        ["Run_ConfirmCancelTitle"] = "Interrompere?",
+        ["Run_ConfirmCancel"] = "Vuoi davvero interrompere l'operazione in corso?\n\nUn backup interrotto riprende al prossimo avvio, e il file che si stava copiando viene ricopiato.",
 
         ["Tab_Reliability"] = "Affidabilità",
         ["Set_ReliabilitySection"] = "Affidabilità e notifiche",
@@ -895,6 +898,9 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tray_StartedBody"] = "Double-click the icon to open it; right-click, Exit to quit.",
         ["Toast_Ok"] = "Backup completed",
         ["Toast_Error"] = "Backup finished with errors",
+        ["Toast_Failed"] = "Windows notification not shown (the backup is not affected)",
+        ["Run_ConfirmCancelTitle"] = "Stop?",
+        ["Run_ConfirmCancel"] = "Do you really want to stop the operation in progress?\n\nA stopped backup resumes at the next run, and the file being copied is copied again.",
 
         ["Tab_Reliability"] = "Reliability",
         ["Set_ReliabilitySection"] = "Reliability and notifications",
@@ -1347,6 +1353,9 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tray_StartedBody"] = "Doble clic en el icono para abrirlo; clic derecho, Salir para cerrar.",
         ["Toast_Ok"] = "Copia completada",
         ["Toast_Error"] = "Copia con errores",
+        ["Toast_Failed"] = "notificación de Windows no mostrada (la copia no se ve afectada)",
+        ["Run_ConfirmCancelTitle"] = "¿Detener?",
+        ["Run_ConfirmCancel"] = "¿Seguro que quieres detener la operación en curso?\n\nUna copia detenida se reanuda en la próxima ejecución, y el archivo que se estaba copiando se vuelve a copiar.",
 
         ["Tab_Reliability"] = "Fiabilidad",
         ["Set_ReliabilitySection"] = "Fiabilidad y notificaciones",
@@ -1799,6 +1808,9 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tray_StartedBody"] = "Double-cliquez sur l'icône pour l'ouvrir ; clic droit, Quitter pour fermer.",
         ["Toast_Ok"] = "Sauvegarde terminée",
         ["Toast_Error"] = "Sauvegarde avec des erreurs",
+        ["Toast_Failed"] = "notification Windows non affichée (la sauvegarde n'est pas concernée)",
+        ["Run_ConfirmCancelTitle"] = "Interrompre ?",
+        ["Run_ConfirmCancel"] = "Voulez-vous vraiment interrompre l'opération en cours ?\n\nUne sauvegarde interrompue reprend au prochain lancement, et le fichier en cours de copie est recopié.",
 
         ["Tab_Reliability"] = "Fiabilité",
         ["Set_ReliabilitySection"] = "Fiabilité et notifications",
@@ -2251,6 +2263,9 @@ public sealed class Loc : INotifyPropertyChanged
         ["Tray_StartedBody"] = "Doppelklick auf das Symbol zum Öffnen; Rechtsklick, Beenden zum Schließen.",
         ["Toast_Ok"] = "Backup abgeschlossen",
         ["Toast_Error"] = "Backup mit Fehlern",
+        ["Toast_Failed"] = "Windows-Benachrichtigung nicht angezeigt (das Backup ist nicht betroffen)",
+        ["Run_ConfirmCancelTitle"] = "Abbrechen?",
+        ["Run_ConfirmCancel"] = "Möchten Sie den laufenden Vorgang wirklich abbrechen?\n\nEin abgebrochenes Backup wird beim nächsten Start fortgesetzt, und die gerade kopierte Datei wird erneut kopiert.",
 
         ["Tab_Reliability"] = "Zuverlässigkeit",
         ["Set_ReliabilitySection"] = "Zuverlässigkeit und Benachrichtigungen",

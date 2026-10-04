@@ -61,6 +61,14 @@ All notable changes to RoboKeep are documented here. The format is based on
   the log and the email now say that the run went ahead without the safety threshold.
 - The scheduled task (command line) now writes `crash.log` and ends with an error code if
   `config.json` cannot be read, instead of failing silently.
+- **A running backup is no longer stopped by a stray key press.** While a job runs, the button that
+  started it becomes "Cancel" and keeps the keyboard focus: a Space or Enter pressed later in the
+  window stopped a long backup without the user noticing. Stopping now always asks for
+  confirmation (default "No"), and "Run all" in the tray icon menu never stops anything: if
+  something is already running it just opens the window.
+- **A Windows notification that cannot be shown no longer turns a successful backup into an error.**
+  When Windows refused the end-of-job notification, the job showed "Show notification failed" as
+  its error. The log now just says the notification was not shown, and the backup result stands.
 
 ## [1.9.0] - 2026-09-30 — Restore, versions on every disk, safer mirrors
 

@@ -131,10 +131,10 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             timer.Stop();
             if (_trayHintShown) return;
             _trayHintShown = true;
-            TrayIcon.ShowNotification(
+            NotificationGuard.TryShow(() => TrayIcon.ShowNotification(
                 Loc.Instance["Tray_StartedTitle"],
                 Loc.Instance["Tray_StartedBody"],
-                NotificationIcon.Info);
+                NotificationIcon.Info));
         };
         timer.Start();
     }
@@ -210,10 +210,10 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         Hide();
         if (_trayHintShown) return;
         _trayHintShown = true;
-        TrayIcon.ShowNotification(
+        NotificationGuard.TryShow(() => TrayIcon.ShowNotification(
             Loc.Instance["Tray_StillRunningTitle"],
             Loc.Instance["Tray_StillRunningBody"],
-            NotificationIcon.Info);
+            NotificationIcon.Info));
     }
 
     // ----- Gestori icona nel tray -----
@@ -225,8 +225,12 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         Activate();
     }
 
+    // Se qualcosa sta gia' girando la voce non annulla: apre la finestra, dove si vede cosa.
     private void OnTrayRunAll(object sender, System.Windows.RoutedEventArgs e)
-        => _vm.RunAllCommand.Execute(null);
+    {
+        if (_vm.IsBusy) { OnTrayShow(sender, e); return; }
+        _vm.RunAllFromTray();
+    }
 
     private void OnTrayExit(object sender, System.Windows.RoutedEventArgs e)
     {
@@ -234,11 +238,12 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         System.Windows.Application.Current.Shutdown();    // OnClosed distrugge l'icona (no doppio dispose)
     }
 
-    /// <summary>Mostra una notifica toast tramite l'icona del tray.</summary>
-    internal void ShowJobToast(string title, string message)
+    /// <summary>Mostra una notifica toast tramite l'icona del tray. false se Windows l'ha rifiutata:
+    /// il backup e' andato com'e' andato, la notifica e' solo un avviso in piu'.</summary>
+    internal bool ShowJobToast(string title, string message)
     {
-        if (_exiting) return;
-        TrayIcon.ShowNotification(title, message, NotificationIcon.Info);
+        if (_exiting) return true;
+        return NotificationGuard.TryShow(() => TrayIcon.ShowNotification(title, message, NotificationIcon.Info));
     }
 
     // Ordinamento per intestazione: riordina FISICAMENTE la collezione (vedi MainViewModel.SortJobs)

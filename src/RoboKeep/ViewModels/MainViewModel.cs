@@ -291,11 +291,42 @@ public sealed class MainViewModel : ObservableObject
         return k == RunKind.All ? Jobs.Count > 0 : SelectedJob is not null;
     }
 
-    private void Toggle(RunKind k)
+    private void Toggle(RunKind k, bool fromTray = false)
     {
-        if (_running == k) { _cts?.Cancel(); return; }
-        if (_running != RunKind.None || _preflighting) return;
+        switch (RunToggle.Decide(_running == k, _running != RunKind.None && _running != k, fromTray))
+        {
+            case ToggleAction.AskToCancel:
+                if (ConfirmCancel()) _cts?.Cancel();
+                return;
+            case ToggleAction.Ignore:
+                return;
+        }
+        if (_preflighting) return;
         _ = StartAsync(k);
+    }
+
+    /// <summary>«Avvia tutti» dal menu dell'icona: parte solo se non c'e' niente in corso. La voce
+    /// del menu non diventa «Annulla», quindi non deve mai interrompere niente.</summary>
+    public void RunAllFromTray()
+    {
+        if (CanToggle(RunKind.All)) Toggle(RunKind.All, fromTray: true);
+    }
+
+    /// <summary>Chiede se interrompere davvero l'operazione in corso. Predefinito No: chi preme
+    /// Invio o Spazio per abitudine non interrompe un backup di un'ora.</summary>
+    private static bool ConfirmCancel()
+    {
+        var owner = System.Windows.Application.Current?.MainWindow;
+        var body = Loc.Instance["Run_ConfirmCancel"];
+        var title = Loc.Instance["Run_ConfirmCancelTitle"];
+        var answer = owner is not null && owner.IsVisible
+            ? System.Windows.MessageBox.Show(owner, body, title,
+                System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question,
+                System.Windows.MessageBoxResult.No)
+            : System.Windows.MessageBox.Show(body, title,
+                System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Question,
+                System.Windows.MessageBoxResult.No);
+        return answer == System.Windows.MessageBoxResult.Yes;
     }
 
     private async Task StartAsync(RunKind k)
@@ -573,7 +604,10 @@ public sealed class MainViewModel : ObservableObject
                         var msg = result.Success
                             ? Loc.Instance["Toast_Ok"]
                             : Loc.Instance["Toast_Error"];
-                        mw.ShowJobToast(jvm.Name, msg);
+                        // Una notifica rifiutata da Windows non e' un errore del job: prima finiva nel
+                        // catch qui sotto e un backup riuscito compariva come «ERRORE».
+                        if (!mw.ShowJobToast(jvm.Name, msg))
+                            Enqueue($"   {jvm.Name}: {Loc.Instance["Toast_Failed"]}");
                     }
                 }
                 catch (OperationCanceledException)
