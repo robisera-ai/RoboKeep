@@ -887,6 +887,42 @@ public class VersionedBackupServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task TooManyFilesThatCannotBeSetAside_StopTheRunAndPutEverythingBack()
+    {
+        // Oltre il limite delle esclusioni i file in uso non si potrebbero piu' escludere tutti dal
+        // mirror, che sovrascriverebbe i rimanenti senza copia precedente. Ci si ferma: niente
+        // mirror, e cio' che era gia' stato messo da parte torna al suo posto (senza, un programma
+        // che tiene aperto un albero svuoterebbe «current» un backup dopo l'altro).
+        var (source, dest, job, _) = Setup("troppi", keepCount: 1);
+        foreach (var name in new[] { "a.txt", "b.txt", "c.txt", "normale.txt" })
+            File.WriteAllText(Path.Combine(source, name), "v1");
+        var svc = new VersionedBackupService(new RobocopyRunner(), maxSkipped: 2);
+        Assert.True((await svc.RunAsync(job)).Result.Success);
+        foreach (var old in new[] { "2026-01-01_000000", "2026-01-02_000000" })
+        {
+            Directory.CreateDirectory(Path.Combine(Versions(dest), old));
+            File.WriteAllText(Path.Combine(Versions(dest), old, "vecchio.txt"), old);
+        }
+        var before = Directory.GetFileSystemEntries(Versions(dest)).OrderBy(n => n).ToArray();
+
+        await Task.Delay(1100);
+        foreach (var name in new[] { "a.txt", "b.txt", "c.txt", "normale.txt" })
+            File.WriteAllText(Path.Combine(source, name), "v2, piu' lungo");
+        var held = new[] { "a.txt", "b.txt", "c.txt" }
+            .Select(n => new FileStream(Path.Combine(Current(dest), n), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            .ToList();
+        RobocopyRunResult r;
+        try { r = await svc.RunAsync(job); }
+        finally { held.ForEach(h => h.Dispose()); }
+
+        Assert.False(r.Result.Success);
+        Assert.NotEmpty(r.Result.VersionNotes);
+        foreach (var name in new[] { "a.txt", "b.txt", "c.txt", "normale.txt" })
+            Assert.Equal("v1", File.ReadAllText(Path.Combine(Current(dest), name)));
+        Assert.Equal(before, Directory.GetFileSystemEntries(Versions(dest)).OrderBy(n => n).ToArray());
+    }
+
+    [Fact]
     public async Task WithoutTheUnicodeLog_NamesFoundOnDisk_RunAsUsual()
     {
         // Il ripiego sullo stdout resta buono quando ogni nome dell'elenco si ritrova sul disco:

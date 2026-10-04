@@ -10,7 +10,25 @@ All notable changes to RoboKeep are documented here. The format is based on
 - **Versions + "Accumulate" no longer lose files deleted from the source.** In a job that keeps
   versions without mirroring, a file deleted from the source was moved out of the backup into that
   day's version, and retention deleted it later for good. "Accumulate" now keeps it in the backup,
-  as it always promised.
+  as it always promised, including files on the "Force copy" list.
+- **"Force copy" in jobs with versions no longer takes files out of the backup.** Before the forced
+  pass, every file matching the list was set aside, even one deleted from the source or inside a
+  folder you excluded later: the pass did not copy it back, and retention eventually deleted it.
+  Now only files present in the source are set aside, and anything the pass did not rewrite is put
+  back.
+- **"Force copy" in smart mode recopies a file that was in use.** The file was left out of the pass,
+  but its new fingerprint was saved as if it had been copied, so it was not copied again until it
+  changed once more. Fingerprints are now saved only when the pass copied everything.
+- **A slow answer from robocopy no longer switches off part of "Force copy".** RoboKeep asks robocopy
+  once whether it supports the `/IM` option. Under heavy load the answer could take longer than the
+  10 seconds allowed, and RoboKeep then assumed "no" until it was closed: files rewritten with the
+  same date and size were silently skipped. It now waits up to 60 seconds, remembers only real
+  answers, and if there is none it says so in the outcome and does not save the fingerprints.
+- **More than 100 files that cannot be set aside no longer lose their previous copy.** Only the
+  first 100 files in use were excluded from the mirror; the others were overwritten or deleted
+  without keeping their previous copy, while the outcome said they were "left as they were". Now,
+  past that limit (or past what fits on robocopy's command line), the backup stops, puts back the
+  files it had already set aside, and says why.
 - **File names robocopy cannot print no longer lose their previous copy.** Robocopy's console
   output cannot hold every character: an emoji or a letter of another alphabet came back as `?`,
   and many common characters were silently replaced by a similar one (the typographic apostrophe

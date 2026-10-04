@@ -190,6 +190,211 @@ public sealed class VersioningLoadAndForceCopyTests : IDisposable
         Assert.Equal("AAAA", File.ReadAllText(Path.Combine(Current, "db.dat")));
     }
 
+    [Fact]
+    public async Task Accumulate_WithForceCopy_KeepsAFileDeletedFromTheSource()
+    {
+        // «Accumula» promette che cio' che sparisce dalla sorgente resta nel backup. La passata
+        // forzata mette da parte i file che sta per riscrivere: uno che in sorgente non c'e' piu'
+        // non verrebbe riscritto, e una volta messo da parte uscirebbe dal backup per finire
+        // cancellato dalla ritenzione.
+        File.WriteAllText(Path.Combine(Src, "vecchio.pst"), "unica copia");
+        File.WriteAllText(Path.Combine(Src, "posta.pst"), "v0");
+        var job = new BackupJob
+        {
+            Name = "AF", Source = Src, Destination = Dst, Versioned = true, Mirror = false,
+            MultiThread = 1, SnapshotKeepCount = 1, Retries = 0, Wait = 0,
+        };
+        job.ForceCopyFiles = new() { "*.pst" };
+        var svc = new VersionedBackupService(RunnerWithForceCopy());
+        Assert.True((await svc.RunAsync(job)).Result.Success);
+
+        File.Delete(Path.Combine(Src, "vecchio.pst"));
+        for (var i = 1; i <= 3; i++)
+        {
+            await Task.Delay(1100);
+            File.WriteAllText(Path.Combine(Src, "posta.pst"), "v" + i);
+            Assert.True((await svc.RunAsync(job)).Result.Success);
+        }
+
+        Assert.True(File.Exists(Path.Combine(Current, "vecchio.pst")), "il file sparito dalla sorgente e' uscito dal backup");
+        Assert.Equal("unica copia", File.ReadAllText(Path.Combine(Current, "vecchio.pst")));
+    }
+
+    [Fact]
+    public async Task SmartForceCopy_ASameNamedFileDeletedElsewhere_StaysInCurrent()
+    {
+        // In modalita' smart i filtri sono nomi nudi: "posta.pst" vale per ogni posta.pst
+        // dell'albero. Ne cambia uno, l'altro e' stato cancellato dalla sorgente: quello
+        // cancellato non va portato fuori dal backup.
+        Directory.CreateDirectory(Path.Combine(Src, "A"));
+        Directory.CreateDirectory(Path.Combine(Src, "B"));
+        File.WriteAllText(Path.Combine(Src, "A", "posta.pst"), "AAAA");
+        File.WriteAllText(Path.Combine(Src, "B", "posta.pst"), "BBBB");
+        var job = new BackupJob
+        {
+            Name = "SF", Source = Src, Destination = Dst, Versioned = true, Mirror = false,
+            MultiThread = 1, ForceCopySmart = true, Retries = 0, Wait = 0,
+        };
+        job.ForceCopyFiles = new() { "posta.pst" };
+        var svc = new VersionedBackupService(RunnerWithForceCopy());
+        Assert.True((await svc.RunAsync(job)).Result.Success);
+
+        await Task.Delay(1100);
+        Directory.Delete(Path.Combine(Src, "A"), recursive: true);
+        RewriteKeepingSizeAndTime(Path.Combine(Src, "B", "posta.pst"), "CCCC");
+        Assert.True((await svc.RunAsync(job)).Result.Success);
+
+        Assert.True(File.Exists(Path.Combine(Current, "A", "posta.pst")), "il file cancellato dalla sorgente e' uscito dal backup");
+        Assert.Equal("CCCC", File.ReadAllText(Path.Combine(Current, "B", "posta.pst")));
+    }
+
+    [Fact]
+    public async Task ForceCopy_AFileTheUserExcludedLater_StaysInCurrent()
+    {
+        // Robocopy non ripulisce cio' che e' escluso: un file copiato prima che l'utente
+        // escludesse la sua cartella resta in «current». La passata forzata rispetta l'esclusione e
+        // non lo riscrive: se lo si mettesse da parte uscirebbe dal backup senza tornarci.
+        Directory.CreateDirectory(Path.Combine(Src, "Archivio"));
+        File.WriteAllText(Path.Combine(Src, "Archivio", "x.pst"), "archiviato");
+        File.WriteAllText(Path.Combine(Src, "posta.pst"), "AAAA");
+        var job = new BackupJob
+        {
+            Name = "EX", Source = Src, Destination = Dst, Versioned = true, Mirror = true,
+            MultiThread = 1, Retries = 0, Wait = 0,
+        };
+        job.ForceCopyFiles = new() { "*.pst" };
+        var svc = new VersionedBackupService(RunnerWithForceCopy());
+        Assert.True((await svc.RunAsync(job)).Result.Success);
+
+        await Task.Delay(1100);
+        job.ExcludeDirs = new() { "Archivio" };
+        Assert.True((await svc.RunAsync(job)).Result.Success);
+
+        Assert.True(File.Exists(Path.Combine(Current, "Archivio", "x.pst")), "il file escluso e' uscito dal backup");
+    }
+
+    [Fact]
+    public async Task AForceCopyFileInUse_MatchedByTwoFilters_IsReportedOnce()
+    {
+        File.WriteAllText(Path.Combine(Src, "posta.pst"), "AAAA");
+        var job = new BackupJob
+        {
+            Name = "DUP", Source = Src, Destination = Dst, Versioned = true, Mirror = true,
+            MultiThread = 1, Retries = 0, Wait = 0,
+        };
+        job.ForceCopyFiles = new() { "*.pst", "posta.*" };
+        var svc = new VersionedBackupService(RunnerWithForceCopy());
+        Assert.True((await svc.RunAsync(job)).Result.Success);
+        await Task.Delay(1100);
+
+        RobocopyRunResult run;
+        using (new FileStream(Path.Combine(Current, "posta.pst"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            run = await svc.RunAsync(job);
+
+        var note = Assert.Single(run.Result.VersionNotes);
+        Assert.Single(System.Text.RegularExpressions.Regex.Matches(note, "posta\\.pst"));
+    }
+
+    [Fact]
+    public async Task SmartForceCopy_AFileInUse_IsRecopiedOnceItIsFree()
+    {
+        // Il file escluso dalla passata perche' in uso non e' stato ricopiato: salvarne il nuovo hash
+        // lo farebbe sembrare gia' a posto, e non verrebbe piu' ricopiato finche' non cambia di nuovo.
+        File.WriteAllText(Path.Combine(Src, "db.dat"), "AAAA");
+        var job = ForcedJob(smart: true);
+        var svc = new VersionedBackupService(RunnerWithForceCopy());
+        Assert.True((await svc.RunAsync(job)).Result.Success);
+
+        await Task.Delay(1100);
+        RewriteKeepingSizeAndTime(Path.Combine(Src, "db.dat"), "BBBB");
+        using (new FileStream(Path.Combine(Current, "db.dat"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            await svc.RunAsync(job);
+        Assert.Equal("AAAA", File.ReadAllText(Path.Combine(Current, "db.dat")));
+
+        await Task.Delay(1100);
+        Assert.True((await svc.RunAsync(job)).Result.Success);
+        Assert.Equal("BBBB", File.ReadAllText(Path.Combine(Current, "db.dat")));
+    }
+
+    [Fact]
+    public async Task TooManyForcedFilesInUse_SkipTheForcedPass_AndKeepTheSavedHashes()
+    {
+        // Lo stesso limite vale per la passata forzata: se i file che non si possono mettere da
+        // parte sono troppi per escluderli tutti, la passata non parte (riscriverebbe sul posto i
+        // rimanenti) e gli hash restano quelli di prima, cosi' al prossimo run si riprova.
+        File.WriteAllText(Path.Combine(Src, "x.dat"), "XXXX");
+        File.WriteAllText(Path.Combine(Src, "y.dat"), "YYYY");
+        var hashes = Path.Combine(_root, "hashes-limit.json");
+        var job = new BackupJob
+        {
+            Name = "LIM", Source = Src, Destination = Dst, Versioned = true, Mirror = true,
+            MultiThread = 1, ForceCopySmart = true, Retries = 0, Wait = 0,
+        };
+        job.ForceCopyFiles = new() { "*.dat" };
+        var svc = new VersionedBackupService(
+            new RobocopyRunner(forceCopyPlanner: new ForceCopyPlanner(new ForceCopyHashStore(hashes))), maxSkipped: 1);
+        Assert.True((await svc.RunAsync(job)).Result.Success);
+        var savedHashes = File.ReadAllText(hashes);
+
+        await Task.Delay(1100);
+        RewriteKeepingSizeAndTime(Path.Combine(Src, "x.dat"), "xxxx");
+        RewriteKeepingSizeAndTime(Path.Combine(Src, "y.dat"), "yyyy");
+        RobocopyRunResult run;
+        using (new FileStream(Path.Combine(Current, "x.dat"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+        using (new FileStream(Path.Combine(Current, "y.dat"), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            run = await svc.RunAsync(job);
+
+        Assert.False(run.Result.Success);
+        Assert.Equal("XXXX", File.ReadAllText(Path.Combine(Current, "x.dat")));
+        Assert.Equal("YYYY", File.ReadAllText(Path.Combine(Current, "y.dat")));
+        Assert.Equal(savedHashes, File.ReadAllText(hashes));
+    }
+
+    /// <summary>Finto robocopy che risponde a <c>/?</c> troppo tardi (PC sotto carico) e per tutto il
+    /// resto passa la mano a quello vero. Ogni domanda <c>/?</c> lascia una riga in probes.txt.</summary>
+    private string SlowHelpRobocopy()
+    {
+        var path = Path.Combine(_root, "fake-slow-help.cmd");
+        Directory.CreateDirectory(_root);
+        File.WriteAllText(path,
+            "@echo off\r\n" +
+            "if \"%~1\"==\"/?\" (\r\n" +
+            "  >>\"%~dp0probes.txt\" echo probe\r\n" +
+            "  ping -n 4 127.0.0.1 >nul\r\n" +
+            "  exit /b 16\r\n" +
+            ")\r\n" +
+            "\"%SystemRoot%\\System32\\Robocopy.exe\" %*\r\n" +
+            "exit /b %errorlevel%\r\n");
+        return path;
+    }
+
+    [Fact]
+    public async Task ProbeWithoutAnswer_IsNotRemembered_AndTheHashesAreNotSaved()
+    {
+        // Una sola risposta lenta di "robocopy /?" non deve spegnere /IM per tutta la vita del
+        // programma: senza /IM i file riscritti con stessa data e dimensione vengono saltati, e
+        // salvandone gli hash non verrebbero piu' ricopiati finche' non cambiano di nuovo.
+        File.WriteAllText(Path.Combine(Src, "db.dat"), "AAAA");
+        var hashes = Path.Combine(_root, "hashes-probe.json");
+        var job = new BackupJob
+        {
+            Name = "PR", Source = Src, Destination = Dst, Mirror = true, MultiThread = 1,
+            ForceCopySmart = true, Retries = 0, Wait = 0,
+        };
+        job.ForceCopyFiles = new() { "db.dat" };
+        var runner = new RobocopyRunner(SlowHelpRobocopy(), new ForceCopyPlanner(new ForceCopyHashStore(hashes)),
+            _ => DiskMedia.Unknown, probeTimeout: TimeSpan.FromSeconds(1));
+
+        var first = await runner.RunAsync(job);
+        var second = await runner.RunAsync(job);
+
+        Assert.NotEmpty(first.Result.VersionNotes);
+        Assert.NotEmpty(second.Result.VersionNotes);
+        Assert.False(File.Exists(hashes) && File.ReadAllText(hashes).Contains("db.dat", StringComparison.OrdinalIgnoreCase),
+            "hash salvati senza sapere se /IM funziona");
+        Assert.Equal(2, File.ReadAllLines(Path.Combine(_root, "probes.txt")).Length);
+    }
+
     /// <summary>Finto robocopy: anteprima e prima passata non trovano niente; la passata forzata
     /// (riconosciuta da /IS) scrive una riga e poi si blocca, oppure esce con errore grave.</summary>
     private string FakeRobocopyForcedPass(bool hang)
@@ -251,9 +456,12 @@ public sealed class VersioningLoadAndForceCopyTests : IDisposable
             .RunAsync(ForcedJob(keep: 1));
 
         Assert.False(run.Result.Success);
+        // La passata forzata non ha riscritto niente: la copia messa da parte torna in «current»
+        // (fuori dal backup la ritenzione la cancellerebbe), e la cartella rimasta vuota non diventa
+        // una versione.
+        Assert.Equal("AAAA", File.ReadAllText(Path.Combine(Current, "db.dat")));
         var names = SnapshotName.ListValid(Versions);
-        Assert.Equal(3, names.Count);                                  // nessuna ritenzione dopo un fallimento
-        Assert.Equal("AAAA", File.ReadAllText(Path.Combine(Versions, names[0], "db.dat"))); // la nuova, promossa
+        Assert.Equal(new[] { "2026-01-01_000000", "2026-01-02_000000" }, names.OrderBy(n => n).ToArray()); // nessuna ritenzione dopo un fallimento
     }
 
     private sealed class SyncProgress : IProgress<string>

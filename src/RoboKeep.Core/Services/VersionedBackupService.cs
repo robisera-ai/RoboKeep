@@ -21,22 +21,28 @@ public sealed class VersionedBackupService
     private readonly RobocopyRunner _runner;
     private readonly AppSettings? _settings;
     private readonly Func<string, long?> _freeSpace;
+    private readonly int _maxSkipped;
 
-    /// <summary>Quante voci "non spostate" si possono escludere dal mirror: oltre questo numero la
-    /// riga di comando di robocopy diventerebbe troppo lunga per essere avviata.</summary>
-    private const int MaxExclusions = 100;
+    /// <summary>Quanti caratteri possono occupare le esclusioni dei file non messi da parte (due
+    /// percorsi completi per voce). La riga di comando di Windows si ferma a 32 767 caratteri, e ci
+    /// devono stare anche le opzioni e le esclusioni dell'utente.</summary>
+    private const int MaxExclusionChars = 24_000;
 
     /// <param name="settings">Impostazioni globali: servono alla ritenzione per spazio
     /// (<see cref="AppSettings.FreeSpaceCleanup"/> e <see cref="AppSettings.MinFreeSpaceMb"/>).
     /// null = nessuna pulizia per spazio.</param>
     /// <param name="freeSpace">Lettore dello spazio libero, iniettabile nei test; default
     /// <see cref="FreeSpaceReader.Read"/>.</param>
+    /// <param name="maxSkipped">Quanti file non messi da parte (in uso, nome non ritrovato) si
+    /// possono escludere dal mirror. Oltre, il backup si ferma senza toccare nulla: escluderne solo
+    /// una parte vorrebbe dire lasciare che robocopy sovrascriva gli altri senza copia precedente.</param>
     public VersionedBackupService(RobocopyRunner runner, AppSettings? settings = null,
-        Func<string, long?>? freeSpace = null)
+        Func<string, long?>? freeSpace = null, int maxSkipped = 100)
     {
         _runner = runner;
         _settings = settings;
         _freeSpace = freeSpace ?? FreeSpaceReader.Read;
+        _maxSkipped = maxSkipped;
     }
 
     /// <param name="confirmDeletions">Guardia sulle cancellazioni, sui conteggi della STESSA
@@ -53,8 +59,11 @@ public sealed class VersionedBackupService
         var current = VersioningLayout.CurrentDir(dest);
         var versions = VersioningLayout.VersionsDir(dest);
         var now = DateTime.Now;
+        // La sorgente come la riceve robocopy (RobocopyArgsBuilder toglie gli spazi ai bordi): i
+        // percorsi dell'elenco cominciano con questa, e ogni controllo sul disco deve usare la stessa.
+        var source = (sourceOverride ?? job.Source ?? "").Trim();
 
-        AdoptPlainMirror(dest, current, versions, sourceOverride ?? job.Source, progress);
+        AdoptPlainMirror(dest, current, versions, source, progress);
         Directory.CreateDirectory(current);
         // Subito, non solo dopo il mirror: anche un run che non ha niente da fare deve rimettere a
         // posto una «current» rimasta in sola lettura da un backup precedente.
@@ -97,8 +106,7 @@ public sealed class VersionedBackupService
             return preview;
         }
 
-        var changes = RobocopyListParser.Parse(preview.Output.Split('\n'),
-            sourceOverride ?? job.Source, current);
+        var changes = RobocopyListParser.Parse(preview.Output.Split('\n'), source, current);
         // «Accumula»: cio' che e' sparito dalla sorgente resta in «current». L'anteprima elenca
         // comunque i file e le cartelle "extra" (anche senza /MIR): spostarli in una versione
         // vorrebbe dire toglierli dal backup e lasciarli alla ritenzione, che prima o poi li cancella.
@@ -108,15 +116,22 @@ public sealed class VersionedBackupService
         // log non si e' potuto scrivere, i caratteri che la console non sa scrivere tornano con '?'
         // e vanno riportati ai nomi veri, altrimenti la copia precedente si perderebbe. Quelli che
         // non si ritrovano sono trattati come i file in uso: fuori da questo mirror, e segnalati.
+        var unresolved = new List<string>();
+        changes = ListedPathResolver.Resolve(changes, source, current, unresolved);
         var skipped = new List<string>();
-        changes = ListedPathResolver.Resolve(changes, sourceOverride ?? job.Source ?? "", current, skipped);
+        foreach (var rel in unresolved) AddSkipped(skipped, rel);
 
         // Senza il log Unicode un nome che non si ritrova puo' essere uno che la console ha
         // trasformato (’ in ', – in -) senza lasciare '?': l'esclusione con quel nome non fermerebbe
         // robocopy, che sovrascriverebbe o cancellerebbe il file vero senza che la sua copia
         // precedente sia stata messa da parte. Ci si ferma prima di toccare qualunque cosa.
         if (!preview.ExactNames && skipped.Count > 0)
-            return StopWithoutExactNames(job, preview, skipped, guardNote, progress);
+            return StopBeforeMirror(job, preview, CoreLoc.S("Diff_NoExactNamesStatus"),
+                string.Format(CoreLoc.S("Diff_NoExactNames"), skipped.Count, string.Join(", ", skipped.Take(10))),
+                guardNote, progress);
+        if (ExceedsExclusionLimit(skipped, current, source))
+            return StopBeforeMirror(job, preview, CoreLoc.S("Diff_TooManySkippedStatus"),
+                TooManySkippedNote(skipped), guardNote, progress);
 
         foreach (var rel in skipped)
             progress?.Report(string.Format(CoreLoc.S("Diff_MoveFailed"), rel, CoreLoc.S("Diff_NameNotFound")));
@@ -151,6 +166,18 @@ public sealed class VersionedBackupService
         var forcedMoved = new List<string>();
         var (movedFiles, movedDirs) = MoveAsideChanges(current, versionDir, changes, manifest, skipped, progress, ct);
         manifest.WriteTo(versionDir);
+
+        // Troppi file non messi da parte per escluderli tutti dal mirror: si rimette a posto quello
+        // che e' gia' stato spostato e ci si ferma. Lasciarlo nella versione, con il mirror che non
+        // parte, toglierebbe quei file da «current» un backup dopo l'altro finche' dura la causa.
+        if (ExceedsExclusionLimit(skipped, current, source))
+        {
+            UndoMoves(current, versionDir, manifest);
+            manifest.WriteTo(versionDir);
+            Promote(versions, versionDir, newName, progress, CoreLoc.S("Diff_PromotedPartial"));
+            return StopBeforeMirror(job, preview, CoreLoc.S("Diff_TooManySkippedStatus"),
+                TooManySkippedNote(skipped), guardNote, progress);
+        }
         progress?.Report(string.Format(CoreLoc.S("Diff_Moved"), movedFiles, movedDirs, newName));
 
         // Un file che non si e' potuto mettere da parte (aperto da un altro programma) va TOLTO da
@@ -161,26 +188,59 @@ public sealed class VersionedBackupService
         // Si lavora SEMPRE su una copia del job: il gancio della forza-copia ci aggiungera' le
         // esclusioni scoperte a meta' strada, e il job del chiamante non si tocca.
         var mirrorJob = job.Clone();
-        ApplyExclusions(mirrorJob, job, changes, skipped, current, sourceOverride);
+        ApplyExclusions(mirrorJob, job, changes, skipped, current, source);
 
         // Mirror vero su current, con tutte le opzioni del job (/MT compreso). La passata
         // "forza copia" sovrascrive SUL POSTO: il gancio mette da parte quei file prima che
         // vengano riscritti, altrimenti la versione non li conterrebbe.
+        var forcedOverflow = false;
         var run = await _runner.RunAsync(mirrorJob, dryRun: false, progress, ct, destinationOverride: current,
             sourceOverride: sourceOverride,
             beforeForceCopyPass: filters => Task.Run(() =>
             {
                 var before = skipped.Count;
-                var moved = MoveMatching(current, versionDir, filters, manifest, skipped, forcedMoved, progress);
+                var moved = MoveMatching(current, versionDir, source, filters, manifest, skipped, forcedMoved, progress);
                 if (moved > 0) manifest.WriteTo(versionDir);
+                // Troppi da escludere: la passata non parte (riscriverebbe sul posto quelli rimasti
+                // fuori dalle esclusioni). Quello che il gancio ha spostato torna in «current» piu' sotto.
+                if (ExceedsExclusionLimit(skipped, current, source))
+                {
+                    forcedOverflow = true;
+                    return ForcedPass.Skip;
+                }
                 // Anche i file della forza-copia che non si sono potuti spostare vanno esclusi: gli
                 // argomenti di quella passata vengono costruiti DOPO questo gancio, quindi si
                 // arriva in tempo. Senza, /IS /IT li riscriverebbe sul posto e la copia precedente
                 // sparirebbe senza lasciare traccia.
                 if (skipped.Count > before)
-                    ApplyExclusions(mirrorJob, job, changes, skipped, current, sourceOverride);
+                    ApplyExclusions(mirrorJob, job, changes, skipped, current, source);
+                // Con qualcosa escluso la passata non ricopia tutto: gli hash restano quelli di prima,
+                // cosi' i file rimasti fuori vengono ripresi al prossimo backup.
+                return skipped.Count > 0 ? ForcedPass.RunWithoutSavingHashes : ForcedPass.Run;
             }, ct))
             .ConfigureAwait(false);
+
+        // Cio' che il gancio ha messo da parte e la passata forzata NON ha riscritto (escluso
+        // dall'utente, filtro che robocopy legge diversamente, passata fallita) torna in «current»:
+        // lasciato nella versione uscirebbe dal backup e la ritenzione lo cancellerebbe. Mai dopo un
+        // errore hardware: il disco va lasciato in pace, e la copia resta comunque nella versione.
+        if (!run.Result.HardwareError && forcedMoved.Count > 0
+            && PutBackNotRewritten(current, versionDir, forcedMoved, manifest) > 0)
+        {
+            manifest.WriteTo(versionDir);
+        }
+
+        // Passata forzata saltata per troppi file da escludere: il backup non e' completo. Da qui in
+        // poi conta come fallito: niente ritenzione, e la cartella (se le resta qualcosa) e' parziale.
+        if (forcedOverflow)
+        {
+            var note = TooManySkippedNote(skipped);
+            progress?.Report(note);
+            run.Result.Success = false;
+            run.Result.ExitCode = Math.Max(run.Result.ExitCode, MirrorDeleteGuard.BlockedExitCode);
+            run.Result.Status = CoreLoc.S("Diff_TooManySkippedStatus");
+            run.Result.VersionNotes.Add(note);
+        }
 
         // La passata "forza copia" semplice ricopia i suoi file a OGNI run, cambiati o no, e il
         // gancio li ha messi tutti da parte. Quelli identici alla copia appena scritta non sono
@@ -231,7 +291,8 @@ public sealed class VersionedBackupService
         // I file che non si sono potuti mettere da parte sono rimasti com'erano (esclusi da questo
         // mirror): e' una notizia che riguarda dei dati e deve arrivare all'utente anche a backup
         // riuscito, quindi viaggia nell'esito fino al riepilogo, al log e all'email.
-        if (skipped.Count > 0)
+        // (Con la passata forzata saltata la notizia l'ha gia' data la nota sui troppi file.)
+        if (skipped.Count > 0 && !forcedOverflow)
             run.Result.VersionNotes.Add(string.Format(CoreLoc.S("Diff_SkippedLocked"),
                 skipped.Count, string.Join(", ", skipped.Take(10))));
 
@@ -239,14 +300,13 @@ public sealed class VersionedBackupService
         return run;
     }
 
-    /// <summary>Esito di un backup fermato prima di toccare qualunque cosa perche' l'anteprima non ha
-    /// i nomi esatti e alcuni non si ritrovano sul disco (vedi <see cref="RobocopyRunResult.ExactNames"/>).
-    /// Niente cartella-versione e niente mirror: «current» resta com'era e il prossimo backup riprova.</summary>
-    private static RobocopyRunResult StopWithoutExactNames(BackupJob job, RobocopyRunResult preview,
-        IReadOnlyList<string> unresolved, string? guardNote, IProgress<string>? progress)
+    /// <summary>Esito di un backup fermato prima del mirror: l'anteprima non ha i nomi esatti (vedi
+    /// <see cref="RobocopyRunResult.ExactNames"/>), oppure i file non messi da parte sono troppi per
+    /// escluderli tutti. Niente mirror e niente ritenzione: «current» resta com'era e il prossimo
+    /// backup riprova.</summary>
+    private static RobocopyRunResult StopBeforeMirror(BackupJob job, RobocopyRunResult preview,
+        string status, string note, string? guardNote, IProgress<string>? progress)
     {
-        var note = string.Format(CoreLoc.S("Diff_NoExactNames"), unresolved.Count,
-            string.Join(", ", unresolved.Take(10)));
         progress?.Report(note);
         var result = new JobResult
         {
@@ -254,13 +314,75 @@ public sealed class VersionedBackupService
             Success = false,
             NotStarted = true,
             ExitCode = MirrorDeleteGuard.BlockedExitCode,
-            Status = CoreLoc.S("Diff_NoExactNamesStatus"),
+            Status = status,
             StartedAt = preview.Result.StartedAt,
             Duration = preview.Result.Duration,
         };
         result.VersionNotes.Add(note);
         if (guardNote is not null) result.VersionNotes.Add(guardNote);
         return new RobocopyRunResult { Result = result, Output = string.Empty };
+    }
+
+    private string TooManySkippedNote(IReadOnlyList<string> skipped) =>
+        string.Format(CoreLoc.S("Diff_TooManySkipped"), skipped.Count, _maxSkipped, string.Join(", ", skipped.Take(10)));
+
+    /// <summary>true se le voci da escludere sono troppe: per numero, o per la lunghezza che
+    /// occuperebbero sulla riga di comando (due percorsi completi ciascuna, piu' le virgolette).</summary>
+    private bool ExceedsExclusionLimit(IReadOnlyList<string> skipped, string current, string source)
+    {
+        if (skipped.Count > _maxSkipped) return true;
+        long chars = 0;
+        foreach (var rel in skipped)
+        {
+            chars += Path.Combine(current, rel).Length + 3;
+            if (source.Length > 0) chars += Path.Combine(source, rel).Length + 3;
+        }
+        return chars > MaxExclusionChars;
+    }
+
+    /// <summary>Aggiunge un file non messo da parte, una volta sola: lo stesso file trovato due volte
+    /// (due filtri della forza copia, o anteprima e gancio) non deve contare doppio.</summary>
+    private static void AddSkipped(List<string> skipped, string rel)
+    {
+        if (!skipped.Contains(rel, StringComparer.OrdinalIgnoreCase)) skipped.Add(rel);
+    }
+
+    /// <summary>Rimette in <c>current</c> cio' che <see cref="MoveAsideChanges"/> aveva spostato nella
+    /// versione (voci <c>Changed</c> e <c>Deleted</c>), prima le meno profonde: una cartella "extra"
+    /// spostata intera si porta dietro i figli, che poi risultano gia' a posto. Toglie dal manifest
+    /// cio' che e' tornato; quello che non si riesce a rimettere resta nella versione e non si perde.
+    /// Alla fine toglie dalla versione le cartelle rimaste vuote.</summary>
+    private static void UndoMoves(string current, string versionDir, VersionManifest manifest)
+    {
+        foreach (var list in new[] { manifest.Changed, manifest.Deleted })
+        {
+            foreach (var rel in list.OrderBy(r => r.Count(c => c == Path.DirectorySeparatorChar)).ToList())
+            {
+                var kept = Path.Combine(versionDir, rel);
+                var back = Path.Combine(current, rel);
+                var isDir = Directory.Exists(kept);
+                if ((isDir || File.Exists(kept)) && !File.Exists(back) && !Directory.Exists(back))
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(Path.GetDirectoryName(back)!);
+                        if (isDir) Directory.Move(kept, back);
+                        else File.Move(kept, back);
+                    }
+                    catch (Exception ex) when (!DiskError.IsUnreadable(ex)) { /* resta nella versione */ }
+                }
+                if (!File.Exists(kept) && !Directory.Exists(kept))
+                    list.RemoveAll(r => string.Equals(r, rel, StringComparison.OrdinalIgnoreCase));
+            }
+        }
+
+        // Dal basso: una cartella si svuota solo dopo che si sono svuotate le sue sottocartelle.
+        foreach (var dir in Directory.EnumerateDirectories(versionDir, "*", SearchOption.AllDirectories)
+                     .OrderByDescending(d => d.Length).ToList())
+        {
+            try { if (!Directory.EnumerateFileSystemEntries(dir).Any()) Directory.Delete(dir); }
+            catch (Exception ex) when (!DiskError.IsUnreadable(ex)) { /* resta: non fa danni */ }
+        }
     }
 
     /// <summary>
@@ -276,20 +398,18 @@ public sealed class VersionedBackupService
     /// Si passano quindi entrambi: quello che non serve semplicemente non corrisponde a nulla.</para>
     /// </summary>
     private static void ApplyExclusions(BackupJob clone, BackupJob original,
-        IReadOnlyList<ListedChange> changes, IReadOnlyList<string> skipped, string current, string? sourceOverride)
+        IReadOnlyList<ListedChange> changes, IReadOnlyList<string> skipped, string current, string source)
     {
-        var source = sourceOverride ?? original.Source ?? "";
         var dirs = changes.Where(c => c.Kind is ChangeKind.ExtraDir or ChangeKind.NewDir)
             .Select(c => c.RelativePath).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         clone.ExcludeFiles = new List<string>(original.ExcludeFiles ?? new List<string>());
         clone.ExcludeDirs = new List<string>(original.ExcludeDirs ?? new List<string>());
-        // La riga di comando di Windows ha un tetto (circa 32 000 caratteri) e ogni voce ne costa
-        // due percorsi completi: oltre un centinaio si rischia di non poter avviare robocopy
-        // affatto, che sarebbe peggio. Se tanti file sono in uso insieme c'e' un problema piu'
-        // grande (un programma che tiene aperto un albero intero), e il conto completo finisce
-        // comunque nell'avviso dell'esito.
-        foreach (var rel in skipped.Take(MaxExclusions))
+        // Si escludono TUTTI: escluderne solo una parte lascerebbe robocopy libero di sovrascrivere
+        // o cancellare gli altri senza copia precedente. Che ci stiano sulla riga di comando (circa
+        // 32 000 caratteri) lo garantisce chi chiama: oltre il limite il backup si ferma prima (vedi
+        // ExceedsExclusionLimit).
+        foreach (var rel in skipped)
         {
             var target = dirs.Contains(rel) ? clone.ExcludeDirs : clone.ExcludeFiles;
             target.Add(Path.Combine(current, rel));
@@ -395,7 +515,7 @@ public sealed class VersionedBackupService
                         // Cartella non spostata: va esclusa dal mirror, altrimenti la cancellerebbe
                         // come "extra" e il suo contenuto non esisterebbe piu' da nessuna parte.
                         progress?.Report(string.Format(CoreLoc.S("Diff_MoveFailed"), rel, ex.Message));
-                        skipped.Add(rel);
+                        AddSkipped(skipped, rel);
                     }
                     break;
                 }
@@ -404,7 +524,7 @@ public sealed class VersionedBackupService
                     if (File.Exists(Path.Combine(current, rel)))
                     {
                         if (MoveAside(current, versionDir, rel, progress)) { files++; Add(manifest.Deleted, done, rel); }
-                        else skipped.Add(rel);
+                        else AddSkipped(skipped, rel);
                     }
                     // Arrivata qui dentro con la cartella che la contiene: nel manifest ci va lo
                     // stesso, il ripristino deve sapere che quel file e' finito in questa versione.
@@ -419,7 +539,7 @@ public sealed class VersionedBackupService
                     if (File.Exists(Path.Combine(current, rel)))
                     {
                         if (MoveAside(current, versionDir, rel, progress)) { files++; Add(manifest.Changed, done, rel); }
-                        else skipped.Add(rel);
+                        else AddSkipped(skipped, rel);
                     }
                     else
                     {
@@ -437,7 +557,7 @@ public sealed class VersionedBackupService
     /// cercato in tutto l'albero); i file gia' spostati non si toccano due volte. Quelli spostati
     /// finiscono anche in <paramref name="movedList"/>; quelli che non si sono potuti spostare in
     /// <paramref name="skipped"/>, e chi chiama li esclude dalla passata prima che parta.</summary>
-    private static int MoveMatching(string current, string versionDir, IReadOnlyList<string> filters,
+    private static int MoveMatching(string current, string versionDir, string source, IReadOnlyList<string> filters,
         VersionManifest manifest, List<string> skipped, List<string> movedList, IProgress<string>? progress)
     {
         if (!Directory.Exists(current)) return 0;
@@ -447,7 +567,10 @@ public sealed class VersionedBackupService
             AttributesToSkip = FileAttributes.ReparsePoint,
             MatchCasing = MatchCasing.CaseInsensitive,
         };
-        var done = new HashSet<string>(manifest.Changed.Concat(manifest.Deleted).Concat(manifest.Added),
+        // Gia' trattati: quelli del manifest e quelli gia' saltati (in uso). Un file saltato e'
+        // escluso dalla passata: ritentarlo lo conterebbe due volte, o peggio, se stavolta si
+        // spostasse, lo toglierebbe da «current» senza che nessuno lo ricopi.
+        var done = new HashSet<string>(manifest.Changed.Concat(manifest.Deleted).Concat(manifest.Added).Concat(skipped),
             StringComparer.OrdinalIgnoreCase);
         var moved = 0;
         foreach (var filter in filters.Where(f => !string.IsNullOrWhiteSpace(f)))
@@ -455,12 +578,47 @@ public sealed class VersionedBackupService
             {
                 var rel = Path.GetRelativePath(current, file);
                 if (done.Contains(rel)) continue;
-                if (!MoveAside(current, versionDir, rel, progress)) { skipped.Add(rel); continue; }
+                // La passata forzata copia DALLA sorgente: un file che li' non c'e' piu' non verrebbe
+                // riscritto, e messo da parte uscirebbe dal backup. Con «Accumula» e' proprio un file
+                // che il backup deve tenere.
+                if (!File.Exists(Path.Combine(source, rel))) continue;
+                if (!MoveAside(current, versionDir, rel, progress))
+                {
+                    if (done.Add(rel)) skipped.Add(rel);
+                    continue;
+                }
                 Add(manifest.Changed, done, rel);
                 movedList.Add(rel);
                 moved++;
             }
         return moved;
+    }
+
+    /// <summary>Rimette in <c>current</c> i file che il gancio della forza-copia aveva messo da parte
+    /// e che la passata non ha riscritto: la copia in <c>current</c> manca e quella nella versione
+    /// c'e'. Li toglie dal manifest e da <paramref name="forced"/>. Restituisce quanti ne ha rimessi.
+    /// Un file che non si riesce a rimettere resta nella versione: non si perde.</summary>
+    private static int PutBackNotRewritten(string current, string versionDir, List<string> forced,
+        VersionManifest manifest)
+    {
+        var putBack = 0;
+        foreach (var rel in forced.ToList())
+        {
+            var inCurrent = Path.Combine(current, rel);
+            var kept = Path.Combine(versionDir, rel);
+            if (File.Exists(inCurrent) || !File.Exists(kept)) continue;
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(inCurrent)!);
+                File.Move(kept, inCurrent);
+            }
+            catch (Exception ex) when (!DiskError.IsUnreadable(ex)) { continue; }
+            manifest.Changed.RemoveAll(c => string.Equals(c, rel, StringComparison.OrdinalIgnoreCase));
+            forced.Remove(rel);
+            RemoveEmptyParents(versionDir, Path.GetDirectoryName(kept), manifest);
+            putBack++;
+        }
+        return putBack;
     }
 
     /// <summary>Toglie dalla versione le copie dei file forzati che la passata ha riscritto

@@ -119,8 +119,11 @@ public static class RestoreCopier
 
             // Si copia su un nome temporaneo e solo a copia finita si da' il nome vero: un disco
             // pieno o un errore di lettura a meta' non lasciano un file troncato col nome giusto,
-            // che sembrerebbe ripristinato e al tentativo dopo risulterebbe «gia' presente».
-            var tmp = $"{destPath}.{Guid.NewGuid():N}.rbk-tmp";
+            // che sembrerebbe ripristinato e al tentativo dopo risulterebbe «gia' presente». Il
+            // temporaneo ha un nome suo, corto, nella stessa cartella (la rinomina finale resta
+            // istantanea): aggiunto in fondo al nome vero sforerebbe i 255 caratteri di NTFS con i
+            // nomi lunghi, che non si potrebbero piu' ripristinare.
+            var tmp = Path.Combine(Path.GetDirectoryName(destPath)!, $"~rbk-{Guid.NewGuid():N}.tmp");
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
@@ -145,7 +148,17 @@ public static class RestoreCopier
             }
             finally
             {
-                try { if (File.Exists(tmp)) File.Delete(tmp); } catch { /* resta un .rbk-tmp: innocuo */ }
+                // La copia si porta dietro la sola lettura del file di backup, e un file in sola
+                // lettura non si cancella: la si toglie prima.
+                try
+                {
+                    if (File.Exists(tmp))
+                    {
+                        File.SetAttributes(tmp, FileAttributes.Normal);
+                        File.Delete(tmp);
+                    }
+                }
+                catch { /* resta un ~rbk-*.tmp: innocuo */ }
             }
 
             progress?.Report((done, total));

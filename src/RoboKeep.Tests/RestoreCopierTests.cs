@@ -76,6 +76,22 @@ public class RestoreCopierTests : IDisposable
     }
 
     [Fact]
+    public async Task AVeryLongFileName_IsRestored()
+    {
+        // Un nome di 230 caratteri sta nei 255 che NTFS concede a un nome, ma non se il nome
+        // temporaneo della copia ci aggiunge qualcosa in fondo: il temporaneo deve averne uno suo.
+        var name = new string('n', 226) + ".txt";
+        var a = Make(Path.Combine("src", name), "lungo");
+        var target = Path.Combine(_root, "dentro");
+
+        var outcome = await RestoreCopier.CopyAsync(Plan(new[] { Entry(name, a) }), target);
+
+        Assert.Empty(outcome.Failures);
+        Assert.Equal("lungo", File.ReadAllText(Path.Combine(target, name)));
+        Assert.Equal(new[] { name }, Directory.GetFiles(target).Select(Path.GetFileName));
+    }
+
+    [Fact]
     public async Task AnUnreadableFile_IsListed_AndTheOthersStillArrive()
     {
         var locked = Make(@"src\bloccato.txt", "in uso");

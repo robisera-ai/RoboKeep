@@ -15,6 +15,20 @@ public sealed class JobCancelledException : OperationCanceledException
         : base("Annullato dall'utente.", token) => PartialOutput = partialOutput;
 }
 
+/// <summary>Cosa fare della passata "forza copia", deciso da chi la prepara (il versioning).</summary>
+public enum ForcedPass
+{
+    /// <summary>Si esegue, e a passata riuscita gli hash della modalita' smart si salvano.</summary>
+    Run,
+
+    /// <summary>Si esegue, ma qualche file e' escluso (in uso, non messo da parte): gli hash non si
+    /// salvano, altrimenti quei file sembrerebbero gia' ricopiati e non lo sarebbero piu'.</summary>
+    RunWithoutSavingHashes,
+
+    /// <summary>Non si esegue: i file da escludere sono troppi per la riga di comando.</summary>
+    Skip,
+}
+
 /// <summary>Risultato grezzo di un'esecuzione robocopy: esito + output testuale completo.</summary>
 public sealed class RobocopyRunResult
 {
@@ -39,19 +53,24 @@ public sealed class RobocopyRunner
     private readonly ForceCopyPlanner? _forceCopyPlanner;
     private readonly Func<string?, DiskMedia> _detectMedia;
     private readonly Func<string?> _createUnicodeLog;
+    private readonly TimeSpan _probeTimeout;
 
     private static readonly Encoding OemEncoding = ResolveOemEncoding();
 
     /// <param name="detectMedia">Rilevatore del tipo di disco (iniettabile nei test); default <see cref="StorageProbe.Detect"/>.</param>
     /// <param name="createUnicodeLog">Prepara il file per <c>/UNILOG</c> e ne restituisce il percorso, o
     /// null se non si puo' (iniettabile nei test, per provare il ripiego sullo stdout).</param>
+    /// <param name="probeTimeout">Quanto aspettare la risposta di <c>robocopy /?</c>; default 60 s.
+    /// Misurato su questa macchina con il processore al 100 %: fino a 12,5 s.</param>
     public RobocopyRunner(string? robocopyPath = null, ForceCopyPlanner? forceCopyPlanner = null,
-        Func<string?, DiskMedia>? detectMedia = null, Func<string?>? createUnicodeLog = null)
+        Func<string?, DiskMedia>? detectMedia = null, Func<string?>? createUnicodeLog = null,
+        TimeSpan? probeTimeout = null)
     {
         _robocopyPath = robocopyPath ?? Path.Combine(Environment.SystemDirectory, "Robocopy.exe");
         _forceCopyPlanner = forceCopyPlanner;
         _detectMedia = detectMedia ?? StorageProbe.Detect;
         _createUnicodeLog = createUnicodeLog ?? CreateUnicodeLog;
+        _probeTimeout = probeTimeout ?? TimeSpan.FromSeconds(60);
     }
 
     [DllImport("kernel32.dll")]
@@ -70,17 +89,28 @@ public sealed class RobocopyRunner
         }
     }
 
-    // Supporto a /IM, per eseguibile: si chiede a robocopy stesso (il suo help la elenca o no),
-    // una volta sola. Un'opzione sconosciuta lo farebbe uscire con errore grave senza copiare nulla.
+    // Supporto a /IM, per eseguibile: si chiede a robocopy stesso (il suo help la elenca o no).
+    // Un'opzione sconosciuta lo farebbe uscire con errore grave senza copiare nulla. Si ricordano solo
+    // le risposte vere: una domanda rimasta senza risposta (PC sotto carico, processo che non parte)
+    // si rifa' al run successivo, invece di spegnere /IM finche' il programma resta aperto.
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, bool> IncludeModifiedSupport = new();
 
-    private bool SupportsIncludeModified() => IncludeModifiedSupport.GetOrAdd(_robocopyPath, path =>
+    /// <summary>true/false se robocopy ha risposto; null se non si e' potuto sapere.</summary>
+    private bool? SupportsIncludeModified()
+    {
+        if (IncludeModifiedSupport.TryGetValue(_robocopyPath, out var known)) return known;
+        var answer = ProbeIncludeModified();
+        if (answer is bool supported) IncludeModifiedSupport[_robocopyPath] = supported;
+        return answer;
+    }
+
+    private bool? ProbeIncludeModified()
     {
         try
         {
             var psi = new ProcessStartInfo
             {
-                FileName = path,
+                FileName = _robocopyPath,
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
                 CreateNoWindow = true,
@@ -88,19 +118,19 @@ public sealed class RobocopyRunner
             };
             psi.ArgumentList.Add("/?");
             using var p = Process.Start(psi);
-            if (p is null) return false;
+            if (p is null) return null;
             // Il tempo massimo deve valere anche per la lettura: un ReadToEnd sincrono aspetterebbe
             // per sempre un robocopy che non risponde, prima ancora di arrivare al WaitForExit.
             var read = p.StandardOutput.ReadToEndAsync();
-            if (!read.Wait(10_000))
+            if (!read.Wait(_probeTimeout))
             {
                 try { p.Kill(); } catch { /* gia' uscito */ }
-                return false;
+                return null;
             }
             return read.Result.Contains("/IM ", StringComparison.OrdinalIgnoreCase);
         }
-        catch { return false; }
-    });
+        catch { return null; }
+    }
 
     /// <summary>Copia del job adatta a un'anteprima che deve CONTARE (guardia sulle cancellazioni,
     /// elenco dei cambiamenti delle versioni).
@@ -123,14 +153,15 @@ public sealed class RobocopyRunner
     /// <param name="beforeForceCopyPass">Invocato (mai in anteprima) subito prima della passata
     /// "forza copia", con i filtri che robocopy ricevera'. Serve al versioning: la passata
     /// sovrascrive SUL POSTO, e chi versiona deve prima mettere da parte la copia precedente di
-    /// quei file, altrimenti la versione non la conterrebbe.</param>
+    /// quei file, altrimenti la versione non la conterrebbe. La risposta decide se la passata parte
+    /// e se, dopo, gli hash della modalita' smart si possono salvare (vedi <see cref="ForcedPass"/>).</param>
     /// <param name="listDetails">Chiede a robocopy un elenco con percorso completo e byte
     /// (<c>/FP /BYTES</c>): serve solo all'anteprima dei job con versioni, che quelle
     /// righe deve leggerle (vedi <see cref="RobocopyListParser"/>).</param>
     public async Task<RobocopyRunResult> RunAsync(
         BackupJob job, bool dryRun = false, IProgress<string>? progress = null, CancellationToken ct = default,
         string? destinationOverride = null, string? sourceOverride = null,
-        Func<IReadOnlyList<string>, Task>? beforeForceCopyPass = null, bool listDetails = false)
+        Func<IReadOnlyList<string>, Task<ForcedPass>>? beforeForceCopyPass = null, bool listDetails = false)
     {
         var started = DateTime.Now;
 
@@ -173,20 +204,29 @@ public sealed class RobocopyRunner
         var counts = RobocopyOutputParser.ParseCounts(text1.Split('\n'));
         var exitCombined = exit1;
 
+        // Senza risposta sul supporto a /IM la passata forzata va senza. Nei job con versioni non
+        // cambia niente (il gancio ha messo da parte i file, che si ricopiano come nuovi); negli altri
+        // robocopy potrebbe saltare i file riscritti con stessa data e dimensione, proprio quelli per
+        // cui la forza copia esiste. Allora niente hash salvati (si riprova al prossimo run) e un
+        // avviso nell'esito, invece di un "OK" con la copia vecchia.
+        var imUnknown = false;
+
         // Passata "Forza copia": solo se la lista è valorizzata e c'è un pianificatore — e mai
         // dopo un errore hardware: il disco va lasciato in pace.
         if (hardwareError is null && job.ForceCopyFiles is { Count: > 0 } && _forceCopyPlanner is not null)
         {
             var plan = await _forceCopyPlanner.PlanAsync(job, progress, ct).ConfigureAwait(false);
-            if (plan.Filters.Count > 0)
+            var decision = plan.Filters.Count > 0 && !dryRun && beforeForceCopyPass is not null
+                ? await beforeForceCopyPass(plan.Filters).ConfigureAwait(false)
+                : ForcedPass.Run;
+            if (plan.Filters.Count > 0 && decision != ForcedPass.Skip)
             {
-                if (!dryRun && beforeForceCopyPass is not null)
-                    await beforeForceCopyPass(plan.Filters).ConfigureAwait(false);
-
+                var includeModified = SupportsIncludeModified();
+                imUnknown = includeModified is null && !job.Versioned && !dryRun;
                 var pass2Args = RobocopyArgsBuilder.BuildForceCopyPass(
                     job, plan.Filters, dryRun, destinationOverride: destinationOverride,
                     sourceOverride: sourceOverride, maxThreads: maxThreads,
-                    includeModified: SupportsIncludeModified());
+                    includeModified: includeModified ?? false);
                 var (exit2, text2, hardwareError2, _) = await RunPassAsync(pass2Args, progress, ct).ConfigureAwait(false);
                 hardwareError = hardwareError2;
                 fullText.AppendLine().Append(text2);
@@ -202,8 +242,10 @@ public sealed class RobocopyRunner
                     counts.DirsFailed + c2.DirsFailed,
                     counts.DirsExtra + c2.DirsExtra);
 
-                // Aggiorna gli hash salvati solo a passata forzata riuscita (così un errore = ricopia al prossimo run).
-                if (!dryRun && plan.Smart && hardwareError2 is null && ExitCodeInterpreter.Interpret(exit2).Success)
+                // Aggiorna gli hash salvati solo a passata forzata riuscita e completa (così un errore,
+                // o un file lasciato fuori perché in uso, = ricopia al prossimo run).
+                if (!dryRun && plan.Smart && hardwareError2 is null && !imUnknown && decision == ForcedPass.Run
+                    && ExitCodeInterpreter.Interpret(exit2).Success)
                     _forceCopyPlanner.Commit(job.Name, plan.NewHashes);
             }
         }
@@ -245,6 +287,7 @@ public sealed class RobocopyRunner
             DirsFailed = counts.DirsFailed,
             DirsExtra = counts.DirsExtra,
         };
+        if (imUnknown) result.VersionNotes.Add(CoreLoc.S("ForceCopy_ImUnknown"));
 
         return new RobocopyRunResult { Result = result, Output = text, ExactNames = exactNames };
     }
