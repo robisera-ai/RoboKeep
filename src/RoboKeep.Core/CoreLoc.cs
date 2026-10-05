@@ -533,6 +533,12 @@ public static class CoreLoc
             "{0} bloques dañados, {1} errores de E/S, {2} errores del sistema de archivos (último: {3})",
             "{0} blocs défectueux, {1} erreurs d'E/S, {2} erreurs du système de fichiers (dernière : {3})",
             "{0} defekte Blöcke, {1} E/A-Fehler, {2} Dateisystemfehler (zuletzt: {3})"),
+        ["Health_Acknowledged"] = L(
+            "— altri {0} già controllati (fino al {1})",
+            "— {0} more already checked (up to {1})",
+            "— otros {0} ya revisados (hasta el {1})",
+            "— {0} autres déjà vérifiées (jusqu'au {1})",
+            "— {0} weitere bereits geprüft (bis {1})"),
         ["Health_Warning"] = L(
             "[disco] ATTENZIONE: negli ultimi giorni Windows ha registrato errori sul disco {0} (o su un altro disco che ha usato la stessa lettera): {1}. Controlla cavo, box e alimentazione, poi la salute del disco (SMART), prima che il problema diventi un danno.",
             "[disk] WARNING: in the last few days Windows logged errors on disk {0} (or on another disk that used the same letter): {1}. Check cable, enclosure and power, then the disk's health (SMART), before the problem turns into damage.",

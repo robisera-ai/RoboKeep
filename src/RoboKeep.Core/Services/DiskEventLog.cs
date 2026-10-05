@@ -11,14 +11,26 @@ namespace RoboKeep.Core.Services;
 /// tipici anche di un disco che "sparisce" per cavo, box o alimentazione.</param>
 /// <param name="FileSystemErrors">Scritture perse e corruzione NTFS (Ntfs 50, 55, 137, 140).</param>
 /// <param name="Latest">Momento dell'errore più recente.</param>
-public sealed record DiskEventSummary(int BadBlocks, int IoErrors, int FileSystemErrors, DateTime? Latest)
+/// <param name="Acknowledged">Errori che l'utente ha già controllato («Ho controllato», vedi
+/// <see cref="DiskEventAcknowledgements"/>): non sono nei conteggi e non fanno scattare avvisi,
+/// ma si dicono, perché non spariscano senza traccia.</param>
+/// <param name="AcknowledgedUntil">Fino a quando sono stati controllati.</param>
+public sealed record DiskEventSummary(int BadBlocks, int IoErrors, int FileSystemErrors, DateTime? Latest,
+    int Acknowledged = 0, DateTime? AcknowledgedUntil = null)
 {
     public static readonly DiskEventSummary None = new(0, 0, 0, null);
     public int Total => BadBlocks + IoErrors + FileSystemErrors;
 
     /// <summary>Riga leggibile e localizzata con i conteggi, per avvisi e log.</summary>
-    public string Describe() => string.Format(CoreLoc.S("Health_Detail"),
-        BadBlocks, IoErrors, FileSystemErrors, Latest?.ToString("g") ?? "-");
+    public string Describe()
+    {
+        var text = string.Format(CoreLoc.S("Health_Detail"),
+            BadBlocks, IoErrors, FileSystemErrors, Latest?.ToString("g") ?? "-");
+        return Acknowledged > 0
+            ? text + " " + string.Format(CoreLoc.S("Health_Acknowledged"), Acknowledged,
+                AcknowledgedUntil?.ToString("g") ?? "-")
+            : text;
+    }
 }
 
 /// <summary>
@@ -63,22 +75,38 @@ public static class DiskEventLog
 
     /// <summary>Somma una sequenza di eventi già filtrati (funzione pura, usata anche dai test).</summary>
     public static DiskEventSummary Summarize(IEnumerable<(string Provider, int Id, DateTime When)> events)
+        => Summarize(events, acknowledgedUntil: null);
+
+    /// <summary>Come sopra, ma gli eventi fino a <paramref name="acknowledgedUntil"/> (già controllati
+    /// dall'utente) non si contano: si ricorda solo quanti sono.</summary>
+    public static DiskEventSummary Summarize(IEnumerable<(string Provider, int Id, DateTime When)> events,
+        DateTime? acknowledgedUntil)
     {
-        int bad = 0, io = 0, fs = 0;
+        int bad = 0, io = 0, fs = 0, acknowledged = 0;
         DateTime? latest = null;
         foreach (var e in events)
         {
-            switch (Classify(e.Provider, e.Id))
+            var kind = Classify(e.Provider, e.Id);
+            if (kind == Kind.None) continue;
+            if (acknowledgedUntil is DateTime until && e.When <= until)
+            {
+                acknowledged++;
+                continue;
+            }
+            switch (kind)
             {
                 case Kind.BadBlock: bad++; break;
                 case Kind.Io: io++; break;
                 case Kind.FileSystem: fs++; break;
-                default: continue;
             }
             if (latest is null || e.When > latest) latest = e.When;
         }
-        return new DiskEventSummary(bad, io, fs, latest);
+        return new DiskEventSummary(bad, io, fs, latest, acknowledged, acknowledged > 0 ? acknowledgedUntil : null);
     }
+
+    /// <summary>Gli errori già controllati dall'utente, per disco («Ho controllato»). Lo imposta
+    /// l'applicazione all'avvio (AppHost); null = nessuno, si conta tutto.</summary>
+    public static DiskEventAcknowledgements? Acknowledgements { get; set; }
 
     /// <summary>Validità della cache per lettera: la lettura del registro costa secondi, e lo
     /// stesso disco viene interrogato dal pre-avvio e poi dal runner, per ogni job in coda.</summary>
@@ -108,14 +136,15 @@ public static class DiskEventLog
                 if (_cache.TryGetValue(key, out var hit) && DateTime.Now - hit.At < CacheTtl)
                     return hit.Summary;
             }
-            var summary = Read(root[0], window);
+            var acknowledgedUntil = Acknowledgements?.Until(VolumeIdentity.ForPath(root)?.VolumeId);
+            var summary = Read(root[0], window, acknowledgedUntil);
             lock (_cache) _cache[key] = (DateTime.Now, summary);
             return summary;
         }
         catch { return DiskEventSummary.None; }
     }
 
-    private static DiskEventSummary Read(char letter, TimeSpan? window)
+    private static DiskEventSummary Read(char letter, TimeSpan? window, DateTime? acknowledgedUntil)
     {
         try
         {
@@ -160,7 +189,7 @@ public static class DiskEventLog
                         matched.Add((provider, ev.Id, when));
                 }
             }
-            return Summarize(matched);
+            return Summarize(matched, acknowledgedUntil);
         }
         catch { return DiskEventSummary.None; }
     }

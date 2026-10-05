@@ -7,8 +7,10 @@ using RoboKeep.Localization;
 namespace RoboKeep;
 
 /// <summary>Riga della griglia cronologia (testi già formattati).</summary>
+/// <param name="NoLogKey">Il testo da mostrare se la voce non ha un log: per un job saltato dice
+/// il perché.</param>
 public sealed record HistoryRow(string When, string Job, string Kind, string Outcome,
-    string Counts, string Duration, string? LogPath, bool IsSkipped = false);
+    string Counts, string Duration, string? LogPath, string NoLogKey = "Hist_NoLog");
 
 public partial class HistoryWindow : Wpf.Ui.Controls.FluentWindow
 {
@@ -52,17 +54,27 @@ public partial class HistoryWindow : Wpf.Ui.Controls.FluentWindow
             ? Loc.Instance["Hist_OutcomeSkipped"]
             : e.IsCancelled ? Loc.Instance["Run_Cancelled"]
             : e.Success ? "OK" : Loc.Instance["Run_Error"];
+        var skip = SkipTextKeys(e.Reason);
         var counts = e.Kind switch
         {
-            RunHistoryEntry.KindSkipped => Loc.Instance["Hist_CountsSkipped"],
+            RunHistoryEntry.KindSkipped => Loc.Instance[skip.Counts],
             RunHistoryEntry.KindCancelled => Loc.Instance["Hist_CountsCancelled"],
             RunHistoryEntry.KindVerify => string.Format(Loc.Instance["Hist_CountsVerify"], e.FilesCopied, e.FilesFailed, e.FilesSkipped),
             _ => string.Format(Loc.Instance["Hist_CountsBackup"], e.FilesCopied, e.FilesSkipped, e.FilesFailed + e.DirsFailed),
         };
         var duration = (e.FinishedAt - e.StartedAt).ToString(@"hh\:mm\:ss");
         return new HistoryRow($"{e.StartedAt:dd/MM/yyyy HH:mm}", e.JobName, kind, outcome, counts, duration,
-            e.LogPath, e.IsSkipped);
+            e.LogPath, e.IsSkipped ? skip.NoLog : "Hist_NoLog");
     }
+
+    /// <summary>Le chiavi dei testi di un job saltato, secondo il motivo: disco atteso non collegato
+    /// (motivo null, il caso storico), stesso job gia' in esecuzione, destinazione occupata.</summary>
+    public static (string Counts, string NoLog) SkipTextKeys(string? reason) => reason switch
+    {
+        RunHistoryEntry.ReasonAlreadyRunning => ("Hist_CountsAlreadyRunning", "Hist_NoLogAlreadyRunning"),
+        RunHistoryEntry.ReasonDestinationBusy => ("Hist_CountsDestinationBusy", "Hist_NoLogDestinationBusy"),
+        _ => ("Hist_CountsSkipped", "Hist_NoLogSkipped"),
+    };
 
     private void OnOpenLog(object sender, RoutedEventArgs e)
     {
@@ -73,7 +85,7 @@ public partial class HistoryWindow : Wpf.Ui.Controls.FluentWindow
             // e il suo esito è nel riepilogo della console; il job saltato non ha girato affatto.
             // Chi apre un salto sta cercando proprio il perché: parlargli di verifiche o di
             // pulizia automatica lo manderebbe fuori strada.
-            MessageBox.Show(Loc.Instance[row.IsSkipped ? "Hist_NoLogSkipped" : "Hist_NoLog"], row.Job,
+            MessageBox.Show(Loc.Instance[row.NoLogKey], row.Job,
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }

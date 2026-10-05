@@ -38,4 +38,17 @@ public static class PreflightChecker
 
         return w;
     }
+
+    /// <summary>I dischi i cui errori del registro di Windows l'utente puo' segnare come
+    /// controllati («Ho controllato, avvia»), ciascuno fino all'ultimo errore mostrato: gli errori
+    /// che arriveranno dopo devono avvisare di nuovo.</summary>
+    public static IReadOnlyList<(string Path, DateTime Until)> AcknowledgeableDisks(BackupJob job, PreflightInputs i)
+    {
+        var disks = new List<(string, DateTime)>();
+        if (i.DestinationDiskEvents is { Total: > 0, Latest: DateTime destLatest })
+            disks.Add((job.Destination, destLatest));
+        if (i.SourceDiskEvents is { Total: > 0, Latest: DateTime sourceLatest })
+            disks.Add((job.Source, sourceLatest));
+        return disks;
+    }
 }

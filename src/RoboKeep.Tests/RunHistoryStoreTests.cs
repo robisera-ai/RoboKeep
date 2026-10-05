@@ -18,6 +18,32 @@ public class RunHistoryStoreTests : IDisposable
         => Assert.Empty(new RunHistoryStore(StorePath).List());
 
     [Fact]
+    public void TheReasonOfASkip_SurvivesSavingAndReading()
+    {
+        var s = new RunHistoryStore(StorePath);
+        s.Append(RunHistoryEntry.ForSkipped("A", DateTime.Now, RunHistoryEntry.ReasonAlreadyRunning));
+
+        Assert.Equal(RunHistoryEntry.ReasonAlreadyRunning, Assert.Single(s.List()).Reason);
+    }
+
+    [Fact]
+    public void AnOldFileWithoutTheReason_IsStillRead()
+    {
+        // Le cronologie scritte dalle versioni precedenti non hanno il campo: si leggono uguali,
+        // e un salto senza motivo resta quello di sempre (disco non collegato).
+        Directory.CreateDirectory(_dir);
+        // Il formato vero del file (nomi in camelCase), come lo scrivevano le versioni precedenti.
+        File.WriteAllText(StorePath,
+            "[{\"jobName\":\"A\",\"kind\":\"skipped\",\"startedAt\":\"2026-09-30T10:00:00\",\"finishedAt\":\"2026-09-30T10:00:00\"," +
+            "\"success\":true,\"exitCode\":0,\"filesCopied\":0,\"filesSkipped\":0,\"filesExtra\":0,\"filesFailed\":0,\"dirsFailed\":0,\"logPath\":null}]");
+
+        var entry = Assert.Single(new RunHistoryStore(StorePath).List());
+
+        Assert.True(entry.IsSkipped);
+        Assert.Null(entry.Reason);
+    }
+
+    [Fact]
     public void Append_ThenList_NewestFirst()
     {
         var s = new RunHistoryStore(StorePath);

@@ -242,6 +242,38 @@ public sealed class DiskHealthAndVerifyScheduleTests : IDisposable
     }
 
     [Fact]
+    public async Task AnUnexpectedVerifyError_LeavesAHistoryEntryWithItsLog()
+    {
+        // Una verifica che si rompe per un errore qualunque (cartella sparita, rete caduta) diceva
+        // solo una riga a video: di notte nessuno la leggeva, e nella cronologia non restava niente.
+        File.WriteAllText(Path.Combine(Src, "a.txt"), "x");
+        var history = new RunHistoryStore(Path.Combine(_root, "history.json"));
+        var job = new BackupJob { Name = "T", Source = Src, Destination = Dst, VerifyAfterRun = true, VerifyEveryDays = 0 };
+
+        await NewRunner(history, _ => DiskEventSummary.None).RunJobAsync(job, progress: new DeleteSourceOnRecap(Src));
+
+        var verify = Assert.Single(history.List("T"), e => e.Kind == RunHistoryEntry.KindVerify);
+        Assert.False(verify.IsCompletedVerify);   // la verifica resta da fare
+        Assert.NotNull(verify.LogPath);
+        Assert.True(File.Exists(verify.LogPath));
+    }
+
+    /// <summary>Cancella la sorgente quando arriva il riepilogo del backup («… (RoboKeep)»): cioe'
+    /// dopo la copia e prima della verifica.</summary>
+    private sealed class DeleteSourceOnRecap : IProgress<string>
+    {
+        private readonly string _source;
+        private bool _done;
+        public DeleteSourceOnRecap(string source) => _source = source;
+        public void Report(string value)
+        {
+            if (_done || !value.Contains("(RoboKeep)")) return;
+            _done = true;
+            Directory.Delete(_source, recursive: true);
+        }
+    }
+
+    [Fact]
     public void InterruptedVerify_DoesNotCountAsTheLastVerification()
     {
         var interrupted = RunHistoryEntry.ForVerifyInterrupted("T", DateTime.Now, null);

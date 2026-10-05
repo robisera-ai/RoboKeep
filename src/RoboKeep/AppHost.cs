@@ -17,6 +17,8 @@ public sealed class AppHost
     public RunHistoryStore History { get; }
     public FaultedDiskStore FaultedDisks { get; }
     public UpdateStateStore UpdateState { get; }
+    /// <summary>«Ho controllato»: gli errori del registro di Windows gia' guardati, per disco.</summary>
+    public DiskEventAcknowledgements DiskEventAcks { get; }
     public string LockFolder => Path.Combine(Store.DirectoryPath, "locks");
     /// <summary>Cartella delle sessioni usa-e-getta per lo scambio con l'helper SMART elevato.</summary>
     public string SmartSessionRoot => Path.Combine(Store.DirectoryPath, "smart");
@@ -35,6 +37,10 @@ public sealed class AppHost
         History = new RunHistoryStore(Path.Combine(store.DirectoryPath, "runhistory.json"));
         FaultedDisks = new FaultedDiskStore(Path.Combine(store.DirectoryPath, "faulted-disks.json"));
         UpdateState = new UpdateStateStore(Path.Combine(store.DirectoryPath, "update-state.json"));
+        DiskEventAcks = new DiskEventAcknowledgements(Path.Combine(store.DirectoryPath, "disk-acks.json"));
+        // Vale per tutti i lettori del registro eventi: pre-avvio, backup (anche dall'attivita'
+        // pianificata, che passa da qui) e pannello Salute dischi.
+        DiskEventLog.Acknowledgements = DiskEventAcks;
     }
 
     public static AppHost Load(string? configPath = null)

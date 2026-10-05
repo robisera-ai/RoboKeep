@@ -368,21 +368,24 @@ public sealed class MainViewModel : ObservableObject
         var budget = TimeSpan.FromSeconds(2);
         var models = jobs.Select(j => (j.Name, j.Model)).ToList();
         List<string> messages;
+        List<(string Path, DateTime Until)> acknowledgeable;
 
         _preflighting = true;
         IsBusy = true;
         try
         {
-            messages = await Task.Run(() =>
+            (messages, acknowledgeable) = await Task.Run(() =>
             {
                 var list = new List<string>();
+                var disks = new List<(string, DateTime)>();
                 foreach (var (name, job) in models)
                 {
                     var inputs = PreflightCollector.Collect(job, minFree, budget);
                     foreach (var warn in PreflightChecker.Evaluate(inputs))
                         list.Add($"- {name}: {Loc.Instance[warn.MessageKey]} {warn.Detail}".TrimEnd());
+                    disks.AddRange(PreflightChecker.AcknowledgeableDisks(job, inputs));
                 }
-                return list;
+                return (list, disks);
             });
         }
         finally
@@ -395,10 +398,28 @@ public sealed class MainViewModel : ObservableObject
             return true;
 
         var body = Loc.Instance["Preflight_ConfirmIntro"] + "\n\n" + string.Join("\n", messages);
-        var res = System.Windows.MessageBox.Show(
-            body, Loc.Instance["Preflight_ConfirmTitle"],
-            System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning);
-        return res == System.Windows.MessageBoxResult.Yes;
+        var window = new PreflightWindow(body, canAcknowledge: acknowledgeable.Count > 0);
+        // Finestra ridotta nella barra di notifica (avvio da «Avvia tutti» dell'icona): una finestra
+        // figlia di una finestra nascosta non si vedrebbe. Allora sta da sola, in primo piano.
+        if (System.Windows.Application.Current?.MainWindow is { IsVisible: true } owner)
+            window.Owner = owner;
+        else
+        {
+            window.WindowStartupLocation = System.Windows.WindowStartupLocation.CenterScreen;
+            window.Topmost = true;
+        }
+        window.ShowDialog();
+
+        if (window.Choice == PreflightChoice.AcknowledgeAndStart)
+        {
+            // Si segna, per ogni disco, fino all'ultimo errore mostrato: quelli successivi
+            // avviseranno di nuovo. Il disco si riconosce dal volume, non dalla lettera.
+            foreach (var (path, until) in acknowledgeable)
+                if (VolumeIdentity.ForPath(path)?.VolumeId is { } volumeId)
+                    _host.DiskEventAcks.Acknowledge(volumeId, until);
+            DiskEventLog.ClearCache();
+        }
+        return window.Choice != PreflightChoice.Cancel;
     }
 
     /// <summary>Ricostruisce la collezione dei job dalla configurazione corrente.</summary>
@@ -734,6 +755,12 @@ public sealed class MainViewModel : ObservableObject
         catch (Exception ex)
         {
             Enqueue($"!! {sel.Name}: {ex.Message}");
+            // Anche qui la verifica non fatta lascia il suo log e la sua voce di cronologia (e
+            // resta da fare). verifyLog e' ancora null se l'errore e' arrivato prima di cominciare.
+            var rec = verifyLog ?? new VerifyLogRecorder(progress);
+            rec.Report(string.Format(RoboKeep.Core.CoreLoc.S("Verify_Failed"), ex.Message));
+            _host.History.Append(RunHistoryEntry.ForVerifyInterrupted(job.Name, started,
+                rec.Save(new LogService(_host.Config.Settings), job.Name, started, null)));
         }
         finally
         {

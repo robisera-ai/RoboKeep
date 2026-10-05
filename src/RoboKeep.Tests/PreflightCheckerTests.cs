@@ -8,6 +8,30 @@ public class PreflightCheckerTests
     private const long Mb = 1024L * 1024L;
 
     [Fact]
+    public void DiskErrors_CanBeMarkedAsChecked_UpToTheLatestOneShown()
+    {
+        // «Ho controllato» vale per gli errori mostrati, non per quelli che arriveranno: la data
+        // salvata e' quella dell'ultimo errore del riepilogo, non l'ora del clic.
+        var job = new BackupJob { Source = @"D:\Dati", Destination = @"E:\Backup" };
+        var latest = new DateTime(2026, 10, 1, 2, 7, 49);
+        var inputs = new PreflightInputs(true, 10_000 * Mb, 1024 * Mb, 100 * Mb, null,
+            new DiskEventSummary(0, 295, 7, latest), DiskEventSummary.None);
+
+        var disk = Assert.Single(PreflightChecker.AcknowledgeableDisks(job, inputs));
+
+        Assert.Equal((@"E:\Backup", latest), (disk.Path, disk.Until));
+    }
+
+    [Fact]
+    public void WithoutDiskErrors_ThereIsNothingToMarkAsChecked()
+    {
+        var job = new BackupJob { Source = @"D:\Dati", Destination = @"E:\Backup" };
+        var inputs = new PreflightInputs(true, 10 * Mb, 1024 * Mb, 100 * Mb);   // solo spazio scarso
+
+        Assert.Empty(PreflightChecker.AcknowledgeableDisks(job, inputs));
+    }
+
+    [Fact]
     public void AllGood_NoWarnings()
     {
         var w = PreflightChecker.Evaluate(new PreflightInputs(

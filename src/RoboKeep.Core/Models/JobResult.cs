@@ -80,12 +80,13 @@ public sealed class JobResult
     /// migliaia di righe di robocopy.</summary>
     public string? ThreadCapNote { get; set; }
 
-    /// <summary>Avvisi del versioning che l'utente deve leggere anche quando il backup è riuscito:
-    /// oggi, i file che erano in uso e non si sono potuti mettere da parte. Quei file sono stati
-    /// LASCIATI come stavano (esclusi da questo mirror) invece di essere sovrascritti senza copia
-    /// precedente, e vanno ritentati al prossimo backup: un esito "OK" che nasconde la notizia
-    /// sarebbe una bugia. Finiscono nel riepilogo, nel log e nell'email, come
-    /// <see cref="ThreadCapNote"/> e <see cref="HealthWarnings"/>.</summary>
+    /// <summary>Avvisi che l'utente deve leggere anche quando il backup è riuscito: i file che
+    /// erano in uso e non si sono potuti mettere da parte, il mirror partito senza la soglia sulle
+    /// cancellazioni perché l'anteprima non è riuscita, la forza copia senza risposta su /IM… Un
+    /// esito "OK" che nasconde la notizia sarebbe una bugia. Finiscono nel riepilogo, nel log e
+    /// nell'email (e la fanno partire anche con «solo in caso di errore»), come
+    /// <see cref="ThreadCapNote"/> e <see cref="HealthWarnings"/>. Il nome è storico: nacquero per
+    /// il versioning.</summary>
     public List<string> VersionNotes { get; } = new();
 
     // Conteggi estratti dal riepilogo robocopy (best-effort, indipendenti dalla lingua).

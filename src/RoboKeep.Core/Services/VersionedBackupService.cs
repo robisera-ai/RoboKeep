@@ -95,7 +95,9 @@ public sealed class VersionedBackupService
         // Anteprima non riuscita per altro (un file o una cartella della sorgente illeggibili): la
         // guardia non ha numeri su cui decidere. Il run prosegue come nei mirror senza versioni,
         // ma lo si dice nel riepilogo, nel log e nell'email: e' partito senza rete di sicurezza.
-        var guardNote = job.Mirror && !preview.Result.Success && !preview.Result.HardwareError
+        // Solo con la soglia accesa: a zero non c'e' nessuna rete di sicurezza da perdere.
+        var guardNote = job.Mirror && job.MirrorDeleteLimitPercent > 0
+            && !preview.Result.Success && !preview.Result.HardwareError
             ? CoreLoc.S("Guard_PreviewFailed") : null;
         if (guardNote is not null) progress?.Report(guardNote);
 

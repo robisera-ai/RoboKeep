@@ -342,6 +342,66 @@ public sealed class MirrorDeleteGuardTests : IDisposable
     }
 
     [Fact]
+    public async Task WhenThePreviewFails_TheNoteReachesTheOutcome_NotOnlyTheScreen()
+    {
+        // Il log e l'email si costruiscono dalle note dell'esito: una riga solo a video, in
+        // un'attivita' pianificata, non la legge nessuno.
+        var result = await FakeRunner(FakeRobocopyThatFails()).RunJobAsync(LocalJob());
+
+        Assert.Contains(CoreLoc.S("Guard_PreviewFailed"), result.VersionNotes);
+    }
+
+    [Fact]
+    public async Task WithTheThresholdOff_ThereIsNoNoteAboutIt()
+    {
+        var result = await FakeRunner(FakeRobocopyThatFails()).RunJobAsync(LocalJob(limit: 0));
+
+        Assert.DoesNotContain(CoreLoc.S("Guard_PreviewFailed"), result.VersionNotes);
+        Assert.Single(Calls());   // soglia spenta: nessuna anteprima
+    }
+
+    [Theory]
+    [InlineData(0, false)]
+    [InlineData(20, true)]
+    public async Task Versioned_TheNoteAppearsOnlyWithTheThresholdOn(int limit, bool expected)
+    {
+        // Con la soglia a zero non c'e' nessuna rete di sicurezza da perdere: dire «parte senza
+        // soglia» sarebbe rumore, e farebbe partire l'email anche con «solo in caso di errore».
+        var job = LocalJob(limit: limit);
+        job.Versioned = true;
+        var svc = new VersionedBackupService(new RobocopyRunner(FakeRobocopyThatFails(), null, _ => DiskMedia.Unknown));
+
+        var run = await svc.RunAsync(job);
+
+        Assert.Equal(expected, run.Result.VersionNotes.Contains(CoreLoc.S("Guard_PreviewFailed")));
+    }
+
+    /// <summary>Finto robocopy: nell'anteprima (/L) stampa una riga di errore CRC come quella vera e
+    /// resta appeso; ogni chiamata lascia una riga nel file delle chiamate.</summary>
+    private string FakeRobocopyWithCrcInPreview()
+    {
+        var path = Path.Combine(_root, "fake-robocopy-crc.cmd");
+        File.WriteAllText(path,
+            "@echo off\r\n" +
+            $">>\"{CallsFile}\" echo %*\r\n" +
+            "echo %* | findstr /C:\"/L\" >nul || exit /b 0\r\n" +
+            "echo 2026/09/20 13:00:00 ERRORE 23 (0x00000017) Copia del file in corso C:\\dati\\f.dat\r\n" +
+            "ping -n 30 127.0.0.1 >nul\r\n");
+        return path;
+    }
+
+    [Fact]
+    public async Task AHardwareErrorAlreadyInThePreview_StopsTheMirror()
+    {
+        // Il disco ha gia' dato un errore hardware mentre si contavano i file: lanciare subito dopo
+        // il mirror vero vorrebbe dire ore di lavoro su un disco che sta cedendo.
+        var result = await FakeRunner(FakeRobocopyWithCrcInPreview()).RunJobAsync(LocalJob());
+
+        Assert.True(result.HardwareError);
+        Assert.Single(Calls());   // solo l'anteprima
+    }
+
+    [Fact]
     public async Task Preview_OfAVersionedJob_DoesNotCryWolf()
     {
         // L'anteprima di un job versionato ancora senza «current» gira contro la RADICE della

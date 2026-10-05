@@ -105,8 +105,11 @@ public sealed class DiskHealthViewModel : ObservableObject
         var title = $"{d.Model} — {bus}" + (d.Letters.Length > 0 ? " — " + string.Join(", ", d.Letters) : "");
         var events = d.Letters.Select(l => DiskEventLog.Collect(l + @"\")).Aggregate(DiskEventSummary.None,
             (a, b) => new DiskEventSummary(a.BadBlocks + b.BadBlocks, a.IoErrors + b.IoErrors,
-                a.FileSystemErrors + b.FileSystemErrors, Later(a.Latest, b.Latest)));
-        var eventsText = string.Format(Loc.Instance["Smart_Events"], events.Total == 0 ? "0" : events.Describe());
+                a.FileSystemErrors + b.FileSystemErrors, Later(a.Latest, b.Latest),
+                a.Acknowledged + b.Acknowledged, Later(a.AcknowledgedUntil, b.AcknowledgedUntil)));
+        // Anche gli errori gia' controllati si dicono («altri N gia' controllati»): non spariscono.
+        var eventsText = string.Format(Loc.Instance["Smart_Events"],
+            events.Total == 0 && events.Acknowledged == 0 ? "0" : events.Describe());
 
         DiskVerdictResult? v = d.Nvme is { } n ? DiskVerdict.Evaluate(n) : d.Ata is { } a ? DiskVerdict.Evaluate(a) : null;
         if (v is null)

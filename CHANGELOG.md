@@ -90,8 +90,20 @@ All notable changes to RoboKeep are documented here. The format is based on
   only closes a connection it opened itself.
 - A version whose deletion was interrupted no longer shows up as a restore point with no files, and
   leftover lists of interrupted runs are cleaned up.
-- When the check before a versioned mirror cannot count the deletions (an unreadable source file),
-  the log and the email now say that the run went ahead without the safety threshold.
+- When the check before a mirror cannot count the deletions (an unreadable source file), the log
+  and the email now say that the run went ahead without the safety threshold, for mirrors with and
+  without versions (before, mirrors without versions said it only on screen). Nothing is said when
+  the threshold is off.
+- **A disk error already during that check now stops a mirror without versions**, as it already
+  did with versions: before, the real mirror started anyway on a disk that had just failed.
+- **A verification that fails for an unexpected reason** (source folder gone, network down) now
+  leaves its log and a history entry, and stays due; before it was one line on screen.
+- **A scheduled run skipped because the job was already running, or because its destination was
+  busy, now leaves a history entry with that reason.** Every skip used to read "expected disk not
+  connected".
+- **A job refused because of its folders** (source and destination overlapping, or a destination
+  shared with another job) now leaves a log, a history entry and an email, like a mirror stopped
+  by the deletion threshold. A scheduled job in that state used to fail silently every night.
 - The scheduled task (command line) now writes `crash.log` and ends with an error code if
   `config.json` cannot be read, instead of failing silently.
 - **A running backup is no longer stopped by a stray key press.** While a job runs, the button that
@@ -102,6 +114,12 @@ All notable changes to RoboKeep are documented here. The format is based on
 - **A Windows notification that cannot be shown no longer turns a successful backup into an error.**
   When Windows refused the end-of-job notification, the job showed "Show notification failed" as
   its error. The log now just says the notification was not shown, and the backup result stands.
+
+### Added
+- **"I checked, run" in the pre-run checks.** Disk errors in the Windows event log stay there for
+  days, and the same episode, already looked into, was reported before every backup. The new
+  button marks the errors shown as checked, for that disk: they are no longer reported, newer
+  errors are. The disk health panel and the logs still count them as "already checked".
 
 ## [1.9.0] - 2026-09-30 — Restore, versions on every disk, safer mirrors
 

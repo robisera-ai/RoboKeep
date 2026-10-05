@@ -85,7 +85,10 @@ public class BackupRunnerRobustnessTests : IDisposable
             Assert.True(result.AlreadyRunning);
             Assert.True(result.Skipped);
             Assert.False(Directory.Exists(job.Destination));
-            Assert.Empty(history.List("T"));
+            // Un'attivita' pianificata saltata deve lasciare traccia, con il motivo giusto.
+            var skipped = Assert.Single(history.List("T"));
+            Assert.True(skipped.IsSkipped);
+            Assert.Equal(RunHistoryEntry.ReasonAlreadyRunning, skipped.Reason);
         }
 
         Assert.True((await runner.RunJobAsync(job)).Success);
@@ -132,6 +135,43 @@ public class BackupRunnerRobustnessTests : IDisposable
     }
 
     [Fact]
+    public async Task ARefusedDestination_LeavesLogAndHistory_SoAScheduledRunDoesNotFailSilently()
+    {
+        // Un'attivita' pianificata rifiutata senza traccia non girerebbe mai piu', e nessuno lo
+        // saprebbe: niente log, niente cronologia, niente email.
+        var config = new AppConfig();
+        var first = NewJob("Primo");
+        var second = NewJob("Secondo");
+        second.Destination = first.Destination;
+        config.Jobs.Add(first);
+        config.Jobs.Add(second);
+        var (runner, history) = NewRunner(config);
+
+        await runner.RunJobAsync(second);
+
+        var entry = Assert.Single(history.List("Secondo"));
+        Assert.False(entry.Success);
+        Assert.NotNull(entry.LogPath);
+        Assert.True(File.Exists(entry.LogPath));
+    }
+
+    [Fact]
+    public async Task ASourceThatContainsTheDestination_LeavesLogAndHistoryToo()
+    {
+        var config = new AppConfig();
+        var job = NewJob("Dentro");
+        job.Destination = Path.Combine(job.Source, "backup");
+        config.Jobs.Add(job);
+        var (runner, history) = NewRunner(config);
+
+        var result = await runner.RunJobAsync(job);
+
+        Assert.False(result.Success);
+        var entry = Assert.Single(history.List("Dentro"));
+        Assert.NotNull(entry.LogPath);
+    }
+
+    [Fact]
     public async Task ADestinationInsideAnotherJobsDestination_IsRefused()
     {
         // Un mirror su E:\Backup cancellerebbe come "extra" la cartella E:\Backup\Foto dell'altro job.
@@ -159,7 +199,7 @@ public class BackupRunnerRobustnessTests : IDisposable
         var config = new AppConfig();
         var job = NewJob("D");
         config.Jobs.Add(job);
-        var (runner, _) = NewRunner(config);
+        var (runner, history) = NewRunner(config);
 
         using (JobLockFile.TryAcquireDestination(Locks, job.Destination))
         {
@@ -168,6 +208,7 @@ public class BackupRunnerRobustnessTests : IDisposable
             Assert.True(result.Skipped);
             Assert.True(result.AlreadyRunning);
             Assert.False(Directory.Exists(job.Destination));
+            Assert.Equal(RunHistoryEntry.ReasonDestinationBusy, Assert.Single(history.List("D")).Reason);
         }
 
         Assert.True((await runner.RunJobAsync(job)).Success);
