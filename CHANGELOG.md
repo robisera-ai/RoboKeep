@@ -4,7 +4,17 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.10.0] - 2026-10-05 — Review fixes: versions, restore, warnings
+
+This release comes out of a review of the 1.9.0 code. It closes several ways in which a backup with
+versions, a restore or a warning could silently do the wrong thing: file names that robocopy prints
+differently, "Force copy" files leaving the backup, files in use beyond a limit, restores running
+during a backup, disk errors shown for the wrong disk. Nothing changes in how you use RoboKeep; the
+one new feature is **"I checked, run"** for disk errors in the Windows event log. One behaviour is
+stricter: two jobs whose destinations are the same folder (or one inside the other) on the same disk
+are now refused, because their backups would delete each other's files — if you have any, give each
+job its own folder in the editor. The same folder on two different disks, for rotating disks, is
+still fine.
 
 ### Fixed
 - **Versions + "Accumulate" no longer lose files deleted from the source.** In a job that keeps
@@ -120,6 +130,11 @@ All notable changes to RoboKeep are documented here. The format is based on
   days, and the same episode, already looked into, was reported before every backup. The new
   button marks the errors shown as checked, for that disk: they are no longer reported, newer
   errors are. The disk health panel and the logs still count them as "already checked".
+
+### Downloads
+- **`RoboKeep-1.10.0-win-x64-selfcontained.zip`** — bundles .NET 10: extract and run, nothing to install.
+- **`RoboKeep-1.10.0-win-x64-framework-dependent.zip`** — smaller; requires the
+  [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
 
 ## [1.9.0] - 2026-09-30 — Restore, versions on every disk, safer mirrors
 
