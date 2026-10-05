@@ -76,6 +76,54 @@ public class RestoreCopierTests : IDisposable
     }
 
     [Fact]
+    public async Task AnotherJobsBackupFolder_IsRefused()
+    {
+        // Il backup di un altro job e' il mirror della SUA sorgente: al suo prossimo giro i file
+        // ripristinati li' sarebbero "extra", uscirebbero dal backup e la ritenzione li cancellerebbe.
+        var a = Make(@"src\a.txt", "x");
+        var otherBackup = Path.Combine(_root, "backup-altro");
+        Directory.CreateDirectory(otherBackup);
+        var target = Path.Combine(otherBackup, "current");
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => RestoreCopier.CopyAsync(
+            Plan(new[] { Entry("a.txt", a) }), target, otherBackupFolders: new[] { otherBackup }));
+        Assert.False(File.Exists(Path.Combine(target, "a.txt")));
+    }
+
+    [Fact]
+    public async Task AFileRewrittenAfterThePlan_IsReported_NotCopied()
+    {
+        // Fra la preparazione dell'elenco e la copia un backup puo' aver riscritto il file: copiarlo
+        // darebbe il contenuto di oggi con la data della versione scelta, e l'esito direbbe «a posto».
+        var a = Make(@"src\a.txt", "com'era alla data scelta");
+        var entry = Entry("a.txt", a);
+        File.WriteAllText(a, "riscritto dal backup di stasera, piu' lungo");
+        var target = Path.Combine(_root, "dentro");
+
+        var outcome = await RestoreCopier.CopyAsync(Plan(new[] { entry }), target);
+
+        Assert.Equal(0, outcome.Copied);
+        Assert.Equal("a.txt", Assert.Single(outcome.Failures).RelativePath);
+        Assert.False(File.Exists(Path.Combine(target, "a.txt")));
+    }
+
+    [Fact]
+    public async Task AFileRewrittenWithTheSameSize_IsCaughtByItsDate()
+    {
+        var a = Make(@"src\a.txt", "AAAA");
+        File.SetLastWriteTime(a, new DateTime(2026, 9, 1, 10, 0, 0));
+        var entry = Entry("a.txt", a);
+        File.WriteAllText(a, "BBBB");
+        File.SetLastWriteTime(a, new DateTime(2026, 10, 4, 21, 0, 0));
+        var target = Path.Combine(_root, "dentro");
+
+        var outcome = await RestoreCopier.CopyAsync(Plan(new[] { entry }), target);
+
+        Assert.Equal(0, outcome.Copied);
+        Assert.Single(outcome.Failures);
+    }
+
+    [Fact]
     public async Task AVeryLongFileName_IsRestored()
     {
         // Un nome di 230 caratteri sta nei 255 che NTFS concede a un nome, ma non se il nome

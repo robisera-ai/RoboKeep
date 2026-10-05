@@ -70,7 +70,21 @@ All notable changes to RoboKeep are documented here. The format is based on
   while saving `config.json` could leave a truncated file that prevented RoboKeep from starting.
   Every state file is now written to a temporary file and swapped in only when complete.
 - **Restore never leaves a half-copied file** with the right name after a disk-full or read error,
-  and ignores entries in a version list that point outside the backup.
+  and ignores entries in a version list that point outside the backup (including names that
+  Windows reads as "..", such as ".. ").
+- **Restore no longer gives back today's file for a folder whose name starts with a space.** A
+  folder like " Important" (the space puts it first in the list) lost its leading space during
+  restore: the copy kept in the version was not found, and the restore silently returned the
+  current content, reporting success.
+- **Restore and backup no longer work on the same destination at the same time.** A restore
+  prepared or copied while a backup was changing the destination could get today's content with
+  the chosen date, or miss files the backup had just set aside, without saying so. Restore now
+  waits for the backup to finish (and a backup that starts during a restore is skipped), checks
+  each file just before copying it, and says when an interrupted backup set aside files it cannot
+  see yet.
+- **Restore no longer writes into another job's backup folder.** It was refused only for the job's
+  own backup; restored into another job's backup, the files would have been taken for extras at
+  that job's next run and left the backup.
 - **A backup no longer disconnects your own network drive.** If the share was already open or
   mapped, the job used that connection and then closed it (and could remove the mapping). Now it
   only closes a connection it opened itself.

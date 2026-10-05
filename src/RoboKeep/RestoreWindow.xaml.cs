@@ -20,12 +20,15 @@ public partial class RestoreWindow : Wpf.Ui.Controls.FluentWindow
 
     /// <param name="job">Il job da cui recuperare (serve la destinazione, e la sorgente per il
     /// controllo di sicurezza).</param>
+    /// <param name="lockFolder">Cartella dei lock dei job: il ripristino non lavora mentre un
+    /// backup cambia la destinazione.</param>
     /// <param name="preselectVersion">Nome della versione da mostrare all'apertura (arriva da
     /// «Versioni...», dove l'utente ne ha già scelta una); null = «Adesso».</param>
-    public RestoreWindow(BackupJob job, string? preselectVersion = null)
+    public RestoreWindow(BackupJob job, string lockFolder, IReadOnlyList<OtherJob> otherJobs,
+        string? preselectVersion = null)
     {
         InitializeComponent();
-        _vm = new RestoreViewModel(job);
+        _vm = new RestoreViewModel(job, lockFolder, otherJobs);
         _preselect = preselectVersion;
         DataContext = _vm;
         Loaded += OnLoadedRead;

@@ -489,6 +489,12 @@ public static class CoreLoc
             "La carpeta elegida es la copia de seguridad del trabajo (o está dentro de ella, como current o una versión): restaurar ahí mezclaría archivos antiguos con la copia. Elige otra carpeta.",
             "Le dossier choisi est la sauvegarde de la tâche (ou se trouve à l'intérieur, comme current ou une version) : une restauration là mélangerait d'anciens fichiers à la sauvegarde. Choisissez un autre dossier.",
             "Der gewählte Ordner ist das Backup des Jobs (oder liegt darin, etwa current oder eine Version): eine Wiederherstellung dorthin würde alte Dateien mit dem Backup vermischen. Wählen Sie einen anderen Ordner."),
+        ["Restore_TargetInsideOtherBackup"] = L(
+            "La cartella scelta è dentro il backup di un altro job ({0}): al suo prossimo giro quei file uscirebbero dal backup. Scegli un'altra cartella.",
+            "The chosen folder is inside another job's backup ({0}): at its next run those files would leave the backup. Pick another folder.",
+            "La carpeta elegida está dentro de la copia de otro trabajo ({0}): en su próxima ejecución esos archivos saldrían de la copia. Elige otra carpeta.",
+            "Le dossier choisi se trouve dans la sauvegarde d'une autre tâche ({0}) : à sa prochaine exécution ces fichiers sortiraient de la sauvegarde. Choisissez un autre dossier.",
+            "Der gewählte Ordner liegt im Backup eines anderen Jobs ({0}): bei dessen nächstem Lauf würden diese Dateien das Backup verlassen. Wählen Sie einen anderen Ordner."),
         ["Restore_UnsafePath"] = L(
             "percorso rifiutato: uscirebbe dalla cartella di destinazione",
             "path refused: it would lead outside the destination folder",
@@ -501,6 +507,12 @@ public static class CoreLoc
             "ya existe, no se sobrescribe: {0}",
             "existe déjà, n'est pas écrasé : {0}",
             "existiert bereits, wird nicht überschrieben: {0}"),
+        ["Restore_ChangedSincePlan"] = L(
+            "cambiato o spostato da un backup dopo la preparazione dell'elenco: non copiato. Riapri il ripristino e rifallo.",
+            "changed or moved by a backup after the list was prepared: not copied. Open the restore again and redo it.",
+            "modificado o movido por una copia después de preparar la lista: no copiado. Vuelve a abrir la restauración y repítela.",
+            "modifié ou déplacé par une sauvegarde après la préparation de la liste : non copié. Rouvrez la restauration et recommencez.",
+            "nach dem Erstellen der Liste von einem Backup geändert oder verschoben: nicht kopiert. Öffnen Sie die Wiederherstellung erneut und wiederholen Sie sie."),
 
         ["ConfigCopy_Written"] = L(
             "[config] copia della configurazione salvata in {0} (job, esclusioni e impostazioni, senza password).",

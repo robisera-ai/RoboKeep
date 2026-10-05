@@ -146,7 +146,7 @@ public static class RestorePlanner
         var files = new Dictionary<string, RestoreEntry>(Cmp);
         foreach (var f in fs.Files(current))
         {
-            var rel = Normalize(Path.GetRelativePath(current, f.FullPath));
+            var rel = NormalizeRelative(Path.GetRelativePath(current, f.FullPath));
             if (rel.Length == 0) continue;
             files[rel] = new RestoreEntry(rel, f.FullPath, f.Size, f.LastWrite);
         }
@@ -160,7 +160,7 @@ public static class RestorePlanner
             // un backup ha portato via intere.
             foreach (var d in fs.Directories(current))
             {
-                var rel = Normalize(Path.GetRelativePath(current, d));
+                var rel = NormalizeRelative(Path.GetRelativePath(current, d));
                 if (rel.Length > 0) dirs.Add(rel);
             }
         }
@@ -207,7 +207,7 @@ public static class RestorePlanner
         ArgumentNullException.ThrowIfNull(plan);
         ArgumentNullException.ThrowIfNull(selected);
 
-        var picks = selected.Select(Normalize).Where(s => s.Length > 0).Distinct(Cmp).ToList();
+        var picks = selected.Select(NormalizeRelative).Where(s => s.Length > 0).Distinct(Cmp).ToList();
         if (picks.Count == 0) return RestorePlan.Empty;
 
         bool Covered(string rel) =>
@@ -245,7 +245,7 @@ public static class RestorePlanner
             if (!point.HasFolder) return;
             foreach (var f in fs.Files(versionDir))
             {
-                var rel = Normalize(Path.GetRelativePath(versionDir, f.FullPath));
+                var rel = NormalizeRelative(Path.GetRelativePath(versionDir, f.FullPath));
                 if (rel.Length == 0 || !resolved.Add(rel)) continue;
                 files[rel] = new RestoreEntry(rel, f.FullPath, f.Size, f.LastWrite);
             }
@@ -254,7 +254,7 @@ public static class RestorePlanner
 
         foreach (var raw in manifest.Changed.Concat(manifest.Deleted))
         {
-            var rel = Normalize(raw);
+            var rel = NormalizeRelative(raw);
             if (rel.Length == 0 || resolved.Contains(rel)) continue;
             var candidate = Path.Combine(versionDir, rel);
 
@@ -274,12 +274,12 @@ public static class RestorePlanner
                 dirs.Add(rel);
                 foreach (var f in fs.Files(candidate))
                 {
-                    var child = Path.Combine(rel, Normalize(Path.GetRelativePath(candidate, f.FullPath)));
+                    var child = Path.Combine(rel, NormalizeRelative(Path.GetRelativePath(candidate, f.FullPath)));
                     if (!resolved.Add(child)) continue;
                     files[child] = new RestoreEntry(child, f.FullPath, f.Size, f.LastWrite);
                 }
                 foreach (var d in fs.Directories(candidate))
-                    dirs.Add(Path.Combine(rel, Normalize(Path.GetRelativePath(candidate, d))));
+                    dirs.Add(Path.Combine(rel, NormalizeRelative(Path.GetRelativePath(candidate, d))));
                 continue;
             }
 
@@ -290,7 +290,7 @@ public static class RestorePlanner
 
         foreach (var raw in manifest.Added)
         {
-            var rel = Normalize(raw);
+            var rel = NormalizeRelative(raw);
             if (rel.Length == 0 || !resolved.Add(rel)) continue;
             files.Remove(rel); // a quella data questo file non esisteva ancora
         }
@@ -299,14 +299,18 @@ public static class RestorePlanner
     /// <summary>Percorso relativo in forma canonica: separatori di Windows, senza separatori
     /// iniziali o finali. I manifest vengono scritti da noi, ma un file modificato a mano non deve
     /// far sbagliare il confronto tra percorsi. Un percorso che potrebbe uscire dalla cartella
-    /// della versione (con un'unita', o con segmenti <c>..</c> e <c>.</c>) diventa vuoto, cioe'
-    /// ignorato: il ripristino legge solo dentro il backup.</summary>
-    private static string Normalize(string? rel)
+    /// della versione (con un'unita', o con un segmento fatto solo di punti e spazi: Windows legge
+    /// <c>.. </c> e <c>...</c> come <c>..</c>) diventa vuoto, cioe' ignorato: il ripristino legge solo
+    /// dentro il backup.
+    /// <para>Gli spazi NON si tolgono: fanno parte del nome. Una cartella " Importante" (lo spazio
+    /// davanti la mette in cima all'elenco) diventava "Importante", la sua copia nella versione non
+    /// si trovava, e il ripristino restituiva in silenzio il contenuto di oggi.</para></summary>
+    public static string NormalizeRelative(string? rel)
     {
-        var s = (rel ?? "").Trim().Replace('/', '\\').Trim('\\');
+        var s = (rel ?? "").Replace('/', '\\').Trim('\\');
         if (s.Contains(':')) return "";
         foreach (var segment in s.Split('\\'))
-            if (segment is "." or "..") return "";
+            if (segment.TrimEnd(' ', '.').Length == 0) return "";
         return s;
     }
 

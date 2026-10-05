@@ -31,9 +31,13 @@ public static class RestoreCopier
     /// La finestra lo impedisce gia', qui si ricontrolla — un errore chiaro invece di un disastro
     /// silenzioso. null = nessun controllo (chiamata senza job, come nei test).</param>
     /// <param name="progress">Avanzamento (fatti, totale) per la barra.</param>
+    /// <param name="otherBackupFolders">Le destinazioni degli ALTRI job: anche li' non si ripristina.
+    /// Il backup di un altro job e' il mirror della sua sorgente, e al suo prossimo giro i file
+    /// ripristinati sarebbero "extra": uscirebbero dal backup e la ritenzione li cancellerebbe.</param>
     public static Task<RestoreOutcome> CopyAsync(RestorePlan plan, string targetFolder,
         string? jobSource = null, IProgress<(int Done, int Total)>? progress = null,
-        CancellationToken ct = default, string? jobDestination = null)
+        CancellationToken ct = default, string? jobDestination = null,
+        IReadOnlyList<string>? otherBackupFolders = null)
     {
         ArgumentNullException.ThrowIfNull(plan);
 
@@ -49,6 +53,8 @@ public static class RestoreCopier
             throw new InvalidOperationException(CoreLoc.S("Restore_TargetInsideSource"));
         if (TouchesBackup(root, jobDestination))
             throw new InvalidOperationException(CoreLoc.S("Restore_TargetInsideBackup"));
+        if (otherBackupFolders?.FirstOrDefault(f => TouchesBackup(root, f)) is { } other)
+            throw new InvalidOperationException(string.Format(CoreLoc.S("Restore_TargetInsideOtherBackup"), other));
 
         // Il token NON si passa a Task.Run: un annullamento gia' chiesto deve dare un esito
         // «annullato» da mostrare nel riepilogo, non un'eccezione da intercettare.
@@ -117,6 +123,16 @@ public static class RestoreCopier
                 continue;
             }
 
+            // Il file da cui si copia e' ancora quello dell'elenco? Fra la preparazione e la copia un
+            // backup puo' averlo riscritto o spostato in una versione: copiarlo darebbe il contenuto
+            // di oggi con la data scelta, e l'esito direbbe «tutto a posto».
+            if (ChangedSincePlan(entry))
+            {
+                failures.Add(new RestoreFailure(rel, CoreLoc.S("Restore_ChangedSincePlan")));
+                progress?.Report((done, total));
+                continue;
+            }
+
             // Si copia su un nome temporaneo e solo a copia finita si da' il nome vero: un disco
             // pieno o un errore di lettura a meta' non lasciano un file troncato col nome giusto,
             // che sembrerebbe ripristinato e al tentativo dopo risulterebbe «gia' presente». Il
@@ -165,6 +181,25 @@ public static class RestoreCopier
         }
 
         return new RestoreOutcome(copied, total, bytes, failures, Cancelled: false);
+    }
+
+    /// <summary>true se il file da copiare non e' piu' quello visto preparando l'elenco: sparito,
+    /// oppure con dimensione o data di modifica diverse. Se non si riesce nemmeno a guardarlo si
+    /// risponde false e decide la copia, che riportera' l'errore vero.</summary>
+    private static bool ChangedSincePlan(RestoreEntry entry)
+    {
+        try
+        {
+            var file = new FileInfo(entry.SourcePath);
+            if (!file.Exists) return true;
+            if (file.Length != entry.Size) return true;
+            return entry.LastWrite is { } when && file.LastWriteTime != when;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
+                                       or ArgumentException or NotSupportedException)
+        {
+            return false;
+        }
     }
 
     /// <summary>Il percorso completo dove va rimesso un file, oppure null se quel percorso

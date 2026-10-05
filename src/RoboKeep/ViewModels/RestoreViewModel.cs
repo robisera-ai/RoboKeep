@@ -294,14 +294,24 @@ public sealed class RestoreNode : ObservableObject
 public sealed class RestoreViewModel : ObservableObject
 {
     private readonly BackupJob _job;
+    private readonly string _lockFolder;
+    private readonly IReadOnlyList<OtherJob> _otherJobs;
     private RestorePlan _plan = RestorePlan.Empty;
     private RestoreTree? _tree;
     private CancellationTokenSource? _cts;
     private string _warnedTarget = "";
+    // Avviso che resta visibile quando non c'e' niente di piu' urgente da dire (vedi SetIdleStatus).
+    private string? _idleWarning;
 
-    public RestoreViewModel(BackupJob job)
+    /// <param name="lockFolder">Cartella dei lock dei job (<c>AppHost.LockFolder</c>): obbligatoria,
+    /// perche' senza il ripristino potrebbe leggere la destinazione mentre un backup la cambia.</param>
+    /// <param name="otherJobs">Gli altri job: nemmeno nei loro backup si ripristina (vedi
+    /// <see cref="RestoreCopier.CopyAsync"/>).</param>
+    public RestoreViewModel(BackupJob job, string lockFolder, IReadOnlyList<OtherJob> otherJobs)
     {
         _job = job;
+        _lockFolder = lockFolder;
+        _otherJobs = otherJobs;
         Header = string.Format(Loc.Instance["Restore_Header"], job.Name);
     }
 
@@ -379,6 +389,30 @@ public sealed class RestoreViewModel : ObservableObject
     {
         Status = text;
         StatusIsWarning = warning && text.Length > 0;
+    }
+
+    /// <summary>Lo stato "a riposo": vuoto, oppure l'avviso che deve restare visibile finche' non
+    /// c'e' qualcosa di piu' urgente da dire (un backup interrotto, vedi LoadPlanAsync).</summary>
+    private void SetIdleStatus()
+    {
+        if (_idleWarning is { } warning) SetStatus(warning, warning: true);
+        else SetStatus("");
+    }
+
+    /// <summary>true se nella cartella delle versioni c'e' una cartella «.inprogress»: un backup
+    /// interrotto ha messo da parte dei file che il ripristino vedra' solo dopo il prossimo backup.</summary>
+    private static bool HasInterruptedBackup(string destination)
+    {
+        try
+        {
+            var versions = VersioningLayout.VersionsDir(destination);
+            return Directory.Exists(versions)
+                && Directory.EnumerateDirectories(versions, "*" + SnapshotName.InProgressSuffix).Any();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
     }
 
     private string _totals = "";
@@ -561,17 +595,35 @@ public sealed class RestoreViewModel : ObservableObject
             // farlo sul thread della UI congelerebbe la finestra a ogni cambio di data.
             // RestoreTree non tocca nessun oggetto WPF, quindi può nascere fuori dalla UI.
             var onlyChanged = _onlyChanged && point.Name is not null;
-            var (plan, tree) = await Task.Run(() =>
+            var (plan, tree, busy, interrupted) = await Task.Run(() =>
             {
+                // Mentre si prepara l'elenco nessun backup deve lavorare su questa destinazione: un
+                // backup a meta' ha spostato dei file in una cartella che il ripristino non vede, e
+                // l'elenco li perderebbe senza dirlo.
+                using var guard = JobLockFile.TryAcquireDestination(_lockFolder, dest);
+                if (guard is null) return (RestorePlan.Empty, (RestoreTree?)null, true, false);
                 var p = RestorePlanner.Resolve(dest, when);
                 // «Solo i file cambiati»: il piano completo filtrato con il manifest di quel
                 // backup. Senza manifest leggibile resta la vista completa, non una vista vuota.
                 if (onlyChanged && VersionManifest.ReadFrom(
                         Path.Combine(VersioningLayout.VersionsDir(dest), point.Name!)) is { } manifest)
                     p = RestorePlanner.OnlyChangedBy(p, manifest);
-                return (p, new RestoreTree(p));
+                return (p, new RestoreTree(p), false, HasInterruptedBackup(dest));
             });
 
+            if (busy || tree is null)
+            {
+                _plan = RestorePlan.Empty;
+                _tree = null;
+                ShowNodes();
+                IsEmpty = true;
+                SetStatus(Loc.Instance["Restore_BackupRunning"], warning: true);
+                return;
+            }
+
+            // Un backup interrotto (annullato, PC spento) ha messo da parte dei file in una cartella
+            // che il ripristino vedra' solo dopo il prossimo backup: l'utente deve saperlo.
+            _idleWarning = interrupted ? Loc.Instance["Restore_InterruptedBackup"] : null;
             _plan = plan;
             _tree = tree;
             // L'aggancio si fa QUI, sul thread della UI: la notifica riaccende un pulsante.
@@ -581,7 +633,7 @@ public sealed class RestoreViewModel : ObservableObject
             Totals = string.Format(Loc.Instance["Restore_Totals"],
                 _plan.Files.Count, VersionsUsage.Describe(_plan.TotalBytes));
             IsEmpty = _plan.Files.Count == 0;
-            SetStatus("");
+            SetIdleStatus();
             CheckTarget();
         }
         catch (Exception ex)
@@ -672,7 +724,7 @@ public sealed class RestoreViewModel : ObservableObject
     private void CheckTarget()
     {
         var target = _target.Trim();
-        if (target.Length == 0) { SetStatus(""); return; }
+        if (target.Length == 0) { SetIdleStatus(); return; }
 
         if (RestoreCopier.IsSourceOrInside(target, _job.Source))
         {
@@ -684,6 +736,11 @@ public sealed class RestoreViewModel : ObservableObject
             SetStatus(Loc.Instance["Restore_TargetIsBackup"], warning: true);
             return;
         }
+        if (_otherJobs.FirstOrDefault(o => RestoreCopier.TouchesBackup(target, o.Destination)) is { } other)
+        {
+            SetStatus(string.Format(Loc.Instance["Restore_TargetIsOtherBackup"], other.Name), warning: true);
+            return;
+        }
 
         // Una volta sola per cartella: ripeterlo a ogni tasto premuto lo renderebbe invisibile.
         if (_warnedTarget.Equals(target, StringComparison.OrdinalIgnoreCase)) return;
@@ -693,9 +750,9 @@ public sealed class RestoreViewModel : ObservableObject
             if (Directory.Exists(target) && Directory.EnumerateFileSystemEntries(target).Any())
                 SetStatus(Loc.Instance["Restore_TargetNotEmpty"], warning: true);
             else
-                SetStatus("");
+                SetIdleStatus();
         }
-        catch { SetStatus(""); }
+        catch { SetIdleStatus(); }
     }
 
     /// <summary>Il piano dei soli percorsi spuntati.</summary>
@@ -716,15 +773,28 @@ public sealed class RestoreViewModel : ObservableObject
 
         var target = _target.Trim();
         _cts = new CancellationTokenSource();
+        IDisposable? guard = null;
         try
         {
+            // Durante la copia nessun backup deve cambiare la destinazione: un backup che parte
+            // adesso viene saltato («destinazione occupata») e riprova alla prossima occasione.
+            // Il lock si prende fuori dal thread della UI: se e' occupato si aspetta qualche decimo.
+            var dest = (_job.Destination ?? "").Trim();
+            guard = await Task.Run(() => JobLockFile.TryAcquireDestination(_lockFolder, dest));
+            if (guard is null)
+            {
+                SetStatus(Loc.Instance["Restore_BackupRunning"], warning: true);
+                return;
+            }
+
             var progress = new Progress<(int Done, int Total)>(p =>
             {
                 Progress = p.Done;
                 SetStatus(string.Format(Loc.Instance["Restore_Copying"], p.Done, p.Total));
             });
             var outcome = await RestoreCopier.CopyAsync(plan, target, _job.Source, progress, _cts.Token,
-                jobDestination: _job.Destination);
+                jobDestination: _job.Destination,
+                otherBackupFolders: _otherJobs.Select(o => o.Destination).ToList());
 
             RestoredTo = target;
             LastRestoreClean = !outcome.Cancelled && outcome.Failures.Count == 0;
@@ -752,6 +822,7 @@ public sealed class RestoreViewModel : ObservableObject
         }
         finally
         {
+            guard?.Dispose();
             _cts.Dispose();
             _cts = null;
             IsCopying = false;

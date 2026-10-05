@@ -390,6 +390,38 @@ public class RestorePlannerTests
     }
 
     [Fact]
+    public void AFolderWithALeadingSpace_KeepsItsName_AndTakesTheVersionCopy()
+    {
+        // Una cartella " Importante" (lo spazio davanti la mette in cima all'elenco). Togliendo lo
+        // spazio, il ripristino cercava la copia nella versione col nome sbagliato, non la trovava e
+        // restituiva in silenzio il contenuto di oggi dicendo che era tutto a posto.
+        var fake = new Fake()
+            .File(Path.Combine(Current, " Importante", "a.docx"), size: 300)
+            .Point(V2, D2, hasFolder: true, Manifest(D2, changed: new[] { @" Importante\a.docx" }))
+            .File(Path.Combine(Versions, V2, " Importante", "a.docx"), size: 100);
+
+        var plan = RestorePlanner.Resolve(Dest, D2, fake.Reader);
+
+        var entry = Assert.Single(plan.Files.Values);
+        Assert.Equal(@" Importante\a.docx", entry.RelativePath);
+        Assert.Equal(100, entry.Size);
+    }
+
+    [Theory]
+    [InlineData(@" Importante\a.docx", @" Importante\a.docx")]   // lo spazio davanti fa parte del nome
+    [InlineData(@"a/b.txt", @"a\b.txt")]
+    [InlineData(@"\a\b\", @"a\b")]
+    [InlineData(@"..\x", "")]
+    [InlineData(@"a\..\..\x", "")]
+    [InlineData(@".. \x", "")]            // Windows legge ".. " come "..": si uscirebbe dalla versione
+    [InlineData(@"...\x", "")]
+    [InlineData(@". \x", "")]
+    [InlineData(@"a\ \b", "")]
+    [InlineData(@"C:\Windows\win.ini", "")]
+    public void NormalizeRelative_KeepsRealNames_AndRefusesWaysOut(string raw, string expected)
+        => Assert.Equal(expected, RestorePlanner.NormalizeRelative(raw));
+
+    [Fact]
     public void ATamperedManifest_CannotReadFromOutsideTheVersion()
     {
         // Un manifest modificato a mano (o da un programma ostile) non deve poter far copiare file

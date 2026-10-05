@@ -591,7 +591,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         var job = selected.Model;
         if (!job.Versioned) return;
 
-        var win = new SnapshotsWindow(job) { Owner = this };
+        var win = new SnapshotsWindow(job, _host.LockFolder,
+            OtherJob.From(_vm.Jobs.Select(j => j.Model), self: job)) { Owner = this };
         win.ShowDialog();
     }
 
@@ -602,7 +603,8 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         var job = selected.Model;
         if (!job.Versioned) return;
 
-        new RestoreWindow(job) { Owner = this }.ShowDialog();
+        new RestoreWindow(job, _host.LockFolder, OtherJob.From(_vm.Jobs.Select(j => j.Model), self: job))
+            { Owner = this }.ShowDialog();
     }
 
     private void OnSettings(object sender, RoutedEventArgs e)

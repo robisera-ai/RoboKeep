@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows;
 using RoboKeep.Core.Models;
 using RoboKeep.Core.Services;
+using RoboKeep.ViewModels;
 
 namespace RoboKeep;
 
@@ -13,10 +14,16 @@ public partial class SnapshotsWindow : Wpf.Ui.Controls.FluentWindow
     // La cartella che contiene le versioni: «versions» nella destinazione del job.
     private readonly string _versionsFolder;
     private readonly BackupJob _job;
+    private readonly string _lockFolder;
+    private readonly IReadOnlyList<OtherJob> _otherJobs;
 
-    public SnapshotsWindow(BackupJob job)
+    /// <param name="lockFolder">Cartella dei lock dei job, per il ripristino aperto da qui.</param>
+    /// <param name="otherJobs">Gli altri job, per il ripristino aperto da qui.</param>
+    public SnapshotsWindow(BackupJob job, string lockFolder, IReadOnlyList<OtherJob> otherJobs)
     {
         _job = job;
+        _lockFolder = lockFolder;
+        _otherJobs = otherJobs;
         _versionsFolder = VersioningLayout.VersionsDir((job.Destination ?? "").Trim());
         Snapshots = SnapshotName.ListValid(_versionsFolder).ToList();
 
@@ -62,7 +69,7 @@ public partial class SnapshotsWindow : Wpf.Ui.Controls.FluentWindow
     private void OnRestore(object sender, RoutedEventArgs e)
     {
         var chosen = SnapshotList.SelectedItem as string;
-        new RestoreWindow(_job, chosen) { Owner = this }.ShowDialog();
+        new RestoreWindow(_job, _lockFolder, _otherJobs, chosen) { Owner = this }.ShowDialog();
     }
 
     private void OnClose(object sender, RoutedEventArgs e)
