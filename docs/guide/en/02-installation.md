@@ -48,9 +48,14 @@ configuration, logs, and results stay in the app folder.
 
 ## Updating
 
-When a new version exists (if you turned the check on), the main window shows a banner with
-**What's new**, **Download** and **Ignore**. Download grabs the right package for your install
-and puts it in Downloads. Then it's up to you: close RoboKeep, extract the zip **over** the
-current folder (overwriting it), reopen. Settings, jobs, history and logs live in
-`%APPDATA%\RoboKeep` and are left untouched. If a scheduled task points at that folder, it picks
-up the new version on its own after the replacement.
+When a new version exists (if you turned the check on), RoboKeep opens a window that says so,
+with **What's new**, **Download** and **Later**. Download grabs the right package for your
+install and puts it in Downloads, showing the progress in the window itself. Then it's up to
+you: close RoboKeep, extract the zip **over** the current folder (overwriting it), reopen.
+Settings, jobs, history and logs live in `%APPDATA%\RoboKeep` and are left untouched. If a
+scheduled task points at that folder, it picks up the new version on its own after the
+replacement.
+
+**Later** closes the window and the version is offered again the next day: there is no way to
+silence a version for good, because the updates of a backup program carry fixes you had better
+not miss.

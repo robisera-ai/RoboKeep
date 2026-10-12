@@ -49,9 +49,14 @@ da quel momento configurazione, log ed esiti restano nella cartella dell'app.
 
 ## Aggiornare
 
-Quando esiste una versione nuova (se hai attivato il controllo), nella finestra principale
-compare un avviso con **Novità**, **Scarica** e **Ignora**. Scarica prende il pacchetto giusto
-per la tua installazione e lo mette in Download. Poi fai tu: chiudi RoboKeep, estrai lo zip
-**sopra** la cartella attuale (sovrascrivendo), riapri. Impostazioni, job, cronologia e log
-stanno in `%APPDATA%\RoboKeep` e non vengono toccati. Se un'attività pianificata punta a quella
-cartella, dopo la sostituzione usa la versione nuova da sola.
+Quando esiste una versione nuova (se hai attivato il controllo), RoboKeep apre una finestra che
+lo dice, con **Novità**, **Scarica** e **Più tardi**. Scarica prende il pacchetto giusto per la
+tua installazione e lo mette in Download, mostrando l'avanzamento nella finestra stessa. Poi fai
+tu: chiudi RoboKeep, estrai lo zip **sopra** la cartella attuale (sovrascrivendo), riapri.
+Impostazioni, job, cronologia e log stanno in `%APPDATA%\RoboKeep` e non vengono toccati. Se
+un'attività pianificata punta a quella cartella, dopo la sostituzione usa la versione nuova da
+sola.
+
+Con **Più tardi** la finestra si chiude e la versione ti viene riproposta il giorno dopo: non
+c'è un modo per mettere a tacere una versione per sempre, perché gli aggiornamenti di un
+programma di backup contengono correzioni che è meglio non perdere.

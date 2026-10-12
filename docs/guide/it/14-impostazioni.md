@@ -54,9 +54,9 @@ Sotto c'è la casella **«Quando il disco di backup è pieno, cancella le versio
 
 ## Aggiornamenti
 
-La casella **«Cerca aggiornamenti automaticamente»** decide se RoboKeep controlla da solo l'esistenza di una versione nuova: una richiesta a `api.github.com` all'avvio, al massimo una volta al giorno. Se trova una versione più recente, l'avviso compare nella finestra principale con **Novità**, **Scarica** e **Ignora**. Spenta, RoboKeep non contatta mai GitHub di sua iniziativa.
+La casella **«Cerca aggiornamenti automaticamente»** decide se RoboKeep controlla da solo l'esistenza di una versione nuova: una richiesta a `api.github.com` all'avvio e poi, se lasci l'app aperta, al massimo una volta al giorno. Se un tentativo non riesce (rete assente, GitHub non raggiungibile) riprova dopo due ore invece di aspettare il giorno dopo. Se trova una versione più recente, si apre una finestra con **Novità**, **Scarica** e **Più tardi**. Spenta, RoboKeep non contatta mai GitHub di sua iniziativa.
 
-Nella scheda **Info** trovi anche il pulsante **«Controlla ora»**, che fa la verifica subito — funziona anche a casella spenta, perché è un'azione esplicita che decidi tu lì per lì. Il risultato compare sotto il pulsante: *sei aggiornato*, oppure *è disponibile la versione X* (con l'avviso che compare nella finestra principale), oppure *controllo non riuscito* se manca la rete o GitHub non è raggiungibile.
+Nella scheda **Info** trovi anche il pulsante **«Controlla ora»**, che fa la verifica subito — funziona anche a casella spenta, perché è un'azione esplicita che decidi tu lì per lì. Il risultato compare sotto il pulsante: *sei aggiornato*, oppure *è disponibile la versione X* (e la finestra dell'aggiornamento si apre sopra le Impostazioni), oppure *controllo non riuscito* se manca la rete o GitHub non è raggiungibile.
 
 ## Salute dischi
 

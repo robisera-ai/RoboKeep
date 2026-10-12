@@ -54,9 +54,9 @@ Below it sits the checkbox **"When the backup disk is full, delete the oldest ve
 
 ## Updates
 
-The **"Check for updates automatically"** checkbox decides whether RoboKeep checks on its own for a newer version: one request to `api.github.com` at startup, at most once a day. If it finds a newer version, the notice appears in the main window with **What's new**, **Download** and **Ignore**. Off, RoboKeep never contacts GitHub on its own.
+The **"Check for updates automatically"** checkbox decides whether RoboKeep checks on its own for a newer version: one request to `api.github.com` at startup and then, if you leave the app open, at most once a day. If an attempt fails (no network, GitHub unreachable) it retries after two hours instead of waiting for the next day. If it finds a newer version, a window opens with **What's new**, **Download** and **Later**. Off, RoboKeep never contacts GitHub on its own.
 
-The **About** tab also has a **"Check now"** button, which checks right away — it works even with the checkbox off, because it's an explicit action you decide in the moment. The result appears under the button: *you are up to date*, or *version X is available* (with the notice appearing in the main window), or *check failed* if there's no network or GitHub can't be reached.
+The **About** tab also has a **"Check now"** button, which checks right away — it works even with the checkbox off, because it's an explicit action you decide in the moment. The result appears under the button: *you are up to date*, or *version X is available* (and the update window opens on top of Settings), or *check failed* if there's no network or GitHub can't be reached.
 
 ## Disk health
 

@@ -4,6 +4,24 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- **The update notice is now a window of its own.** It used to be a banner in the main window:
+  whoever pressed "Check now" in the About tab had to close Settings to go and read it. The
+  window now opens in front of whoever asked for it, at startup or from Settings, with
+  "What's new", "Download" (with the progress bar inside the window) and "Later".
+- **"Ignore this version" is gone.** A backup program's updates carry fixes that had better not
+  be silenced for good; "Later" closes the notice and the version is offered again the next day.
+
+### Fixed
+- **A failed update check no longer blocks the next one for 24 hours.** The date of the last
+  check was saved even when the network was missing or GitHub timed out, so an offline startup
+  took the check away for a full day. A failed attempt is now retried after two hours.
+- **RoboKeep left open for days now checks for updates again.** The check only ran when the
+  window opened; it now also runs while the window stays open, with the same once-a-day cadence,
+  and the notice never interrupts a running operation.
+
 ## [1.10.0] - 2026-10-05 — Review fixes: versions, restore, warnings
 
 This release comes out of a review of the 1.9.0 code. It closes several ways in which a backup with
