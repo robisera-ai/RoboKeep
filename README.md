@@ -18,18 +18,29 @@ versions you can go back to. **No cloud, no account, no subscription.**
 
 ## Why RoboKeep
 
+### Simple to start, clever with space
+
 | | |
 |---|---|
-| 🧙 **Simple setup** | The wizard asks about your data in plain language and picks the right settings. Experts can tweak everything by hand. |
-| 🕰️ **Go back in time** | Every run can keep a dated version holding only the files it replaced or deleted, so ten versions don't cost ten times the space — on any disk. And *Restore* puts a file, a folder or the whole job back **as it was on a date**, into a folder you choose. |
-| 💿 **Kind to your disks** | Stops at the first hardware error instead of grinding for hours, keeps the PC awake mid-backup, goes easy on mechanical disks. |
-| 🩺 **Disk health at a glance** | One click reads every disk's SMART and gives a plain verdict: Good, Caution, Danger — with each value explained. *New in 1.8.* |
-| 🛡️ **Never the wrong disk** | Rotating two external drives that Windows both calls `E:`? Each job knows its own disk by identity and simply waits for it. |
-| ✅ **Proof it worked** | Verify re-reads both sides and compares SHA-256 fingerprints. Silent corruption gets caught. |
-| 🔓 **Open files too** | Outlook archives, databases, anything locked: one checkbox copies from a Windows shadow copy. |
-| ⏰ **Runs by itself** | Each job has its own schedule (daily, weekly, monthly, even the last day of the month) and runs with the app closed. |
-| 🚨 **Speaks up only when it matters** | Colored icons and plain tooltips for failed, stale, or interrupted jobs. An unplugged disk is an hourglass, not an alarm. |
-| 🏠 **Truly yours** | Free, open source (MIT), fully local, no telemetry. Five languages. Portable if you want. |
+| 🧙 **Guided setup** | Answer a few plain questions and RoboKeep sets everything up properly. Experts keep full manual control.<br>*✓ Start the easy way* |
+| 🕰️ **History without waste** | Dated versions that store only the files changed or deleted.<br>*✓ Ten revisions in the space of one* |
+| ↩️ **Pinpoint restore** | Get back a file, a folder or the whole job exactly as it was on a given date, wherever you want it.<br>*✓ Pick what and when* |
+
+### Kind to your hardware, sure about your disks
+
+| | |
+|---|---|
+| 💿 **Respect for your disks** | Stops at the first hardware error to protect the drive. The PC stays awake during the backup.<br>*✓ Your drives protected* |
+| 🩺 **SMART health at a glance** | Disk status with plain verdicts and every value explained.<br>`Good` · `Caution` · `Danger` |
+| 🛡️ **Knows its own disk** | Two external drives that Windows both calls `E:`? Each job recognises its own and simply waits for it.<br>*✓ Never the wrong disk* |
+
+### Rock-solid, private, no strings attached
+
+| | |
+|---|---|
+| ✅ **SHA-256 verify and open files** | Catches silent corruption, and takes in locked files or Outlook archives through shadow copies (VSS).<br>*✓ Proof it worked* |
+| ⏰ **Quietly self-sufficient** | Per-job scheduling, even with the app closed. Sober notifications, only when they matter.<br>*✓ Runs by itself* |
+| 🏠 **100% yours and open source** | MIT license, zero telemetry, everything local. Five languages and a portable build ready to go.<br>*✓ Your files, under your control* |
 
 ## Get started in two minutes
 
@@ -65,17 +76,6 @@ Each job is a source folder → destination folder pair. On every run RoboKeep:
 
 With versions on, the previous state of every file about to be replaced or deleted is set aside
 in a dated version first.
-
-## What's new in 1.8
-
-- **Disk health window**: SMART for every disk, explained in plain words. NVMe without prompts;
-  SATA and USB with one administrator confirmation, the only way through USB enclosures.
-- **Optional update check**: RoboKeep asks once whether it may look for new versions on GitHub.
-  When one exists, a banner offers *What's new*, *Download*, *Ignore*. You replace the files.
-- **Simpler wizard**: asks only what matters, saves the job as soon as you finish, handles network
-  credentials on its own.
-- Turning versions on for an existing job **no longer recopies everything**; a cancelled job still
-  leaves a log; monthly schedules can run on the **last day of the month**.
 
 Full history in the [CHANGELOG](CHANGELOG.md).
 

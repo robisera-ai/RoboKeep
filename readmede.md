@@ -19,18 +19,29 @@ Cloud, kein Konto, kein Abo.**
 
 ## Warum RoboKeep
 
+### Einfach im Start, sparsam mit dem Platz
+
 | | |
 |---|---|
-| 🧙 **Einfache Einrichtung** | Der Assistent fragt in klarer Sprache nach Ihren Daten und wählt die passenden Einstellungen. Wer möchte, kann alles von Hand anpassen. |
-| 🕰️ **Zurück in der Zeit** | Jeder Lauf kann eine datierte Version speichern, die nur die ersetzten oder gelöschten Dateien enthält, sodass zehn Versionen nicht das Zehnfache an Platz kosten – auf jedem Datenträger. Und *Wiederherstellen* holt eine Datei, einen Ordner oder den ganzen Job **so zurück, wie er an einem Datum war**, in einen Ordner Ihrer Wahl. |
-| 💿 **Schont Ihre Datenträger** | Stoppt beim ersten Hardwarefehler, statt stundenlang weiterzukopieren, hält den PC während des Backups wach und geht behutsam mit mechanischen Festplatten um. |
-| 🩺 **Datenträgerzustand auf einen Blick** | Ein Klick liest den SMART-Zustand jedes Datenträgers aus und liefert ein klares Urteil: Gut, Achtung, Gefahr — mit jedem Wert erklärt. *Neu in 1.8.* |
-| 🛡️ **Nie der falsche Datenträger** | Wechseln Sie zwischen zwei externen Datenträgern, die Windows beide `E:` nennt? Jeder Auftrag erkennt seinen eigenen Datenträger an der Identität und wartet einfach auf ihn. |
-| ✅ **Der Beweis, dass es geklappt hat** | Prüfen liest beide Seiten neu ein und vergleicht die SHA-256-Fingerabdrücke. Stille Beschädigung wird aufgedeckt. |
-| 🔓 **Auch offene Dateien** | Outlook-Archive, Datenbanken, alles was gesperrt ist: ein Häkchen kopiert aus einer Windows-Schattenkopie. |
-| ⏰ **Läuft von selbst** | Jeder Auftrag hat seinen eigenen Zeitplan (täglich, wöchentlich, monatlich, sogar am letzten Tag des Monats) und läuft auch bei geschlossener App. |
-| 🚨 **Meldet sich nur, wenn es zählt** | Farbige Symbole und klare Tooltips für fehlgeschlagene, veraltete oder unterbrochene Aufträge. Ein abgezogener Datenträger ist eine Sanduhr, kein Alarm. |
-| 🏠 **Wirklich Ihres** | Kostenlos, quelloffen (MIT), vollständig lokal, keine Telemetrie. Fünf Sprachen. Portabel, wenn Sie möchten. |
+| 🧙 **Geführte Einrichtung** | Beantworten Sie ein paar einfache Fragen, und RoboKeep richtet alles bestmöglich ein. Profis behalten die volle Kontrolle.<br>*✓ Einfach loslegen* |
+| 🕰️ **Verlauf ohne Verschwendung** | Datierte Versionen, die nur die geänderten oder gelöschten Dateien aufbewahren.<br>*✓ Zehn Stände im Platz von einem* |
+| ↩️ **Punktgenaue Wiederherstellung** | Holen Sie eine Datei, einen Ordner oder den ganzen Auftrag so zurück, wie er an einem bestimmten Datum war – wohin Sie möchten.<br>*✓ Sie wählen was und wann* |
+
+### Höchste Rücksicht auf die Hardware, Gewissheit beim Datenträger
+
+| | |
+|---|---|
+| 💿 **Rücksicht auf Ihre Datenträger** | Sofortiger Stopp beim ersten Hardwarefehler, um den Datenträger zu schonen. Der PC bleibt während des Backups wach.<br>*✓ Datenträger geschützt* |
+| 🩺 **SMART-Zustand sofort** | Der Zustand des Datenträgers mit klaren Urteilen und jedem Wert erklärt.<br>`Gut` · `Achtung` · `Gefahr` |
+| 🛡️ **Erkennt den eigenen Datenträger** | Zwei externe Datenträger, die Windows beide `E:` nennt? Jeder Auftrag erkennt seinen eigenen und wartet einfach auf ihn.<br>*✓ Nie der falsche Datenträger* |
+
+### Volle Zuverlässigkeit, Privatsphäre und keine Bindung
+
+| | |
+|---|---|
+| ✅ **SHA-256-Prüfung und offene Dateien** | Deckt stille Beschädigung auf und erfasst gesperrte Dateien oder Outlook-Archive über Schattenkopien (VSS).<br>*✓ Der Beweis, dass es geklappt hat* |
+| ⏰ **Unauffällige Eigenständigkeit** | Zeitplan für jeden Auftrag, auch bei geschlossener App. Zurückhaltende Benachrichtigungen, nur wenn sie zählen.<br>*✓ Läuft von selbst* |
+| 🏠 **100 % Ihres und quelloffen** | MIT-Lizenz, keine Telemetrie, alles lokal. Fünf Sprachen und eine portable Version, sofort einsatzbereit.<br>*✓ Ihre Dateien, unter Ihrer Kontrolle* |
 
 ## In zwei Minuten loslegen
 
@@ -69,19 +80,6 @@ Jeder Auftrag ist ein Paar aus Quellordner → Zielordner. Bei jedem Lauf macht 
 
 Mit aktivierten Versionen wird der vorherige Stand der Dateien, die ersetzt oder gelöscht werden,
 zuerst in einer datierten Version beiseitegelegt.
-
-## Neuerungen in 1.8
-
-- **Fenster Datenträgerzustand**: SMART für jeden Datenträger, in klaren Worten erklärt. NVMe ohne
-  Abfragen; SATA und USB mit einer Administratorbestätigung — der einzige Weg durch USB-Gehäuse.
-- **Optionale Updateprüfung**: RoboKeep fragt einmal, ob es auf GitHub nach neuen Versionen suchen
-  darf. Gibt es eine, bietet ein Banner *Neuerungen*, *Herunterladen*, *Ignorieren*. Die Dateien
-  ersetzen Sie selbst.
-- **Einfacherer Assistent**: fragt nur, was zählt, speichert den Auftrag, sobald Sie fertig sind,
-  und verwaltet Netzwerk-Anmeldedaten von selbst.
-- Versionen bei einem bestehenden Auftrag zu aktivieren **kopiert nicht mehr alles neu**; ein
-  abgebrochener Auftrag hinterlässt weiterhin ein Protokoll; monatliche Zeitpläne können am
-  **letzten Tag des Monats** laufen.
 
 Vollständige Historie im [CHANGELOG](CHANGELOG.md).
 

@@ -19,18 +19,29 @@ nube, sin cuenta, sin suscripción.**
 
 ## Por qué RoboKeep
 
+### Sencillo al empezar, inteligente con el espacio
+
 | | |
 |---|---|
-| 🧙 **Configuración sencilla** | El asistente pregunta sobre tus datos en lenguaje sencillo y elige los ajustes adecuados. Quien lo prefiera puede ajustarlo todo a mano. |
-| 🕰️ **Vuelve atrás en el tiempo** | Cada ejecución puede guardar una versión fechada con solo los archivos que sustituyó o eliminó, así que diez versiones no cuestan diez veces el espacio, en cualquier disco. Y *Restaurar* devuelve un archivo, una carpeta o todo el trabajo **como estaba en una fecha**, en la carpeta que elijas. |
-| 💿 **Cuida tus discos** | Se detiene al primer error de hardware en vez de insistir durante horas, mantiene el PC despierto durante la copia y va con cuidado en los discos mecánicos. |
-| 🩺 **Salud de discos de un vistazo** | Un clic lee el SMART de cada disco y da un veredicto claro: Bien, Precaución, Peligro — con cada valor explicado. *Novedad en 1.8.* |
-| 🛡️ **Nunca el disco equivocado** | ¿Alternas dos discos externos que Windows llama a ambos `E:`? Cada tarea reconoce su disco por identidad y simplemente espera a que esté conectado. |
-| ✅ **Prueba de que funcionó** | Verificar relee ambos lados y compara las huellas SHA-256. La corrupción silenciosa queda al descubierto. |
-| 🔓 **Copia también archivos abiertos** | Archivos de Outlook, bases de datos, cualquier cosa bloqueada: una casilla copia desde una instantánea de Windows. |
-| ⏰ **Se ejecuta solo** | Cada tarea tiene su propio horario (diario, semanal, mensual, incluso el último día del mes) y se ejecuta con la app cerrada. |
-| 🚨 **Avisa solo cuando importa** | Iconos de color y explicaciones claras para tareas fallidas, atrasadas o interrumpidas. Un disco desconectado es un reloj de arena, no una alarma. |
-| 🏠 **Realmente tuyo** | Gratis y de código abierto (MIT), totalmente local, sin telemetría. Cinco idiomas. Portátil si quieres. |
+| 🧙 **Configuración guiada** | Responde a unas preguntas sencillas y RoboKeep lo configura todo como debe ser. Quien sea experto conserva el control total.<br>*✓ Empieza sin complicaciones* |
+| 🕰️ **Historial sin desperdicio** | Versiones fechadas que guardan solo los archivos modificados o eliminados.<br>*✓ Diez revisiones en el espacio de una* |
+| ↩️ **Restauración precisa** | Recupera un archivo, una carpeta o toda la tarea tal como estaba en una fecha exacta, donde prefieras.<br>*✓ Elige qué y cuándo* |
+
+### Máximo cuidado del hardware y control de los discos
+
+| | |
+|---|---|
+| 💿 **Respeto por los discos** | Se detiene al primer error de hardware para proteger el soporte. El PC permanece despierto durante la copia.<br>*✓ Soportes protegidos* |
+| 🩺 **Salud SMART inmediata** | Estado del disco con veredictos claros y cada valor explicado.<br>`Bien` · `Precaución` · `Peligro` |
+| 🛡️ **Reconoce su propio disco** | ¿Dos discos externos que Windows llama a ambos `E:`? Cada tarea reconoce el suyo y simplemente lo espera.<br>*✓ Nunca el disco equivocado* |
+
+### Fiabilidad total, privacidad y cero ataduras
+
+| | |
+|---|---|
+| ✅ **Verificación SHA-256 y archivos abiertos** | Descubre la corrupción silenciosa e incluye archivos bloqueados o archivos de Outlook mediante instantáneas de volumen (VSS).<br>*✓ La prueba de que funcionó* |
+| ⏰ **Autonomía discreta** | Programación para cada tarea, incluso con la app cerrada. Notificaciones sobrias, solo cuando importan.<br>*✓ Se ejecuta solo* |
+| 🏠 **100% tuyo y de código abierto** | Licencia MIT, sin telemetría, todo en local. Cinco idiomas y versión portátil lista para usar.<br>*✓ Tus archivos, bajo tu control* |
 
 ## Empieza en dos minutos
 
@@ -67,19 +78,6 @@ Cada tarea es un par carpeta origen → carpeta destino. En cada ejecución, Rob
 
 Con las versiones activadas, el estado anterior de los archivos que van a sustituirse o eliminarse
 se aparta primero en una versión fechada.
-
-## Novedades de la 1.8
-
-- **Ventana de salud de discos**: SMART de cada disco, explicado en lenguaje sencillo. NVMe sin
-  avisos; SATA y USB con una confirmación de administrador, la única forma de atravesar las cajas
-  USB.
-- **Comprobación de actualizaciones opcional**: RoboKeep pregunta una vez si puede buscar nuevas
-  versiones en GitHub. Cuando hay una, un banner ofrece *Novedades*, *Descargar*, *Ignorar*. Tú
-  reemplazas los archivos.
-- **Asistente más simple**: pregunta solo lo que importa, guarda la tarea en cuanto terminas y
-  gestiona las credenciales de red por su cuenta.
-- Activar las versiones en una tarea existente **ya no recopia todo**; una tarea cancelada sigue
-  dejando un registro; las programaciones mensuales pueden ejecutarse el **último día del mes**.
 
 Historial completo en el [CHANGELOG](CHANGELOG.md).
 

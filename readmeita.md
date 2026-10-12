@@ -18,18 +18,29 @@ versioni datate a cui tornare quando serve. **Niente cloud, niente account, ness
 
 ## Perché RoboKeep
 
+### Semplice all'avvio, intelligente nello spazio
+
 | | |
 |---|---|
-| 🧙 **Configurazione semplice** | La creazione guidata chiede dei tuoi dati in linguaggio semplice e sceglie le impostazioni giuste. Chi è esperto può comunque regolare tutto a mano. |
-| 🕰️ **Torna indietro nel tempo** | Ogni esecuzione può salvare una versione datata con i soli file che ha sostituito o cancellato, quindi dieci versioni non costano dieci volte lo spazio — su qualunque disco. E *Ripristina* rimette a posto un file, una cartella o tutto il job **com'era a una data**, in una cartella a tua scelta. |
-| 💿 **Rispetta i tuoi dischi** | Si ferma al primo errore hardware invece di insistere per ore, tiene il PC sveglio durante il backup, va piano sui dischi meccanici. |
-| 🩺 **Salute dischi a colpo d'occhio** | Un clic legge lo SMART di ogni disco e dà un verdetto semplice: Buono, Attenzione, Pericolo — con ogni valore spiegato. *Novità della 1.8.* |
-| 🛡️ **Mai il disco sbagliato** | Alterni due dischi esterni che Windows chiama entrambi `E:`? Ogni job riconosce il proprio disco dall'identità e semplicemente lo aspetta. |
-| ✅ **La prova che ha funzionato** | Verifica rilegge entrambi i lati e confronta le impronte SHA-256. La corruzione silenziosa viene scovata. |
-| 🔓 **Anche i file aperti** | Archivi di Outlook, database, qualsiasi file bloccato: una casella copia da una copia shadow di Windows. |
-| ⏰ **Gira da solo** | Ogni job ha il suo orario (giornaliero, settimanale, mensile, anche l'ultimo giorno del mese) e parte anche ad app chiusa. |
-| 🚨 **Si fa sentire solo quando conta** | Icone colorate e tooltip semplici per i job falliti, in ritardo o interrotti. Un disco scollegato è una clessidra, non un allarme. |
-| 🏠 **Davvero tuo** | Gratuito e open source (MIT), tutto in locale, zero telemetria. Cinque lingue. Portatile, se lo vuoi. |
+| 🧙 **Configurazione guidata** | Rispondi a domande semplici: RoboKeep imposta tutto al meglio. Chi è esperto mantiene i controlli completi.<br>*✓ Parti con semplicità* |
+| 🕰️ **Storico senza sprechi** | Versioni datate che archiviano solo i file modificati o eliminati.<br>*✓ Dieci revisioni allo spazio di una* |
+| ↩️ **Ripristino puntuale** | Recupera un file, una cartella o l'intero job com'era a una data esatta, dove preferisci.<br>*✓ Scegli cosa e quando* |
+
+### Massima cura dell'hardware e controllo dei dischi
+
+| | |
+|---|---|
+| 💿 **Rispetto per i dischi** | Stop immediato al primo errore hardware per proteggere i supporti. Il PC resta sveglio durante il backup.<br>*✓ Protezione dei supporti* |
+| 🩺 **Salute SMART immediata** | Stato del disco con verdetti chiari e ogni valore spiegato.<br>`Buono` · `Attenzione` · `Pericolo` |
+| 🛡️ **Riconoscimento univoco** | Due dischi esterni che Windows chiama entrambi `E:`? Ogni job riconosce il proprio e lo aspetta.<br>*✓ Il disco giusto* |
+
+### Affidabilità totale, privacy e zero vincoli
+
+| | |
+|---|---|
+| ✅ **Verifica SHA-256 e file aperti** | Scova la corruzione silenziosa e include i file bloccati o gli archivi di Outlook tramite copie shadow (VSS).<br>*✓ La prova che ha funzionato* |
+| ⏰ **Autonomia discreta** | Pianificazione per ogni job, anche ad app chiusa. Notifiche sobrie, solo quando contano.<br>*✓ Gira da solo* |
+| 🏠 **100% tuo e open source** | Licenza MIT, zero telemetria, tutto in locale. Cinque lingue e versione portatile pronta all'uso.<br>*✓ I tuoi file, sotto il tuo controllo* |
 
 ## Parti in due minuti
 
@@ -67,18 +78,6 @@ Ogni job è una coppia cartella sorgente → cartella destinazione. Ad ogni esec
 
 Con le versioni attive, lo stato precedente dei file che stanno per essere sostituiti o cancellati
 viene prima messo da parte in una versione datata.
-
-## Novità della 1.8
-
-- **Finestra Salute dischi**: SMART di ogni disco, spiegato in parole semplici. NVMe senza
-  richieste; SATA e USB con una conferma da amministratore, l'unico modo per attraversare i box USB.
-- **Controllo aggiornamenti facoltativo**: RoboKeep chiede una volta se può cercare nuove versioni
-  su GitHub. Quando ce n'è una, un banner propone *Novità*, *Scarica*, *Ignora*. Sostituisci i
-  file tu.
-- **Creazione guidata più semplice**: chiede solo ciò che conta, salva il job appena finisci,
-  gestisce da sola le credenziali di rete.
-- Attivare le versioni su un job esistente **non ricopia più tutto**; un job annullato lascia
-  comunque un log; le pianificazioni mensili possono girare **l'ultimo giorno del mese**.
 
 Cronologia completa nel [CHANGELOG](CHANGELOG.md).
 

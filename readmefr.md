@@ -19,18 +19,29 @@ d'abonnement.**
 
 ## Pourquoi RoboKeep
 
+### Simple au démarrage, économe en espace
+
 | | |
 |---|---|
-| 🧙 **Configuration simple** | L'assistant pose des questions sur vos données en langage clair et choisit les bons réglages. Les experts peuvent tout ajuster à la main. |
-| 🕰️ **Remontez le temps** | Chaque exécution peut conserver une version datée qui ne contient que les fichiers qu'elle a remplacés ou supprimés, donc dix versions ne coûtent pas dix fois l'espace, sur n'importe quel disque. Et *Restaurer* remet un fichier, un dossier ou toute la tâche **tels qu'à une date**, dans un dossier de votre choix. |
-| 💿 **Doux avec vos disques** | S'arrête à la première erreur matérielle au lieu de s'acharner pendant des heures, maintient le PC éveillé pendant la sauvegarde, ménage les disques mécaniques. |
-| 🩺 **État des disques en un coup d'œil** | Un clic lit le SMART de chaque disque et donne un verdict clair : Bon, Attention, Danger — avec chaque valeur expliquée. *Nouveauté de la 1.8.* |
-| 🛡️ **Jamais le mauvais disque** | Vous alternez deux disques externes que Windows appelle tous deux `E:` ? Chaque tâche reconnaît son propre disque par son identité et attend simplement qu'il soit branché. |
-| ✅ **La preuve que ça a marché** | Vérifier relit les deux côtés et compare les empreintes SHA-256. La corruption silencieuse est débusquée. |
-| 🔓 **Même les fichiers ouverts** | Archives Outlook, bases de données, tout ce qui est verrouillé : une case à cocher suffit pour copier depuis un cliché instantané Windows. |
-| ⏰ **Fonctionne tout seul** | Chaque tâche a son propre horaire (quotidien, hebdomadaire, mensuel, même le dernier jour du mois) et s'exécute même l'application fermée. |
-| 🚨 **Ne parle que quand c'est important** | Icônes colorées et infobulles claires pour les tâches en échec, périmées ou interrompues. Un disque débranché est un sablier, pas une alarme. |
-| 🏠 **Vraiment à vous** | Gratuit, open source (MIT), entièrement local, sans télémétrie. Cinq langues. Portable si vous le souhaitez. |
+| 🧙 **Configuration guidée** | Répondez à quelques questions simples et RoboKeep règle tout au mieux. Les experts gardent la main sur tout.<br>*✓ Démarrez en toute simplicité* |
+| 🕰️ **Un historique sans gaspillage** | Des versions datées qui ne conservent que les fichiers modifiés ou supprimés.<br>*✓ Dix révisions pour la place d'une* |
+| ↩️ **Restauration au fichier près** | Récupérez un fichier, un dossier ou toute la tâche tels qu'à une date précise, où vous voulez.<br>*✓ Choisissez quoi et quand* |
+
+### Le plus grand soin du matériel et des disques
+
+| | |
+|---|---|
+| 💿 **Respect de vos disques** | Arrêt immédiat à la première erreur matérielle pour protéger le support. Le PC reste éveillé pendant la sauvegarde.<br>*✓ Vos supports protégés* |
+| 🩺 **Santé SMART immédiate** | L'état du disque avec des verdicts clairs et chaque valeur expliquée.<br>`Bon` · `Attention` · `Danger` |
+| 🛡️ **Reconnaît son propre disque** | Deux disques externes que Windows appelle tous deux `E:` ? Chaque tâche reconnaît le sien et l'attend simplement.<br>*✓ Jamais le mauvais disque* |
+
+### Fiabilité totale, confidentialité et zéro contrainte
+
+| | |
+|---|---|
+| ✅ **Vérification SHA-256 et fichiers ouverts** | Débusque la corruption silencieuse et prend en charge les fichiers verrouillés ou les archives Outlook via les clichés instantanés (VSS).<br>*✓ La preuve que ça a marché* |
+| ⏰ **Une autonomie discrète** | Une planification par tâche, même application fermée. Des notifications sobres, seulement quand elles comptent.<br>*✓ Fonctionne tout seul* |
+| 🏠 **100 % à vous et open source** | Licence MIT, aucune télémétrie, tout en local. Cinq langues et une version portable prête à l'emploi.<br>*✓ Vos fichiers, sous votre contrôle* |
 
 ## Démarrez en deux minutes
 
@@ -69,20 +80,6 @@ Chaque tâche est une paire dossier source → dossier destination. À chaque ex
 
 Avec les versions activées, l'état précédent des fichiers sur le point d'être remplacés ou supprimés
 est d'abord mis de côté dans une version datée.
-
-## Nouveautés de la 1.8
-
-- **Fenêtre État des disques** : SMART de chaque disque, expliqué en mots simples. NVMe sans
-  confirmation ; SATA et USB avec une confirmation administrateur, seul moyen de traverser les
-  boîtiers USB.
-- **Recherche de mises à jour facultative** : RoboKeep demande une fois s'il peut chercher de
-  nouvelles versions sur GitHub. Quand il y en a une, une bannière propose *Nouveautés*,
-  *Télécharger*, *Ignorer*. C'est vous qui remplacez les fichiers.
-- **Assistant plus simple** : ne demande que ce qui compte, enregistre la tâche dès que vous avez
-  terminé, gère les identifiants réseau tout seul.
-- Activer les versions sur une tâche existante **ne recopie plus tout** ; une tâche annulée laisse
-  quand même un journal ; les planifications mensuelles peuvent s'exécuter le **dernier jour du
-  mois**.
 
 Historique complet dans le [CHANGELOG](CHANGELOG.md).
 
