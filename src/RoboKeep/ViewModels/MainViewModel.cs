@@ -129,16 +129,25 @@ public sealed class MainViewModel : ObservableObject
     public enum UpdateCheckOutcome { Skipped, UpToDate, Available, Unreachable, NotPublic }
 
     private UpdateInfo? _update;
-    private string _updateBannerText = "";
-    private bool _updateBannerVisible;
-    private bool _updateBusy;
 
-    public string UpdateBannerText { get => _updateBannerText; private set => SetField(ref _updateBannerText, value); }
-    public bool UpdateBannerVisible { get => _updateBannerVisible; set => SetField(ref _updateBannerVisible, value); }
-    /// <summary>Scaricamento in corso: i pulsanti del banner si disattivano.</summary>
-    public bool UpdateActionsEnabled => !_updateBusy;
-    /// <summary>Versione nuova trovata dall'ultimo controllo (vuota se nessuna): la mostrano le Impostazioni.</summary>
+    /// <summary>Versione nuova trovata dall'ultimo controllo (vuota se nessuna): la mostrano le
+    /// Impostazioni e la finestra dell'aggiornamento.</summary>
     public string LatestUpdateVersion => _update?.Latest.ToString() ?? "";
+
+    /// <summary>Dimensione del pacchetto che verrebbe scaricato su questa installazione, già
+    /// scritta per essere letta ("65,5 MB"); vuota se non c'e' nessuna versione nuova. Si mostra
+    /// una dimensione sola: quella dell'altro pacchetto non riguarda chi legge.</summary>
+    public string UpdatePackageSize
+    {
+        get
+        {
+            if (_update is null) return "";
+            var size = InstallKind.IsSelfContained(AppContext.BaseDirectory)
+                ? _update.SelfContainedSize
+                : _update.FrameworkDependentSize;
+            return $"{size / 1024d / 1024d:0.#} MB";
+        }
+    }
 
     private bool _hasFaultedDisks;
     /// <summary>true se c'e' almeno un disco a riposo per errore hardware: mostra "Riattiva dischi".</summary>
@@ -773,78 +782,64 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
-    /// <summary>Controlla se esiste una versione nuova. <paramref name="force"/> ignora la cadenza
-    /// e la versione ignorata (pulsante "Controlla ora"). Restituisce: null = errore,
-    /// false = aggiornato, true = nuova. Data e versione ignorata stanno in update-state.json:
-    /// qui la configurazione non si salva mai, perche' le Impostazioni possono essere aperte con
-    /// modifiche non confermate.</summary>
+    /// <summary>Controlla se esiste una versione nuova. <paramref name="force"/> ignora la
+    /// cadenza (pulsante "Controlla ora"). La data e l'esito dell'ultimo tentativo stanno in
+    /// update-state.json: qui la configurazione non si salva mai, perche' le Impostazioni
+    /// possono essere aperte con modifiche non confermate.</summary>
     public async Task<UpdateCheckOutcome> CheckForUpdatesAsync(bool force)
     {
         var state = _host.UpdateState.Load();
-        if (!force && (_host.Config.Settings.UpdateCheck != true || !UpdateChecker.IsDue(state.LastCheck, DateTime.Now)))
+        if (!force && (_host.Config.Settings.UpdateCheck != true
+                       || !UpdateChecker.IsDue(state.LastCheck, state.LastCheckFailed, DateTime.Now)))
             return UpdateCheckOutcome.Skipped;
 
         var (info, status) = await UpdateChecker.FetchWithStatusAsync();
-        // La data si aggiorna anche quando il controllo non riesce: senza rete il tentativo non
-        // va rifatto a ogni avvio.
-        _host.UpdateState.Save(state with { LastCheck = DateTime.Now });
+        // La data si aggiorna anche quando il controllo non riesce, ma segnata come fallita: si
+        // riprova fra RetryInterval invece di restare fermi 24 ore.
+        _host.UpdateState.Save(new UpdateState(DateTime.Now, info is null));
         if (info is null)
             return status == FetchStatus.NotFound ? UpdateCheckOutcome.NotPublic : UpdateCheckOutcome.Unreachable;
 
-        if (!UpdateChecker.IsNewer(info.Latest, UpdateChecker.Current, force ? null : state.IgnoredVersion))
+        if (!UpdateChecker.IsNewer(info.Latest, UpdateChecker.Current))
         {
-            UpdateBannerVisible = false;
+            _update = null;
+            RaiseUpdateChanged();
             return UpdateCheckOutcome.UpToDate;
         }
         _update = info;
-        OnPropertyChanged(nameof(LatestUpdateVersion));
-        UpdateBannerText = string.Format(Loc.Instance["Upd_Available"], info.Latest, UpdateChecker.Current);
-        UpdateBannerVisible = true;
+        RaiseUpdateChanged();
         return UpdateCheckOutcome.Available;
+    }
+
+    private void RaiseUpdateChanged()
+    {
+        OnPropertyChanged(nameof(LatestUpdateVersion));
+        OnPropertyChanged(nameof(UpdatePackageSize));
     }
 
     /// <summary>Apre nel browser la pagina della release trovata (pulsante "Novita'").</summary>
     public void OpenUpdatePage() => OpenUrl(_update?.ReleaseUrl);
 
-    public void IgnoreUpdate()
+    /// <summary>Scarica il pacchetto giusto per questa installazione nella cartella Download e
+    /// la apre in Esplora file. Restituisce l'esito e la cartella: i testi li compone la
+    /// finestra dell'aggiornamento. Non lancia eccezioni.</summary>
+    public async Task<(bool Ok, string Folder)> DownloadUpdateAsync(IProgress<double>? progress)
     {
-        if (_update is null) return;
-        var state = _host.UpdateState.Load();
-        _host.UpdateState.Save(state with { IgnoredVersion = _update.Latest.ToString() });
-        UpdateBannerVisible = false;
-    }
-
-    public async Task DownloadUpdateAsync()
-    {
-        if (_update is null || _updateBusy) return;
+        if (_update is null) return (false, "");
         var selfContained = InstallKind.IsSelfContained(AppContext.BaseDirectory);
         var url = selfContained ? _update.SelfContainedUrl : _update.FrameworkDependentUrl;
         var size = selfContained ? _update.SelfContainedSize : _update.FrameworkDependentSize;
         var folder = DownloadsFolder();
         var target = Path.Combine(folder, InstallKind.AssetName(_update.Latest, selfContained));
 
-        SetUpdateBusy(true);
-        try
-        {
-            // Nessun annullamento: il banner non ha un pulsante per fermarlo e DownloadAsync
-            // gestisce da se' gli errori (niente file a meta').
-            var progress = new Progress<double>(p => UpdateBannerText = string.Format(Loc.Instance["Upd_Downloading"], (int)(p * 100)));
-            var ok = await UpdateChecker.DownloadAsync(url, target, size, progress, CancellationToken.None);
-            UpdateBannerText = ok
-                ? string.Format(Loc.Instance["Upd_Downloaded"], folder)
-                : Loc.Instance["Upd_DownloadFailed"];
-            if (ok) RevealInExplorer(target);
-        }
-        finally { SetUpdateBusy(false); }
+        // Nessun annullamento: la finestra non ha un pulsante per fermarlo e DownloadAsync
+        // gestisce da se' gli errori (niente file a meta').
+        var ok = await UpdateChecker.DownloadAsync(url, target, size, progress, CancellationToken.None);
+        if (ok) RevealInExplorer(target);
+        return (ok, folder);
     }
 
-    private void SetUpdateBusy(bool busy)
-    {
-        _updateBusy = busy;
-        OnPropertyChanged(nameof(UpdateActionsEnabled)); // disattiva la riga di pulsanti sotto il banner
-    }
-
-    /// <summary>Cartella Download dell'utente; se non esiste, %TEMP% (lo dice il banner).</summary>
+    /// <summary>Cartella Download dell'utente; se non esiste, %TEMP% (lo dice la finestra).</summary>
     private static string DownloadsFolder()
     {
         var dl = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");

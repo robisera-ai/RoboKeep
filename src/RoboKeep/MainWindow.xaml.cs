@@ -40,6 +40,13 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
     private const int DBT_DEVICEREMOVECOMPLETE = 0x8004;
     private System.Windows.Threading.DispatcherTimer? _deviceRefresh;
 
+    // Avviso di aggiornamento rimandato: l'app puo' essere partita nell'area di notifica, e la
+    // finestra si centrerebbe su una finestra che non si vede.
+    private bool _updatePostponed;
+    // Ricontrollo a finestra aperta: senza di questo RoboKeep lasciato aperto per giorni non
+    // ricontrollerebbe mai (il controllo parte solo all'apertura della finestra).
+    private System.Windows.Threading.DispatcherTimer? _updateRecheck;
+
     public MainWindow()
     {
         _host = AppHost.Load();
@@ -84,7 +91,65 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             s.UpdateCheck = r == MessageBoxResult.Yes;
             _host.SaveConfig();
         }
-        try { await _vm.CheckForUpdatesAsync(force: false); }
+        try
+        {
+            if (await _vm.CheckForUpdatesAsync(force: false) == MainViewModel.UpdateCheckOutcome.Available)
+                ShowOrPostponeUpdateWindow();
+        }
+        catch { /* best-effort: nessun aggiornamento noto */ }
+
+        // La cadenza la decide CheckForUpdatesAsync, quindi quasi tutti i giri non fanno rete.
+        _updateRecheck = new System.Windows.Threading.DispatcherTimer
+        {
+            Interval = System.TimeSpan.FromHours(1),
+        };
+        _updateRecheck.Tick += OnUpdateRecheckTick;
+        _updateRecheck.Start();
+    }
+
+    // L'avviso va mostrato solo a finestra davanti all'utente. Partiti nell'area di notifica, o
+    // ridotti a icona, si aspetta la prima apertura: altrimenti l'avviso arriva addosso a chi
+    // sta facendo altro, con sotto una finestra che non si vede.
+    private void ShowOrPostponeUpdateWindow()
+    {
+        if (UpdateWindow.IsOnScreen(this))
+        {
+            UpdateWindow.ShowFor(this, _vm);
+            return;
+        }
+        if (_updatePostponed) return;
+        _updatePostponed = true;
+        // Due strade per tornare a video: dall'area di notifica (Show, cambia IsVisible) e dalla
+        // barra delle applicazioni (ripristino, cambia WindowState).
+        IsVisibleChanged += OnShowUpdateWhenVisible;
+        StateChanged += OnShowUpdateWhenRestored;
+    }
+
+    private void OnShowUpdateWhenVisible(object sender, DependencyPropertyChangedEventArgs e) => ShowPostponedUpdate();
+    private void OnShowUpdateWhenRestored(object? sender, System.EventArgs e) => ShowPostponedUpdate();
+
+    private void ShowPostponedUpdate()
+    {
+        if (!_updatePostponed || !UpdateWindow.IsOnScreen(this)) return;
+        _updatePostponed = false;
+        IsVisibleChanged -= OnShowUpdateWhenVisible;
+        StateChanged -= OnShowUpdateWhenRestored;
+        // La finestra appena tornata a video non ha ancora finito di disporsi: l'avviso si apre
+        // al giro successivo del dispatcher, altrimenti si centra su misure non ancora valide.
+        Dispatcher.BeginInvoke(new System.Action(() => UpdateWindow.ShowFor(this, _vm)));
+    }
+
+    // Ricontrollo ogni ora a finestra aperta. L'avviso non salta addosso durante un'operazione o
+    // sopra un'altra finestra modale: in quel caso si riprova al giro dopo.
+    private async void OnUpdateRecheckTick(object? sender, System.EventArgs e)
+    {
+        if (_vm.IsBusy || System.Windows.Interop.ComponentDispatcher.IsThreadModal) return;
+        try
+        {
+            if (await _vm.CheckForUpdatesAsync(force: false) == MainViewModel.UpdateCheckOutcome.Available
+                && !_vm.IsBusy && !System.Windows.Interop.ComponentDispatcher.IsThreadModal)
+                ShowOrPostponeUpdateWindow();
+        }
         catch { /* best-effort: nessun aggiornamento noto */ }
     }
 
@@ -519,14 +584,6 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
 
     // Riattiva i dischi messi a riposo per un errore hardware: l'utente dichiara di averli
     // controllati. Conferma esplicita: riabilitare un disco che sta cedendo e' peggio del blocco.
-    // Pulsanti del banner aggiornamenti: gestori diretti, niente binding di comandi.
-    private void OnUpdateWhatsNew(object sender, RoutedEventArgs e) => _vm.OpenUpdatePage();
-    private async void OnUpdateDownload(object sender, RoutedEventArgs e)
-    {
-        try { await _vm.DownloadUpdateAsync(); } catch { /* il view model gia' gestisce gli errori */ }
-    }
-    private void OnUpdateIgnore(object sender, RoutedEventArgs e) => _vm.IgnoreUpdate();
-
     private void OnReenableDisks(object sender, RoutedEventArgs e)
     {
         // La conferma elenca i dischi: con piu' dischi in rotazione si deve sapere QUALE si riabilita.

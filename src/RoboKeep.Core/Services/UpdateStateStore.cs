@@ -3,10 +3,14 @@ using System.Text.Json;
 namespace RoboKeep.Core.Services;
 
 /// <summary>Stato del controllo aggiornamenti.</summary>
-/// <param name="LastCheck">Ultimo controllo eseguito: si ricontrolla al massimo una volta ogni 24 ore.</param>
-/// <param name="IgnoredVersion">Versione che l'utente ha scelto di ignorare ("1.8.0"): non viene
-/// piu' proposta; una versione successiva si'.</param>
-public sealed record UpdateState(DateTime? LastCheck, string? IgnoredVersion);
+/// <param name="LastCheck">Ultimo tentativo eseguito.</param>
+/// <param name="LastCheckFailed">true se l'ultimo tentativo non ha portato informazioni (rete
+/// assente, timeout, 404): si riprova dopo <see cref="UpdateChecker.RetryInterval"/> invece di
+/// aspettare le 24 ore piene, altrimenti un avvio senza rete toglierebbe il controllo per un
+/// giorno intero. Un file scritto da una versione precedente contiene <c>ignoredVersion</c> al
+/// posto di questo campo: viene ignorato, e la versione messa a tacere torna a essere
+/// proposta.</param>
+public sealed record UpdateState(DateTime? LastCheck, bool LastCheckFailed);
 
 /// <summary>
 /// Persistenza dello stato del controllo aggiornamenti in un file suo, accanto a
@@ -24,7 +28,7 @@ public sealed class UpdateStateStore
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
 
-    private static readonly UpdateState Empty = new(null, null);
+    private static readonly UpdateState Empty = new(null, false);
 
     private readonly string _path;
 

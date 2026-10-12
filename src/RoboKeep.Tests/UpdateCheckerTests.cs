@@ -88,22 +88,39 @@ public class UpdateCheckerTests
     }
 
     [Theory]
-    [InlineData("1.8.0", "1.7.0", null, true)]
-    [InlineData("1.7.0", "1.7.0", null, false)]
-    [InlineData("1.6.9", "1.7.0", null, false)]
-    [InlineData("1.8.0", "1.7.0", "1.8.0", false)]   // ignorata
-    [InlineData("1.8.1", "1.7.0", "1.8.0", true)]    // ignorata la 1.8.0, la 1.8.1 si propone
-    [InlineData("1.8.0", "1.7.0", "abc", true)]      // valore ignorato illeggibile: si propone
-    public void IsNewer_ComparesAndHonoursIgnored(string latest, string current, string? ignored, bool expected)
-        => Assert.Equal(expected, UpdateChecker.IsNewer(Version.Parse(latest), Version.Parse(current), ignored));
+    [InlineData("1.8.0", "1.7.0", true)]
+    [InlineData("1.7.0", "1.7.0", false)]
+    [InlineData("1.6.9", "1.7.0", false)]
+    [InlineData("1.8.1", "1.8.0", true)]
+    public void IsNewer_ComparesVersions(string latest, string current, bool expected)
+        => Assert.Equal(expected, UpdateChecker.IsNewer(Version.Parse(latest), Version.Parse(current)));
 
     [Fact]
-    public void IsDue_Every24Hours()
+    public void IsDue_Every24Hours_WhenTheLastCheckSucceeded()
     {
-        var now = new DateTime(2026, 9, 23, 12, 0, 0);
-        Assert.True(UpdateChecker.IsDue(null, now));
-        Assert.False(UpdateChecker.IsDue(now.AddHours(-23), now));
-        Assert.True(UpdateChecker.IsDue(now.AddHours(-25), now));
+        var now = new DateTime(2026, 10, 12, 12, 0, 0);
+        Assert.True(UpdateChecker.IsDue(null, false, now));
+        Assert.False(UpdateChecker.IsDue(now.AddHours(-23), false, now));
+        Assert.True(UpdateChecker.IsDue(now.AddHours(-25), false, now));
+    }
+
+    [Fact]
+    public void IsDue_After2Hours_WhenTheLastCheckFailed()
+    {
+        // Un avvio senza rete non deve togliere il controllo per un giorno intero.
+        var now = new DateTime(2026, 10, 12, 12, 0, 0);
+        Assert.False(UpdateChecker.IsDue(now.AddHours(-1), true, now));
+        Assert.True(UpdateChecker.IsDue(now.AddHours(-2), true, now));
+        Assert.True(UpdateChecker.IsDue(now.AddHours(-3), true, now));
+    }
+
+    [Fact]
+    public void IsDue_WhenTheClockWentBack()
+    {
+        // Orologio spostato indietro (o fuso cambiato): senza questo si resterebbe fermi
+        // fino a quando l'ora non ha recuperato il ritardo.
+        var now = new DateTime(2026, 10, 12, 12, 0, 0);
+        Assert.True(UpdateChecker.IsDue(now.AddHours(5), false, now));
     }
 
     private static (System.Net.HttpListener Listener, string Url) StartServer(byte[] body, int statusCode = 200)

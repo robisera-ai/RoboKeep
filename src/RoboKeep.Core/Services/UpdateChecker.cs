@@ -34,6 +34,9 @@ public static class UpdateChecker
     /// <summary>Pagina da aprire quando la risposta non porta un indirizzo attendibile.</summary>
     public const string ReleasesPage = "https://github.com/robisera-ai/RoboKeep/releases/latest";
     public static readonly TimeSpan CheckInterval = TimeSpan.FromHours(24);
+    /// <summary>Attesa dopo un tentativo che non ha portato informazioni. Molto piu' breve delle
+    /// 24 ore: un avvio senza rete non deve impedire ogni controllo per un giorno intero.</summary>
+    public static readonly TimeSpan RetryInterval = TimeSpan.FromHours(2);
     private static readonly TimeSpan FetchTimeout = TimeSpan.FromSeconds(5);
 
     /// <summary>Legge la risposta dell'API; null se non e' una release usabile (tag non
@@ -90,15 +93,21 @@ public static class UpdateChecker
             || host.EndsWith(".githubusercontent.com", StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>true se la release e' piu' recente di quella in uso e non e' quella ignorata.</summary>
-    public static bool IsNewer(Version latest, Version current, string? ignored)
-    {
-        if (latest <= current) return false;
-        return !(Version.TryParse(ignored ?? "", out var ign) && ign == latest);
-    }
+    /// <summary>true se la release e' piu' recente di quella in uso. Non esiste piu' una versione
+    /// "ignorata": su uno strumento di backup una versione con correzioni non deve poter essere
+    /// messa a tacere per sempre; «Più tardi» chiude l'avviso e la cadenza lo ripropone.</summary>
+    public static bool IsNewer(Version latest, Version current) => latest > current;
 
-    public static bool IsDue(DateTime? lastCheck, DateTime now) =>
-        lastCheck is null || now - lastCheck.Value >= CheckInterval;
+    /// <summary>Se e' ora di ricontrollare: 24 ore dopo un tentativo riuscito, 2 dopo uno
+    /// fallito.</summary>
+    public static bool IsDue(DateTime? lastCheck, bool lastCheckFailed, DateTime now)
+    {
+        if (lastCheck is null) return true;
+        // Orologio spostato indietro o fuso cambiato: senza questo si resterebbe fermi finche'
+        // l'ora non ha recuperato il ritardo.
+        if (now < lastCheck.Value) return true;
+        return now - lastCheck.Value >= (lastCheckFailed ? RetryInterval : CheckInterval);
+    }
 
     /// <summary>Versione dell'app in uso (Major.Minor.Build).</summary>
     public static Version Current

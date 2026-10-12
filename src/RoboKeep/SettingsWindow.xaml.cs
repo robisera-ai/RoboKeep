@@ -42,15 +42,17 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
         AppVersionText.Text = v is null ? "1.0.0" : $"{v.Major}.{v.Minor}.{v.Build}";
     }
 
-    // "Controlla ora": controllo immediato, saltando la cadenza di 24 ore e la versione ignorata.
-    // Il banner (se c'e' una versione nuova) compare nella finestra principale: qui solo l'esito.
+    // "Controlla ora": controllo immediato, saltando la cadenza di 24 ore. L'avviso si apre sopra
+    // le Impostazioni, non dietro: prima bisognava chiuderle per leggere il banner nella pagina
+    // principale.
     private async void OnCheckUpdatesNow(object sender, RoutedEventArgs e)
     {
         CheckUpdatesButton.IsEnabled = false;
+        var outcome = MainViewModel.UpdateCheckOutcome.Skipped;
         try
         {
-            var r = await _main.CheckForUpdatesAsync(force: true);
-            UpdateStatusText.Text = r switch
+            outcome = await _main.CheckForUpdatesAsync(force: true);
+            UpdateStatusText.Text = outcome switch
             {
                 MainViewModel.UpdateCheckOutcome.Available => string.Format(Loc.Instance["Set_UpdateAvailable"], _main.LatestUpdateVersion),
                 MainViewModel.UpdateCheckOutcome.UpToDate => Loc.Instance["Set_UpdateUpToDate"],
@@ -60,7 +62,12 @@ public partial class SettingsWindow : Wpf.Ui.Controls.FluentWindow
         }
         // async void: un'eccezione non gestita qui farebbe cadere l'applicazione.
         catch { UpdateStatusText.Text = Loc.Instance["Set_UpdateFailed"]; }
+        // Il pulsante si riattiva prima di aprire l'avviso: la finestra e' modale e lo
+        // lascerebbe spento per tutto il tempo che resta aperta.
         finally { CheckUpdatesButton.IsEnabled = true; }
+
+        if (outcome == MainViewModel.UpdateCheckOutcome.Available)
+            UpdateWindow.ShowFor(this, _main);
     }
 
     // Apre un link esterno (es. il repository) nel browser predefinito.

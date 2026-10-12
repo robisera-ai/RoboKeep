@@ -1,0 +1,43 @@
+<ui:FluentWindow x:Class="RoboKeep.UpdateWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:l="clr-namespace:RoboKeep.Localization"
+        Title="{l:Tr Upd_WindowTitle}" Width="520" SizeToContent="Height"
+        ResizeMode="NoResize" ExtendsContentIntoTitleBar="True" WindowBackdropType="Mica"
+        WindowCornerPreference="Round" WindowStartupLocation="CenterOwner">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <!-- Niente riduci a icona ne' ingrandisci: e' un avviso modale di dimensione fissa, e
+             quei due pulsanti porterebbero solo a stati strani. -->
+        <ui:TitleBar Grid.Row="0" Title="{l:Tr Upd_WindowTitle}"
+                     ShowMinimize="False" ShowMaximize="False">
+            <ui:TitleBar.Icon><ui:SymbolIcon Symbol="ArrowDownload24"/></ui:TitleBar.Icon>
+        </ui:TitleBar>
+
+        <StackPanel Grid.Row="1" Margin="20,8,20,0">
+            <TextBlock x:Name="Headline" FontSize="18" FontWeight="SemiBold" TextWrapping="Wrap"/>
+            <TextBlock x:Name="Detail" Margin="0,4,0,0" Opacity="0.75" TextWrapping="Wrap"/>
+            <TextBlock x:Name="Body" Margin="0,12,0,0" TextWrapping="Wrap"/>
+            <!-- Non "Progress": un campo con quel nome nasconderebbe il tipo Progress<double>
+                 usato nel code-behind. -->
+            <ProgressBar x:Name="DownloadProgress" Height="6" Margin="0,12,0,0"
+                         Minimum="0" Maximum="100" Visibility="Collapsed"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right"
+                    Margin="20,16,20,20">
+            <ui:Button x:Name="WhatsNewButton" Content="{l:Tr Upd_WhatsNew}"
+                       Icon="{ui:SymbolIcon Open24}" Margin="0,0,8,0" Click="OnWhatsNew"/>
+            <ui:Button x:Name="DownloadButton" Content="{l:Tr Upd_Download}"
+                       Icon="{ui:SymbolIcon ArrowDownload24}" Appearance="Primary"
+                       Margin="0,0,8,0" Click="OnDownload"/>
+            <ui:Button x:Name="CloseButton" Content="{l:Tr Upd_Later}" IsCancel="True"
+                       Click="OnClose"/>
+        </StackPanel>
+    </Grid>
+</ui:FluentWindow>
