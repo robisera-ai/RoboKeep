@@ -311,6 +311,12 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
         return NotificationGuard.TryShow(() => TrayIcon.ShowNotification(title, message, NotificationIcon.Info));
     }
 
+    // SelectedItems di DataGrid non e' una proprieta' di dipendenza e non si puo' associare: le
+    // righe evidenziate si passano al view model a ogni cambio. Senza questo la griglia lasciava
+    // selezionarne piu' d'una ma «Avvia selezionato» ne faceva partire una sola, in silenzio.
+    private void OnGridSelectionChanged(object sender, SelectionChangedEventArgs e) =>
+        _vm.SetSelectedJobs(JobsGrid.SelectedItems.OfType<JobViewModel>());
+
     // Ordinamento per intestazione: riordina FISICAMENTE la collezione (vedi MainViewModel.SortJobs)
     // invece di applicare un ordinamento di vista. Così l'ordine visibile coincide sempre con quello
     // reale e il riordino manuale via drag & drop resta visibile (un ordinamento di vista lo nasconderebbe).

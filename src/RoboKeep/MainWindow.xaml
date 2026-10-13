@@ -121,6 +121,7 @@
                               VerticalAlignment="Stretch" VerticalContentAlignment="Top"
                               Visibility="{Binding HasJobs, Converter={StaticResource BoolToVis}}"
                               AllowDrop="True"
+                              SelectionChanged="OnGridSelectionChanged"
                               Sorting="OnGridSorting"
                               MouseMove="OnGridMouseMove"
                               DragOver="OnGridDragOver"

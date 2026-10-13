@@ -226,6 +226,35 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
+    // Righe evidenziate nella griglia. SelectedItems di DataGrid non si puo' associare, quindi
+    // la finestra le passa qui a ogni cambio di selezione. Prima esisteva solo SelectedJob: la
+    // griglia lasciava evidenziare piu' righe (SelectionMode predefinito: Extended), ma «Avvia
+    // selezionato» e «Verifica» ne prendevano una sola, senza dirlo.
+    private List<JobViewModel> _selectedJobs = new();
+
+    /// <summary>Aggiorna le righe evidenziate (la chiama la griglia).</summary>
+    public void SetSelectedJobs(IEnumerable<JobViewModel> jobs)
+    {
+        _selectedJobs = jobs.ToList();
+        RaiseRunButtons();
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    /// <summary>I job da avviare o verificare, nell'ordine in cui stanno nell'elenco e non in
+    /// quello in cui sono stati cliccati. Le righe sopravvissute a un ricaricamento: dopo un run
+    /// la collezione puo' essere ricostruita, e un riferimento vecchio farebbe partire un job che
+    /// non e' piu' quello a video.</summary>
+    private List<JobViewModel> SelectedOrPrimary()
+    {
+        var chosen = Jobs.Where(j => _selectedJobs.Contains(j)).ToList();
+        if (chosen.Count > 0) return chosen;
+        return SelectedJob is null ? new List<JobViewModel>() : new List<JobViewModel> { SelectedJob };
+    }
+
+    /// <summary>Quante righe prenderebbero «Avvia selezionato» e «Verifica»: lo dicono le
+    /// etichette, perche' con due righe evidenziate ci si aspetta che partano entrambe.</summary>
+    private int SelectedCount => SelectedOrPrimary().Count;
+
     /// <summary>true quando il job selezionato ha il versioning attivo (abilita il pulsante Versioni).</summary>
     public bool IsVersionedJobSelected
     {
@@ -266,9 +295,19 @@ public sealed class MainViewModel : ObservableObject
     private RunKind _running = RunKind.None;
 
     public string PreviewLabel => _running == RunKind.Preview ? Loc.Instance["Common_Cancel"] : Loc.Instance["Main_Preview"];
-    public string RunSelectedLabel => _running == RunKind.Selected ? Loc.Instance["Common_Cancel"] : Loc.Instance["Main_RunSelected"];
+    // Con piu' righe evidenziate l'etichetta dice quante ne prende: «Avvia selezionati (2)».
+    // Con una sola resta la frase di sempre, che non deve diventare «Avvia selezionati (1)».
+    public string RunSelectedLabel => _running == RunKind.Selected
+        ? Loc.Instance["Common_Cancel"]
+        : SelectedCount > 1
+            ? string.Format(Loc.Instance["Main_RunSelectedMany"], SelectedCount)
+            : Loc.Instance["Main_RunSelected"];
     public string RunAllLabel => _running == RunKind.All ? Loc.Instance["Common_Cancel"] : Loc.Instance["Main_RunAll"];
-    public string VerifyLabel => _running == RunKind.Verify ? Loc.Instance["Common_Cancel"] : Loc.Instance["Main_Verify"];
+    public string VerifyLabel => _running == RunKind.Verify
+        ? Loc.Instance["Common_Cancel"]
+        : SelectedCount > 1
+            ? string.Format(Loc.Instance["Main_VerifyMany"], SelectedCount)
+            : Loc.Instance["Main_Verify"];
     public bool PreviewCancel => _running == RunKind.Preview;
     public bool RunSelectedCancel => _running == RunKind.Selected;
     public bool RunAllCancel => _running == RunKind.All;
@@ -349,9 +388,7 @@ public sealed class MainViewModel : ObservableObject
         }
         else
         {
-            var sel = SelectedJob;
-            if (sel is null) return;
-            jobs = new List<JobViewModel> { sel };
+            jobs = SelectedOrPrimary();
         }
         if (jobs.Count == 0) return;
 
@@ -596,6 +633,12 @@ public sealed class MainViewModel : ObservableObject
         var runner = _host.BuildRunner();
         IProgress<string> progress = new DirectProgress(Enqueue);
         _logTimer.Start();
+        // Piu' job in una volta: le notifiche di Windows si accodano, una ogni cinque secondi, e
+        // restano tutte nel Centro notifiche da chiudere a mano. Si contano e si notifica una
+        // volta sola alla fine (vedi RunSummary).
+        var batch = jobs.Count > 1;
+        List<string> okNames = new(), failedNames = new();
+        var skipped = 0;
         try
         {
             var header = dryRun ? Loc.Instance["Run_Preview"] : Loc.Instance["Run_Execution"];
@@ -626,18 +669,25 @@ public sealed class MainViewModel : ObservableObject
                     Enqueue($"=> {jvm.Name}: {result.Status}");
 
                     // Nessun toast per un job saltato: non e' successo niente da notificare.
-                    if (!dryRun
-                        && !result.Skipped
-                        && _host.Config.Settings.NotificationsEnabled
-                        && System.Windows.Application.Current?.MainWindow is MainWindow mw)
+                    if (!dryRun && result.Skipped) skipped++;
+                    else if (!dryRun)
                     {
-                        var msg = result.Success
-                            ? Loc.Instance["Toast_Ok"]
-                            : Loc.Instance["Toast_Error"];
-                        // Una notifica rifiutata da Windows non e' un errore del job: prima finiva nel
-                        // catch qui sotto e un backup riuscito compariva come «ERRORE».
-                        if (!mw.ShowJobToast(jvm.Name, msg))
-                            Enqueue($"   {jvm.Name}: {Loc.Instance["Toast_Failed"]}");
+                        (result.Success ? okNames : failedNames).Add(jvm.Name);
+                        // In gruppo il successo non notifica: sei job erano sei banner in fila, che
+                        // Windows mostra uno alla volta. Lo dice il riassunto in fondo. I falliti
+                        // notificano sempre, col loro nome: li' si vuole sapere subito quale.
+                        if (_host.Config.Settings.NotificationsEnabled
+                            && (!batch || !result.Success)
+                            && System.Windows.Application.Current?.MainWindow is MainWindow mw)
+                        {
+                            var msg = result.Success
+                                ? Loc.Instance["Toast_Ok"]
+                                : Loc.Instance["Toast_Error"];
+                            // Una notifica rifiutata da Windows non e' un errore del job: prima finiva nel
+                            // catch qui sotto e un backup riuscito compariva come «ERRORE».
+                            if (!mw.ShowJobToast(jvm.Name, msg))
+                                Enqueue($"   {jvm.Name}: {Loc.Instance["Toast_Failed"]}");
+                        }
                     }
                 }
                 catch (OperationCanceledException)
@@ -647,6 +697,9 @@ public sealed class MainViewModel : ObservableObject
                 }
                 catch (Exception ex)
                 {
+                    // Conta come fallito anche qui, altrimenti il riassunto direbbe «6 completati»
+                    // con un job caduto per un errore imprevisto.
+                    if (!dryRun) failedNames.Add(jvm.Name);
                     jvm.LastStatus = Loc.Instance["Run_Error"];
                     Enqueue($"!! {jvm.Name}: {ex.Message}");
                 }
@@ -661,6 +714,11 @@ public sealed class MainViewModel : ObservableObject
                         ReloadLastResults();
                 }
             }
+
+            // Riassunto del gruppo. Non dopo un annullamento: chi ha premuto «Annulla» sa gia'
+            // com'e' finita, e una notifica sarebbe solo rumore.
+            if (batch && !dryRun && _cts?.IsCancellationRequested != true)
+                ShowBatchToast(okNames, failedNames, skipped);
         }
         finally
         {
@@ -673,6 +731,18 @@ public sealed class MainViewModel : ObservableObject
             // Ricarica gli esiti e rivaluta la salute: il banner/le righe riflettono l'esito appena ottenuto.
             ReloadLastResults();
         }
+    }
+
+    /// <summary>Una notifica sola per tutto il gruppo, al posto di una per job.</summary>
+    private void ShowBatchToast(IReadOnlyList<string> okNames, IReadOnlyList<string> failedNames, int skipped)
+    {
+        if (!RunSummary.Worth(okNames.Count, failedNames.Count)) return;
+        if (!_host.Config.Settings.NotificationsEnabled) return;
+        if (System.Windows.Application.Current?.MainWindow is not MainWindow mw) return;
+
+        var title = Loc.Instance[RunSummary.TitleKey(failedNames.Count)];
+        if (!mw.ShowJobToast(title, RunSummary.Body(okNames, failedNames, skipped)))
+            Enqueue($"   {Loc.Instance["Toast_Failed"]}");
     }
 
     /// <summary>
