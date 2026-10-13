@@ -4,7 +4,13 @@ All notable changes to RoboKeep are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.11.0] - 2026-10-13 — Notices that reach you: updates, end of run, selection
+
+Three things you meet every day. The notice of a new version is now a window that opens in front
+of whoever asked for it, instead of a banner you had to go looking for in the main window. The
+end-of-run notifications no longer queue up one every five seconds: several jobs leave a single
+notice carrying their names. And selecting more than one job in the list finally runs them all —
+before, only the first one started, and nothing said so.
 
 ### Changed
 - **The update notice is now a window of its own.** It used to be a banner in the main window:
@@ -13,6 +19,17 @@ All notable changes to RoboKeep are documented here. The format is based on
   "What's new", "Download" (with the progress bar inside the window) and "Later".
 - **"Ignore this version" is gone.** A backup program's updates carry fixes that had better not
   be silenced for good; "Later" closes the notice and the version is offered again the next day.
+- **Several jobs now leave one notification instead of one each.** The notifications RoboKeep
+  uses are balloon tips of the notification-area icon, and Windows shows one at a time per icon:
+  six jobs meant six banners in a row, five seconds each, and six entries to dismiss by hand in
+  the notification centre. The duration cannot be set by the program (the parameter has been
+  deprecated since Vista: the user's accessibility setting decides), so the queue is removed at
+  the root. The single notice carries the names, up to three, then "and N more". A job that
+  failed still gets its own notice with its name, and the summary names the failed ones — those
+  are the ones to look at — while the successful ones stay a count.
+- **"Minimize to the notification area" and "Start minimized" moved to the General tab**, under
+  "Window". They were in Reliability, next to free space and the pre-run checks: settings that
+  all answer whether the backup went as it should. Those two only say how the window behaves.
 
 ### Fixed
 - **A failed update check no longer blocks the next one for 24 hours.** The date of the last
@@ -21,6 +38,14 @@ All notable changes to RoboKeep are documented here. The format is based on
 - **RoboKeep left open for days now checks for updates again.** The check only ran when the
   window opened; it now also runs while the window stays open, with the same once-a-day cadence,
   and the notice never interrupts a running operation.
+- **Selecting several jobs now runs all of them.** The list let you highlight as many rows as you
+  liked, but "Run selected" and "Verify" took only the primary one and ignored the rest in
+  silence: no message, no log line, and a backup you believed done had never started. The buttons
+  now say how many rows they take ("Run selected (2)") and run them in list order. Edit, Delete,
+  Versions and Restore still work on the primary row.
+- **Turning off "Minimize to the notification area" now also turns off "Start minimized"**, which
+  without it is greyed out: the value stayed in force although it could no longer be seen or
+  changed, and RoboKeep started minimized to the taskbar with no way to tell why.
 
 ## [1.10.0] - 2026-10-05 — Review fixes: versions, restore, warnings
 
