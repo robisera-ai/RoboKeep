@@ -96,6 +96,12 @@
 
                     <TextBlock Text="{l:Tr Set_UpdateSection}" Style="{StaticResource Label}"/>
                     <CheckBox Content="{l:Tr Set_UpdateCheck}" IsChecked="{Binding UpdateCheck}"/>
+
+                    <!-- Come si comporta la finestra, non se il backup e' andato bene: stavano in
+                         Affidabilita' accanto allo spazio libero e ai controlli pre-avvio. -->
+                    <TextBlock Text="{l:Tr Set_WindowSection}" Style="{StaticResource Label}"/>
+                    <CheckBox Content="{l:Tr Set_MinimizeToTray}" IsChecked="{Binding MinimizeToTray}"/>
+                    <CheckBox Content="{l:Tr Set_StartMinimized}" IsChecked="{Binding StartMinimized}" IsEnabled="{Binding MinimizeToTray}" Margin="0,8,0,0"/>
                 </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -277,8 +283,6 @@
 
                         <CheckBox Content="{l:Tr Set_PreflightEnabled}" IsChecked="{Binding PreflightEnabled}" Margin="0,16,0,0"/>
                         <CheckBox Content="{l:Tr Set_NotificationsEnabled}" IsChecked="{Binding NotificationsEnabled}" Margin="0,8,0,0"/>
-                        <CheckBox Content="{l:Tr Set_MinimizeToTray}" IsChecked="{Binding MinimizeToTray}" Margin="0,8,0,0"/>
-                        <CheckBox Content="{l:Tr Set_StartMinimized}" IsChecked="{Binding StartMinimized}" IsEnabled="{Binding MinimizeToTray}" Margin="0,8,0,0"/>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>

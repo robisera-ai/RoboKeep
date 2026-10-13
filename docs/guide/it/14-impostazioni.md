@@ -38,9 +38,13 @@ Cose da sapere:
 - nessun mirror la cancella, perché sta **fuori** dalle cartelle dei job; e se un job ha come destinazione la radice stessa del disco, RoboKeep esclude `RoboKeep-config` dalla copia per non farla rimuovere;
 - se la copia non riesce (disco in sola lettura, spazio finito, permessi) resta solo una riga nel log: **il backup dei file non fallisce per questo**.
 
-## Notifiche e area di notifica
+## Notifiche
 
-Da qui attivi le **notifiche toast** e i comportamenti del **tray** (riduci nel tray, avvio minimizzato, gira in background). I dettagli sono nel capitolo *Notifiche ed email*.
+Nella scheda **Affidabilità** attivi le **notifiche toast** di fine lavoro. I dettagli sono nel capitolo *Notifiche ed email*.
+
+## Finestra
+
+In fondo alla scheda **Generale**, sotto **Finestra**, decidi come si comporta RoboKeep quando lo chiudi e quando lo apri: **«Riduci a icona nell'area di notifica»** lo lascia girare accanto all'orologio invece di chiuderlo, e **«Avvia minimizzato»** — attivabile solo con la prima accesa — lo fa partire già nell'area di notifica, senza finestra. Spegnendo la prima si spegne anche la seconda, così non resta attiva una scelta che non puoi più vedere. I dettagli sono nel capitolo *Notifiche ed email*.
 
 ## Avviso di backup fermo
 

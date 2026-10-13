@@ -60,7 +60,19 @@ public sealed class SettingsViewModel : ObservableObject
     public bool FreeSpaceCleanup { get => _s.FreeSpaceCleanup; set { _s.FreeSpaceCleanup = value; OnPropertyChanged(); } }
     public bool PreflightEnabled { get => _s.PreflightEnabled; set { _s.PreflightEnabled = value; OnPropertyChanged(); } }
     public bool NotificationsEnabled { get => _s.NotificationsEnabled; set { _s.NotificationsEnabled = value; OnPropertyChanged(); } }
-    public bool MinimizeToTray { get => _s.MinimizeToTray; set { _s.MinimizeToTray = value; OnPropertyChanged(); } }
+    /// <summary>Spegnendola si spegne anche <see cref="StartMinimized"/>, che senza di questa
+    /// resta grigia: altrimenti una scelta non piu' visibile continuerebbe a valere, e l'app
+    /// partirebbe ridotta a icona nella barra delle applicazioni senza che si capisca perche'.</summary>
+    public bool MinimizeToTray
+    {
+        get => _s.MinimizeToTray;
+        set
+        {
+            _s.MinimizeToTray = value;
+            OnPropertyChanged();
+            if (!value && _s.StartMinimized) StartMinimized = false;
+        }
+    }
     /// <summary>Controllo aggiornamenti: null (mai chiesto) vale come spento nella casella.</summary>
     public bool UpdateCheck { get => _s.UpdateCheck == true; set { _s.UpdateCheck = value; OnPropertyChanged(); } }
     public bool StartMinimized { get => _s.StartMinimized; set { _s.StartMinimized = value; OnPropertyChanged(); } }

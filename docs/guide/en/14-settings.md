@@ -38,9 +38,13 @@ Things to know:
 - no mirror deletes it, because it lives **outside** the job folders; and if a job's destination is the root of the disk itself, RoboKeep excludes `RoboKeep-config` from the copy so it is not removed;
 - if the copy fails (read-only disk, no space, permissions) all you get is a line in the log: **the file backup does not fail because of it**.
 
-## Notifications and system tray
+## Notifications
 
-From here you turn on **toast notifications** and the **tray** behaviors (minimize to tray, start minimized, run in background). The details are in the *Notifications and email* chapter.
+The **Reliability** tab is where you turn on the end-of-job **toast notifications**. The details are in the *Notifications and email* chapter.
+
+## Window
+
+At the bottom of the **General** tab, under **Window**, you decide how RoboKeep behaves when you close it and when you open it: **"Minimize to the notification area"** leaves it running next to the clock instead of closing it, and **"Start minimized"** — available only with the first one on — starts it in the notification area, with no window. Turning the first one off turns the second one off too, so a choice you can no longer see does not stay in force. The details are in the *Notifications and email* chapter.
 
 ## Stale-backup warning
 
